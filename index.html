@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NMAO Platform — Professional Management Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black:   #080808;
+      --near:    #111111;
+      --card:    #141414;
+      --border:  #222222;
+      --gold:    #C9A84C;
+      --gold-lt: #E2C06E;
+      --gold-dk: #8B6914;
+      --white:   #F5F0E8;
+      --muted:   #7A7060;
+      --font-display: 'Cinzel', serif;
+      --font-body:    'Cormorant Garamond', serif;
+      --font-ui:      'Lato', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 18px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ── GRAIN OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.35;
+    }
+
+    /* ── GOLD RULE ── */
+    .rule {
+      display: block;
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5vw;
+      height: 72px;
+      background: rgba(8,8,8,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+    }
+    .nav-logo span { color: var(--white); font-weight: 400; }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      align-items: center;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .btn-nav {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.55rem 1.5rem;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-nav:hover { background: var(--gold); color: var(--black); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 5vw 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201,168,76,0.04) 0%, transparent 60%);
+    }
+    .hero-ornament {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(90vw, 800px);
+      height: min(90vw, 800px);
+      border: 1px solid rgba(201,168,76,0.05);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-ornament::before {
+      content: '';
+      position: absolute;
+      inset: 30px;
+      border: 1px solid rgba(201,168,76,0.04);
+      border-radius: 50%;
+    }
+    .hero-tag {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1.05;
+      color: var(--white);
+      opacity: 0;
+      animation: fadeUp 0.9s 0.4s forwards;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: var(--gold);
+      display: block;
+    }
+    .hero-sub {
+      font-size: 1.2rem;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 2rem auto 0;
+      line-height: 1.8;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.6s forwards;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.8s forwards;
+    }
+    .btn-primary {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 1rem 2.5rem;
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { background: var(--gold-lt); transform: translateY(-2px); }
+    .btn-ghost {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 1rem 2.5rem;
+      background: transparent;
+      color: var(--white);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+    .hero-stats {
+      display: flex;
+      gap: 4rem;
+      margin-top: 5rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 1s forwards;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--gold);
+      font-weight: 700;
+      display: block;
+    }
+    .stat-lbl {
+      font-family: var(--font-ui);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTION BASE ── */
+    section { padding: 7rem 5vw; }
+    .section-label {
+      font-family: var(--font-ui);
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .section-body {
+      font-size: 1.05rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 580px;
+      margin: 0 auto 4rem;
+      font-weight: 300;
+    }
+
+    /* ── FEATURES ── */
+    #features { background: var(--near); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: var(--card);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { background: #181818; }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--gold);
+    }
+    .feature-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+      color: var(--white);
+    }
+    .feature-text {
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.75;
+    }
+
+    /* ── HOW IT WORKS ── */
+    #how { background: var(--black); }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 3rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dk), var(--gold-dk), transparent);
+      opacity: 0.4;
+    }
+    .step { text-align: center; position: relative; }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border: 1px solid var(--gold-dk);
+      border-radius: 50%;
+      margin: 0 auto 1.5rem;
+      background: var(--black);
+      z-index: 1;
+      position: relative;
+    }
+    .step-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .step-text { font-size: 0.95rem; color: var(--muted); font-weight: 300; }
+
+    /* ── PRICING ── */
+    #pricing { background: var(--near); }
+    .pricing-note {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: -2.5rem;
+      margin-bottom: 3rem;
+      font-family: var(--font-ui);
+      letter-spacing: 0.05em;
+    }
+    .pricing-note span { color: var(--gold); }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .plan {
+      border: 1px solid var(--border);
+      background: var(--card);
+      padding: 2.5rem;
+      position: relative;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .plan:hover { transform: translateY(-4px); }
+    .plan.featured {
+      border-color: var(--gold);
+      background: linear-gradient(160deg, #171200, #141414);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -1px; right: 2rem;
+      background: var(--gold);
+      color: var(--black);
+      font-family: var(--font-ui);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      font-weight: 700;
+    }
+    .plan-name {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+    }
+    .plan-price {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .plan-dollar {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .plan-amount {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--white);
+    }
+    .plan-period {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      color: var(--muted);
+      align-self: flex-end;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.08em;
+    }
+    .plan-fee {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+      margin-bottom: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .plan-fee::before {
+      content: '+';
+      color: var(--muted);
+    }
+    .plan-divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold-dk), transparent);
+      margin-bottom: 1.75rem;
+      opacity: 0.5;
+    }
+    .plan-features {
+      list-style: none;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .plan-features li {
+      font-size: 0.9rem;
+      color: var(--muted);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      font-family: var(--font-ui);
+    }
+    .plan-features li::before {
+      content: '◆';
+      color: var(--gold);
+      font-size: 0.45rem;
+      margin-top: 0.45rem;
+      flex-shrink: 0;
+    }
+    .btn-plan {
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 0.9rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-plan:hover { border-color: var(--gold); color: var(--gold); }
+    .plan.featured .btn-plan {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--black);
+      font-weight: 700;
+    }
+    .plan.featured .btn-plan:hover { background: var(--gold-lt); }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--black); }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .testimonial {
+      border: 1px solid var(--border);
+      padding: 2rem;
+      position: relative;
+    }
+    .testimonial::before {
+      content: '"';
+      position: absolute;
+      top: -0.5rem; left: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: var(--gold);
+      opacity: 0.15;
+      line-height: 1;
+    }
+    .testimonial-text {
+      font-size: 1rem;
+      color: var(--white);
+      font-style: italic;
+      font-weight: 300;
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+    .testimonial-author {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .testimonial-role {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* ── CTA BANNER ── */
+    #cta {
+      background: var(--near);
+      text-align: center;
+      padding: 7rem 5vw;
+      position: relative;
+      overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(201,168,76,0.08), transparent);
+    }
+    #cta .section-title { margin-bottom: 0.75rem; }
+    #cta .section-body  { margin-bottom: 2.5rem; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      width: min(90vw, 420px);
+      padding: 2.5rem;
+      position: relative;
+      animation: fadeUp 0.3s forwards;
+    }
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--white); }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.25rem;
+      color: var(--white);
+    }
+    .modal-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+      font-weight: 300;
+    }
+    .modal-tabs {
+      display: flex;
+      margin-bottom: 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-tab {
+      font-family: var(--font-ui);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.25rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .modal-tab.active { color: var(--gold); border-color: var(--gold); }
+    .field {
+      margin-bottom: 1.1rem;
+    }
+    .field label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .field input {
+      width: 100%;
+      background: var(--black);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      padding: 0.7rem 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--gold); }
+    .btn-submit {
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 0.9rem;
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: var(--gold-lt); }
+    .modal-msg {
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      text-align: center;
+      margin-top: 1rem;
+      min-height: 1.2em;
+    }
+    .modal-msg.success { color: #7DBD7D; }
+    .modal-msg.error   { color: #E07070; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--black);
+      border-top: 1px solid var(--border);
+      padding: 3rem 5vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+    }
+    .footer-copy {
+      font-family: var(--font-ui);
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero-stats { gap: 2rem; }
+      .steps::before { display: none; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- NAV -->
+
+  <nav>
+    <div class="nav-logo">NMAO <span>Platform</span></div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#testimonials">Testimonials</a></li>
+      <li><button class="btn-nav" onclick="openModal('login')">Sign In</button></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-ornament"></div>
+    <p class="hero-tag">Professional Management Suite</p>
+    <h1 class="hero-title">
+      The Platform Built<br>
+      <em>For Excellence</em>
+    </h1>
+    <p class="hero-sub">
+      NMAO unifies your operations, payments, and membership management into one distinguished platform — crafted for organizations that demand more.
+    </p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="openModal('signup')">Begin Your Journey</button>
+      <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">500+</span>
+        <span class="stat-lbl">Organizations</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">$12M+</span>
+        <span class="stat-lbl">Processed</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">99.9%</span>
+        <span class="stat-lbl">Uptime</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+
+  <section id="features">
+    <p class="section-label">What We Offer</p>
+    <h2 class="section-title">Everything You Need,<br>Nothing You Don't</h2>
+    <p class="section-body">Every tool is purpose-built for professional organizations that need reliability, elegance, and control.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Membership Management</h3>
+        <p class="feature-text">Manage member profiles, roles, and access tiers with precision. Automated renewals, expiration notices, and onboarding flows built in.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Payment Processing</h3>
+        <p class="feature-text">Secure, integrated payment collection with transparent 1.5% processing fee. Invoices, receipts, and reconciliation at your fingertips.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Event Management</h3>
+        <p class="feature-text">Create, publish, and manage events with custom registration forms, capacity controls, ticketing, and attendee tracking.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Analytics & Reports</h3>
+        <p class="feature-text">Real-time dashboards and exportable reports. Track revenue, membership trends, event performance, and growth metrics in one view.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Communications</h3>
+        <p class="feature-text">Broadcast announcements, newsletters, and targeted messages to members. Logged, tracked, and elegantly presented.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3 class="feature-title">Secure Infrastructure</h3>
+        <p class="feature-text">Built on enterprise-grade infrastructure with row-level security, encrypted storage, and compliant data handling — always.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+
+  <section id="how">
+    <p class="section-label">The Process</p>
+    <h2 class="section-title">Up and Running in Minutes</h2>
+    <p class="section-body">We've removed every point of friction so your organization can focus on what matters.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3 class="step-title">Create Your Account</h3>
+        <p class="step-text">Sign up and configure your organization profile in minutes. No technical knowledge required.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3 class="step-title">Choose Your Plan</h3>
+        <p class="step-text">Select the tier that fits your organization size and needs. Upgrade anytime as you grow.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3 class="step-title">Import & Configure</h3>
+        <p class="step-text">Import existing members, set up payment methods, and configure your workflows.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3 class="step-title">Go Live</h3>
+        <p class="step-text">Launch your member portal, start collecting payments, and manage everything from one dashboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+
+  <section id="pricing">
+    <p class="section-label">Investment</p>
+    <h2 class="section-title">Transparent, Straightforward Pricing</h2>
+    <p class="section-body">Three plans designed to scale with your organization. No hidden fees, no surprises.</p>
+    <p class="pricing-note">All plans include a <span>1.5% payment processing fee</span> on transactions.</p>
+    <div class="pricing-grid">
+      <!-- Starter -->
+      <div class="plan">
+        <p class="plan-name">Starter</p>
+        <div class="plan-price">
+          <span class="plan-dollar">$</span>
+          <span class="plan-amount">29</span>
+          <span class="plan-period">/ month</span>
+        </div>
+        <div class="plan-fee">1.5% processing fee on transactions</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Up to 100 members</li>
+          <li>Core membership management</li>
+          <li>Payment collection</li>
+          <li>Basic event management (5/mo)</li>
+          <li>Email support</li>
+          <li>Standard reports</li>
+        </ul>
+        <button class="btn-plan" onclick="openModal('signup')">Get Started</button>
+      </div>
+      <!-- Professional (featured) -->
+      <div class="plan featured">
+        <div class="plan-badge">Most Popular</div>
+        <p class="plan-name">Professional</p>
+        <div class="plan-price">
+          <span class="plan-dollar">$</span>
+          <span class="plan-amount">59</span>
+          <span class="plan-period">/ month</span>
+        </div>
+        <div class="plan-fee">1.5% processing fee on transactions</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Up to 500 members</li>
+          <li>Full membership management</li>
+          <li>Advanced payment tools & invoicing</li>
+          <li>Unlimited events</li>
+          <li>Email & chat support</li>
+          <li>Advanced analytics dashboard</li>
+          <li>Custom communications</li>
+        </ul>
+        <button class="btn-plan" onclick="openModal('signup')">Get Started</button>
+      </div>
+      <!-- Enterprise -->
+      <div class="plan">
+        <p class="plan-name">Enterprise</p>
+        <div class="plan-price">
+          <span class="plan-dollar">$</span>
+          <span class="plan-amount">89</span>
+          <span class="plan-period">/ month</span>
+        </div>
+        <div class="plan-fee">1.5% processing fee on transactions</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Unlimited members</li>
+          <li>All Professional features</li>
+          <li>Priority support & onboarding</li>
+          <li>Custom integrations</li>
+          <li>White-label member portal</li>
+          <li>Dedicated account manager</li>
+          <li>SLA guarantee</li>
+        </ul>
+        <button class="btn-plan" onclick="openModal('signup')">Get Started</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+
+  <section id="testimonials">
+    <p class="section-label">Testimonials</p>
+    <h2 class="section-title">Trusted by Leading Organizations</h2>
+    <p class="section-body">The organizations that have made NMAO Platform the foundation of their operations.</p>
+    <div class="testimonials-grid">
+      <div class="testimonial">
+        <p class="testimonial-text">NMAO Platform transformed how we manage our 400-member organization. The payment tracking alone saved us dozens of hours every month.</p>
+        <p class="testimonial-author">Margaret Chen</p>
+        <p class="testimonial-role">Executive Director, Pacific Regional Council</p>
+      </div>
+      <div class="testimonial">
+        <p class="testimonial-text">The dashboard is elegant, the reporting is powerful, and support is genuinely excellent. We've tried everything else — nothing compares.</p>
+        <p class="testimonial-author">James Whitfield</p>
+        <p class="testimonial-role">Operations Lead, Meridian Association</p>
+      </div>
+      <div class="testimonial">
+        <p class="testimonial-text">From day one, NMAO felt like it was built specifically for us. The onboarding was seamless and our members noticed the difference immediately.</p>
+        <p class="testimonial-author">Dr. Elena Reyes</p>
+        <p class="testimonial-role">President, Southwest Professionals Alliance</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+
+  <section id="cta">
+    <p class="section-label">Get Started</p>
+    <h2 class="section-title">Your Organization Deserves Better</h2>
+    <p class="section-body">Join hundreds of organizations already running on NMAO Platform. Start your first month today.</p>
+    <span class="rule" style="margin-bottom:2.5rem;display:block;"></span>
+    <button class="btn-primary" onclick="openModal('signup')">Create Your Account</button>
+  </section>
+
+  <!-- FOOTER -->
+
+  <footer>
+    <div class="footer-logo">NMAO</div>
+    <span class="footer-copy">© 2025 NMAO Platform · nmao.us · All rights reserved.</span>
+    <ul class="footer-links">
+      <li><a href="#">Privacy</a></li>
+      <li><a href="#">Terms</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </footer>
+
+  <!-- AUTH MODAL -->
+
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <p class="modal-title" id="modalTitle">Sign In</p>
+      <p class="modal-sub" id="modalSub">Access your NMAO dashboard</p>
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="modal-tab" id="tabSignup" onclick="switchTab('signup')">Create Account</button>
+      </div>
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" placeholder="you@organization.com" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" />
+        </div>
+        <button class="btn-submit" onclick="handleLogin()">Sign In</button>
+      </div>
+      <!-- Signup Form -->
+      <div id="signupForm" style="display:none">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="signupName" placeholder="Your Name" />
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="signupEmail" placeholder="you@organization.com" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="signupPassword" placeholder="Create a password" />
+        </div>
+        <button class="btn-submit" onclick="handleSignup()">Create Account</button>
+      </div>
+      <p class="modal-msg" id="modalMsg"></p>
+    </div>
+  </div>
+
+  <script>
+    // ── SUPABASE ──
+    const SUPABASE_URL    = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c'; // Replace with your anon key
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // ── MODAL ──
+    function openModal(tab = 'login') {
+      document.getElementById('authModal').classList.add('active');
+      switchTab(tab);
+    }
+    function closeModal() {
+      document.getElementById('authModal').classList.remove('active');
+      document.getElementById('modalMsg').textContent = '';
+    }
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
+      document.getElementById('tabLogin').classList.toggle('active', isLogin);
+      document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+      document.getElementById('modalTitle').textContent = isLogin ? 'Welcome Back'  : 'Create Account';
+      document.getElementById('modalSub').textContent   = isLogin ? 'Access your NMAO dashboard' : 'Join the NMAO Platform';
+      document.getElementById('modalMsg').textContent = '';
+    }
+    function setMsg(text, type) {
+      const el = document.getElementById('modalMsg');
+      el.textContent = text;
+      el.className = 'modal-msg ' + type;
+    }
+
+    // ── AUTH ──
+    async function handleLogin() {
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) { setMsg('Please fill in all fields.', 'error'); return; }
+      setMsg('Signing in…', '');
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { setMsg(error.message, 'error'); }
+      else        { window.location.href = 'dashboard.html'; }
+    }
+
+    async function handleSignup() {
+      const name     = document.getElementById('signupName').value.trim();
+      const email    = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      if (!name || !email || !password) { setMsg('Please fill in all fields.', 'error'); return; }
+      setMsg('Creating account…', '');
+      const { error } = await sb.auth.signUp({
+        email, password,
+        options: { data: { full_name: name } }
+      });
+      if (error) { setMsg(error.message, 'error'); }
+      else        { setMsg('Account created! Check your email to confirm.', 'success'); }
+    }
+
+    // Close on backdrop click
+    document.getElementById('authModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Check if already logged in
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'dashboard.html';
+    });
+  </script>
+
+</body>
+</html>
