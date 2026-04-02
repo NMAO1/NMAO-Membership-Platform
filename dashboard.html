@@ -9,27 +9,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --black:    #080808;
-      --near:     #0f0f0f;
-      --surface:  #141414;
-      --surface2: #1a1a1a;
-      --border:   #222222;
-      --border2:  #2a2a2a;
-      --gold:     #C9A84C;
-      --gold-lt:  #E2C06E;
-      --gold-dk:  #8B6914;
-      --gold-bg:  rgba(201,168,76,0.06);
-      --white:    #F5F0E8;
-      --muted:    #6A6050;
-      --muted2:   #9A8F80;
-      --green:    #5A9A6A;
-      --red:      #9A5A5A;
-      --blue:     #5A7A9A;
-      --sidebar:  220px;
+      --black:   #080808;
+      --near:    #0f0f0f;
+      --surface: #141414;
+      --surface2:#1a1a1a;
+      --border:  #222222;
+      --border2: #2a2a2a;
+      --gold:    #C9A84C;
+      --gold-lt: #E2C06E;
+      --gold-dk: #8B6914;
+      --gold-bg: rgba(201,168,76,0.06);
+      --white:   #F5F0E8;
+      --muted:   #6A6050;
+      --muted2:  #9A8F80;
+      --green:   #5A9A6A;
+      --red:     #9A5A5A;
+      --blue:    #5A7A9A;
+      --sidebar: 220px;
       --font-display: 'Cinzel', serif;
       --font-body:    'Cormorant Garamond', serif;
       --font-ui:      'Lato', sans-serif;
@@ -44,8 +43,6 @@
       display: flex;
       overflow: hidden;
     }
-
-    /* ── SIDEBAR ── */
     .sidebar {
       width: var(--sidebar);
       min-height: 100vh;
@@ -58,1046 +55,591 @@
       top: 0; left: 0; bottom: 0;
       z-index: 50;
     }
-    .sidebar-logo {
-      padding: 1.75rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar-logo-text {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      color: var(--gold);
-    }
-    .sidebar-logo-sub {
-      font-size: 0.6rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 0.2rem;
-    }
-    .sidebar-nav {
-      flex: 1;
-      padding: 1.5rem 0;
-      overflow-y: auto;
-    }
-    .nav-section-label {
-      font-size: 0.55rem;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: 0 1.5rem;
-      margin-bottom: 0.5rem;
-      margin-top: 1.25rem;
-    }
-    .nav-section-label:first-child { margin-top: 0; }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.65rem 1.5rem;
-      color: var(--muted2);
-      cursor: pointer;
-      transition: color 0.2s, background 0.2s;
-      position: relative;
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-    }
-    .nav-item::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 2px;
-      background: var(--gold);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
+    .sidebar-logo { padding: 1.75rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .sidebar-logo-text { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; letter-spacing: 0.16em; color: var(--gold); }
+    .sidebar-school { font-size: 0.62rem; color: var(--muted2); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-nav { flex: 1; padding: 1.5rem 0; overflow-y: auto; }
+    .nav-section-label { font-size: 0.55rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); padding: 0 1.5rem; margin-bottom: 0.5rem; margin-top: 1.25rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1.5rem; color: var(--muted2); cursor: pointer; transition: color 0.2s, background 0.2s; position: relative; font-size: 0.8rem; }
+    .nav-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--gold); opacity: 0; transition: opacity 0.2s; }
     .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
     .nav-item.active { color: var(--gold); background: var(--gold-bg); }
     .nav-item.active::before { opacity: 1; }
     .nav-icon { font-size: 0.85rem; width: 16px; text-align: center; }
-    .sidebar-footer {
-      padding: 1.25rem 1.5rem;
-      border-top: 1px solid var(--border);
-    }
+    .sidebar-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); }
     .user-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-    .user-avatar {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: var(--gold-bg);
-      border: 1px solid var(--gold-dk);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-display);
-      font-size: 0.7rem;
-      color: var(--gold);
-    }
-    .user-name {
-      font-size: 0.78rem;
-      color: var(--white);
-      font-weight: 400;
-    }
-    .user-role {
-      font-size: 0.6rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-    }
-    .btn-signout {
-      width: 100%;
-      font-family: var(--font-ui);
-      font-size: 0.62rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      padding: 0.55rem;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-    }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-bg); border: 1px solid var(--gold-dk); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.7rem; color: var(--gold); flex-shrink: 0; }
+    .user-name { font-size: 0.78rem; color: var(--white); }
+    .user-role { font-size: 0.6rem; color: var(--muted); }
+    .btn-signout { width: 100%; font-family: var(--font-ui); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.55rem; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: border-color 0.2s, color 0.2s; }
     .btn-signout:hover { border-color: var(--red); color: #C07070; }
-
-    /* ── MAIN ── */
-    .main {
-      margin-left: var(--sidebar);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      overflow-y: auto;
-    }
-
-    /* ── TOP BAR ── */
-    .topbar {
-      height: 64px;
-      background: var(--black);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-    .topbar-title {
-      font-family: var(--font-display);
-      font-size: 0.9rem;
-      letter-spacing: 0.1em;
-      color: var(--white);
-    }
+    .main { margin-left: var(--sidebar); flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+    .topbar { height: 64px; background: var(--black); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: sticky; top: 0; z-index: 40; }
+    .topbar-title { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.1em; }
     .topbar-right { display: flex; align-items: center; gap: 1rem; }
-    .topbar-date {
-      font-size: 0.68rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-    }
-    .badge-gold {
-      background: var(--gold-bg);
-      border: 1px solid var(--gold-dk);
-      color: var(--gold);
-      font-size: 0.6rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      padding: 0.25rem 0.6rem;
-    }
-
-    /* ── CONTENT AREA ── */
+    .topbar-date { font-size: 0.68rem; color: var(--muted); }
+    .badge-gold { background: var(--gold-bg); border: 1px solid var(--gold-dk); color: var(--gold); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.25rem 0.6rem; }
     .content { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
-
-    /* ── SECTION HEADING ── */
-    .content-heading {
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-    }
-    .content-heading h2 {
-      font-family: var(--font-display);
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--white);
-    }
-    .content-heading .rule-h {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, var(--border2), transparent);
-    }
-
-    /* ── STAT CARDS ── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-    }
-    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px)  { .stats-grid { grid-template-columns: 1fr; } }
-    .stat-card {
-      background: var(--surface);
-      padding: 1.5rem;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.2s;
-    }
-    .stat-card:hover { background: var(--surface2); }
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, var(--gold-dk), transparent);
-      opacity: 0.5;
-    }
-    .stat-label {
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 0.75rem;
-    }
-    .stat-value {
-      font-family: var(--font-display);
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1;
-      margin-bottom: 0.5rem;
-    }
-    .stat-delta {
-      font-size: 0.68rem;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      letter-spacing: 0.04em;
-    }
-    .stat-delta.up   { color: var(--green); }
-    .stat-delta.down { color: var(--red); }
-    .stat-delta.neutral { color: var(--muted); }
-    .stat-icon {
-      position: absolute;
-      top: 1.25rem; right: 1.25rem;
-      font-size: 1.5rem;
-      opacity: 0.12;
-      color: var(--gold);
-    }
-
-    /* ── TWO-COL LAYOUT ── */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 1.5rem;
-    }
-    @media (max-width: 1100px) { .two-col { grid-template-columns: 1fr; } }
-
-    /* ── PANEL ── */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-    }
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .panel-title {
-      font-family: var(--font-display);
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-    .panel-action {
-      font-size: 0.62rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
+    .content-heading { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.25rem; }
+    .content-heading h2 { font-family: var(--font-display); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); white-space: nowrap; }
+    .rule-h { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border2), transparent); }
+    .today-banner { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .today-label { font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+    .today-date { font-family: var(--font-display); font-size: 1.1rem; color: var(--white); margin-top: 0.2rem; }
+    .today-stats { display: flex; gap: 2rem; }
+    .today-stat { text-align: center; }
+    .today-stat-num { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); display: block; }
+    .today-stat-lbl { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .schedule-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+    .class-card { background: var(--surface); border: 1px solid var(--border); display: flex; align-items: stretch; overflow: hidden; transition: border-color 0.2s, transform 0.2s; cursor: pointer; }
+    .class-card:hover { border-color: var(--gold-dk); transform: translateX(3px); }
+    .class-color-bar { width: 4px; flex-shrink: 0; }
+    .class-time { width: 90px; flex-shrink: 0; padding: 1rem; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border); text-align: center; }
+    .class-time-start { font-family: var(--font-display); font-size: 1rem; color: var(--white); }
+    .class-time-end { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+    .class-info { flex: 1; padding: 1rem 1.25rem; }
+    .class-title { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.06em; color: var(--white); margin-bottom: 0.4rem; }
+    .class-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .class-tag { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border2); color: var(--muted2); }
+    .class-meta { display: flex; gap: 1.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+    .class-meta-item { font-size: 0.72rem; color: var(--muted); }
+    .class-meta-item span { color: var(--muted2); }
+    .class-actions { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; border-left: 1px solid var(--border); }
+    .btn-sm { font-family: var(--font-ui); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4rem 0.85rem; border: 1px solid var(--border); background: transparent; color: var(--muted2); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-sm.gold { background: var(--gold-bg); border-color: var(--gold-dk); color: var(--gold); }
+    .no-classes { padding: 3rem; text-align: center; color: var(--muted); font-family: var(--font-body); font-style: italic; font-size: 1.1rem; border: 1px solid var(--border); background: var(--surface); }
+    .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .week-day { background: var(--surface); min-height: 120px; padding: 0.75rem; }
+    .week-day.today { background: var(--surface2); }
+    .week-day-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    .week-day-name { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+    .week-day-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--white); line-height: 1.2; }
+    .week-day.today .week-day-num { color: var(--gold); }
+    .week-class-pill { font-size: 0.58rem; padding: 0.25rem 0.4rem; margin-bottom: 0.3rem; border-left: 2px solid; background: rgba(0,0,0,0.3); color: var(--muted2); cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+    .stat-card { background: var(--surface); padding: 1.5rem; position: relative; overflow: hidden; }
+    .stat-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--gold-dk), transparent); opacity: 0.5; }
+    .stat-label { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+    .stat-value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; color: var(--white); line-height: 1; margin-bottom: 0.5rem; }
+    .stat-delta { font-size: 0.68rem; color: var(--muted); }
+    .stat-delta.up { color: var(--green); }
+    .stat-icon { position: absolute; top: 1.25rem; right: 1.25rem; font-size: 1.5rem; opacity: 0.12; color: var(--gold); }
+    .panel { background: var(--surface); border: 1px solid var(--border); }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .panel-title { font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+    .panel-action { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; transition: color 0.2s; }
     .panel-action:hover { color: var(--gold); }
     .panel-body { padding: 1.5rem; }
-
-    /* ── ACTIVITY LIST ── */
-    .activity-list { display: flex; flex-direction: column; gap: 0; }
-    .activity-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.85rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .dot-gold   { background: var(--gold); }
-    .dot-green  { background: var(--green); }
-    .dot-red    { background: var(--red); }
-    .dot-blue   { background: var(--blue); }
-    .activity-text { flex: 1; font-size: 0.82rem; color: var(--muted2); }
-    .activity-text strong { color: var(--white); font-weight: 400; }
-    .activity-time { font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
-    .activity-amount { font-family: var(--font-display); font-size: 0.85rem; color: var(--gold); white-space: nowrap; }
-
-    /* ── MEMBERS TABLE ── */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     thead tr { border-bottom: 1px solid var(--border); }
-    th {
-      font-size: 0.58rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: 0.75rem 1rem;
-      text-align: left;
-      white-space: nowrap;
-      font-weight: 400;
-    }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-      cursor: pointer;
-    }
+    th { font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 0.75rem 1rem; text-align: left; font-weight: 400; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: rgba(201,168,76,0.03); }
-    td {
-      padding: 0.85rem 1rem;
-      font-size: 0.8rem;
-      color: var(--muted2);
-    }
-    td.name { color: var(--white); font-weight: 400; }
-    .chip {
-      display: inline-block;
-      font-size: 0.55rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      padding: 0.2rem 0.55rem;
-      border-radius: 0;
-    }
+    td { padding: 0.85rem 1rem; font-size: 0.8rem; color: var(--muted2); }
+    td.name { color: var(--white); }
+    .chip { display: inline-block; font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.2rem 0.55rem; }
     .chip-active  { background: rgba(90,154,106,0.12); border: 1px solid rgba(90,154,106,0.3); color: #7DBD7D; }
     .chip-pending { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); color: var(--gold); }
     .chip-expired { background: rgba(154,90,90,0.12); border: 1px solid rgba(154,90,90,0.3); color: #C07070; }
-
-    /* ── PLAN BREAKDOWN ── */
-    .plan-breakdown { display: flex; flex-direction: column; gap: 1rem; }
-    .plan-row { display: flex; flex-direction: column; gap: 0.4rem; }
-    .plan-row-top { display: flex; justify-content: space-between; align-items: baseline; }
-    .plan-row-name {
-      font-size: 0.75rem;
-      color: var(--white);
-      letter-spacing: 0.04em;
-    }
-    .plan-row-count {
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      color: var(--gold);
-    }
-    .plan-bar-bg {
-      height: 3px;
-      background: var(--border2);
-      position: relative;
-    }
-    .plan-bar-fill {
-      position: absolute;
-      top: 0; left: 0; bottom: 0;
-      background: linear-gradient(90deg, var(--gold-dk), var(--gold));
-    }
-
-    /* ── UPCOMING EVENTS ── */
-    .events-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .event-item {
-      display: flex;
-      gap: 1rem;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-      transition: border-color 0.2s;
-    }
-    .event-item:hover { border-color: var(--gold-dk); }
-    .event-date {
-      width: 40px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .event-day {
-      font-family: var(--font-display);
-      font-size: 1.4rem;
-      line-height: 1;
-      color: var(--gold);
-    }
-    .event-mo {
-      font-size: 0.55rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .event-info { flex: 1; }
-    .event-name { font-size: 0.82rem; color: var(--white); margin-bottom: 0.2rem; }
-    .event-meta { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.04em; }
-    .event-registrants {
-      font-family: var(--font-display);
-      font-size: 0.8rem;
-      color: var(--gold-lt);
-      align-self: center;
-      white-space: nowrap;
-    }
-
-    /* ── REVENUE CHART (CSS-only bar chart) ── */
-    .bar-chart {
-      display: flex;
-      align-items: flex-end;
-      gap: 0.5rem;
-      height: 120px;
-      padding: 0 0 0.5rem;
-    }
-    .bar-col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25rem;
-      height: 100%;
-      justify-content: flex-end;
-    }
-    .bar-fill {
-      width: 100%;
-      background: linear-gradient(180deg, var(--gold), var(--gold-dk));
-      opacity: 0.7;
-      transition: opacity 0.2s;
-      min-height: 4px;
-    }
-    .bar-col:hover .bar-fill { opacity: 1; }
-    .bar-label {
-      font-size: 0.55rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-align: center;
-    }
-    .chart-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .chart-footer-stat { text-align: center; }
-    .chart-footer-val {
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-      color: var(--gold);
-    }
-    .chart-footer-lbl {
-      font-size: 0.58rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* ── QUICK ACTIONS ── */
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-    }
-    .quick-action {
-      background: var(--surface);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      border: none;
-      text-align: left;
-    }
-    .quick-action:hover { background: var(--surface2); }
-    .qa-icon { font-size: 1.1rem; color: var(--gold); }
-    .qa-label {
-      font-size: 0.72rem;
-      color: var(--white);
-      letter-spacing: 0.04em;
-    }
-    .qa-desc { font-size: 0.62rem; color: var(--muted); }
-
-    /* ── LOADING ── */
-    #loadingScreen {
-      position: fixed;
-      inset: 0;
-      background: var(--black);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-    .loading-logo {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      margin-bottom: 2rem;
-    }
-    .loading-bar-bg {
-      width: 200px; height: 1px;
-      background: var(--border);
-      position: relative;
-      overflow: hidden;
-    }
-    .loading-bar-fill {
-      position: absolute;
-      top: 0; left: -100%; bottom: 0;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      animation: loading 1.2s infinite;
-    }
-    @keyframes loading {
-      to { left: 100%; }
-    }
-
-    /* ── PAGE SECTIONS (tabs) ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); width: min(90vw, 500px); max-height: 90vh; overflow-y: auto; position: relative; }
+    .modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-family: var(--font-display); font-size: 1rem; letter-spacing: 0.08em; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .field input, .field select, .field textarea { background: var(--black); border: 1px solid var(--border); color: var(--white); font-family: var(--font-ui); font-size: 0.85rem; padding: 0.65rem 0.85rem; outline: none; transition: border-color 0.2s; width: 100%; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+    .field select option { background: var(--near); }
+    .days-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .day-btn { font-family: var(--font-ui); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.4rem 0.65rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .day-btn.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+    .btn-gold-full { width: 100%; font-family: var(--font-ui); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; background: var(--gold); color: var(--black); border: none; cursor: pointer; font-weight: 700; transition: background 0.2s; margin-top: 0.5rem; }
+    .btn-gold-full:hover { background: var(--gold-lt); }
+    .form-msg { font-size: 0.75rem; text-align: center; min-height: 1em; }
+    .form-msg.success { color: #7DBD7D; }
+    .form-msg.error { color: #C07070; }
     .page { display: none; }
     .page.active { display: block; }
-
-    /* ── SCROLLBAR ── */
+    #loadingScreen { position: fixed; inset: 0; background: var(--black); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+    .loading-logo { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.2em; color: var(--gold); margin-bottom: 2rem; }
+    .loading-bar-bg { width: 200px; height: 1px; background: var(--border); position: relative; overflow: hidden; }
+    .loading-bar-fill { position: absolute; top: 0; left: -100%; bottom: 0; width: 100%; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: loading 1.2s infinite; }
+    @keyframes loading { to { left: 100%; } }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: var(--black); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); }
   </style>
-
 </head>
 <body>
 
-  <!-- LOADING -->
+<div id="loadingScreen">
+  <div class="loading-logo">NMAO</div>
+  <div class="loading-bar-bg"><div class="loading-bar-fill"></div></div>
+</div>
 
-  <div id="loadingScreen">
-    <div class="loading-logo">NMAO</div>
-    <div class="loading-bar-bg"><div class="loading-bar-fill"></div></div>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">NMAO</div>
+    <div class="sidebar-school" id="schoolName">Loading...</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Schedule</div>
+    <div class="nav-item active" onclick="navigate('schedule',this)"><span class="nav-icon">◇</span> Schedule</div>
+    <div class="nav-item" onclick="navigate('classes',this)"><span class="nav-icon">◈</span> All Classes</div>
+    <div class="nav-section-label">Organization</div>
+    <div class="nav-item" onclick="navigate('members',this)"><span class="nav-icon">◎</span> Members</div>
+    <div class="nav-item" onclick="navigate('payments',this)"><span class="nav-icon">◆</span> Payments</div>
+    <div class="nav-item" onclick="navigate('communications',this)"><span class="nav-icon">◻</span> Communications</div>
+    <div class="nav-section-label">Insights</div>
+    <div class="nav-item" onclick="navigate('analytics',this)"><span class="nav-icon">◉</span> Analytics</div>
+    <div class="nav-section-label">Account</div>
+    <div class="nav-item" onclick="navigate('settings',this)"><span class="nav-icon">⊙</span> Settings</div>
+    <div class="nav-item" onclick="navigate('billing',this)"><span class="nav-icon">⊕</span> Billing</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="userInitial">?</div>
+      <div>
+        <div class="user-name" id="userName">Loading...</div>
+        <div class="user-role">Administrator</div>
+      </div>
+    </div>
+    <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Today's Schedule</div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="todayDate"></span>
+      <span class="badge-gold">Professional</span>
+    </div>
   </div>
 
-  <!-- SIDEBAR -->
-
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-text">NMAO</div>
-      <div class="sidebar-logo-sub">Management Platform</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Overview</div>
-      <div class="nav-item active" onclick="navigate('dashboard', this)">
-        <span class="nav-icon">◈</span> Dashboard
-      </div>
-      <div class="nav-item" onclick="navigate('analytics', this)">
-        <span class="nav-icon">◉</span> Analytics
-      </div>
+  <div class="content">
 
 ```
-  <div class="nav-section-label">Organization</div>
-  <div class="nav-item" onclick="navigate('members', this)">
-    <span class="nav-icon">◎</span> Members
-  </div>
-  <div class="nav-item" onclick="navigate('events', this)">
-    <span class="nav-icon">◇</span> Events
-  </div>
-  <div class="nav-item" onclick="navigate('payments', this)">
-    <span class="nav-icon">◆</span> Payments
-  </div>
-  <div class="nav-item" onclick="navigate('communications', this)">
-    <span class="nav-icon">◻</span> Communications
-  </div>
-
-  <div class="nav-section-label">Account</div>
-  <div class="nav-item" onclick="navigate('settings', this)">
-    <span class="nav-icon">⊙</span> Settings
-  </div>
-  <div class="nav-item" onclick="navigate('billing', this)">
-    <span class="nav-icon">⊕</span> Billing & Plan
-  </div>
-</nav>
-<div class="sidebar-footer">
-  <div class="user-info">
-    <div class="user-avatar" id="userInitial">?</div>
+<!-- SCHEDULE PAGE -->
+<div class="page active" id="page-schedule">
+  <div class="today-banner">
     <div>
-      <div class="user-name" id="userName">Loading…</div>
-      <div class="user-role">Administrator</div>
+      <div class="today-label">Today</div>
+      <div class="today-date" id="todayFull"></div>
+    </div>
+    <div class="today-stats">
+      <div class="today-stat"><span class="today-stat-num" id="todayClassCount">0</span><span class="today-stat-lbl">Classes</span></div>
+      <div class="today-stat"><span class="today-stat-num" id="todayStudentCount">0</span><span class="today-stat-lbl">Active Members</span></div>
+      <div class="today-stat"><span class="today-stat-num" id="totalMembers">0</span><span class="today-stat-lbl">Total Members</span></div>
+    </div>
+    <button class="btn-sm gold" onclick="openAddClass()">+ Add Class</button>
+  </div>
+  <div>
+    <div class="content-heading"><h2>Today's Classes</h2><div class="rule-h"></div></div>
+    <div class="schedule-grid" id="todaySchedule"><div class="no-classes">Loading schedule...</div></div>
+  </div>
+  <div>
+    <div class="content-heading"><h2>This Week</h2><div class="rule-h"></div></div>
+    <div class="week-grid" id="weekGrid"></div>
+  </div>
+</div>
+
+<!-- ALL CLASSES PAGE -->
+<div class="page" id="page-classes">
+  <div class="content-heading"><h2>All Classes</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()">+ Add Class</button></div>
+  <div class="schedule-grid" id="allClassesList"><div class="no-classes">Loading...</div></div>
+</div>
+
+<!-- MEMBERS PAGE -->
+<div class="page" id="page-members">
+  <div class="content-heading"><h2>Members</h2><div class="rule-h"></div></div>
+  <div class="stats-grid" style="margin-bottom:1.5rem">
+    <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
+    <div class="stat-card"><div class="stat-icon">◆</div><div class="stat-label">Active</div><div class="stat-value" id="statActive">0</div><div class="stat-delta up">Current</div></div>
+    <div class="stat-card"><div class="stat-icon">◇</div><div class="stat-label">Pending</div><div class="stat-value" id="statPending">0</div></div>
+    <div class="stat-card"><div class="stat-icon">⊕</div><div class="stat-label">Expired</div><div class="stat-value" id="statExpired">0</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Student Roster</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+        <tbody id="membersTableBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody>
+      </table>
     </div>
   </div>
-  <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
+</div>
+
+<!-- PAYMENTS PAGE -->
+<div class="page" id="page-payments">
+  <div class="content-heading"><h2>Payments</h2><div class="rule-h"></div></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Transaction Ledger</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Invoice #</th><th>Student</th><th>Type</th><th>Amount</th><th>Fee (1.5%)</th><th>Net</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="paymentsTableBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No payments recorded yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- COMMUNICATIONS PAGE -->
+<div class="page" id="page-communications">
+  <div class="content-heading"><h2>Communications</h2><div class="rule-h"></div></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Send Broadcast</span></div>
+    <div class="panel-body">
+      <div style="display:flex;flex-direction:column;gap:1rem;max-width:600px">
+        <div class="field"><label>Subject</label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
+        <div class="field"><label>Audience</label>
+          <select id="commAudience">
+            <option value="all">All Members</option>
+            <option value="active">Active Only</option>
+            <option value="expired">Expired Members</option>
+          </select>
+        </div>
+        <div class="field"><label>Message</label><textarea id="commBody" rows="5" placeholder="Write your message..."></textarea></div>
+        <button class="btn-sm gold" style="width:fit-content" onclick="sendCommunication()">Send Message</button>
+        <p class="form-msg" id="commMsg"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYTICS PAGE -->
+<div class="page" id="page-analytics">
+  <div class="content-heading"><h2>Analytics</h2><div class="rule-h"></div></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-label">Total Members</div><div class="stat-value" id="anaTotal">0</div></div>
+    <div class="stat-card"><div class="stat-icon">◆</div><div class="stat-label">Active Members</div><div class="stat-value" id="anaActive">0</div></div>
+    <div class="stat-card"><div class="stat-icon">◈</div><div class="stat-label">Total Classes</div><div class="stat-value" id="anaClasses">0</div></div>
+    <div class="stat-card"><div class="stat-icon">◇</div><div class="stat-label">Weekly Sessions</div><div class="stat-value" id="anaWeekly">0</div></div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <div class="content-heading"><h2>Settings</h2><div class="rule-h"></div></div>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">School Profile</span></div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+      <div class="field"><label>School Name</label><input type="text" id="settingName" /></div>
+      <div class="field"><label>Email</label><input type="email" id="settingEmail" /></div>
+      <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
+      <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
+      <div class="field"><label>State</label><input type="text" id="settingState" /></div>
+      <button class="btn-sm gold" style="width:fit-content" onclick="saveSettings()">Save Changes</button>
+      <p class="form-msg" id="settingsMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- BILLING PAGE -->
+<div class="page" id="page-billing">
+  <div class="content-heading"><h2>Billing</h2><div class="rule-h"></div></div>
+  <div class="panel">
+    <div class="panel-body">
+      <p style="color:var(--muted2);margin-bottom:1.5rem">All plans include a <span style="color:var(--gold)">1.5% processing fee</span> on transactions.</p>
+      <div class="stats-grid" style="max-width:500px">
+        <div class="stat-card"><div class="stat-label">Current Plan</div><div class="stat-value" style="font-size:1.4rem">Pro</div><div class="stat-delta">$59/month</div></div>
+        <div class="stat-card"><div class="stat-label">Processing Fee</div><div class="stat-value" style="font-size:1.4rem">1.5%</div><div class="stat-delta">Per transaction</div></div>
+      </div>
+    </div>
+  </div>
 </div>
 ```
 
-  </aside>
+  </div>
+</main>
 
-  <!-- MAIN -->
+<!-- ADD CLASS MODAL -->
 
-  <main class="main">
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="topbar-title" id="pageTitle">Overview Dashboard</div>
-      <div class="topbar-right">
-        <span class="topbar-date" id="todayDate"></span>
-        <span class="badge-gold" id="planBadge">Professional</span>
-      </div>
+<div class="modal-overlay" id="addClassModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add New Class</span>
+      <button class="modal-close" onclick="closeAddClass()">x</button>
     </div>
-
-```
-<!-- CONTENT -->
-<div class="content">
-
-  <!-- ── DASHBOARD PAGE ── -->
-  <div class="page active" id="page-dashboard">
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <button class="quick-action" onclick="navigate('members', document.querySelector('[onclick*=members]'))">
-        <div class="qa-icon">◎</div>
-        <div class="qa-label">Add Member</div>
-        <div class="qa-desc">Register a new member</div>
-      </button>
-      <button class="quick-action" onclick="navigate('events', document.querySelector('[onclick*=events]'))">
-        <div class="qa-icon">◇</div>
-        <div class="qa-label">Create Event</div>
-        <div class="qa-desc">Schedule a new event</div>
-      </button>
-      <button class="quick-action" onclick="navigate('payments', document.querySelector('[onclick*=payments]'))">
-        <div class="qa-icon">◆</div>
-        <div class="qa-label">Send Invoice</div>
-        <div class="qa-desc">Issue a payment request</div>
-      </button>
-      <button class="quick-action" onclick="navigate('communications', document.querySelector('[onclick*=communications]'))">
-        <div class="qa-icon">◻</div>
-        <div class="qa-label">Broadcast</div>
-        <div class="qa-desc">Message your members</div>
-      </button>
-    </div>
-
-    <!-- Stats -->
-    <div>
-      <div class="content-heading">
-        <h2>Key Metrics</h2>
-        <div class="rule-h"></div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">◎</div>
-          <div class="stat-label">Total Members</div>
-          <div class="stat-value">247</div>
-          <div class="stat-delta up">▲ +12 this month</div>
+    <div class="modal-body">
+      <div class="field"><label>Class Title</label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
+      <div class="form-row">
+        <div class="field"><label>Style</label>
+          <select id="classStyle">
+            <option value="BJJ">BJJ</option>
+            <option value="Karate">Karate</option>
+            <option value="Kickboxing">Kickboxing</option>
+            <option value="Kung Fu">Kung Fu</option>
+            <option value="Boxing">Boxing</option>
+            <option value="Yoga">Yoga</option>
+            <option value="Strength">Strength</option>
+            <option value="Mixed">Mixed</option>
+          </select>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">◆</div>
-          <div class="stat-label">Revenue (MTD)</div>
-          <div class="stat-value">$14,820</div>
-          <div class="stat-delta up">▲ +8.4% vs last month</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">◇</div>
-          <div class="stat-label">Active Events</div>
-          <div class="stat-value">6</div>
-          <div class="stat-delta neutral">3 upcoming this week</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⊕</div>
-          <div class="stat-label">Processing Fee (MTD)</div>
-          <div class="stat-value">$222</div>
-          <div class="stat-delta neutral">1.5% of transactions</div>
+        <div class="field"><label>Age Group</label>
+          <select id="classAge">
+            <option value="kids">Kids</option>
+            <option value="teens">Teens</option>
+            <option value="adults">Adults</option>
+            <option value="all">All Ages</option>
+          </select>
         </div>
       </div>
-    </div>
-
-    <!-- Two-Col -->
-    <div class="two-col">
-      <!-- Left: Revenue Chart -->
-      <div>
-        <div class="content-heading">
-          <h2>Revenue — Last 8 Months</h2>
-          <div class="rule-h"></div>
+      <div class="form-row">
+        <div class="field"><label>Level</label>
+          <select id="classLevel">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="all">All Levels</option>
+          </select>
         </div>
-        <div class="panel">
-          <div class="panel-body">
-            <div class="bar-chart" id="revenueChart"></div>
-            <div class="chart-footer">
-              <div class="chart-footer-stat">
-                <div class="chart-footer-val">$89,340</div>
-                <div class="chart-footer-lbl">YTD Revenue</div>
-              </div>
-              <div class="chart-footer-stat">
-                <div class="chart-footer-val">$1,340</div>
-                <div class="chart-footer-lbl">YTD Fees (1.5%)</div>
-              </div>
-              <div class="chart-footer-stat">
-                <div class="chart-footer-val">247</div>
-                <div class="chart-footer-lbl">Active Members</div>
-              </div>
-              <div class="chart-footer-stat">
-                <div class="chart-footer-val">94%</div>
-                <div class="chart-footer-lbl">Retention Rate</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="content-heading" style="margin-top:1.5rem">
-          <h2>Recent Activity</h2>
-          <div class="rule-h"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Transaction Feed</span>
-            <button class="panel-action" onclick="navigate('payments', document.querySelector('[onclick*=payments]'))">View All →</button>
-          </div>
-          <div class="panel-body" style="padding:0 1.5rem">
-            <div class="activity-list">
-              <div class="activity-item">
-                <div class="activity-dot dot-green"></div>
-                <div class="activity-text"><strong>Margaret Chen</strong> — Annual Membership Renewal</div>
-                <span class="activity-amount">$89</span>
-                <span class="activity-time">2m ago</span>
-              </div>
-              <div class="activity-item">
-                <div class="activity-dot dot-blue"></div>
-                <div class="activity-text"><strong>James Whitfield</strong> — Event Registration: Spring Gala</div>
-                <span class="activity-amount">$45</span>
-                <span class="activity-time">18m ago</span>
-              </div>
-              <div class="activity-item">
-                <div class="activity-dot dot-green"></div>
-                <div class="activity-text"><strong>Dr. Elena Reyes</strong> — New Member (Professional)</div>
-                <span class="activity-amount">$59</span>
-                <span class="activity-time">1h ago</span>
-              </div>
-              <div class="activity-item">
-                <div class="activity-dot dot-gold"></div>
-                <div class="activity-text"><strong>System</strong> — Invoice #0084 sent to Thomas Park</div>
-                <span class="activity-amount">$120</span>
-                <span class="activity-time">3h ago</span>
-              </div>
-              <div class="activity-item">
-                <div class="activity-dot dot-red"></div>
-                <div class="activity-text"><strong>Linda Torres</strong> — Membership expired (unpaid)</div>
-                <span class="activity-amount">—</span>
-                <span class="activity-time">5h ago</span>
-              </div>
-              <div class="activity-item">
-                <div class="activity-dot dot-green"></div>
-                <div class="activity-text"><strong>Robert Kim</strong> — Annual Membership Renewal</div>
-                <span class="activity-amount">$29</span>
-                <span class="activity-time">Yesterday</span>
-              </div>
-            </div>
-          </div>
+        <div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Start Time</label><input type="time" id="classStart" /></div>
+        <div class="field"><label>End Time</label><input type="time" id="classEnd" /></div>
+      </div>
+      <div class="field">
+        <label>Days of Week</label>
+        <div class="days-grid">
+          <button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button>
+          <button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button>
+          <button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button>
+          <button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button>
+          <button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button>
+          <button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button>
+          <button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button>
         </div>
       </div>
-
-      <!-- Right: sidebar panels -->
-      <div style="display:flex;flex-direction:column;gap:1.5rem">
-        <!-- Plan Breakdown -->
-        <div>
-          <div class="content-heading">
-            <h2>Plan Distribution</h2>
-            <div class="rule-h"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Members by Plan</span>
-            </div>
-            <div class="panel-body">
-              <div class="plan-breakdown">
-                <div class="plan-row">
-                  <div class="plan-row-top">
-                    <span class="plan-row-name">Starter · $29/mo</span>
-                    <span class="plan-row-count">82</span>
-                  </div>
-                  <div class="plan-bar-bg"><div class="plan-bar-fill" style="width:33%"></div></div>
-                </div>
-                <div class="plan-row">
-                  <div class="plan-row-top">
-                    <span class="plan-row-name">Professional · $59/mo</span>
-                    <span class="plan-row-count">131</span>
-                  </div>
-                  <div class="plan-bar-bg"><div class="plan-bar-fill" style="width:53%"></div></div>
-                </div>
-                <div class="plan-row">
-                  <div class="plan-row-top">
-                    <span class="plan-row-name">Enterprise · $89/mo</span>
-                    <span class="plan-row-count">34</span>
-                  </div>
-                  <div class="plan-bar-bg"><div class="plan-bar-fill" style="width:14%"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Upcoming Events -->
-        <div>
-          <div class="content-heading">
-            <h2>Upcoming Events</h2>
-            <div class="rule-h"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Next 30 Days</span>
-              <button class="panel-action" onclick="navigate('events', document.querySelector('[onclick*=events]'))">Manage →</button>
-            </div>
-            <div class="panel-body">
-              <div class="events-list">
-                <div class="event-item">
-                  <div class="event-date">
-                    <div class="event-day">08</div>
-                    <div class="event-mo">Apr</div>
-                  </div>
-                  <div class="event-info">
-                    <div class="event-name">Spring Member Gala</div>
-                    <div class="event-meta">Annual Banquet · Downtown Venue</div>
-                  </div>
-                  <div class="event-registrants">94 reg.</div>
-                </div>
-                <div class="event-item">
-                  <div class="event-date">
-                    <div class="event-day">15</div>
-                    <div class="event-mo">Apr</div>
-                  </div>
-                  <div class="event-info">
-                    <div class="event-name">Leadership Workshop</div>
-                    <div class="event-meta">Members Only · Virtual</div>
-                  </div>
-                  <div class="event-registrants">38 reg.</div>
-                </div>
-                <div class="event-item">
-                  <div class="event-date">
-                    <div class="event-day">22</div>
-                    <div class="event-mo">Apr</div>
-                  </div>
-                  <div class="event-info">
-                    <div class="event-name">Board Meeting Q2</div>
-                    <div class="event-meta">Board Members · Conference Room A</div>
-                  </div>
-                  <div class="event-registrants">12 reg.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Members Table -->
-    <div>
-      <div class="content-heading">
-        <h2>Recent Members</h2>
-        <div class="rule-h"></div>
-        <button class="panel-action" onclick="navigate('members', document.querySelector('[onclick*=members]'))">View All →</button>
-      </div>
-      <div class="panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Next Renewal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="name">Margaret Chen</td>
-                <td>m.chen@email.com</td>
-                <td>Enterprise · $89</td>
-                <td><span class="chip chip-active">Active</span></td>
-                <td>Jan 14, 2024</td>
-                <td>Jan 14, 2026</td>
-              </tr>
-              <tr>
-                <td class="name">James Whitfield</td>
-                <td>j.whitfield@email.com</td>
-                <td>Professional · $59</td>
-                <td><span class="chip chip-active">Active</span></td>
-                <td>Mar 2, 2024</td>
-                <td>Mar 2, 2026</td>
-              </tr>
-              <tr>
-                <td class="name">Dr. Elena Reyes</td>
-                <td>e.reyes@email.com</td>
-                <td>Professional · $59</td>
-                <td><span class="chip chip-active">Active</span></td>
-                <td>Apr 1, 2025</td>
-                <td>Apr 1, 2026</td>
-              </tr>
-              <tr>
-                <td class="name">Thomas Park</td>
-                <td>t.park@email.com</td>
-                <td>Starter · $29</td>
-                <td><span class="chip chip-pending">Pending</span></td>
-                <td>Feb 20, 2025</td>
-                <td>Feb 20, 2026</td>
-              </tr>
-              <tr>
-                <td class="name">Linda Torres</td>
-                <td>l.torres@email.com</td>
-                <td>Starter · $29</td>
-                <td><span class="chip chip-expired">Expired</span></td>
-                <td>Nov 5, 2023</td>
-                <td>Nov 5, 2024</td>
-              </tr>
-              <tr>
-                <td class="name">Robert Kim</td>
-                <td>r.kim@email.com</td>
-                <td>Enterprise · $89</td>
-                <td><span class="chip chip-active">Active</span></td>
-                <td>Jun 30, 2024</td>
-                <td>Jun 30, 2026</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /page-dashboard -->
-
-  <!-- ── OTHER PAGES (placeholder) ── -->
-  <div class="page" id="page-analytics">
-    <div class="content-heading"><h2>Analytics</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Full analytics module — connect your Supabase tables to populate this view.</div></div>
-  </div>
-  <div class="page" id="page-members">
-    <div class="content-heading"><h2>Member Management</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Full member management module — connect your Supabase members table.</div></div>
-  </div>
-  <div class="page" id="page-events">
-    <div class="content-heading"><h2>Event Management</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Full event management module — connect your Supabase events table.</div></div>
-  </div>
-  <div class="page" id="page-payments">
-    <div class="content-heading"><h2>Payments & Invoicing</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Payment history and invoicing — connect your Supabase payments table. Processing fee: 1.5% per transaction.</div></div>
-  </div>
-  <div class="page" id="page-communications">
-    <div class="content-heading"><h2>Communications</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Broadcast messages and newsletters — connect your Supabase comms table.</div></div>
-  </div>
-  <div class="page" id="page-settings">
-    <div class="content-heading"><h2>Settings</h2><div class="rule-h"></div></div>
-    <div class="panel"><div class="panel-body" style="color:var(--muted);font-style:italic;font-family:var(--font-body)">Organization settings and user preferences.</div></div>
-  </div>
-  <div class="page" id="page-billing">
-    <div class="content-heading"><h2>Billing & Plan</h2><div class="rule-h"></div></div>
-    <div class="panel">
-      <div class="panel-body">
-        <p style="color:var(--muted2);margin-bottom:1.5rem">Your current plan and billing details. All plans include a <span style="color:var(--gold)">1.5% processing fee</span> on transactions.</p>
-        <div class="stats-grid" style="max-width:600px">
-          <div class="stat-card"><div class="stat-label">Current Plan</div><div class="stat-value" style="font-size:1.4rem">Pro</div><div class="stat-delta neutral">$59 / month</div></div>
-          <div class="stat-card"><div class="stat-label">Next Invoice</div><div class="stat-value" style="font-size:1.4rem">May 1</div><div class="stat-delta neutral">2025</div></div>
-        </div>
-      </div>
+      <button class="btn-gold-full" onclick="saveClass()">Save Class</button>
+      <p class="form-msg" id="classMsg"></p>
     </div>
   </div>
+</div>
 
-</div><!-- /content -->
-```
+<script>
+  const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+  const SCHOOL_ID     = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  </main>
+  let allClasses = [];
+  let allStudents = [];
 
-  <script>
-    // ── SUPABASE ──
-    const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c'; // Replace with your anon key
-    const { createClient } = supabase;
-    const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+  async function init() {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) { window.location.href = 'index.html'; return; }
+    const user = data.session.user;
+    const name = user.user_metadata?.full_name || user.email.split('@')[0];
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userInitial').textContent = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    const now = new Date();
+    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    await loadSchool();
+    await loadClasses();
+    await loadStudents();
+    buildTodaySchedule();
+    buildWeekGrid();
+    document.getElementById('loadingScreen').style.display = 'none';
+  }
 
-    // ── AUTH GUARD ──
-    async function init() {
-      const { data } = await sb.auth.getSession();
-      if (!data.session) {
-        window.location.href = 'index.html';
-        return;
-      }
-      const user = data.session.user;
-      const name = user.user_metadata?.full_name || user.email.split('@')[0];
-      const initials = name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
-      document.getElementById('userName').textContent = name;
-      document.getElementById('userInitial').textContent = initials;
-
-      // Hide loading
-      document.getElementById('loadingScreen').style.display = 'none';
-
-      // Today's date
-      document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-      });
-
-      // Build bar chart
-      buildChart();
+  async function loadSchool() {
+    const { data } = await sb.from('schools').select('*').eq('id',SCHOOL_ID).single();
+    if (data) {
+      document.getElementById('schoolName').textContent = data.name;
+      document.getElementById('settingName').value  = data.name||'';
+      document.getElementById('settingEmail').value = data.email||'';
+      document.getElementById('settingPhone').value = data.phone||'';
+      document.getElementById('settingCity').value  = data.city||'';
+      document.getElementById('settingState').value = data.state||'';
     }
+  }
 
-    async function handleSignOut() {
-      await sb.auth.signOut();
-      window.location.href = 'index.html';
+  async function loadClasses() {
+    const { data } = await sb.from('classes').select('*').eq('school_id',SCHOOL_ID).eq('is_active',true).order('start_time');
+    allClasses = data || [];
+    document.getElementById('anaClasses').textContent = allClasses.length;
+    const weekly = allClasses.reduce((a,c)=>a+(c.days_of_week?c.days_of_week.length:0),0);
+    document.getElementById('anaWeekly').textContent = weekly;
+    renderAllClasses();
+  }
+
+  async function loadStudents() {
+    const { data } = await sb.from('students').select('*').eq('school_id',SCHOOL_ID);
+    allStudents = data || [];
+    const active  = allStudents.filter(s=>s.membership_status==='active').length;
+    const pending = allStudents.filter(s=>s.membership_status==='pending').length;
+    const expired = allStudents.filter(s=>s.membership_status==='expired').length;
+    document.getElementById('statTotal').textContent   = allStudents.length;
+    document.getElementById('statActive').textContent  = active;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statExpired').textContent = expired;
+    document.getElementById('totalMembers').textContent = allStudents.length;
+    document.getElementById('todayStudentCount').textContent = active;
+    document.getElementById('anaTotal').textContent  = allStudents.length;
+    document.getElementById('anaActive').textContent = active;
+    renderMembersTable();
+  }
+
+  function getTodayClasses() {
+    const today = DAYS[new Date().getDay()];
+    return allClasses.filter(c=>c.days_of_week&&c.days_of_week.includes(today)).sort((a,b)=>a.start_time>b.start_time?1:-1);
+  }
+
+  function buildTodaySchedule() {
+    const tc = getTodayClasses();
+    document.getElementById('todayClassCount').textContent = tc.length;
+    const el = document.getElementById('todaySchedule');
+    el.innerHTML = tc.length ? tc.map(classCardHTML).join('') : '<div class="no-classes">No classes today. Rest day! </div>';
+  }
+
+  function classCardHTML(c) {
+    return `<div class="class-card">
+      <div class="class-color-bar" style="background:${c.color||'#C9A84C'}"></div>
+      <div class="class-time"><div class="class-time-start">${fmtTime(c.start_time)}</div><div class="class-time-end">${fmtTime(c.end_time)}</div></div>
+      <div class="class-info">
+        <div class="class-title">${c.title}</div>
+        <div class="class-tags">${c.style?`<span class="class-tag">${c.style}</span>`:''} ${c.level?`<span class="class-tag">${c.level}</span>`:''} ${c.age_group?`<span class="class-tag">${c.age_group}</span>`:''}</div>
+        <div class="class-meta">
+          ${c.instructor_name?`<div class="class-meta-item">Instructor: <span>${c.instructor_name}</span></div>`:''}
+          ${c.capacity?`<div class="class-meta-item">Capacity: <span>${c.capacity}</span></div>`:''}
+          ${c.days_of_week?`<div class="class-meta-item">Days: <span>${c.days_of_week.map(d=>d.slice(0,3)).join(', ')}</span></div>`:''}
+        </div>
+      </div>
+      <div class="class-actions"><button class="btn-sm gold">Attendance</button><button class="btn-sm">Edit</button></div>
+    </div>`;
+  }
+
+  function buildWeekGrid() {
+    const now = new Date();
+    const cur = now.getDay();
+    const ws  = new Date(now); ws.setDate(now.getDate()-cur);
+    let html  = '';
+    for (let i=0;i<7;i++) {
+      const d = new Date(ws); d.setDate(ws.getDate()+i);
+      const dn = DAYS[i];
+      const dc = allClasses.filter(c=>c.days_of_week&&c.days_of_week.includes(dn)).sort((a,b)=>a.start_time>b.start_time?1:-1);
+      html += `<div class="week-day ${i===cur?'today':''}">
+        <div class="week-day-header"><div class="week-day-name">${DAY_SHORT[i]}</div><div class="week-day-num">${d.getDate()}</div></div>
+        ${dc.map(c=>`<div class="week-class-pill" style="border-color:${c.color||'#C9A84C'}">${fmtTime(c.start_time)} ${c.title}</div>`).join('')}
+      </div>`;
     }
+    document.getElementById('weekGrid').innerHTML = html;
+  }
 
-    // ── NAV ──
-    const pageTitles = {
-      dashboard: 'Overview Dashboard',
-      analytics: 'Analytics',
-      members: 'Member Management',
-      events: 'Event Management',
-      payments: 'Payments & Invoicing',
-      communications: 'Communications',
-      settings: 'Settings',
-      billing: 'Billing & Plan',
-    };
+  function renderMembersTable() {
+    const tb = document.getElementById('membersTableBody');
+    if (!allStudents.length) { tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No members yet. Add your first student!</td></tr>'; return; }
+    tb.innerHTML = allStudents.map(s=>{
+      const sc = s.membership_status==='active'?'chip-active':s.membership_status==='pending'?'chip-pending':'chip-expired';
+      const jd = s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      return `<tr><td class="name">${s.first_name} ${s.last_name}</td><td>${s.email||'—'}</td><td>${s.membership_plan||'—'}</td><td><span class="chip ${sc}">${s.membership_status}</span></td><td>${jd}</td></tr>`;
+    }).join('');
+  }
 
-    function navigate(page, el) {
-      // Hide all pages
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      // Show target page
-      const target = document.getElementById('page-' + page);
-      if (target) target.classList.add('active');
-      if (el) el.classList.add('active');
-      document.getElementById('pageTitle').textContent = pageTitles[page] || page;
-      // Scroll to top
-      document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+  function renderAllClasses() {
+    const el = document.getElementById('allClassesList');
+    el.innerHTML = allClasses.length ? allClasses.map(classCardHTML).join('') : '<div class="no-classes">No classes yet. Add your first class!</div>';
+  }
+
+  function openAddClass()  { document.getElementById('addClassModal').classList.add('active'); }
+  function closeAddClass() { document.getElementById('addClassModal').classList.remove('active'); }
+  function toggleDay(btn)  { btn.classList.toggle('selected'); }
+
+  async function saveClass() {
+    const title = document.getElementById('classTitle').value.trim();
+    const start = document.getElementById('classStart').value;
+    const end   = document.getElementById('classEnd').value;
+    const days  = Array.from(document.querySelectorAll('.day-btn.selected')).map(b=>b.dataset.day);
+    if (!title||!start||!end||!days.length) { setMsg('classMsg','Fill in title, times, and select days.','error'); return; }
+    setMsg('classMsg','Saving...','');
+    const { error } = await sb.from('classes').insert({
+      school_id: SCHOOL_ID, title,
+      style: document.getElementById('classStyle').value,
+      age_group: document.getElementById('classAge').value,
+      level: document.getElementById('classLevel').value,
+      capacity: document.getElementById('classCapacity').value ? parseInt(document.getElementById('classCapacity').value) : null,
+      start_time: start, end_time: end, days_of_week: days,
+      is_fixed: true, is_active: true,
+      instructor_name: document.getElementById('userName').textContent
+    });
+    if (error) { setMsg('classMsg',error.message,'error'); }
+    else {
+      setMsg('classMsg','Class saved!','success');
+      await loadClasses(); buildTodaySchedule(); buildWeekGrid();
+      setTimeout(()=>{ closeAddClass(); document.getElementById('classMsg').textContent=''; },1200);
     }
+  }
 
-    // ── BAR CHART ──
-    function buildChart() {
-      const months = ['Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
-      const values = [8200, 9400, 10100, 11800, 12200, 13500, 14100, 14820];
-      const max = Math.max(...values);
-      const chart = document.getElementById('revenueChart');
-      chart.innerHTML = '';
-      months.forEach((m, i) => {
-        const pct = Math.round((values[i] / max) * 100);
-        const col = document.createElement('div');
-        col.className = 'bar-col';
-        col.innerHTML = `
-          <div class="bar-fill" style="height:${pct}%" title="$${values[i].toLocaleString()}"></div>
-          <div class="bar-label">${m}</div>`;
-        chart.appendChild(col);
-      });
-    }
+  async function sendCommunication() {
+    const subject  = document.getElementById('commSubject').value.trim();
+    const body     = document.getElementById('commBody').value.trim();
+    const audience = document.getElementById('commAudience').value;
+    if (!subject||!body) { setMsg('commMsg','Please fill in all fields.','error'); return; }
+    setMsg('commMsg','Sending...','');
+    const { data:{ session } } = await sb.auth.getSession();
+    const count = audience==='all'?allStudents.length:allStudents.filter(s=>s.membership_status===(audience==='active'?'active':'expired')).length;
+    const { error } = await sb.from('communications').insert({ school_id:SCHOOL_ID, created_by:session.user.id, subject, body, audience, status:'sent', sent_at:new Date().toISOString(), recipient_count:count });
+    if (error) { setMsg('commMsg',error.message,'error'); }
+    else { setMsg('commMsg','Message sent!','success'); document.getElementById('commSubject').value=''; document.getElementById('commBody').value=''; }
+  }
 
-    init();
-  </script>
+  async function saveSettings() {
+    const { error } = await sb.from('schools').update({
+      name:  document.getElementById('settingName').value.trim(),
+      email: document.getElementById('settingEmail').value.trim(),
+      phone: document.getElementById('settingPhone').value.trim(),
+      city:  document.getElementById('settingCity').value.trim(),
+      state: document.getElementById('settingState').value.trim()
+    }).eq('id',SCHOOL_ID);
+    if (error) { setMsg('settingsMsg',error.message,'error'); }
+    else { setMsg('settingsMsg','Saved!','success'); document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim(); }
+  }
+
+  function fmtTime(t) {
+    if (!t) return '';
+    const [h,m] = t.split(':');
+    const hr = parseInt(h);
+    return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`;
+  }
+
+  function setMsg(id,text,type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'form-msg '+type;
+  }
+
+  function navigate(page,el) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const t = document.getElementById('page-'+page);
+    if (t) t.classList.add('active');
+    if (el) el.classList.add('active');
+    const titles = {schedule:"Today's Schedule",classes:'All Classes',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
+    document.getElementById('pageTitle').textContent = titles[page]||page;
+    document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+  }
+
+  async function handleSignOut() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+  document.getElementById('addClassModal').addEventListener('click',function(e){ if(e.target===this) closeAddClass(); });
+
+  init();
+</script>
 
 </body>
 </html>
