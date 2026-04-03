@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Member Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:   #C9A84C;
+      --primary-lt:#E2C06E;
+      --primary-dk:#8B6914;
+      --primary-bg:rgba(201,168,76,0.08);
+      --bg:        #080808;
+      --surface:   #141414;
+      --surface2:  #1a1a1a;
+      --border:    #222222;
+      --text:      #F5F0E8;
+      --muted:     #7A7060;
+      --muted2:    #9A8F80;
+      --green:     #5A9A6A;
+      --red:       #9A5A5A;
+      --font-display: 'Cinzel', serif;
+      --font-ui:      'Lato', sans-serif;
+    }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+```
+/* ── LOADING ── */
+#loadingScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.loading-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+  margin-bottom: 2rem;
+}
+.loading-bar-bg {
+  width: 200px; height: 1px;
+  background: var(--border);
+  position: relative; overflow: hidden;
+}
+.loading-bar-fill {
+  position: absolute;
+  top: 0; left: -100%; bottom: 0; width: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: loading 1.2s infinite;
+}
+@keyframes loading { to { left: 100%; } }
+
+/* ── AUTH SCREEN ── */
+#authScreen {
+  display: none;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg);
+}
+#authScreen.active { display: flex; }
+.auth-card {
+  width: min(100%, 420px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+.auth-header {
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.auth-school-logo {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  border: 2px solid var(--primary-dk);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--primary);
+  overflow: hidden;
+}
+.auth-school-logo img { width: 100%; height: 100%; object-fit: cover; }
+.auth-school-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+.auth-school-tag {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.auth-body { padding: 1.75rem; }
+.auth-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.auth-tab {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.25rem;
+  background: none; border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.auth-tab.active { color: var(--primary); border-color: var(--primary); }
+.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.field label {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.field input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.field input:focus { border-color: var(--primary); }
+.btn-primary {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.9rem;
+  background: var(--primary);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+.btn-primary:hover { background: var(--primary-lt); }
+.auth-msg {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 0.75rem;
+  min-height: 1em;
+}
+.auth-msg.success { color: #7DBD7D; }
+.auth-msg.error   { color: #C07070; }
+
+/* ── PORTAL APP ── */
+#portalApp {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+}
+#portalApp.active { display: flex; }
+
+/* TOP BAR */
+.portal-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.25rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.portal-logo {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  color: var(--primary);
+}
+.portal-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.portal-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-dk);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--primary);
+}
+.portal-username {
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+/* MEMBERSHIP CARD */
+.membership-card {
+  margin: 1.25rem;
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.membership-card::after {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+}
+.card-school {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+.card-name {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+.card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  margin-top: 0.5rem;
+}
+.card-status.active {
+  background: rgba(90,154,106,0.12);
+  border: 1px solid rgba(90,154,106,0.3);
+  color: #7DBD7D;
+}
+.card-status.active::before { content: '●'; font-size: 0.5rem; }
+.card-since {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+}
+.belt-display {
+  position: absolute;
+  bottom: 1.25rem; right: 1.5rem;
+  text-align: right;
+}
+.belt-color-bar {
+  height: 12px;
+  width: 80px;
+  border-radius: 6px;
+  margin-bottom: 0.3rem;
+  margin-left: auto;
+}
+.belt-name {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.75rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: var(--font-ui);
+}
+.nav-btn.active { color: var(--primary); }
+.nav-btn-icon { font-size: 1.1rem; }
+.nav-btn-label { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* PAGES */
+.portal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* SECTION HEADING */
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.section-link {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* CLASS CARDS */
+.classes-list {
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.class-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.class-card:hover { border-color: var(--primary-dk); }
+.class-color-bar { width: 4px; flex-shrink: 0; }
+.class-time {
+  width: 72px;
+  flex-shrink: 0;
+  padding: 0.85rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.class-time-start {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.class-time-end { font-size: 0.58rem; color: var(--muted); margin-top: 0.2rem; }
+.class-info { flex: 1; padding: 0.85rem 1rem; }
+.class-title-text {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.class-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.class-tag {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  color: var(--muted2);
+}
+.class-instructor { font-size: 0.68rem; color: var(--muted); }
+.rsvp-btn {
+  padding: 0.85rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.btn-rsvp {
+  font-family: var(--font-ui);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--primary-dk);
+  background: var(--primary-bg);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-rsvp:hover { background: var(--primary); color: var(--bg); }
+.btn-rsvp.rsvped {
+  background: rgba(90,154,106,0.12);
+  border-color: rgba(90,154,106,0.3);
+  color: #7DBD7D;
+}
+.no-classes {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* WEEK STRIP */
+.week-strip {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1rem;
+  overflow-x: auto;
+}
+.week-day-btn {
+  flex-shrink: 0;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.week-day-btn.active {
+  background: var(--primary-bg);
+  border-color: var(--primary-dk);
+}
+.week-day-name { font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.week-day-num {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text);
+}
+.week-day-btn.active .week-day-num { color: var(--primary); }
+.week-day-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0;
+}
+.week-day-btn.has-class .week-day-dot { opacity: 1; }
+
+/* ANNOUNCEMENTS */
+.announcements-list {
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.announcement-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  padding: 1rem 1.25rem;
+}
+.announcement-type {
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+}
+.announcement-subject {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.announcement-body { font-size: 0.82rem; color: var(--muted2); line-height: 1.7; }
+.announcement-date { font-size: 0.62rem; color: var(--muted); margin-top: 0.75rem; }
+
+/* PROFILE PAGE */
+.profile-header {
+  padding: 2rem 1.25rem 1rem;
+  text-align: center;
+}
+.profile-avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  border: 2px solid var(--primary-dk);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+.profile-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+.profile-school { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 1.25rem;
+}
+.profile-stat {
+  background: var(--surface);
+  padding: 1rem;
+  text-align: center;
+}
+.profile-stat-num {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--primary);
+  display: block;
+}
+.profile-stat-lbl { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.profile-section {
+  margin: 0 1.25rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.profile-section-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.profile-row:last-child { border-bottom: none; }
+.profile-row-label { color: var(--muted); }
+.profile-row-value { color: var(--text); }
+.btn-signout-portal {
+  display: block;
+  width: calc(100% - 2.5rem);
+  margin: 0 1.25rem 1.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.85rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-signout-portal:hover { border-color: var(--red); color: #C07070; }
+
+/* DIRECTORY */
+.directory-list {
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.directory-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color 0.2s;
+}
+.directory-card:hover { border-color: var(--primary-dk); }
+.directory-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-dk);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.directory-name { font-size: 0.85rem; color: var(--text); margin-bottom: 0.2rem; }
+.directory-meta { font-size: 0.65rem; color: var(--muted); }
+
+/* SEARCH */
+.search-bar {
+  padding: 1rem 1.25rem 0.5rem;
+}
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--primary); }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+```
+
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+
+<div id="loadingScreen">
+  <div class="loading-logo" id="loadingLogo">NMAO</div>
+  <div class="loading-bar-bg"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- AUTH SCREEN -->
+
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-school-logo" id="authLogo">N</div>
+      <div class="auth-school-name" id="authSchoolName">Member Portal</div>
+      <div class="auth-school-tag" id="authSchoolTag">Loading...</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Join</button>
+      </div>
+      <div id="loginForm">
+        <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="your@email.com" /></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
+        <button class="btn-primary" onclick="handleLogin()">Sign In</button>
+      </div>
+      <div id="signupForm" style="display:none">
+        <div class="field"><label>First Name</label><input type="text" id="signupFirst" placeholder="First name" /></div>
+        <div class="field"><label>Last Name</label><input type="text" id="signupLast" placeholder="Last name" /></div>
+        <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="your@email.com" /></div>
+        <div class="field"><label>Password</label><input type="password" id="signupPassword" placeholder="Create a password" /></div>
+        <button class="btn-primary" onclick="handleSignup()">Create Account</button>
+      </div>
+      <p class="auth-msg" id="authMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- PORTAL APP -->
+
+<div id="portalApp">
+
+  <!-- TOP BAR -->
+
+  <div class="portal-topbar">
+    <div class="portal-logo" id="portalLogoText">NMAO</div>
+    <div class="portal-user">
+      <div class="portal-avatar" id="portalAvatar">?</div>
+      <div class="portal-username" id="portalUsername"></div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+
+  <div class="portal-content">
+
+```
+<!-- SCHEDULE PAGE -->
+<div class="page active" id="page-schedule">
+
+  <!-- Membership Card -->
+  <div class="membership-card" id="membershipCard">
+    <div class="card-school" id="cardSchool">Loading...</div>
+    <div class="card-name" id="cardName">Loading...</div>
+    <div class="card-status active" id="cardStatus">Active Member</div>
+    <div class="card-since" id="cardSince"></div>
+    <div class="belt-display" id="beltDisplay" style="display:none">
+      <div class="belt-color-bar" id="beltBar"></div>
+      <div class="belt-name" id="beltName"></div>
+    </div>
+  </div>
+
+  <!-- Week Strip -->
+  <div class="section-heading">
+    <span class="section-title">This Week</span>
+  </div>
+  <div class="week-strip" id="weekStrip"></div>
+
+  <!-- Today's Classes -->
+  <div class="section-heading">
+    <span class="section-title" id="scheduleTitle">Today's Classes</span>
+  </div>
+  <div class="classes-list" id="classesList">
+    <div class="no-classes">Loading schedule...</div>
+  </div>
+
+</div>
+
+<!-- ANNOUNCEMENTS PAGE -->
+<div class="page" id="page-announcements">
+  <div class="section-heading"><span class="section-title">Announcements</span></div>
+  <div class="announcements-list" id="announcementsList">
+    <div class="no-classes">Loading announcements...</div>
+  </div>
+</div>
+
+<!-- DIRECTORY PAGE -->
+<div class="page" id="page-directory">
+  <div class="section-heading"><span class="section-title">Member Directory</span></div>
+  <div class="search-bar">
+    <input type="text" class="search-input" id="directorySearch" placeholder="Search members..." oninput="filterDirectory()" />
+  </div>
+  <div class="directory-list" id="directoryList">
+    <div class="no-classes">Loading directory...</div>
+  </div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div class="page" id="page-profile">
+  <div class="profile-header">
+    <div class="profile-avatar" id="profileAvatar">?</div>
+    <div class="profile-name" id="profileName">Loading...</div>
+    <div class="profile-school" id="profileSchool">Loading...</div>
+  </div>
+  <div class="profile-stats">
+    <div class="profile-stat">
+      <span class="profile-stat-num" id="statSince">—</span>
+      <span class="profile-stat-lbl">Member Since</span>
+    </div>
+    <div class="profile-stat">
+      <span class="profile-stat-num" id="statBelt">—</span>
+      <span class="profile-stat-lbl">Belt Rank</span>
+    </div>
+    <div class="profile-stat">
+      <span class="profile-stat-num" id="statStatus">—</span>
+      <span class="profile-stat-lbl">Status</span>
+    </div>
+  </div>
+  <div class="profile-section">
+    <div class="profile-section-header">Contact Info</div>
+    <div class="profile-row"><span class="profile-row-label">Email</span><span class="profile-row-value" id="profileEmail">—</span></div>
+    <div class="profile-row"><span class="profile-row-label">Phone</span><span class="profile-row-value" id="profilePhone">—</span></div>
+    <div class="profile-row"><span class="profile-row-label">Address</span><span class="profile-row-value" id="profileAddress">—</span></div>
+  </div>
+  <div class="profile-section">
+    <div class="profile-section-header">Membership</div>
+    <div class="profile-row"><span class="profile-row-label">Plan</span><span class="profile-row-value" id="profilePlan">—</span></div>
+    <div class="profile-row"><span class="profile-row-label">Started</span><span class="profile-row-value" id="profileStart">—</span></div>
+    <div class="profile-row"><span class="profile-row-label">School</span><span class="profile-row-value" id="profileSchoolName">—</span></div>
+  </div>
+  <button class="btn-signout-portal" onclick="handleSignOut()">Sign Out</button>
+</div>
+```
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="navigate('schedule',this)">
+      <span class="nav-btn-icon">◇</span>
+      <span class="nav-btn-label">Schedule</span>
+    </button>
+    <button class="nav-btn" onclick="navigate('announcements',this)">
+      <span class="nav-btn-icon">◻</span>
+      <span class="nav-btn-label">News</span>
+    </button>
+    <button class="nav-btn" onclick="navigate('directory',this)">
+      <span class="nav-btn-icon">◎</span>
+      <span class="nav-btn-label">Directory</span>
+    </button>
+    <button class="nav-btn" onclick="navigate('profile',this)">
+      <span class="nav-btn-icon">⊙</span>
+      <span class="nav-btn-label">Profile</span>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const SCHOOL_ID     = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  let schoolData    = null;
+  let studentData   = null;
+  let allClasses    = [];
+  let allStudents   = [];
+  let selectedDay   = new Date().getDay();
+
+  // ── APPLY BRANDING ──
+  function applyBranding(school) {
+    const root = document.documentElement;
+    if (school.primary_color)    root.style.setProperty('--primary',    school.primary_color);
+    if (school.background_color) root.style.setProperty('--bg',         school.background_color);
+    if (school.accent_color)     root.style.setProperty('--text',       school.accent_color);
+    // Derived colors
+    root.style.setProperty('--primary-bg', school.primary_color + '14');
+    // Update logo text
+    const initials = school.name.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+    document.getElementById('loadingLogo').textContent    = initials;
+    document.getElementById('authLogo').textContent       = initials;
+    document.getElementById('authSchoolName').textContent = school.name;
+    document.getElementById('authSchoolTag').textContent  = school.tagline || '';
+    document.getElementById('portalLogoText').textContent = initials;
+    document.title = school.name + ' — Member Portal';
+    if (school.logo_url) {
+      document.getElementById('authLogo').innerHTML = `<img src="${school.logo_url}" alt="${school.name}" />`;
+    }
+  }
+
+  // ── INIT ──
+  async function init() {
+    // Load school branding first
+    const { data: school } = await sb.from('schools').select('*').eq('id', SCHOOL_ID).single();
+    if (school) { schoolData = school; applyBranding(school); }
+
+    // Check auth
+    const { data } = await sb.auth.getSession();
+    document.getElementById('loadingScreen').style.display = 'none';
+
+    if (!data.session) {
+      document.getElementById('authScreen').classList.add('active');
+      return;
+    }
+
+    await loadPortal(data.session.user);
+  }
+
+  async function loadPortal(user) {
+    document.getElementById('authScreen').classList.remove('active');
+    document.getElementById('portalApp').classList.add('active');
+
+    // Find student record
+    const { data: student } = await sb.from('students')
+      .select('*')
+      .eq('school_id', SCHOOL_ID)
+      .or(`email.eq.${user.email},user_id.eq.${user.id}`)
+      .single();
+
+    studentData = student;
+
+    const name = student
+      ? `${student.first_name} ${student.last_name}`
+      : user.user_metadata?.full_name || user.email.split('@')[0];
+
+    const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+    // Top bar
+    document.getElementById('portalAvatar').textContent  = initials;
+    document.getElementById('portalUsername').textContent = name.split(' ')[0];
+
+    // Membership card
+    document.getElementById('cardSchool').textContent = schoolData?.name || 'NMAO';
+    document.getElementById('cardName').textContent   = name;
+    if (student?.membership_start) {
+      document.getElementById('cardSince').textContent = 'Member since ' +
+        new Date(student.membership_start).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    }
+
+    // Profile
+    document.getElementById('profileAvatar').textContent  = initials;
+    document.getElementById('profileName').textContent    = name;
+    document.getElementById('profileSchool').textContent  = schoolData?.name || '';
+    document.getElementById('profileEmail').textContent   = user.email || '—';
+    document.getElementById('profilePhone').textContent   = student?.phone || '—';
+    document.getElementById('profileAddress').textContent = student?.address || '—';
+    document.getElementById('profilePlan').textContent    = student?.membership_plan || '—';
+    document.getElementById('profileSchoolName').textContent = schoolData?.name || '—';
+    document.getElementById('profileStart').textContent   = student?.membership_start
+      ? new Date(student.membership_start).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+      : '—';
+    document.getElementById('statStatus').textContent = student?.membership_status || '—';
+    document.getElementById('statBelt').textContent   = '—';
+
+    if (student?.membership_start) {
+      const start = new Date(student.membership_start);
+      const years = Math.floor((new Date() - start) / (365.25 * 24 * 60 * 60 * 1000));
+      document.getElementById('statSince').textContent = years > 0 ? years + 'yr' : '<1yr';
+    }
+
+    await loadClasses();
+    await loadAnnouncements();
+    await loadDirectory();
+  }
+
+  async function loadClasses() {
+    const { data } = await sb.from('classes')
+      .select('*')
+      .eq('school_id', SCHOOL_ID)
+      .eq('is_active', true)
+      .order('start_time');
+    allClasses = data || [];
+    buildWeekStrip();
+    showDayClasses(selectedDay);
+  }
+
+  async function loadAnnouncements() {
+    const { data } = await sb.from('communications')
+      .select('*')
+      .eq('school_id', SCHOOL_ID)
+      .eq('status', 'sent')
+      .order('sent_at', { ascending: false })
+      .limit(10);
+
+    const list = document.getElementById('announcementsList');
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="no-classes">No announcements yet.</div>';
+      return;
+    }
+    list.innerHTML = data.map(a => `
+      <div class="announcement-card">
+        <div class="announcement-type">${a.type}</div>
+        <div class="announcement-subject">${a.subject}</div>
+        <div class="announcement-body">${a.body}</div>
+        <div class="announcement-date">${new Date(a.sent_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+      </div>`).join('');
+  }
+
+  async function loadDirectory() {
+    const { data } = await sb.from('students')
+      .select('first_name, last_name, membership_start, membership_status')
+      .eq('school_id', SCHOOL_ID)
+      .eq('show_in_directory', true)
+      .eq('membership_status', 'active')
+      .order('first_name');
+    allStudents = data || [];
+    renderDirectory(allStudents);
+  }
+
+  function renderDirectory(students) {
+    const list = document.getElementById('directoryList');
+    if (!students.length) { list.innerHTML = '<div class="no-classes">No members in directory.</div>'; return; }
+    list.innerHTML = students.map(s => {
+      const initials = `${s.first_name[0]}${s.last_name[0]}`.toUpperCase();
+      const since = s.membership_start
+        ? new Date(s.membership_start).toLocaleDateString('en-US',{month:'short',year:'numeric'})
+        : '';
+      return `<div class="directory-card">
+        <div class="directory-avatar">${initials}</div>
+        <div>
+          <div class="directory-name">${s.first_name} ${s.last_name}</div>
+          <div class="directory-meta">Member${since ? ' since ' + since : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function filterDirectory() {
+    const q = document.getElementById('directorySearch').value.toLowerCase();
+    const filtered = allStudents.filter(s =>
+      `${s.first_name} ${s.last_name}`.toLowerCase().includes(q)
+    );
+    renderDirectory(filtered);
+  }
+
+  // ── WEEK STRIP ──
+  function buildWeekStrip() {
+    const now = new Date();
+    const cur = now.getDay();
+    const ws  = new Date(now); ws.setDate(now.getDate() - cur);
+    let html  = '';
+    for (let i = 0; i < 7; i++) {
+      const d  = new Date(ws); d.setDate(ws.getDate() + i);
+      const dn = DAYS[i];
+      const hasClass = allClasses.some(c => c.days_of_week && c.days_of_week.includes(dn));
+      html += `<button class="week-day-btn ${i === cur ? 'active' : ''} ${hasClass ? 'has-class' : ''}"
+        onclick="selectDay(${i}, this)">
+        <span class="week-day-name">${DAY_SHORT[i]}</span>
+        <span class="week-day-num">${d.getDate()}</span>
+        <span class="week-day-dot"></span>
+      </button>`;
+    }
+    document.getElementById('weekStrip').innerHTML = html;
+  }
+
+  function selectDay(dayIndex, btn) {
+    selectedDay = dayIndex;
+    document.querySelectorAll('.week-day-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showDayClasses(dayIndex);
+  }
+
+  function showDayClasses(dayIndex) {
+    const dayName = DAYS[dayIndex];
+    const dayLabel = dayIndex === new Date().getDay() ? "Today's Classes" : DAY_SHORT[dayIndex] + "'s Classes";
+    document.getElementById('scheduleTitle').textContent = dayLabel;
+
+    const dayClasses = allClasses
+      .filter(c => c.days_of_week && c.days_of_week.includes(dayName))
+      .sort((a,b) => a.start_time > b.start_time ? 1 : -1);
+
+    const list = document.getElementById('classesList');
+    if (!dayClasses.length) {
+      list.innerHTML = '<div class="no-classes">No classes scheduled. Rest day! 🥋</div>';
+      return;
+    }
+    list.innerHTML = dayClasses.map(c => `
+      <div class="class-card">
+        <div class="class-color-bar" style="background:${c.color||'var(--primary)'}"></div>
+        <div class="class-time">
+          <div class="class-time-start">${fmtTime(c.start_time)}</div>
+          <div class="class-time-end">${fmtTime(c.end_time)}</div>
+        </div>
+        <div class="class-info">
+          <div class="class-title-text">${c.title}</div>
+          <div class="class-tags">
+            ${c.style ? `<span class="class-tag">${c.style}</span>` : ''}
+            ${c.level ? `<span class="class-tag">${c.level}</span>` : ''}
+            ${c.age_group ? `<span class="class-tag">${c.age_group}</span>` : ''}
+          </div>
+          ${c.instructor_name ? `<div class="class-instructor">with ${c.instructor_name}</div>` : ''}
+        </div>
+        <div class="rsvp-btn">
+          <button class="btn-rsvp" onclick="toggleRsvp(this, '${c.id}')">RSVP</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function toggleRsvp(btn, classId) {
+    btn.classList.toggle('rsvped');
+    btn.textContent = btn.classList.contains('rsvped') ? 'Going ✓' : 'RSVP';
+  }
+
+  // ── AUTH ──
+  function switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
+    document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+    document.getElementById('authMsg').textContent = '';
+  }
+
+  function setAuthMsg(text, type) {
+    const el = document.getElementById('authMsg');
+    el.textContent = text;
+    el.className = 'auth-msg ' + type;
+  }
+
+  async function handleLogin() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { setAuthMsg('Please fill in all fields.', 'error'); return; }
+    setAuthMsg('Signing in...', '');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { setAuthMsg(error.message, 'error'); }
+    else { await loadPortal(data.user); }
+  }
+
+  async function handleSignup() {
+    const first    = document.getElementById('signupFirst').value.trim();
+    const last     = document.getElementById('signupLast').value.trim();
+    const email    = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    if (!first || !last || !email || !password) { setAuthMsg('Please fill in all fields.', 'error'); return; }
+    setAuthMsg('Creating account...', '');
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: { data: { full_name: `${first} ${last}` } }
+    });
+    if (error) { setAuthMsg(error.message, 'error'); return; }
+    // Link to existing student record if found
+    const { data: student } = await sb.from('students')
+      .select('id').eq('school_id', SCHOOL_ID)
+      .ilike('first_name', first).ilike('last_name', last).single();
+    if (student) {
+      await sb.from('students').update({ user_id: data.user.id, email })
+        .eq('id', student.id);
+    }
+    await loadPortal(data.user);
+  }
+
+  async function handleSignOut() {
+    await sb.auth.signOut();
+    document.getElementById('portalApp').classList.remove('active');
+    document.getElementById('authScreen').classList.add('active');
+  }
+
+  // ── NAVIGATION ──
+  function navigate(page, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const target = document.getElementById('page-' + page);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.querySelector('.portal-content').scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── HELPERS ──
+  function fmtTime(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':');
+    const hr = parseInt(h);
+    return `${hr > 12 ? hr-12 : hr||12}:${m}\n${hr >= 12 ? 'PM' : 'AM'}`;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
