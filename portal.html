@@ -2,1175 +2,466 @@
 
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Member Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=libre baskerville:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --primary:   #C9A84C;
-      --primary-lt:#E2C06E;
-      --primary-dk:#8B6914;
-      --primary-bg:rgba(201,168,76,0.08);
-      --bg:        #080808;
-      --surface:   #141414;
-      --surface2:  #1a1a1a;
-      --border:    #222222;
-      --text:      #F5F0E8;
-      --muted:     #7A7060;
-      --muted2:    #9A8F80;
-      --green:     #5A9A6A;
-      --red:       #9A5A5A;
-      --font-display: 'libre baskerville', serif;
-      --font-ui:      'Lato', sans-serif;
-    }
-    html, body { height: 100%; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-ui);
-      font-size: 15px;
-      line-height: 1.6;
-      min-height: 100vh;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMAO Platform — Professional Management Suite</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
-```
-/* ── LOADING ── */
-#loadingScreen {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-.loading-logo {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.2em;
-  color: var(--primary);
-  margin-bottom: 2rem;
-}
-.loading-bar-bg {
-  width: 200px; height: 1px;
-  background: var(--border);
-  position: relative; overflow: hidden;
-}
-.loading-bar-fill {
-  position: absolute;
-  top: 0; left: -100%; bottom: 0; width: 100%;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-  animation: loading 1.2s infinite;
-}
-@keyframes loading { to { left: 100%; } }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── AUTH SCREEN ── */
-#authScreen {
-  display: none;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: var(--bg);
-}
-#authScreen.active { display: flex; }
-.auth-card {
-  width: min(100%, 420px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-.auth-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-}
-.auth-header {
-  padding: 2rem;
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-}
-.auth-school-logo {
-  width: 64px; height: 64px;
-  border-radius: 50%;
-  background: var(--primary-bg);
-  border: 2px solid var(--primary-dk);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1rem;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  color: var(--primary);
-  overflow: hidden;
-}
-.auth-school-logo img { width: 100%; height: 100%; object-fit: cover; }
-.auth-school-name {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  letter-spacing: 0.1em;
-  color: var(--text);
-  margin-bottom: 0.25rem;
-}
-.auth-school-tag {
-  font-size: 0.72rem;
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
-.auth-body { padding: 1.75rem; }
-.auth-tabs {
-  display: flex;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.auth-tab {
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.6rem 1.25rem;
-  background: none; border: none;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s;
-}
-.auth-tab.active { color: var(--primary); border-color: var(--primary); }
-.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
-.field label {
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.field input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  padding: 0.7rem 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-}
-.field input:focus { border-color: var(--primary); }
-.btn-primary {
-  width: 100%;
-  font-family: var(--font-ui);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 0.9rem;
-  background: var(--primary);
-  color: var(--bg);
-  border: none;
-  cursor: pointer;
-  font-weight: 700;
-  transition: background 0.2s;
-  margin-top: 0.5rem;
-}
-.btn-primary:hover { background: var(--primary-lt); }
-.auth-msg {
-  font-size: 0.75rem;
-  text-align: center;
-  margin-top: 0.75rem;
-  min-height: 1em;
-}
-.auth-msg.success { color: #7DBD7D; }
-.auth-msg.error   { color: #C07070; }
-
-/* ── PORTAL APP ── */
-#portalApp {
-  display: none;
-  flex-direction: column;
-  min-height: 100vh;
-}
-#portalApp.active { display: flex; }
-
-/* TOP BAR */
-.portal-topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 1.25rem;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.portal-logo {
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  letter-spacing: 0.14em;
-  color: var(--primary);
-}
-.portal-user {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.portal-avatar {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--primary-bg);
-  border: 1px solid var(--primary-dk);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  color: var(--primary);
-}
-.portal-username {
-  font-size: 0.78rem;
-  color: var(--text);
+:root {
+–black:   #080808;
+–near:    #111111;
+–card:    #141414;
+–border:  #222222;
+–gold:    #C9A84C;
+–gold-lt: #E2C06E;
+–gold-dk: #8B6914;
+–gold-bg: rgba(201,168,76,0.07);
+–white:   #F5F0E8;
+–muted:   #7A7060;
+–muted2:  #9A8F80;
+–display: ‘Libre Baskerville’, Georgia, serif;
+–ui:      ‘Lato’, sans-serif;
 }
 
-/* MEMBERSHIP CARD */
-.membership-card {
-  margin: 1.25rem;
-  background: linear-gradient(135deg, var(--surface2), var(--surface));
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--primary);
-  padding: 1.5rem;
-  position: relative;
-  overflow: hidden;
-}
-.membership-card::after {
-  content: '';
-  position: absolute;
-  top: -30px; right: -30px;
-  width: 120px; height: 120px;
-  border-radius: 50%;
-  background: var(--primary-bg);
-}
-.card-school {
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-}
-.card-name {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--text);
-  margin-bottom: 0.25rem;
-}
-.card-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.65rem;
-  margin-top: 0.5rem;
-}
-.card-status.active {
-  background: rgba(90,154,106,0.12);
-  border: 1px solid rgba(90,154,106,0.3);
-  color: #7DBD7D;
-}
-.card-status.active::before { content: '●'; font-size: 0.5rem; }
-.card-since {
-  font-size: 0.68rem;
-  color: var(--muted);
-  margin-top: 0.75rem;
-}
-.belt-display {
-  position: absolute;
-  bottom: 1.25rem; right: 1.5rem;
-  text-align: right;
-}
-.belt-color-bar {
-  height: 12px;
-  width: 80px;
-  border-radius: 6px;
-  margin-bottom: 0.3rem;
-  margin-left: auto;
-}
-.belt-name {
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+html { scroll-behavior: smooth; }
+body { background: var(–black); color: var(–white); font-family: var(–display); font-size: 18px; line-height: 1.7; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
 
-/* BOTTOM NAV */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  display: flex;
-  z-index: 50;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.75rem 0.5rem;
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.2s;
-  font-family: var(--font-ui);
-}
-.nav-btn.active { color: var(--primary); }
-.nav-btn-icon { font-size: 1.1rem; }
-.nav-btn-label { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; }
+/* NAV */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 5vw; height: 72px; background: rgba(8,8,8,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(201,168,76,0.15); }
+.nav-logo { font-family: var(–display); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.14em; color: var(–gold); }
+.nav-logo span { color: var(–white); font-weight: 400; }
+.nav-links { display: flex; gap: 2.5rem; align-items: center; list-style: none; }
+.nav-links a { font-family: var(–ui); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(–muted); transition: color 0.2s; }
+.nav-links a:hover { color: var(–gold); }
+.btn-nav { font-family: var(–ui); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.55rem 1.5rem; border: 1px solid var(–gold); color: var(–gold); background: transparent; cursor: pointer; transition: all 0.2s; }
+.btn-nav:hover { background: var(–gold); color: var(–black); }
 
-/* PAGES */
-.portal-content {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 80px;
-}
-.page { display: none; }
-.page.active { display: block; }
+/* HERO */
+#hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 5vw 80px; position: relative; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201,168,76,0.04) 0%, transparent 60%); }
+.hero-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(90vw,800px); height: min(90vw,800px); border: 1px solid rgba(201,168,76,0.06); border-radius: 50%; pointer-events: none; }
+.hero-ring::before { content: ‘’; position: absolute; inset: 30px; border: 1px solid rgba(201,168,76,0.04); border-radius: 50%; }
+.hero-tag { font-family: var(–ui); font-size: 0.65rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(–gold); margin-bottom: 2rem; position: relative; }
+.hero-title { font-family: var(–display); font-size: clamp(2.8rem, 7vw, 6rem); font-weight: 700; letter-spacing: 0.03em; line-height: 1.1; color: var(–white); position: relative; }
+.hero-title em { font-style: italic; color: var(–gold); display: block; }
+.hero-sub { font-size: 1.15rem; font-weight: 400; color: var(–muted); max-width: 560px; margin: 2rem auto 0; line-height: 1.8; position: relative; font-style: italic; }
+.hero-ctas { display: flex; gap: 1.25rem; align-items: center; margin-top: 3rem; flex-wrap: wrap; justify-content: center; position: relative; }
+.btn-primary { font-family: var(–ui); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 1rem 2.5rem; background: var(–gold); color: var(–black); border: none; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+.btn-primary:hover { background: var(–gold-lt); transform: translateY(-2px); }
+.btn-ghost { font-family: var(–ui); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 1rem 2.5rem; background: transparent; color: var(–white); border: 1px solid var(–border); cursor: pointer; transition: all 0.2s; }
+.btn-ghost:hover { border-color: var(–gold); color: var(–gold); }
+.hero-stats { display: flex; gap: 4rem; margin-top: 5rem; position: relative; }
+.stat-item { text-align: center; }
+.stat-num { font-family: var(–display); font-size: 2.2rem; color: var(–gold); font-weight: 700; display: block; }
+.stat-lbl { font-family: var(–ui); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(–muted); }
 
-/* SECTION HEADING */
-.section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.25rem 0.75rem;
-}
-.section-title {
-  font-family: var(--font-display);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text);
-}
-.section-link {
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+/* SECTIONS */
+section { padding: 7rem 5vw; }
+.section-label { font-family: var(–ui); font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(–gold); text-align: center; margin-bottom: 1rem; }
+.section-title { font-family: var(–display); font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; text-align: center; line-height: 1.2; margin-bottom: 1rem; }
+.section-body { font-size: 1rem; color: var(–muted); text-align: center; max-width: 580px; margin: 0 auto 4rem; font-style: italic; }
 
-/* CLASS CARDS */
-.classes-list {
-  padding: 0 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.class-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: stretch;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-.class-card:hover { border-color: var(--primary-dk); }
-.class-color-bar { width: 4px; flex-shrink: 0; }
-.class-time {
-  width: 72px;
-  flex-shrink: 0;
-  padding: 0.85rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border-right: 1px solid var(--border);
-  text-align: center;
-}
-.class-time-start {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  color: var(--text);
-  line-height: 1.2;
-}
-.class-time-end { font-size: 0.58rem; color: var(--muted); margin-top: 0.2rem; }
-.class-info { flex: 1; padding: 0.85rem 1rem; }
-.class-title-text {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  margin-bottom: 0.3rem;
-}
-.class-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
-.class-tag {
-  font-size: 0.55rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.4rem;
-  border: 1px solid var(--border);
-  color: var(--muted2);
-}
-.class-instructor { 
-  font-size: 0.68rem; 
-  color: var(--muted); 
-}
-.class-description {
-  font-size: 0.72rem;
-  color: var(--muted);
-  line-height: 1.6;
-  margin-top: 0.4rem;
-  font-style: italic;
-}
+/* ECOSYSTEM */
+#ecosystem { background: var(–near); }
+.eco-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
+.eco-card { background: var(–card); border: 1px solid var(–border); padding: 2rem; text-align: center; transition: border-color 0.3s; position: relative; }
+.eco-card:hover { border-color: var(–gold-dk); }
+.eco-card.current { border-color: var(–gold); }
+.eco-card.current::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(–gold), transparent); }
+.eco-icon { font-size: 2rem; color: var(–gold); margin-bottom: 1rem; }
+.eco-title { font-family: var(–display); font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(–white); }
+.eco-text { font-size: 0.9rem; color: var(–muted); line-height: 1.75; font-style: italic; }
+.eco-badge { display: inline-block; margin-top: 1rem; font-family: var(–ui); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.25rem 0.75rem; background: var(–gold-bg); border: 1px solid var(–gold-dk); color: var(–gold); }
 
-.rsvp-btn {
-  padding: 0.85rem 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.btn-rsvp {
-  font-family: var(--font-ui);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 0.4rem 0.65rem;
-  border: 1px solid var(--primary-dk);
-  background: var(--primary-bg);
-  color: var(--primary);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.btn-rsvp:hover { background: var(--primary); color: var(--bg); }
-.btn-rsvp.rsvped {
-  background: rgba(90,154,106,0.12);
-  border-color: rgba(90,154,106,0.3);
-  color: #7DBD7D;
-}
-.no-classes {
-  padding: 2rem;
-  text-align: center;
-  color: var(--muted);
-  font-style: italic;
-}
+/* FEATURES */
+#features { background: var(–black); }
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1px; background: var(–border); border: 1px solid var(–border); max-width: 1100px; margin: 0 auto; }
+.feat-card { background: var(–card); padding: 2.5rem; position: relative; overflow: hidden; transition: background 0.3s; }
+.feat-card::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(–gold), transparent); opacity: 0; transition: opacity 0.3s; }
+.feat-card:hover { background: #181818; }
+.feat-card:hover::before { opacity: 1; }
+.feat-icon { font-size: 1.5rem; color: var(–gold); margin-bottom: 1.25rem; }
+.feat-title { font-family: var(–display); font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(–white); }
+.feat-text { font-size: 0.92rem; color: var(–muted); line-height: 1.75; font-style: italic; }
 
-/* WEEK STRIP */
-.week-strip {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0 1.25rem 1rem;
-  overflow-x: auto;
-}
-.week-day-btn {
-  flex-shrink: 0;
-  width: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.5rem 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.week-day-btn.active {
-  background: var(--primary-bg);
-  border-color: var(--primary-dk);
-}
-.week-day-name { font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.week-day-num {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  color: var(--text);
-}
-.week-day-btn.active .week-day-num { color: var(--primary); }
-.week-day-dot {
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: var(--primary);
-  opacity: 0;
-}
-.week-day-btn.has-class .week-day-dot { opacity: 1; }
+/* PRICING */
+#pricing { background: var(–near); }
+.price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
+.plan { border: 1px solid var(–border); background: var(–card); padding: 2.5rem; position: relative; transition: all 0.3s; }
+.plan:hover { transform: translateY(-4px); border-color: var(–gold-dk); }
+.plan.featured { border-color: var(–gold); background: linear-gradient(160deg, #171200, #141414); }
+.plan-badge { position: absolute; top: -1px; right: 2rem; background: var(–gold); color: var(–black); font-family: var(–ui); font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; padding: 0.3rem 0.8rem; font-weight: 700; }
+.plan-name { font-family: var(–ui); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(–gold); margin-bottom: 1.25rem; }
+.plan-price { display: flex; align-items: flex-start; gap: 0.25rem; margin-bottom: 0.75rem; }
+.plan-dollar { font-family: var(–display); font-size: 1.2rem; color: var(–gold); margin-top: 0.6rem; }
+.plan-amount { font-family: var(–display); font-size: 3.5rem; font-weight: 700; line-height: 1; color: var(–white); }
+.plan-period { font-family: var(–ui); font-size: 0.7rem; color: var(–muted); align-self: flex-end; margin-bottom: 0.5rem; }
+.plan-desc { font-size: 0.9rem; color: var(–muted); line-height: 1.7; margin-bottom: 1.75rem; font-style: italic; }
+.plan-divider { height: 1px; background: linear-gradient(90deg, var(–gold), transparent); margin-bottom: 1.75rem; opacity: 0.5; }
+.plan-features { list-style: none; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.plan-features li { font-family: var(–ui); font-size: 0.88rem; color: var(–muted2); display: flex; gap: 0.75rem; align-items: flex-start; }
+.plan-features li::before { content: ‘◆’; color: var(–gold); font-size: 0.45rem; margin-top: 0.45rem; flex-shrink: 0; }
+.btn-plan { width: 100%; font-family: var(–ui); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; border: 1px solid var(–gold-dk); background: transparent; color: var(–gold); cursor: pointer; transition: all 0.2s; }
+.btn-plan:hover { background: var(–gold-bg); border-color: var(–gold); }
+.plan.featured .btn-plan { background: var(–gold); border-color: var(–gold); color: var(–black); font-weight: 700; }
+.plan.featured .btn-plan:hover { background: var(–gold-lt); }
 
-/* ANNOUNCEMENTS */
-.announcements-list {
-  padding: 0 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.announcement-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--primary);
-  padding: 1rem 1.25rem;
-}
-.announcement-type {
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin-bottom: 0.4rem;
-}
-.announcement-subject {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  margin-bottom: 0.5rem;
-}
-.announcement-body { font-size: 0.82rem; color: var(--muted2); line-height: 1.7; }
-.announcement-date { font-size: 0.62rem; color: var(--muted); margin-top: 0.75rem; }
+/* TESTIMONIALS */
+#testimonials { background: var(–black); }
+.test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.testimonial { border: 1px solid var(–border); border-left: 3px solid var(–gold); padding: 2rem; position: relative; transition: border-color 0.3s; }
+.testimonial:hover { border-color: var(–gold); }
+.test-text { font-size: 1rem; color: var(–white); font-style: italic; line-height: 1.8; margin-bottom: 1.5rem; }
+.test-author { font-family: var(–ui); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(–gold); }
+.test-role { font-family: var(–ui); font-size: 0.65rem; color: var(–muted); margin-top: 0.2rem; }
 
-/* PROFILE PAGE */
-.profile-header {
-  padding: 2rem 1.25rem 1rem;
-  text-align: center;
-}
-.profile-avatar {
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  background: var(--primary-bg);
-  border: 2px solid var(--primary-dk);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1rem;
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  color: var(--primary);
-}
-.profile-name {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  letter-spacing: 0.06em;
-  color: var(--text);
-  margin-bottom: 0.25rem;
-}
-.profile-school { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  margin: 1.25rem;
-}
-.profile-stat {
-  background: var(--surface);
-  padding: 1rem;
-  text-align: center;
-}
-.profile-stat-num {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--primary);
-  display: block;
-}
-.profile-stat-lbl { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.profile-section {
-  margin: 0 1.25rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-.profile-section-header {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-display);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--primary);
-}
-.profile-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.82rem;
-}
-.profile-row:last-child { border-bottom: none; }
-.profile-row-label { color: var(--muted); }
-.profile-row-value { color: var(--text); }
-.btn-signout-portal {
-  display: block;
-  width: calc(100% - 2.5rem);
-  margin: 0 1.25rem 1.25rem;
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.85rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
-.btn-signout-portal:hover { border-color: var(--red); color: #C07070; }
+/* CTA */
+#cta { background: var(–near); text-align: center; position: relative; overflow: hidden; }
+#cta::before { content: ‘’; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(201,168,76,0.08), transparent); }
+.gold-rule { display: block; width: 60px; height: 1px; background: linear-gradient(90deg, transparent, var(–gold), transparent); margin: 0 auto 2.5rem; }
 
-/* DIRECTORY */
-.directory-list {
-  padding: 0 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.directory-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: border-color 0.2s;
-}
-.directory-card:hover { border-color: var(--primary-dk); }
-.directory-avatar {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  background: var(--primary-bg);
-  border: 1px solid var(--primary-dk);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  color: var(--primary);
-  flex-shrink: 0;
-}
-.directory-name { font-size: 0.85rem; color: var(--text); margin-bottom: 0.2rem; }
-.directory-meta { font-size: 0.65rem; color: var(--muted); }
+/* FOOTER */
+footer { background: var(–black); border-top: 1px solid var(–border); padding: 3rem 5vw; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+.footer-logo { font-family: var(–display); font-size: 1rem; font-weight: 700; letter-spacing: 0.14em; color: var(–gold); }
+.footer-copy { font-family: var(–ui); font-size: 0.68rem; color: var(–muted); }
+.footer-links { display: flex; gap: 2rem; list-style: none; }
+.footer-links a { font-family: var(–ui); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(–muted); transition: color 0.2s; }
+.footer-links a:hover { color: var(–gold); }
 
-/* SEARCH */
-.search-bar {
-  padding: 1rem 1.25rem 0.5rem;
-}
-.search-input {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  padding: 0.7rem 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.search-input:focus { border-color: var(--primary); }
+/* MODAL */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+.overlay.open { display: flex; }
+.modal { background: var(–card); border: 1px solid var(–border); width: min(90vw, 420px); padding: 2.5rem; position: relative; }
+.modal::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(–gold), transparent); }
+.modal-x { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(–muted); font-size: 1.2rem; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.modal-x:hover { color: var(–white); }
+.modal-h { font-family: var(–display); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; color: var(–white); }
+.modal-s { font-size: 0.85rem; color: var(–muted); margin-bottom: 1.5rem; font-style: italic; }
+.plan-pill { background: var(–gold-bg); border: 1px solid var(–gold-dk); padding: 0.65rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+.pill-n { font-family: var(–display); font-size: 0.85rem; color: var(–gold); font-weight: 700; }
+.pill-p { font-family: var(–display); font-size: 1rem; color: var(–white); }
+.tabs { display: flex; border-bottom: 1px solid var(–border); margin-bottom: 1.5rem; }
+.tab { font-family: var(–ui); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.6rem 1.25rem; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(–muted); cursor: pointer; transition: all 0.2s; }
+.tab.on { color: var(–gold); border-color: var(–gold); }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-family: var(–ui); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(–muted); margin-bottom: 0.4rem; }
+.field input, .field select { width: 100%; background: var(–black); border: 1px solid var(–border); color: var(–white); font-family: var(–ui); font-size: 0.9rem; padding: 0.7rem 0.9rem; outline: none; transition: border-color 0.2s; }
+.field input:focus, .field select:focus { border-color: var(–gold); }
+.field select option { background: var(–black); }
+.btn-sub { width: 100%; font-family: var(–ui); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; background: var(–gold); color: var(–black); border: none; cursor: pointer; font-weight: 700; margin-top: 0.5rem; transition: background 0.2s; }
+.btn-sub:hover { background: var(–gold-lt); }
+.btn-sub:disabled { opacity: 0.6; cursor: not-allowed; }
+.msg { font-family: var(–ui); font-size: 0.8rem; text-align: center; margin-top: 0.75rem; min-height: 1em; }
+.ok { color: #7DBD7D; }
+.er { color: #E07070; }
 
-::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); }
-```
+@media (max-width: 768px) { .nav-links { display: none; } .hero-stats { gap: 2rem; } footer { flex-direction: column; text-align: center; } }
+</style>
 
-  </style>
 </head>
 <body>
 
-<!-- LOADING -->
+<!-- NAV -->
 
-<div id="loadingScreen">
-  <div class="loading-logo" id="loadingLogo">NMAO</div>
-  <div class="loading-bar-bg"><div class="loading-bar-fill"></div></div>
-</div>
+<nav>
+  <div class="nav-logo">NMAO <span>Platform</span></div>
+  <ul class="nav-links">
+    <li><a href="#ecosystem">Ecosystem</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><button class="btn-nav" onclick="openModal('login')">Sign In</button></li>
+  </ul>
+</nav>
 
-<!-- AUTH SCREEN -->
+<!-- HERO -->
 
-<div id="authScreen">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-school-logo" id="authLogo">N</div>
-      <div class="auth-school-name" id="authSchoolName">Member Portal</div>
-      <div class="auth-school-tag" id="authSchoolTag">Loading...</div>
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-ring"></div>
+  <p class="hero-tag">National Martial Arts Organization</p>
+  <h1 class="hero-title">The Platform Built<br><em>For Martial Arts</em></h1>
+  <p class="hero-sub">NMAO unifies your school management, student portal, and payments into one platform — built exclusively for martial arts schools.</p>
+  <div class="hero-ctas">
+    <button class="btn-primary" onclick="openModal('signup')">Start Your School</button>
+    <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item"><span class="stat-num">500+</span><span class="stat-lbl">Schools</span></div>
+    <div class="stat-item"><span class="stat-num">$12M+</span><span class="stat-lbl">Processed</span></div>
+    <div class="stat-item"><span class="stat-num">99.9%</span><span class="stat-lbl">Uptime</span></div>
+  </div>
+</section>
+
+<!-- ECOSYSTEM -->
+
+<section id="ecosystem">
+  <p class="section-label">The NMAO Ecosystem</p>
+  <h2 class="section-title">Three Products. One Network.</h2>
+  <p class="section-body">Each product stands alone — together they create an unstoppable martial arts community.</p>
+  <div class="eco-grid">
+    <div class="eco-card">
+      <div class="eco-icon">◈</div>
+      <h3 class="eco-title">NMAO Accreditation</h3>
+      <p class="eco-text">Earn your school's official NMAO certification and gain credibility across the network.</p>
+      <span class="eco-badge">Available Now</span>
     </div>
-    <div class="auth-body">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
-        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Join</button>
+    <div class="eco-card current">
+      <div class="eco-icon">◆</div>
+      <h3 class="eco-title">NMAO Platform</h3>
+      <p class="eco-text">Manage students, classes, payments, and communications — all in one place.</p>
+      <span class="eco-badge">You Are Here</span>
+    </div>
+    <div class="eco-card">
+      <div class="eco-icon">◇</div>
+      <h3 class="eco-title">NMAO Tournament</h3>
+      <p class="eco-text">Connect your students to monthly tournaments and competitions across the network.</p>
+      <span class="eco-badge">Coming Soon</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+
+<section id="features">
+  <p class="section-label">What We Offer</p>
+  <h2 class="section-title">Everything Your School Needs</h2>
+  <p class="section-body">Purpose-built for martial arts schools. No generic software, no compromises.</p>
+  <div class="feat-grid">
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Management</h3><p class="feat-text">Full student profiles, belt rank tracking, attendance history, and membership status in one roster.</p></div>
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Class Scheduling</h3><p class="feat-text">Build your weekly schedule, manage custom events, and let students RSVP from their portal.</p></div>
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Payment Collection</h3><p class="feat-text">Collect dues, event fees, and memberships automatically. Transparent processing, no surprises.</p></div>
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Portal</h3><p class="feat-text">Your students get their own branded app to view their schedule, membership, and connect with the community.</p></div>
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">School Branding</h3><p class="feat-text">Every school gets a fully white-labeled portal in their own colors. Your brand, powered by NMAO.</p></div>
+    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Network Directory</h3><p class="feat-text">Connect with other NMAO schools, share events, and grow your martial arts community nationwide.</p></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+
+<section id="pricing">
+  <p class="section-label">Investment</p>
+  <h2 class="section-title">Simple, Honest Pricing</h2>
+  <p class="section-body">Half the price of ZenPlanner. Twice the focus on martial arts.</p>
+  <div class="price-grid">
+    <div class="plan">
+      <p class="plan-name">Starter</p>
+      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">59</span><span class="plan-period">/mo</span></div>
+      <p class="plan-desc">Everything a growing martial arts school needs to manage students, schedule classes, and collect payments.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Up to 50 active students</li>
+        <li>Class scheduling and calendar</li>
+        <li>Student roster management</li>
+        <li>Student member portal</li>
+        <li>Payment collection</li>
+        <li>Email announcements</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('starter',59)">Get Started</button>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge">Most Popular</div>
+      <p class="plan-name">Professional</p>
+      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">79</span><span class="plan-period">/mo</span></div>
+      <p class="plan-desc">Advanced tools for established schools ready to streamline operations and deepen member engagement.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Up to 200 active students</li>
+        <li>Everything in Starter</li>
+        <li>Belt rank tracking</li>
+        <li>Custom school branding</li>
+        <li>Advanced analytics</li>
+        <li>Priority support</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('professional',79)">Get Started</button>
+    </div>
+    <div class="plan">
+      <p class="plan-name">Enterprise</p>
+      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">99</span><span class="plan-period">/mo</span></div>
+      <p class="plan-desc">The complete NMAO experience for high-volume schools and multi-location operations.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Unlimited students</li>
+        <li>Everything in Professional</li>
+        <li>Multi-location support</li>
+        <li>White-label custom domain</li>
+        <li>Dedicated account manager</li>
+        <li>Phone support</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('enterprise',99)">Get Started</button>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+
+<section id="testimonials">
+  <p class="section-label">Testimonials</p>
+  <h2 class="section-title">Trusted by Leading Schools</h2>
+  <p class="section-body">Schools that have made NMAO Platform the foundation of their operations.</p>
+  <div class="test-grid">
+    <div class="testimonial">
+      <p class="test-text">NMAO Platform transformed how we manage our school. The student portal alone is worth every penny — parents love it.</p>
+      <p class="test-author">Sensei Michael Chen</p>
+      <p class="test-role">Dragon's Gate Martial Arts, Brooklyn NY</p>
+    </div>
+    <div class="testimonial">
+      <p class="test-text">We switched from ZenPlanner and saved over $100 a month. The platform is more intuitive and actually built for martial arts.</p>
+      <p class="test-author">Master James Whitfield</p>
+      <p class="test-role">Meridian BJJ Academy, Austin TX</p>
+    </div>
+    <div class="testimonial">
+      <p class="test-text">The belt rank tracking and attendance system is exactly what we needed. Our students are more engaged than ever.</p>
+      <p class="test-author">Sifu Elena Reyes</p>
+      <p class="test-role">Southwest Kung Fu Institute, Phoenix AZ</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+
+<section id="cta">
+  <p class="section-label">Get Started</p>
+  <h2 class="section-title">Your School Deserves Better</h2>
+  <p class="section-body">Join hundreds of martial arts schools already running on NMAO Platform.</p>
+  <span class="gold-rule"></span>
+  <button class="btn-primary" onclick="selectPlan('professional',79)">Start Your School Today</button>
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-logo">NMAO</div>
+  <span class="footer-copy">2025 NMAO Platform. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+<!-- MODAL -->
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()">x</button>
+    <p class="modal-h" id="mH">Welcome Back</p>
+    <p class="modal-s" id="mS">Access your NMAO dashboard</p>
+    <div class="plan-pill" id="mPill" style="display:none">
+      <span class="pill-n" id="mPN">Professional</span>
+      <span class="pill-p" id="mPP">$79/mo</span>
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="tL" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" id="tS" onclick="switchTab('signup')">Create Account</button>
+    </div>
+    <div id="fL">
+      <div class="field"><label>Email</label><input type="email" id="lE" placeholder="you@school.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="lP" placeholder="password"></div>
+      <button class="btn-sub" onclick="doLogin()">Sign In</button>
+    </div>
+    <div id="fS" style="display:none">
+      <div class="field"><label>School Name</label><input type="text" id="sN" placeholder="Your Martial Arts School"></div>
+      <div class="field"><label>Your Name</label><input type="text" id="sNm" placeholder="Sensei / Master / Sifu"></div>
+      <div class="field"><label>Email</label><input type="email" id="sE" placeholder="you@school.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="sP" placeholder="Create a password"></div>
+      <div class="field"><label>Plan</label>
+        <select id="sPl">
+          <option value="starter">Starter - $59/month</option>
+          <option value="professional" selected>Professional - $79/month</option>
+          <option value="enterprise">Enterprise - $99/month</option>
+        </select>
       </div>
-      <div id="loginForm">
-        <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="your@email.com" /></div>
-        <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
-        <button class="btn-primary" onclick="handleLogin()">Sign In</button>
-      </div>
-      <div id="signupForm" style="display:none">
-        <div class="field"><label>First Name</label><input type="text" id="signupFirst" placeholder="First name" /></div>
-        <div class="field"><label>Last Name</label><input type="text" id="signupLast" placeholder="Last name" /></div>
-        <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="your@email.com" /></div>
-        <div class="field"><label>Password</label><input type="password" id="signupPassword" placeholder="Create a password" /></div>
-        <button class="btn-primary" onclick="handleSignup()">Create Account</button>
-      </div>
-      <p class="auth-msg" id="authMsg"></p>
+      <button class="btn-sub" id="sSub" onclick="doSignup()">Create Account and Subscribe</button>
     </div>
+    <p class="msg" id="mMsg"></p>
   </div>
-</div>
-
-<!-- PORTAL APP -->
-
-<div id="portalApp">
-
-  <!-- TOP BAR -->
-
-  <div class="portal-topbar">
-    <div class="portal-logo" id="portalLogoText">NMAO</div>
-    <div class="portal-user">
-      <div class="portal-avatar" id="portalAvatar">?</div>
-      <div class="portal-username" id="portalUsername"></div>
-    </div>
-  </div>
-
-  <!-- CONTENT -->
-
-  <div class="portal-content">
-
-```
-<!-- SCHEDULE PAGE -->
-<div class="page active" id="page-schedule">
-
-  <!-- Membership Card -->
-  <div class="membership-card" id="membershipCard">
-    <div class="card-school" id="cardSchool">Loading...</div>
-    <div class="card-name" id="cardName">Loading...</div>
-    <div class="card-status active" id="cardStatus">Active Member</div>
-    <div class="card-since" id="cardSince"></div>
-    <div class="belt-display" id="beltDisplay" style="display:none">
-      <div class="belt-color-bar" id="beltBar"></div>
-      <div class="belt-name" id="beltName"></div>
-    </div>
-  </div>
-
-  <!-- Week Strip -->
-  <div class="section-heading">
-    <span class="section-title">This Week</span>
-  </div>
-  <div class="week-strip" id="weekStrip"></div>
-
-  <!-- Today's Classes -->
-  <div class="section-heading">
-    <span class="section-title" id="scheduleTitle">Today's Classes</span>
-  </div>
-  <div class="classes-list" id="classesList">
-    <div class="no-classes">Loading schedule...</div>
-  </div>
-
-</div>
-
-<!-- ANNOUNCEMENTS PAGE -->
-<div class="page" id="page-announcements">
-  <div class="section-heading"><span class="section-title">Announcements</span></div>
-  <div class="announcements-list" id="announcementsList">
-    <div class="no-classes">Loading announcements...</div>
-  </div>
-</div>
-
-<!-- DIRECTORY PAGE -->
-<div class="page" id="page-directory">
-  <div class="section-heading"><span class="section-title">Member Directory</span></div>
-  <div class="search-bar">
-    <input type="text" class="search-input" id="directorySearch" placeholder="Search members..." oninput="filterDirectory()" />
-  </div>
-  <div class="directory-list" id="directoryList">
-    <div class="no-classes">Loading directory...</div>
-  </div>
-</div>
-
-<!-- PROFILE PAGE -->
-<div class="page" id="page-profile">
-  <div class="profile-header">
-    <div class="profile-avatar" id="profileAvatar">?</div>
-    <div class="profile-name" id="profileName">Loading...</div>
-    <div class="profile-school" id="profileSchool">Loading...</div>
-  </div>
-  <div class="profile-stats">
-    <div class="profile-stat">
-      <span class="profile-stat-num" id="statSince">—</span>
-      <span class="profile-stat-lbl">Member Since</span>
-    </div>
-    <div class="profile-stat">
-      <span class="profile-stat-num" id="statBelt">—</span>
-      <span class="profile-stat-lbl">Belt Rank</span>
-    </div>
-    <div class="profile-stat">
-      <span class="profile-stat-num" id="statStatus">—</span>
-      <span class="profile-stat-lbl">Status</span>
-    </div>
-  </div>
-  <div class="profile-section">
-    <div class="profile-section-header">Contact Info</div>
-    <div class="profile-row"><span class="profile-row-label">Email</span><span class="profile-row-value" id="profileEmail">—</span></div>
-    <div class="profile-row"><span class="profile-row-label">Phone</span><span class="profile-row-value" id="profilePhone">—</span></div>
-    <div class="profile-row"><span class="profile-row-label">Address</span><span class="profile-row-value" id="profileAddress">—</span></div>
-  </div>
-  <div class="profile-section">
-    <div class="profile-section-header">Membership</div>
-    <div class="profile-row"><span class="profile-row-label">Plan</span><span class="profile-row-value" id="profilePlan">—</span></div>
-    <div class="profile-row"><span class="profile-row-label">Started</span><span class="profile-row-value" id="profileStart">—</span></div>
-    <div class="profile-row"><span class="profile-row-label">School</span><span class="profile-row-value" id="profileSchoolName">—</span></div>
-  </div>
-  <button class="btn-signout-portal" onclick="handleSignOut()">Sign Out</button>
-</div>
-```
-
-  </div>
-
-  <!-- BOTTOM NAV -->
-
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="navigate('schedule',this)">
-      <span class="nav-btn-icon">◇</span>
-      <span class="nav-btn-label">Schedule</span>
-    </button>
-    <button class="nav-btn" onclick="navigate('announcements',this)">
-      <span class="nav-btn-icon">◻</span>
-      <span class="nav-btn-label">News</span>
-    </button>
-    <button class="nav-btn" onclick="navigate('directory',this)">
-      <span class="nav-btn-icon">◎</span>
-      <span class="nav-btn-label">Directory</span>
-    </button>
-    <button class="nav-btn" onclick="navigate('profile',this)">
-      <span class="nav-btn-icon">⊙</span>
-      <span class="nav-btn-label">Profile</span>
-    </button>
-  </div>
-
 </div>
 
 <script>
-  const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-  const SCHOOL_ID     = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+var SKEY = 'YOUR_SUPABASE_ANON_KEY';
+var sc = supabase.createClient(SURL, SKEY);
+var stripe = Stripe('pk_test_51THQDyLNJ1kmY0YwuPyrwANWtajj1AZrLPrNEuV7EWOurT1Q6NAVFUdbEmaBke2X1j0waK5X59ycvyqV8J1eOghV00wfR16u3j');
+var PLANS = {
+  starter:      { name:'Starter',      price:59, pid:'price_1TI4HbLNJ1kmY0YwVoBaECKp' },
+  professional: { name:'Professional', price:79, pid:'price_1TI4IDLNJ1kmY0YwlLOXltD9' },
+  enterprise:   { name:'Enterprise',   price:99, pid:'price_1TI4JOLNJ1kmY0YwjU0pzZKs' }
+};
 
-  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-  const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-  let schoolData    = null;
-  let studentData   = null;
-  let allClasses    = [];
-  let allStudents   = [];
-  let selectedDay   = new Date().getDay();
-
-  // ── APPLY BRANDING ──
-  function applyBranding(school) {
-    const root = document.documentElement;
-    if (school.primary_color)    root.style.setProperty('--primary',    school.primary_color);
-    if (school.background_color) root.style.setProperty('--bg',         school.background_color);
-    if (school.accent_color)     root.style.setProperty('--text',       school.accent_color);
-    // Derived colors
-    root.style.setProperty('--primary-bg', school.primary_color + '14');
-    // Update logo text
-    const initials = school.name.split(' ').map(w=>w[0]).join('').slice(0,5).toUpperCase();
-
-    document.getElementById('loadingLogo').textContent    = initials;
-    document.getElementById('authLogo').textContent       = initials;
-    document.getElementById('authSchoolName').textContent = school.name;
-    document.getElementById('authSchoolTag').textContent  = school.tagline || '';
-    document.getElementById('portalLogoText').textContent = initials;
-    document.title = school.name + ' — Member Portal';
-    if (school.logo_url) {
-      document.getElementById('authLogo').innerHTML = `<img src="${school.logo_url}" alt="${school.name}" />`;
-    }
-  }
-
-  // ── INIT ──
-  async function init() {
-    // Load school branding first
-    const { data: school } = await sb.from('schools').select('*').eq('id', SCHOOL_ID).single();
-    if (school) { schoolData = school; applyBranding(school); }
-
-    // Check auth
-    const { data } = await sb.auth.getSession();
-    document.getElementById('loadingScreen').style.display = 'none';
-
-    if (!data.session) {
-      document.getElementById('authScreen').classList.add('active');
-      return;
-    }
-
-    await loadPortal(data.session.user);
-  }
-
-  async function loadPortal(user) {
-    document.getElementById('authScreen').classList.remove('active');
-    document.getElementById('portalApp').classList.add('active');
-
-    // Find student record
-    const { data: student } = await sb.from('students')
-      .select('*')
-      .eq('school_id', SCHOOL_ID)
-      .or(`email.eq.${user.email},user_id.eq.${user.id}`)
-      .single();
-
-    studentData = student;
-
-    const name = student
-      ? `${student.first_name} ${student.last_name}`
-      : user.user_metadata?.full_name || user.email.split('@')[0];
-
-    const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-
-    // Top bar
-    document.getElementById('portalAvatar').textContent  = initials;
-    document.getElementById('portalUsername').textContent = name.split(' ')[0];
-
-    // Membership card
-    document.getElementById('cardSchool').textContent = schoolData?.name || 'NMAO';
-    document.getElementById('cardName').textContent   = name;
-    if (student?.membership_start) {
-      document.getElementById('cardSince').textContent = 'Member since ' +
-        new Date(student.membership_start).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-    }
-
-    // Profile
-    document.getElementById('profileAvatar').textContent  = initials;
-    document.getElementById('profileName').textContent    = name;
-    document.getElementById('profileSchool').textContent  = schoolData?.name || '';
-    document.getElementById('profileEmail').textContent   = user.email || '—';
-    document.getElementById('profilePhone').textContent   = student?.phone || '—';
-    document.getElementById('profileAddress').textContent = student?.address || '—';
-    document.getElementById('profilePlan').textContent    = student?.membership_plan || '—';
-    document.getElementById('profileSchoolName').textContent = schoolData?.name || '—';
-    document.getElementById('profileStart').textContent   = student?.membership_start
-      ? new Date(student.membership_start).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
-      : '—';
-    document.getElementById('statStatus').textContent = student?.membership_status || '—';
-    document.getElementById('statBelt').textContent   = '—';
-
-    if (student?.membership_start) {
-      const start = new Date(student.membership_start);
-      const years = Math.floor((new Date() - start) / (365.25 * 24 * 60 * 60 * 1000));
-      document.getElementById('statSince').textContent = years > 0 ? years + 'yr' : '<1yr';
-    }
-
-    await loadClasses();
-    await loadAnnouncements();
-    await loadDirectory();
-  }
-
-  async function loadClasses() {
-    const { data } = await sb.from('classes')
-      .select('*')
-      .eq('school_id', SCHOOL_ID)
-      .eq('is_active', true)
-      .order('start_time');
-    allClasses = data || [];
-    buildWeekStrip();
-    showDayClasses(selectedDay);
-  }
-
-  async function loadAnnouncements() {
-    const { data } = await sb.from('communications')
-      .select('*')
-      .eq('school_id', SCHOOL_ID)
-      .eq('status', 'sent')
-      .order('sent_at', { ascending: false })
-      .limit(10);
-
-    const list = document.getElementById('announcementsList');
-    if (!data || !data.length) {
-      list.innerHTML = '<div class="no-classes">No announcements yet.</div>';
-      return;
-    }
-    list.innerHTML = data.map(a => `
-      <div class="announcement-card">
-        <div class="announcement-type">${a.type}</div>
-        <div class="announcement-subject">${a.subject}</div>
-        <div class="announcement-body">${a.body}</div>
-        <div class="announcement-date">${new Date(a.sent_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
-      </div>`).join('');
-  }
-
-  async function loadDirectory() {
-    const { data } = await sb.from('students')
-      .select('first_name, last_name, membership_start, membership_status')
-      .eq('school_id', SCHOOL_ID)
-      .eq('show_in_directory', true)
-      .eq('membership_status', 'active')
-      .order('first_name');
-    allStudents = data || [];
-    renderDirectory(allStudents);
-  }
-
-  function renderDirectory(students) {
-    const list = document.getElementById('directoryList');
-    if (!students.length) { list.innerHTML = '<div class="no-classes">No members in directory.</div>'; return; }
-    list.innerHTML = students.map(s => {
-      const initials = `${s.first_name[0]}${s.last_name[0]}`.toUpperCase();
-      const since = s.membership_start
-        ? new Date(s.membership_start).toLocaleDateString('en-US',{month:'short',year:'numeric'})
-        : '';
-      return `<div class="directory-card">
-        <div class="directory-avatar">${initials}</div>
-        <div>
-          <div class="directory-name">${s.first_name} ${s.last_name}</div>
-          <div class="directory-meta">Member${since ? ' since ' + since : ''}</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  function filterDirectory() {
-    const q = document.getElementById('directorySearch').value.toLowerCase();
-    const filtered = allStudents.filter(s =>
-      `${s.first_name} ${s.last_name}`.toLowerCase().includes(q)
-    );
-    renderDirectory(filtered);
-  }
-
-  // ── WEEK STRIP ──
-  function buildWeekStrip() {
-    const now = new Date();
-    const cur = now.getDay();
-    const ws  = new Date(now); ws.setDate(now.getDate() - cur);
-    let html  = '';
-    for (let i = 0; i < 7; i++) {
-      const d  = new Date(ws); d.setDate(ws.getDate() + i);
-      const dn = DAYS[i];
-      const hasClass = allClasses.some(c => c.days_of_week && c.days_of_week.includes(dn));
-      html += `<button class="week-day-btn ${i === cur ? 'active' : ''} ${hasClass ? 'has-class' : ''}"
-        onclick="selectDay(${i}, this)">
-        <span class="week-day-name">${DAY_SHORT[i]}</span>
-        <span class="week-day-num">${d.getDate()}</span>
-        <span class="week-day-dot"></span>
-      </button>`;
-    }
-    document.getElementById('weekStrip').innerHTML = html;
-  }
-
-  function selectDay(dayIndex, btn) {
-    selectedDay = dayIndex;
-    document.querySelectorAll('.week-day-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    showDayClasses(dayIndex);
-  }
-
-  function showDayClasses(dayIndex) {
-    const dayName = DAYS[dayIndex];
-    const dayLabel = dayIndex === new Date().getDay() ? "Today's Classes" : DAY_SHORT[dayIndex] + "'s Classes";
-    document.getElementById('scheduleTitle').textContent = dayLabel;
-
-    const dayClasses = allClasses
-      .filter(c => c.days_of_week && c.days_of_week.includes(dayName))
-      .sort((a,b) => a.start_time > b.start_time ? 1 : -1);
-
-    const list = document.getElementById('classesList');
-    if (!dayClasses.length) {
-      list.innerHTML = '<div class="no-classes">No classes scheduled. Rest day! 🥋</div>';
-      return;
-    }
-    list.innerHTML = dayClasses.map(c => `
-      <div class="class-card">
-        <div class="class-color-bar" style="background:${c.color||'var(--primary)'}"></div>
-        <div class="class-time">
-          <div class="class-time-start">${fmtTime(c.start_time)}</div>
-          <div class="class-time-end">${fmtTime(c.end_time)}</div>
-        </div>
-        <div class="class-info">
-          <div class="class-title-text">${c.title}</div>
-          <div class="class-tags">
-            ${c.style ? `<span class="class-tag">${c.style}</span>` : ''}
-            ${c.level ? `<span class="class-tag">${c.level}</span>` : ''}
-            ${c.age_group ? `<span class="class-tag">${c.age_group}</span>` : ''}
-          </div>
-          ${c.instructor_name ? `<div class="class-instructor">with ${c.instructor_name}</div>` : ''}
-${c.description ? `<div class="class-description">${c.description}</div>` : ''}
-
-        </div>
-        <div class="rsvp-btn">
-          <button class="btn-rsvp" onclick="toggleRsvp(this, '${c.id}')">RSVP</button>
-        </div>
-      </div>`).join('');
-  }
-
-  function toggleRsvp(btn, classId) {
-    btn.classList.toggle('rsvped');
-    btn.textContent = btn.classList.contains('rsvped') ? 'Going ✓' : 'RSVP';
-  }
-
-  // ── AUTH ──
-  function switchAuthTab(tab) {
-    const isLogin = tab === 'login';
-    document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
-    document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
-    document.getElementById('tabLogin').classList.toggle('active', isLogin);
-    document.getElementById('tabSignup').classList.toggle('active', !isLogin);
-    document.getElementById('authMsg').textContent = '';
-  }
-
-  function setAuthMsg(text, type) {
-    const el = document.getElementById('authMsg');
-    el.textContent = text;
-    el.className = 'auth-msg ' + type;
-  }
-
-  async function handleLogin() {
-    const email    = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || !password) { setAuthMsg('Please fill in all fields.', 'error'); return; }
-    setAuthMsg('Signing in...', '');
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { setAuthMsg(error.message, 'error'); }
-    else { await loadPortal(data.user); }
-  }
-
-  async function handleSignup() {
-    const first    = document.getElementById('signupFirst').value.trim();
-    const last     = document.getElementById('signupLast').value.trim();
-    const email    = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    if (!first || !last || !email || !password) { setAuthMsg('Please fill in all fields.', 'error'); return; }
-    setAuthMsg('Creating account...', '');
-    const { data, error } = await sb.auth.signUp({
-      email, password,
-      options: { data: { full_name: `${first} ${last}` } }
+function selectPlan(p, price) {
+  openModal('signup');
+  document.getElementById('sPl').value = p;
+  document.getElementById('mPill').style.display = 'flex';
+  document.getElementById('mPN').textContent = PLANS[p].name;
+  document.getElementById('mPP').textContent = '$' + price + '/mo';
+}
+function openModal(tab) {
+  document.getElementById('overlay').classList.add('open');
+  switchTab(tab || 'login');
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('mMsg').textContent = '';
+}
+function switchTab(t) {
+  var login = t === 'login';
+  document.getElementById('fL').style.display = login ? 'block' : 'none';
+  document.getElementById('fS').style.display = login ? 'none' : 'block';
+  document.getElementById('tL').className = 'tab' + (login ? ' on' : '');
+  document.getElementById('tS').className = 'tab' + (!login ? ' on' : '');
+  document.getElementById('mH').textContent = login ? 'Welcome Back' : 'Start Your School';
+  document.getElementById('mS').textContent = login ? 'Access your NMAO dashboard' : 'Create your account and choose a plan';
+  document.getElementById('mPill').style.display = login ? 'none' : 'flex';
+  document.getElementById('mMsg').textContent = '';
+}
+function setMsg(t, c) {
+  var el = document.getElementById('mMsg');
+  el.textContent = t;
+  el.className = 'msg ' + c;
+}
+async function doLogin() {
+  var e = document.getElementById('lE').value.trim();
+  var p = document.getElementById('lP').value;
+  if (!e || !p) { setMsg('Please fill in all fields.', 'er'); return; }
+  setMsg('Signing in...', '');
+  var r = await sc.auth.signInWithPassword({ email:e, password:p });
+  if (r.error) { setMsg(r.error.message, 'er'); }
+  else { window.location.href = 'dashboard.html'; }
+}
+async function doSignup() {
+  var school = document.getElementById('sN').value.trim();
+  var name   = document.getElementById('sNm').value.trim();
+  var email  = document.getElementById('sE').value.trim();
+  var pass   = document.getElementById('sP').value;
+  var plan   = document.getElementById('sPl').value;
+  if (!school || !name || !email || !pass) { setMsg('Please fill in all fields.', 'er'); return; }
+  var btn = document.getElementById('sSub');
+  btn.disabled = true; btn.textContent = 'Creating account...'; setMsg('', '');
+  var auth = await sc.auth.signUp({ email:email, password:pass, options:{ data:{ full_name:name } } });
+  if (auth.error) { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Create Account and Subscribe'; return; }
+  var p = PLANS[plan];
+  await sc.from('schools').insert({ name:school, email:email, owner_id:auth.data.user.id, plan:plan, plan_price:p.price, plan_status:'trialing', is_active:true, slug:school.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-') });
+  btn.textContent = 'Redirecting to checkout...';
+  setMsg('Account created! Taking you to secure payment...', 'ok');
+  setTimeout(async function() {
+    var r = await stripe.redirectToCheckout({
+      lineItems: [{ price:p.pid, quantity:1 }],
+      mode: 'subscription',
+      successUrl: window.location.origin + '/NMAO-Membership-Platform/dashboard.html',
+      cancelUrl:  window.location.origin + '/NMAO-Membership-Platform/index.html',
+      customerEmail: email
     });
-    if (error) { setAuthMsg(error.message, 'error'); return; }
-    // Link to existing student record if found
-    const { data: student } = await sb.from('students')
-      .select('id').eq('school_id', SCHOOL_ID)
-      .ilike('first_name', first).ilike('last_name', last).single();
-    if (student) {
-      await sb.from('students').update({ user_id: data.user.id, email })
-        .eq('id', student.id);
-    }
-    await loadPortal(data.user);
-  }
-
-  async function handleSignOut() {
-    await sb.auth.signOut();
-    document.getElementById('portalApp').classList.remove('active');
-    document.getElementById('authScreen').classList.add('active');
-  }
-
-  // ── NAVIGATION ──
-  function navigate(page, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const target = document.getElementById('page-' + page);
-    if (target) target.classList.add('active');
-    if (btn) btn.classList.add('active');
-    document.querySelector('.portal-content').scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  // ── HELPERS ──
-  function fmtTime(t) {
-    if (!t) return '';
-    const [h, m] = t.split(':');
-    const hr = parseInt(h);
-    return `${hr > 12 ? hr-12 : hr||12}:${m}\n${hr >= 12 ? 'PM' : 'AM'}`;
-  }
-
-  init();
+    if (r.error) { setMsg(r.error.message, 'er'); btn.disabled = false; btn.textContent = 'Create Account and Subscribe'; }
+  }, 1500);
+}
+document.getElementById('overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+sc.auth.getSession().then(function(r) { if (r.data.session) window.location.href = 'dashboard.html'; });
 </script>
 
 </body>
