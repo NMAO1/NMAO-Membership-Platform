@@ -446,15 +446,12 @@ async function doSignup(){
   btn.textContent='Redirecting to checkout...';
   setMsg('Account created! Taking you to secure payment...','ok');
   setTimeout(async function(){
-    var r=await stripe.redirectToCheckout({
-      lineItems:[{price:p.pid,quantity:1}],
-      mode:'subscription',
-      successUrl:window.location.origin+'/NMAO-Membership-Platform/dashboard.html',
-      cancelUrl:window.location.origin+'/NMAO-Membership-Platform/index.html',
-      customerEmail:email
-    });
-    if(r.error){setMsg(r.error.message,'er');btn.disabled=false;btn.textContent='Create Account and Subscribe';}
-  },1500);
+    var links={
+  starter:'https://buy.stripe.com/test_fZudRa87W7uWgvYaoE6Vq00',
+  professional:'https://buy.stripe.com/test_00w28sdsgaH8djM8gw6Vq01',
+  enterprise:'https://buy.stripe.com/test_28EdRaag46qS0x054k6Vq02'
+};
+window.location.href=links[plan]+'?prefilled_email='+encodeURIComponent(email);
 }
 document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 sc.auth.getSession().then(function(r){if(r.data.session)window.location.href='dashboard.html';});
