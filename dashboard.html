@@ -390,11 +390,12 @@
     </div>
     <div class="modal-body">
       <div class="field"><label>Membership Name</label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
-      <div class="field"><label>Program</label>
-        <select id="memProgram">
-          <option value="">— Select a Program —</option>
-        </select>
-      </div>
+<div class="field">
+  <label>Programs (select all that apply)</label>
+  <div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.5rem;background:var(--black);border:1px solid var(--border)">
+    <div style="color:var(--muted);font-size:0.75rem;font-style:italic">Loading programs...</div>
+  </div>
+</div>
       <div class="form-row">
         <div class="field"><label>Type</label>
           <select id="memType" onchange="toggleMemType()">
@@ -551,16 +552,20 @@
     }).join('');
   }
 
-  function populateProgramDropdown() {
-    var sel = document.getElementById('memProgram');
-    sel.innerHTML = '<option value="">— Select a Program —</option>';
-    allPrograms.forEach(function(p) {
-      var opt = document.createElement('option');
-      opt.value       = p.id;
-      opt.textContent = p.name;
-      sel.appendChild(opt);
-    });
+function populateProgramCheckboxes() {
+  var container = document.getElementById('memProgramChecks');
+  if (!container) return;
+  if (!allPrograms.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet. Add a program first.</div>';
+    return;
   }
+  container.innerHTML = allPrograms.map(function(p) {
+    var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';display:inline-block;margin-right:0.5rem"></span>';
+    return '<label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-ui);font-size:0.78rem;color:var(--muted2);cursor:pointer">'
+      + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:var(--gold)" />'
+      + dot + p.name + '</label>';
+  }).join('');
+}
 
   function openAddProgram() {
     document.getElementById('progName').value     = '';
@@ -665,10 +670,15 @@
     document.getElementById('addMembershipModal').classList.add('active');
   }
 
-  function openAddMembershipForProgram(programId) {
-    openAddMembership();
-    document.getElementById('memProgram').value = programId;
-  }
+function openAddMembershipForProgram(programId) {
+  openAddMembership();
+  setTimeout(function() {
+    var checks = document.querySelectorAll('.mem-prog-check');
+    checks.forEach(function(cb) {
+      if (cb.value === programId) cb.checked = true;
+    });
+  }, 50);
+}
 
   function closeAddMembership() {
     document.getElementById('addMembershipModal').classList.remove('active');
@@ -690,17 +700,16 @@
 
   async function saveMembership() {
     var name = document.getElementById('memName').value.trim();
-    var prog = document.getElementById('memProgram').value;
     var price = document.getElementById('memPrice').value;
+    var selectedPrograms = Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){ return cb.value; });
     if (!name)  { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
-    if (!prog)  { setMsg('membershipMsg', 'Please select a program.', 'error'); return; }
+    if (!selectedPrograms.length) { setMsg('membershipMsg', 'Select at least one program.', 'error'); return; }
     if (!price) { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
     setMsg('membershipMsg', 'Saving...', '');
     var limitType  = document.getElementById('memLimitType').value;
     var limitCount = document.getElementById('memLimitCount').value;
     var res = await sb.from('memberships').insert({
       school_id:        SCHOOL_ID,
-      program_id:       prog,
       name:             name,
       billing_type:     document.getElementById('memType').value,
       billing_length:   parseInt(document.getElementById('memLength').value) || 1,
@@ -713,13 +722,20 @@
       auto_renew:       document.getElementById('memAutoRenew').checked,
       autopay:          document.getElementById('memAutopay').checked,
       active:           true
+    }).select();
+if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
+else {
+  var newMem = res.data && res.data[0];
+  if (newMem && selectedPrograms.length) {
+    var links = selectedPrograms.map(function(pid) {
+      return { membership_id: newMem.id, program_id: pid };
     });
-    if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
-    else {
-      setMsg('membershipMsg', 'Membership saved!', 'success');
-      await loadMemberships();
-      setTimeout(function(){ closeAddMembership(); }, 1000);
-    }
+    await sb.from('membership_programs').insert(links);
+  }
+  setMsg('membershipMsg', 'Membership saved!', 'success');
+  await loadMemberships();
+  setTimeout(function(){ closeAddMembership(); }, 1000);
+}
   }
 
   // ─── CLASSES ────────────────────────────────────────
