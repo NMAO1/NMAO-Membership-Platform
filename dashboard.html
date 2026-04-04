@@ -121,14 +121,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Name</th>
-            <th>Programs</th>
-            <th>Type</th>
-            <th>Price</th>
-            <th>Class Access</th>
-            <th>Auto-Renew</th>
-          </tr>
+          <tr><th>Name</th><th>Programs</th><th>Type</th><th>Price</th><th>Class Access</th><th>Auto-Renew</th></tr>
         </thead>
         <tbody id="membershipsTableBody">
           <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</td></tr>
@@ -140,7 +133,7 @@
 
 <!-- MEMBERS PAGE -->
 <div class="page" id="page-members">
-  <div class="content-heading"><h2>Members</h2><div class="rule-h"></div></div>
+  <div class="content-heading"><h2>Members</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddStudent()">+ Add Student</button></div>
   <div class="stats-grid" style="margin-bottom:1.5rem">
     <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
     <div class="stat-card"><div class="stat-icon">◆</div><div class="stat-label">Active</div><div class="stat-value" id="statActive">0</div><div class="stat-delta up">Current</div></div>
@@ -151,8 +144,8 @@
     <div class="panel-header"><span class="panel-title">Student Roster</span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
-        <tbody id="membersTableBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody>
+        <thead><tr><th>Name</th><th>Email</th><th>Program</th><th>Membership</th><th>Status</th><th>Joined</th></tr></thead>
+        <tbody id="membersTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -459,6 +452,51 @@
   </div>
 </div>
 
+<!-- ADD STUDENT MODAL -->
+
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add New Student</span>
+      <button class="modal-close" onclick="closeAddStudent()">x</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Student Info</div>
+      <div class="form-row">
+        <div class="field"><label>First Name</label><input type="text" id="stuFirst" placeholder="First name" /></div>
+        <div class="field"><label>Last Name</label><input type="text" id="stuLast" placeholder="Last name" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Date of Birth</label><input type="date" id="stuDOB" /></div>
+        <div class="field"><label>Phone</label><input type="text" id="stuPhone" placeholder="(555) 555-5555" /></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="stuEmail" placeholder="student@email.com" /></div>
+      <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Enrollment</div>
+      <div class="field"><label>Program</label>
+        <select id="stuProgram" onchange="filterMembershipsForProgram()">
+          <option value="">— Select a Program —</option>
+        </select>
+      </div>
+      <div class="field"><label>Membership Plan</label>
+        <select id="stuMembership">
+          <option value="">— Select a Program first —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Start Date</label><input type="date" id="stuStartDate" /></div>
+        <div class="field"><label>Status</label>
+          <select id="stuStatus">
+            <option value="active">Active</option>
+            <option value="trial">Trial</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-gold-full" onclick="saveStudent()">Save Student</button>
+      <p class="form-msg" id="studentMsg"></p>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
@@ -565,11 +603,11 @@
     }
     container.innerHTML = allPrograms.map(function(p) {
       var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + (p.color || '#C9A84C') + ';display:inline-block;margin-right:0.5rem"></span>';
-       return '<label class="prog-check-label">'
-  + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:#C9A84C;flex-shrink:0" />'
-  + dot
-  + '<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">' + p.name + '</span>'
-  + '</label>';
+      return '<label class="prog-check-label">'
+        + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:#C9A84C;flex-shrink:0" />'
+        + dot
+        + '<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">' + p.name + '</span>'
+        + '</label>';
     }).join('');
   }
 
@@ -584,15 +622,11 @@
     document.getElementById('addProgramModal').classList.add('active');
   }
 
-  function closeAddProgram() {
-    document.getElementById('addProgramModal').classList.remove('active');
-  }
+  function closeAddProgram() { document.getElementById('addProgramModal').classList.remove('active'); }
 
   function syncProgColor() {
     var hex = document.getElementById('progColorHex').value;
-    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-      document.getElementById('progColor').value = hex;
-    }
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) document.getElementById('progColor').value = hex;
   }
 
   async function saveProgram() {
@@ -674,15 +708,11 @@
     openAddMembership();
     setTimeout(function() {
       var checks = document.querySelectorAll('.mem-prog-check');
-      checks.forEach(function(cb) {
-        if (cb.value === programId) cb.checked = true;
-      });
+      checks.forEach(function(cb) { if (cb.value === programId) cb.checked = true; });
     }, 50);
   }
 
-  function closeAddMembership() {
-    document.getElementById('addMembershipModal').classList.remove('active');
-  }
+  function closeAddMembership() { document.getElementById('addMembershipModal').classList.remove('active'); }
 
   function toggleClassLimit() {
     var val = document.getElementById('memLimitType').value;
@@ -702,39 +732,129 @@
     var name             = document.getElementById('memName').value.trim();
     var price            = document.getElementById('memPrice').value;
     var selectedPrograms = Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){ return cb.value; });
-    if (!name)                  { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
+    if (!name)                    { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
     if (!selectedPrograms.length) { setMsg('membershipMsg', 'Select at least one program.', 'error'); return; }
-    if (!price)                 { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
+    if (!price)                   { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
     setMsg('membershipMsg', 'Saving...', '');
     var limitType  = document.getElementById('memLimitType').value;
     var limitCount = document.getElementById('memLimitCount').value;
     var res = await sb.from('memberships').insert({
-      school_id:        SCHOOL_ID,
-      name:             name,
-      billing_type:     document.getElementById('memType').value,
-      billing_length:   parseInt(document.getElementById('memLength').value) || 1,
-      billing_unit:     document.getElementById('memUnit').value,
-      price:            parseFloat(price) || 0,
-      signup_fee:       parseFloat(document.getElementById('memSignup').value) || 0,
-      class_limit_type: limitType,
+      school_id:         SCHOOL_ID,
+      name:              name,
+      billing_type:      document.getElementById('memType').value,
+      billing_length:    parseInt(document.getElementById('memLength').value) || 1,
+      billing_unit:      document.getElementById('memUnit').value,
+      price:             parseFloat(price) || 0,
+      signup_fee:        parseFloat(document.getElementById('memSignup').value) || 0,
+      class_limit_type:  limitType,
       class_limit_count: limitCount ? parseInt(limitCount) : null,
-      trial:            document.getElementById('memTrial').checked,
-      auto_renew:       document.getElementById('memAutoRenew').checked,
-      autopay:          document.getElementById('memAutopay').checked,
-      active:           true
+      trial:             document.getElementById('memTrial').checked,
+      auto_renew:        document.getElementById('memAutoRenew').checked,
+      autopay:           document.getElementById('memAutopay').checked,
+      active:            true
     }).select();
     if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
     else {
       var newMem = res.data && res.data[0];
       if (newMem && selectedPrograms.length) {
-        var links = selectedPrograms.map(function(pid) {
-          return { membership_id: newMem.id, program_id: pid };
-        });
+        var links = selectedPrograms.map(function(pid){ return { membership_id: newMem.id, program_id: pid }; });
         await sb.from('membership_programs').insert(links);
       }
       setMsg('membershipMsg', 'Membership saved!', 'success');
       await loadMemberships();
       setTimeout(function(){ closeAddMembership(); }, 1000);
+    }
+  }
+
+  // ─── ADD STUDENT ────────────────────────────────────
+  function openAddStudent() {
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('stuFirst').value      = '';
+    document.getElementById('stuLast').value       = '';
+    document.getElementById('stuDOB').value        = '';
+    document.getElementById('stuPhone').value      = '';
+    document.getElementById('stuEmail').value      = '';
+    document.getElementById('stuStartDate').value  = today;
+    document.getElementById('stuStatus').value     = 'active';
+    document.getElementById('studentMsg').textContent = '';
+    document.getElementById('stuMembership').innerHTML = '<option value="">— Select a Program first —</option>';
+    populateStudentProgramDropdown();
+    document.getElementById('addStudentModal').classList.add('active');
+  }
+
+  function closeAddStudent() { document.getElementById('addStudentModal').classList.remove('active'); }
+
+  function populateStudentProgramDropdown() {
+    var sel = document.getElementById('stuProgram');
+    sel.innerHTML = '<option value="">— Select a Program —</option>';
+    allPrograms.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value       = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function filterMembershipsForProgram() {
+    var programId = document.getElementById('stuProgram').value;
+    var sel = document.getElementById('stuMembership');
+    if (!programId) {
+      sel.innerHTML = '<option value="">— Select a Program first —</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">Loading...</option>';
+    var res = await sb.from('membership_programs').select('membership_id').eq('program_id', programId);
+    if (res.error || !res.data || !res.data.length) {
+      sel.innerHTML = '<option value="">No memberships for this program</option>';
+      return;
+    }
+    var memIds = res.data.map(function(r){ return r.membership_id; });
+    var mems   = allMemberships.filter(function(m){ return memIds.indexOf(m.id) !== -1; });
+    if (!mems.length) {
+      sel.innerHTML = '<option value="">No memberships for this program</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— Select a Membership —</option>';
+    mems.forEach(function(m) {
+      var opt   = document.createElement('option');
+      opt.value = m.id;
+      var price = '$' + parseFloat(m.price || 0).toFixed(2);
+      if (m.billing_type === 'monthly') price += '/mo';
+      if (m.billing_type === 'yearly')  price += '/yr';
+      opt.textContent = m.name + ' — ' + price;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function saveStudent() {
+    var first      = document.getElementById('stuFirst').value.trim();
+    var last       = document.getElementById('stuLast').value.trim();
+    var programId  = document.getElementById('stuProgram').value;
+    var membershipId = document.getElementById('stuMembership').value;
+    if (!first || !last)  { setMsg('studentMsg', 'First and last name are required.', 'error'); return; }
+    if (!programId)       { setMsg('studentMsg', 'Please select a program.', 'error'); return; }
+    if (!membershipId)    { setMsg('studentMsg', 'Please select a membership plan.', 'error'); return; }
+    setMsg('studentMsg', 'Saving...', '');
+    var dob   = document.getElementById('stuDOB').value;
+    var start = document.getElementById('stuStartDate').value;
+    var res = await sb.from('students').insert({
+      school_id:     SCHOOL_ID,
+      first_name:    first,
+      last_name:     last,
+      email:         document.getElementById('stuEmail').value.trim(),
+      phone:         document.getElementById('stuPhone').value.trim(),
+      date_of_birth: dob   || null,
+      program_id:    programId,
+      membership_id: membershipId,
+      plan_type:     'membership',
+      status:        document.getElementById('stuStatus').value,
+      start_date:    start || new Date().toISOString().split('T')[0]
+    });
+    if (res.error) { setMsg('studentMsg', res.error.message, 'error'); }
+    else {
+      setMsg('studentMsg', first + ' ' + last + ' added!', 'success');
+      await loadStudents();
+      setTimeout(function(){ closeAddStudent(); }, 1200);
     }
   }
 
@@ -749,7 +869,7 @@
   }
 
   async function loadStudents() {
-    var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID);
+    var res = await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id', SCHOOL_ID);
     allStudents = res.data || [];
     var active  = allStudents.filter(function(s){ return s.status === 'active'; }).length;
     var pending = allStudents.filter(function(s){ return s.status === 'trial' || s.status === 'paused'; }).length;
@@ -817,17 +937,20 @@
   function renderMembersTable() {
     var tb = document.getElementById('membersTableBody');
     if (!allStudents.length) {
-      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No members yet.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No students yet. Add your first student!</td></tr>';
       return;
     }
     tb.innerHTML = allStudents.map(function(s) {
-      var st   = s.status || 'trial';
-      var sc   = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
-      var jd   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      var st      = s.status || 'trial';
+      var sc      = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
+      var jd      = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      var progName = (s.programs && s.programs.name) ? s.programs.name : '—';
+      var memName  = (s.memberships && s.memberships.name) ? s.memberships.name : '—';
       return '<tr>'
         + '<td class="name">' + s.first_name + ' ' + s.last_name + '</td>'
         + '<td>' + (s.email || '—') + '</td>'
-        + '<td>' + (s.plan_type || '—') + '</td>'
+        + '<td>' + progName + '</td>'
+        + '<td>' + memName + '</td>'
         + '<td><span class="chip ' + sc + '">' + st + '</span></td>'
         + '<td>' + jd + '</td>'
         + '</tr>';
@@ -853,27 +976,19 @@
     if (!title || !start || !end || !days.length) { setMsg('classMsg', 'Fill in title, times, and select days.', 'error'); return; }
     setMsg('classMsg', 'Saving...', '');
     var res = await sb.from('classes').insert({
-      school_id:       SCHOOL_ID,
-      name:            title,
-      title:           title,
-      style:           document.getElementById('classStyle').value,
-      age_group:       document.getElementById('classAge').value,
-      level:           document.getElementById('classLevel').value,
-      capacity:        capacity ? parseInt(capacity) : null,
-      start_time:      start,
-      end_time:        end,
-      days_of_week:    days,
-      active:          true,
-      is_active:       true,
-      is_fixed:        true,
+      school_id: SCHOOL_ID, name: title, title: title,
+      style: document.getElementById('classStyle').value,
+      age_group: document.getElementById('classAge').value,
+      level: document.getElementById('classLevel').value,
+      capacity: capacity ? parseInt(capacity) : null,
+      start_time: start, end_time: end, days_of_week: days,
+      active: true, is_active: true, is_fixed: true,
       instructor_name: document.getElementById('userName').textContent
     });
     if (res.error) { setMsg('classMsg', res.error.message, 'error'); }
     else {
       setMsg('classMsg', 'Class saved!', 'success');
-      await loadClasses();
-      buildTodaySchedule();
-      buildWeekGrid();
+      await loadClasses(); buildTodaySchedule(); buildWeekGrid();
       setTimeout(function(){ closeAddClass(); document.getElementById('classMsg').textContent = ''; }, 1200);
     }
   }
@@ -935,24 +1050,17 @@
       var del = await sb.from('attendance').delete().eq('id', attendanceRecords[studentId]);
       if (!del.error) {
         delete attendanceRecords[studentId];
-        btn.textContent       = '◇';
-        btn.style.color       = 'var(--muted)';
-        row.style.borderColor = 'var(--border)';
+        btn.textContent = '◇'; btn.style.color = 'var(--muted)'; row.style.borderColor = 'var(--border)';
         setMsg('attendanceMsg', studentName + ' removed.', '');
       }
     } else {
       var ins = await sb.from('attendance').insert({
-        school_id:     SCHOOL_ID,
-        class_id:      currentAttendanceClassId,
-        student_id:    studentId,
-        checked_in_at: new Date().toISOString(),
-        method:        'staff'
+        school_id: SCHOOL_ID, class_id: currentAttendanceClassId,
+        student_id: studentId, checked_in_at: new Date().toISOString(), method: 'staff'
       }).select().single();
       if (!ins.error) {
         attendanceRecords[studentId] = ins.data.id;
-        btn.textContent       = '◆';
-        btn.style.color       = 'var(--gold)';
-        row.style.borderColor = 'var(--gold-dk)';
+        btn.textContent = '◆'; btn.style.color = 'var(--gold)'; row.style.borderColor = 'var(--gold-dk)';
         setMsg('attendanceMsg', studentName + ' marked present!', 'success');
       }
     }
@@ -981,12 +1089,9 @@
   async function saveSettings() {
     var color = document.getElementById('settingColor').value;
     var res   = await sb.from('schools').update({
-      name:  document.getElementById('settingName').value.trim(),
-      email: document.getElementById('settingEmail').value.trim(),
-      phone: document.getElementById('settingPhone').value.trim(),
-      city:  document.getElementById('settingCity').value.trim(),
-      state: document.getElementById('settingState').value.trim(),
-      color: color
+      name: document.getElementById('settingName').value.trim(), email: document.getElementById('settingEmail').value.trim(),
+      phone: document.getElementById('settingPhone').value.trim(), city: document.getElementById('settingCity').value.trim(),
+      state: document.getElementById('settingState').value.trim(), color: color
     }).eq('id', SCHOOL_ID);
     if (res.error) { setMsg('settingsMsg', res.error.message, 'error'); }
     else {
@@ -997,24 +1102,17 @@
     }
   }
 
-  function applyBrandColor(color) {
-    document.documentElement.style.setProperty('--gold', color);
-  }
+  function applyBrandColor(color) { document.documentElement.style.setProperty('--gold', color); }
 
   function syncColorPicker() {
     var hex = document.getElementById('settingColorHex').value;
-    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-      document.getElementById('settingColor').value = hex;
-      applyBrandColor(hex);
-    }
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) { document.getElementById('settingColor').value = hex; applyBrandColor(hex); }
   }
 
   // ─── UTILITIES ──────────────────────────────────────
   function fmtTime(t) {
     if (!t) return '';
-    var parts = t.split(':');
-    var hr    = parseInt(parts[0]);
-    var min   = parts[1];
+    var parts = t.split(':'); var hr = parseInt(parts[0]); var min = parts[1];
     return (hr > 12 ? hr - 12 : hr || 12) + ':' + min + ' ' + (hr >= 12 ? 'PM' : 'AM');
   }
 
@@ -1031,8 +1129,7 @@
   }
 
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('#schoolBtn'))
-      document.getElementById('schoolMenu').style.display = 'none';
+    if (!e.target.closest('#schoolBtn')) document.getElementById('schoolMenu').style.display = 'none';
   });
 
   function navigate(page, el) {
@@ -1042,11 +1139,9 @@
     if (t) t.classList.add('active');
     if (el) el.classList.add('active');
     var titles = {
-      schedule:"Today's Schedule", classes:'All Classes',
-      programs:'Programs', memberships:'Memberships',
-      members:'Members', payments:'Payments',
-      communications:'Communications', analytics:'Analytics',
-      settings:'Settings', billing:'Billing'
+      schedule:"Today's Schedule", classes:'All Classes', programs:'Programs',
+      memberships:'Memberships', members:'Members', payments:'Payments',
+      communications:'Communications', analytics:'Analytics', settings:'Settings', billing:'Billing'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.querySelector('.main').scrollTo({top:0, behavior:'smooth'});
@@ -1058,6 +1153,7 @@
   document.getElementById('attendanceModal').addEventListener('click',    function(e){ if (e.target === this) closeAttendance(); });
   document.getElementById('addProgramModal').addEventListener('click',    function(e){ if (e.target === this) closeAddProgram(); });
   document.getElementById('addMembershipModal').addEventListener('click', function(e){ if (e.target === this) closeAddMembership(); });
+  document.getElementById('addStudentModal').addEventListener('click',    function(e){ if (e.target === this) closeAddStudent(); });
 
   init();
 </script>
