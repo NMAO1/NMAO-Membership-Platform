@@ -7,11 +7,11 @@
   <title>NMAO Platform — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Libre Baskerville:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="dashboard">
 
 <div id="loadingScreen">
   <div class="loading-logo">NMAO</div>
@@ -23,7 +23,7 @@
     <div class="sidebar-logo-text">NMAO</div>
     <div class="sidebar-school" id="schoolName">Loading...</div>
   </div>
-    <div class="sidebar-nav">
+  <div class="sidebar-nav">
     <div class="nav-section-label">Schedule</div>
     <div class="nav-item active" onclick="navigate('schedule',this)"><span class="nav-icon">◇</span> Schedule</div>
     <div class="nav-item" onclick="navigate('classes',this)"><span class="nav-icon">◈</span> All Classes</div>
@@ -52,14 +52,14 @@
 <main class="main">
   <div class="topbar">
     <div style="position:relative">
-<div id="schoolBtn" onclick="toggleSchoolMenu()" style="font-family:'Libre Baskerville',serif;font-size:0.85rem;color:#C9A84C;cursor:pointer;padding:0.5rem;letter-spacing:0.08em">
-  ▾ <span id="topSchoolName">NMAO</span>
-</div>
-<div id="schoolMenu" style="display:none;position:absolute;top:100%;left:0;background:#141414;border:1px solid #C9A84C;min-width:180px;z-index:300">
-  <div onclick="navigate('settings',null)" style="padding:0.75rem 1rem;font-size:0.75rem;color:#F5F0E8;cursor:pointer;border-bottom:1px solid #222;letter-spacing:0.06em">School Settings</div>
-  <div onclick="handleSignOut()" style="padding:0.75rem 1rem;font-size:0.75rem;color:#E07070;cursor:pointer;letter-spacing:0.06em">Sign Out</div>
-</div>
-</div>
+      <div id="schoolBtn" onclick="toggleSchoolMenu()" style="font-family:'Libre Baskerville',serif;font-size:0.85rem;color:#C9A84C;cursor:pointer;padding:0.5rem;letter-spacing:0.08em">
+        ▾ <span id="topSchoolName">NMAO</span>
+      </div>
+      <div id="schoolMenu" style="display:none;position:absolute;top:100%;left:0;background:#141414;border:1px solid #C9A84C;min-width:180px;z-index:300">
+        <div onclick="navigate('settings',null)" style="padding:0.75rem 1rem;font-size:0.75rem;color:#F5F0E8;cursor:pointer;border-bottom:1px solid #222;letter-spacing:0.06em">School Settings</div>
+        <div onclick="handleSignOut()" style="padding:0.75rem 1rem;font-size:0.75rem;color:#E07070;cursor:pointer;letter-spacing:0.06em">Sign Out</div>
+      </div>
+    </div>
     <div class="topbar-title" id="pageTitle">Today's Schedule</div>
     <div class="topbar-right">
       <span class="topbar-date" id="todayDate"></span>
@@ -180,14 +180,13 @@
       <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
       <div class="field"><label>State</label><input type="text" id="settingState" /></div>
       <div class="field">
-  <label>Brand Color</label>
-  <div style="display:flex;gap:0.75rem;align-items:center">
-    <input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
-    <input type="text" id="settingColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncColorPicker()" />
-  </div>
-  <p style="font-size:0.62rem;color:var(--muted);margin-top:0.4rem">This color will be applied across your dashboard and member portal.</p>
-</div>
-
+        <label>Brand Color</label>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
+          <input type="text" id="settingColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncColorPicker()" />
+        </div>
+        <p style="font-size:0.62rem;color:var(--muted);margin-top:0.4rem">This color will be applied across your dashboard and member portal.</p>
+      </div>
       <button class="btn-sm gold" style="width:fit-content" onclick="saveSettings()">Save Changes</button>
       <p class="form-msg" id="settingsMsg"></p>
     </div>
@@ -211,7 +210,9 @@
 
   </div>
 </main>
+
 <!-- ATTENDANCE MODAL -->
+
 <div class="modal-overlay" id="attendanceModal">
   <div class="modal">
     <div class="modal-header">
@@ -334,17 +335,17 @@
     const { data } = await sb.from('schools').select('*').eq('id',SCHOOL_ID).single();
     if (data) {
       document.getElementById('schoolName').textContent = data.name;
+      document.getElementById('topSchoolName').textContent = data.name;
       document.getElementById('settingName').value  = data.name||'';
       document.getElementById('settingEmail').value = data.email||'';
       document.getElementById('settingPhone').value = data.phone||'';
       document.getElementById('settingCity').value  = data.city||'';
       document.getElementById('settingState').value = data.state||'';
       if (data.color) {
-  document.getElementById('settingColor').value = data.color;
-  document.getElementById('settingColorHex').value = data.color;
-  applyBrandColor(data.color);
-}
-
+        document.getElementById('settingColor').value = data.color;
+        document.getElementById('settingColorHex').value = data.color;
+        applyBrandColor(data.color);
+      }
     }
   }
 
@@ -383,15 +384,15 @@
     const tc = getTodayClasses();
     document.getElementById('todayClassCount').textContent = tc.length;
     const el = document.getElementById('todaySchedule');
-    el.innerHTML = tc.length ? tc.map(classCardHTML).join('') : '<div class="no-classes">No classes today. Rest day! </div>';
+    el.innerHTML = tc.length ? tc.map(classCardHTML).join('') : '<div class="no-classes">No classes today. Rest day!</div>';
   }
 
-function classCardHTML(c) {
-  var actions = '<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+c.title+'\')">Attendance</button><button class="btn-sm">Edit</button></div>';
-  var tags = (c.style?'<span class="class-tag">'+c.style+'</span>':'') + (c.level?'<span class="class-tag">'+c.level+'</span>':'') + (c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
-  var meta = (c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'') + (c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'') + (c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
-  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'#C9A84C')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+c.title+'</div><div class="class-tags">'+tags+'</div><div class="class-meta">'+meta+'</div></div>'+actions+'</div>';
-}
+  function classCardHTML(c) {
+    var actions = '<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+c.title+'\')">Attendance</button><button class="btn-sm">Edit</button></div>';
+    var tags = (c.style?'<span class="class-tag">'+c.style+'</span>':'') + (c.level?'<span class="class-tag">'+c.level+'</span>':'') + (c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
+    var meta = (c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'') + (c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'') + (c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
+    return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'#C9A84C')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+c.title+'</div><div class="class-tags">'+tags+'</div><div class="class-meta">'+meta+'</div></div>'+actions+'</div>';
+  }
 
   function buildWeekGrid() {
     const now = new Date();
@@ -402,10 +403,10 @@ function classCardHTML(c) {
       const d = new Date(ws); d.setDate(ws.getDate()+i);
       const dn = DAYS[i];
       const dc = allClasses.filter(c=>c.days_of_week&&c.days_of_week.includes(dn)).sort((a,b)=>a.start_time>b.start_time?1:-1);
-      html += `<div class="week-day ${i===cur?'today':''}">
-        <div class="week-day-header"><div class="week-day-name">${DAY_SHORT[i]}</div><div class="week-day-num">${d.getDate()}</div></div>
-        ${dc.map(c=>`<div class="week-class-pill" style="border-color:${c.color||'#C9A84C'}">${fmtTime(c.start_time)} ${c.title}</div>`).join('')}
-      </div>`;
+      html += '<div class="week-day '+(i===cur?'today':'')+'">';
+      html += '<div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
+      html += dc.map(function(c){ return '<div class="week-class-pill" style="border-color:'+(c.color||'#C9A84C')+'">'+fmtTime(c.start_time)+' '+c.title+'</div>'; }).join('');
+      html += '</div>';
     }
     document.getElementById('weekGrid').innerHTML = html;
   }
@@ -413,10 +414,10 @@ function classCardHTML(c) {
   function renderMembersTable() {
     const tb = document.getElementById('membersTableBody');
     if (!allStudents.length) { tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No members yet. Add your first student!</td></tr>'; return; }
-    tb.innerHTML = allStudents.map(s=>{
-      const sc = s.membership_status==='active'?'chip-active':s.membership_status==='pending'?'chip-pending':'chip-expired';
-      const jd = s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      return `<tr><td class="name">${s.first_name} ${s.last_name}</td><td>${s.email||'—'}</td><td>${s.membership_plan||'—'}</td><td><span class="chip ${sc}">${s.membership_status}</span></td><td>${jd}</td></tr>`;
+    tb.innerHTML = allStudents.map(function(s){
+      var sc = s.membership_status==='active'?'chip-active':s.membership_status==='pending'?'chip-pending':'chip-expired';
+      var jd = s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      return '<tr><td class="name">'+s.first_name+' '+s.last_name+'</td><td>'+(s.email||'—')+'</td><td>'+(s.membership_plan||'—')+'</td><td><span class="chip '+sc+'">'+s.membership_status+'</span></td><td>'+jd+'</td></tr>';
     }).join('');
   }
 
@@ -429,98 +430,90 @@ function classCardHTML(c) {
   function closeAddClass() { document.getElementById('addClassModal').classList.remove('active'); }
   function toggleDay(btn)  { btn.classList.toggle('selected'); }
 
-  let currentAttendanceClassId = null;
-let attendanceRecords = {};
+  var currentAttendanceClassId = null;
+  var attendanceRecords = {};
 
-async function openAttendance(classId, classTitle) {
-  currentAttendanceClassId = classId;
-  attendanceRecords = {};
-  document.getElementById('attendanceModalTitle').textContent = classTitle + ' — Attendance';
-  document.getElementById('attendanceDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('attendanceCount').textContent = '0';
-  document.getElementById('attendanceMsg').textContent = '';
-  document.getElementById('attendanceList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
-  document.getElementById('attendanceModal').classList.add('active');
-  await loadAttendanceStudents(classId);
-}
-
-function closeAttendance() {
-  document.getElementById('attendanceModal').classList.remove('active');
-  currentAttendanceClassId = null;
-  attendanceRecords = {};
-}
-
-async function loadAttendanceStudents(classId) {
-  const { data } = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
-  const list = document.getElementById('attendanceList');
-  if (!data || !data.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
-    return;
+  async function openAttendance(classId, classTitle) {
+    currentAttendanceClassId = classId;
+    attendanceRecords = {};
+    document.getElementById('attendanceModalTitle').textContent = classTitle + ' — Attendance';
+    document.getElementById('attendanceDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    document.getElementById('attendanceCount').textContent = '0';
+    document.getElementById('attendanceMsg').textContent = '';
+    document.getElementById('attendanceList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
+    document.getElementById('attendanceModal').classList.add('active');
+    await loadAttendanceStudents(classId);
   }
 
-async function loadAttendanceStudents(classId) {
-  var list = document.getElementById('attendanceList');
-  var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
-  var data = res.data;
-  if (!data || !data.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
-    return;
+  function closeAttendance() {
+    document.getElementById('attendanceModal').classList.remove('active');
+    currentAttendanceClassId = null;
+    attendanceRecords = {};
   }
-  var today = new Date().toISOString().split('T')[0];
-  var res2 = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
-  var existing = res2.data;
-  if (existing) existing.forEach(function(r) { attendanceRecords[r.student_id] = r.id; });
-  var html = '';
-  data.forEach(function(s) {
-    var present = !!attendanceRecords[s.id];
-    var diamond = present ? '◆' : '◇';
-    var color = present ? 'var(--gold)' : 'var(--muted)';
-    var borderColor = present ? 'var(--gold-dk)' : 'var(--border)';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid ' + borderColor + '" id="row-' + s.id + '">';
-    html += '<div><div style="font-size:0.85rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>';
-    html += '<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">' + (s.membership_plan||'Member') + '</div></div>';
-    html += '<button onclick="toggleAttendance(\'' + s.id + '\',\'' + s.first_name + ' ' + s.last_name + '\')" id="btn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:' + color + '">' + diamond + '</button>';
-    html += '</div>';
-  });
-  list.innerHTML = html;
-  updateAttendanceCount();
-}
 
-async function toggleAttendance(studentId, studentName) {
-  const btn = document.getElementById('btn-' + studentId);
-  const row = document.getElementById('row-' + studentId);
-  const isPresent = !!attendanceRecords[studentId];
-  if (isPresent) {
-    const { error } = await sb.from('attendance').delete().eq('id', attendanceRecords[studentId]);
-    if (!error) {
-      delete attendanceRecords[studentId];
-      btn.textContent = '◇';
-      btn.style.color = 'var(--muted)';
-      row.style.borderColor = 'var(--border)';
-      setMsg('attendanceMsg', studentName + ' removed.', '');
+  async function loadAttendanceStudents(classId) {
+    var list = document.getElementById('attendanceList');
+    var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
+    var data = res.data;
+    if (!data || !data.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
+      return;
     }
-  } else {
-    const { data, error } = await sb.from('attendance').insert({
-      school_id: SCHOOL_ID,
-      class_id: currentAttendanceClassId,
-      student_id: studentId,
-      checked_in_at: new Date().toISOString(),
-      method: 'staff'
-    }).select().single();
-    if (!error) {
-      attendanceRecords[studentId] = data.id;
-      btn.textContent = '◆';
-      btn.style.color = 'var(--gold)';
-      row.style.borderColor = 'var(--gold-dk)';
-      setMsg('attendanceMsg', studentName + ' marked present!', 'success');
-    }
+    var today = new Date().toISOString().split('T')[0];
+    var res2 = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
+    var existing = res2.data;
+    if (existing) existing.forEach(function(r) { attendanceRecords[r.student_id] = r.id; });
+    var html = '';
+    data.forEach(function(s) {
+      var present = !!attendanceRecords[s.id];
+      var diamond = present ? '◆' : '◇';
+      var color = present ? 'var(--gold)' : 'var(--muted)';
+      var borderColor = present ? 'var(--gold-dk)' : 'var(--border)';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid ' + borderColor + '" id="row-' + s.id + '">';
+      html += '<div><div style="font-size:0.85rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>';
+      html += '<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">' + (s.membership_plan||'Member') + '</div></div>';
+      html += '<button onclick="toggleAttendance(\'' + s.id + '\',\'' + s.first_name + ' ' + s.last_name + '\')" id="btn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:' + color + '">' + diamond + '</button>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+    updateAttendanceCount();
   }
-  updateAttendanceCount();
-}
 
-function updateAttendanceCount() {
-  document.getElementById('attendanceCount').textContent = Object.keys(attendanceRecords).length;
-}
+  async function toggleAttendance(studentId, studentName) {
+    var btn = document.getElementById('btn-' + studentId);
+    var row = document.getElementById('row-' + studentId);
+    var isPresent = !!attendanceRecords[studentId];
+    if (isPresent) {
+      var del = await sb.from('attendance').delete().eq('id', attendanceRecords[studentId]);
+      if (!del.error) {
+        delete attendanceRecords[studentId];
+        btn.textContent = '◇';
+        btn.style.color = 'var(--muted)';
+        row.style.borderColor = 'var(--border)';
+        setMsg('attendanceMsg', studentName + ' removed.', '');
+      }
+    } else {
+      var ins = await sb.from('attendance').insert({
+        school_id: SCHOOL_ID,
+        class_id: currentAttendanceClassId,
+        student_id: studentId,
+        checked_in_at: new Date().toISOString(),
+        method: 'staff'
+      }).select().single();
+      if (!ins.error) {
+        attendanceRecords[studentId] = ins.data.id;
+        btn.textContent = '◆';
+        btn.style.color = 'var(--gold)';
+        row.style.borderColor = 'var(--gold-dk)';
+        setMsg('attendanceMsg', studentName + ' marked present!', 'success');
+      }
+    }
+    updateAttendanceCount();
+  }
+
+  function updateAttendanceCount() {
+    document.getElementById('attendanceCount').textContent = Object.keys(attendanceRecords).length;
+  }
 
   async function saveClass() {
     const title = document.getElementById('classTitle').value.trim();
@@ -543,7 +536,7 @@ function updateAttendanceCount() {
     else {
       setMsg('classMsg','Class saved!','success');
       await loadClasses(); buildTodaySchedule(); buildWeekGrid();
-      setTimeout(()=>{ closeAddClass(); document.getElementById('classMsg').textContent=''; },1200);
+      setTimeout(function(){ closeAddClass(); document.getElementById('classMsg').textContent=''; },1200);
     }
   }
 
@@ -560,71 +553,75 @@ function updateAttendanceCount() {
     else { setMsg('commMsg','Message sent!','success'); document.getElementById('commSubject').value=''; document.getElementById('commBody').value=''; }
   }
 
-async function saveSettings() {
-  const color = document.getElementById('settingColor').value;
-  const { error } = await sb.from('schools').update({
-    name:  document.getElementById('settingName').value.trim(),
-    email: document.getElementById('settingEmail').value.trim(),
-    phone: document.getElementById('settingPhone').value.trim(),
-    city:  document.getElementById('settingCity').value.trim(),
-    state: document.getElementById('settingState').value.trim(),
-    color: color
-  }).eq('id', SCHOOL_ID);
-  if (error) { setMsg('settingsMsg', error.message, 'error'); }
-  else {
-    setMsg('settingsMsg', 'Saved!', 'success');
-    document.getElementById('schoolName').textContent = document.getElementById('settingName').value.trim();
-    applyBrandColor(color);
+  async function saveSettings() {
+    const color = document.getElementById('settingColor').value;
+    const { error } = await sb.from('schools').update({
+      name:  document.getElementById('settingName').value.trim(),
+      email: document.getElementById('settingEmail').value.trim(),
+      phone: document.getElementById('settingPhone').value.trim(),
+      city:  document.getElementById('settingCity').value.trim(),
+      state: document.getElementById('settingState').value.trim(),
+      color: color
+    }).eq('id', SCHOOL_ID);
+    if (error) { setMsg('settingsMsg', error.message, 'error'); }
+    else {
+      setMsg('settingsMsg', 'Saved!', 'success');
+      document.getElementById('schoolName').textContent = document.getElementById('settingName').value.trim();
+      applyBrandColor(color);
+    }
   }
-}
 
-function applyBrandColor(color) {
-  document.documentElement.style.setProperty('--gold', color);
-}
-
-function syncColorPicker() {
-  const hex = document.getElementById('settingColorHex').value;
-  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-    document.getElementById('settingColor').value = hex;
-    applyBrandColor(hex);
+  function applyBrandColor(color) {
+    document.documentElement.style.setProperty('--gold', color);
   }
-}
 
+  function syncColorPicker() {
+    const hex = document.getElementById('settingColorHex').value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      document.getElementById('settingColor').value = hex;
+      applyBrandColor(hex);
+    }
+  }
 
   function fmtTime(t) {
     if (!t) return '';
-    const [h,m] = t.split(':');
-    const hr = parseInt(h);
-    return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`;
+    var parts = t.split(':');
+    var hr = parseInt(parts[0]);
+    var min = parts[1];
+    return (hr>12?hr-12:hr||12) + ':' + min + ' ' + (hr>=12?'PM':'AM');
   }
 
   function setMsg(id,text,type) {
-    const el = document.getElementById(id);
+    var el = document.getElementById(id);
     el.textContent = text;
-    el.className = 'form-msg '+type;
+    el.className = 'form-msg ' + (type||'');
   }
-function toggleSchoolMenu(){
-  var m=document.getElementById('schoolMenu');
-  m.style.display=m.style.display==='none'?'block':'none';
-}
-document.addEventListener('click',function(e){
-  if(!e.target.closest('#schoolBtn'))
-    document.getElementById('schoolMenu').style.display='none';
-});
-  function navigate(page,el) {
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    const t = document.getElementById('page-'+page);
+
+  function toggleSchoolMenu() {
+    var m = document.getElementById('schoolMenu');
+    m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#schoolBtn'))
+      document.getElementById('schoolMenu').style.display = 'none';
+  });
+
+  function navigate(page, el) {
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+    var t = document.getElementById('page-' + page);
     if (t) t.classList.add('active');
     if (el) el.classList.add('active');
-    const titles = {schedule:"Today's Schedule",classes:'All Classes',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
+    var titles = {schedule:"Today's Schedule",classes:'All Classes',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
     document.getElementById('pageTitle').textContent = titles[page]||page;
     document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   }
 
   async function handleSignOut() { await sb.auth.signOut(); window.location.href='index.html'; }
 
-  document.getElementById('addClassModal').addEventListener('click',function(e){ if(e.target===this) closeAddClass(); });
+  document.getElementById('addClassModal').addEventListener('click', function(e){ if(e.target===this) closeAddClass(); });
+  document.getElementById('attendanceModal').addEventListener('click', function(e){ if(e.target===this) closeAttendance(); });
 
   init();
 </script>
