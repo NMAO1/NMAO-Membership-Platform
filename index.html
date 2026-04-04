@@ -91,26 +91,26 @@ section { padding: 7rem 5vw; }
 .feat-text { font-size: 0.92rem; color: var(--muted); line-height: 1.75; font-style: italic; }
 
 /* PRICING */
-#pricing { background: var(--Near); }
-.price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto; align-items: stretch; }
-.plan { border: 1px solid var(--border); background: var(--card); padding: 2.5rem; position: relative; transition: all 0.3s; display: flex; flex-direction: column; }
-.plan:hover { transform: translateY(-4px); border-color: var(--gold-dk); }
-.plan.featured { border-color: var(--gold); background: linear-gradient(160deg, #171200, #141414); }
-.plan-badge { position: absolute; top: -1px; right: 2rem; background: var(--gold); color: var(--black); font-family: var(--ui); font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; padding: 0.3rem 0.8rem; font-weight: 700; }
-.plan-name { font-family: var(--ui); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.25rem; }
+#pricing { background: #111111; padding: 7rem 5vw; }
+.price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 1000px; margin: 0 auto; align-items: stretch; }
+.plan { border: 1px solid #222222; background: #141414; padding: 2.5rem; position: relative; transition: all 0.3s; display: flex; flex-direction: column; }
+.plan:hover { transform: translateY(-4px); border-color: #8B6914; }
+.plan.featured { border-color: #C9A84C; background: linear-gradient(160deg, #171200, #141414); }
+.plan-name { font-family: 'Lato', sans-serif; font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A84C; margin-bottom: 1.25rem; }
 .plan-price { display: flex; align-items: flex-start; gap: 0.25rem; margin-bottom: 0.75rem; }
-.plan-dollar { font-family: var(--display); font-size: 1.2rem; color: var(--gold); margin-top: 0.6rem; }
-.plan-amount { font-family: var(--display); font-size: 3.5rem; font-weight: 700; line-height: 1; color: var(--white); }
-.plan-period { font-family: var(--ui); font-size: 0.7rem; color: var(--muted); align-self: flex-end; margin-bottom: 0.5rem; }
-.plan-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.75rem; font-style: italic; }
-.plan-divider { height: 1px; background: linear-gradient(90deg, var(--gold), transparent); margin-bottom: 1.75rem; opacity: 0.5; }
+.plan-dollar { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; color: #C9A84C; margin-top: 0.6rem; }
+.plan-amount { font-family: 'Libre Baskerville', serif; font-size: 3.5rem; font-weight: 700; line-height: 1; color: #F5F0E8; }
+.plan-period { font-family: 'Lato', sans-serif; font-size: 0.7rem; color: #7A7060; align-self: flex-end; margin-bottom: 0.5rem; }
+.plan-desc { font-size: 0.9rem; color: #7A7060; line-height: 1.7; margin-bottom: 1.75rem; font-style: italic; }
+.plan-divider { height: 1px; background: linear-gradient(90deg, #C9A84C, transparent); margin-bottom: 1.75rem; opacity: 0.5; }
 .plan-features { list-style: none; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem; flex: 1; }
-.plan-features li { font-family: var(--ui); font-size: 0.88rem; color: var(--muted2); display: flex; gap: 0.75rem; align-items: flex-start; }
-.plan-features li::before { content: ‘◆’; color: var(--gold); font-size: 0.45rem; margin-top: 0.45rem; flex-shrink: 0; }
-.btn-plan { width: 100%; font-family: var(--ui); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; border: 1px solid var(--gold-dk); background: transparent; color: var(--gold); cursor: pointer; transition: all 0.2s; margin-top: auto; }
-.btn-plan:hover { background: var(--gold-bg); border-color: var(--gold); }
-.plan.featured .btn-plan { background: var(--gold); border-color: var(--gold); color: var(--black); font-weight: 700; }
-.plan.featured .btn-plan:hover { background: var(--gold-lt); }
+.plan-features li { font-family: 'Lato', sans-serif; font-size: 0.88rem; color: #9A8F80; display: flex; gap: 0.75rem; align-items: flex-start; }
+.plan-features li::before { content: '◆'; color: #C9A84C; font-size: 0.45rem; margin-top: 0.45rem; flex-shrink: 0; }
+.btn-plan { width: 100%; font-family: 'Lato', sans-serif; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; border: 1px solid #8B6914; background: transparent; color: #C9A84C; cursor: pointer; transition: all 0.2s; margin-top: auto; }
+.btn-plan:hover { background: rgba(201,168,76,0.07); border-color: #C9A84C; }
+.plan.featured .btn-plan { background: #C9A84C; border-color: #C9A84C; color: #080808; font-weight: 700; }
+.plan.featured .btn-plan:hover { background: #E2C06E; }
+
 
 /* TESTIMONIALS */
 #testimonials { background: var(--black); }
@@ -247,75 +247,71 @@ footer { flex-direction: column; text-align: center; }
 </section>
 
 <!-- PRICING -->
-
 <section id="pricing">
   <p class="section-label">Investment</p>
   <h2 class="section-title">Simple, Honest Pricing</h2>
   <p class="section-body">Half the price of ZenPlanner. Twice the focus on martial arts.</p>
   <div class="price-grid">
 
-```
-<div class="plan">
-  <p class="plan-name">Starter</p>
-  <div class="plan-price">
-    <span class="plan-dollar">$</span>
-    <span class="plan-amount">59</span>
-    <span class="plan-period">/mo</span>
-  </div>
-  <p class="plan-desc">For growing schools up to 50 students.</p>
-  <div class="plan-divider"></div>
-  <ul class="plan-features">
-    <li>Up to 50 active students</li>
-    <li>Class scheduling and calendar</li>
-    <li>Student roster management</li>
-    <li>Student member portal</li>
-    <li>Payment collection</li>
-    <li>Email announcements</li>
-  </ul>
-  <button class="btn-plan" onclick="selectPlan('starter',59)">Get Started</button>
-</div>
+    <div class="plan">
+      <p class="plan-name">Starter</p>
+      <div class="plan-price">
+        <span class="plan-dollar">$</span>
+        <span class="plan-amount">59</span>
+        <span class="plan-period">/mo</span>
+      </div>
+      <p class="plan-desc">For growing schools up to 50 students.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Up to 50 active students</li>
+        <li>Class scheduling and calendar</li>
+        <li>Student roster management</li>
+        <li>Student member portal</li>
+        <li>Payment collection</li>
+        <li>Email announcements</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('starter',59)">Get Started</button>
+    </div>
 
-<div class="plan featured">
-  <div class="plan-badge">Most Popular</div>
-  <p class="plan-name">Professional</p>
-  <div class="plan-price">
-    <span class="plan-dollar">$</span>
-    <span class="plan-amount">79</span>
-    <span class="plan-period">/mo</span>
-  </div>
-  <p class="plan-desc">For established schools up to 200 students.</p>
-  <div class="plan-divider"></div>
-  <ul class="plan-features">
-    <li>Up to 200 active students</li>
-    <li>Everything in Starter</li>
-    <li>Belt rank tracking</li>
-    <li>Custom school branding</li>
-    <li>Advanced analytics</li>
-    <li>Priority support</li>
-  </ul>
-  <button class="btn-plan" onclick="selectPlan('professional',79)">Get Started</button>
-</div>
+    <div class="plan featured">
+      <p class="plan-name">Professional</p>
+      <div class="plan-price">
+        <span class="plan-dollar">$</span>
+        <span class="plan-amount">79</span>
+        <span class="plan-period">/mo</span>
+      </div>
+      <p class="plan-desc">For established schools up to 200 students.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Up to 200 active students</li>
+        <li>Everything in Starter</li>
+        <li>Belt rank tracking</li>
+        <li>Custom school branding</li>
+        <li>Advanced analytics</li>
+        <li>Priority support</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('professional',79)">Get Started</button>
+    </div>
 
-<div class="plan">
-  <p class="plan-name">Enterprise</p>
-  <div class="plan-price">
-    <span class="plan-dollar">$</span>
-    <span class="plan-amount">99</span>
-    <span class="plan-period">/mo</span>
-  </div>
-  <p class="plan-desc">For high-volume and multi-location schools.</p>
-  <div class="plan-divider"></div>
-  <ul class="plan-features">
-    <li>Unlimited students</li>
-    <li>Everything in Professional</li>
-    <li>Multi-location support</li>
-    <li>White-label custom domain</li>
-    <li>Dedicated account manager</li>
-    <li>Phone support</li>
-  </ul>
-  <button class="btn-plan" onclick="selectPlan('enterprise',99)">Get Started</button>
-</div>
-```
+    <div class="plan">
+      <p class="plan-name">Enterprise</p>
+      <div class="plan-price">
+        <span class="plan-dollar">$</span>
+        <span class="plan-amount">99</span>
+        <span class="plan-period">/mo</span>
+      </div>
+      <p class="plan-desc">For high-volume and multi-location schools.</p>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Unlimited students</li>
+        <li>Everything in Professional</li>
+        <li>Multi-location support</li>
+        <li>White-label custom domain</li>
+        <li>Dedicated account manager</li>
+        <li>Phone support</li>
+      </ul>
+      <button class="btn-plan" onclick="selectPlan('enterprise',99)">Get Started</button>
+    </div>
 
   </div>
 </section>
