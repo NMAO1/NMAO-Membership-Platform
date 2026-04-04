@@ -457,9 +457,7 @@ async function loadAttendanceStudents(classId) {
     list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
     return;
   }
-  const today = new Date().toISOString().split('T')[0];
-  const { data: existing } = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
-  existing?.forEach(r => { attendanceRecords[r.student_id] = r.id; });
+
 async function loadAttendanceStudents(classId) {
   var list = document.getElementById('attendanceList');
   var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
