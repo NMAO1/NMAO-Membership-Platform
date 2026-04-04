@@ -177,126 +177,95 @@
 <div class="modal-overlay" id="studentProfileModal">
   <div class="modal" style="width:860px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:0">
     <input type="file" id="photoUploadInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
+      <button onclick="closeStudentProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">x</button>
+      <div style="position:relative;flex-shrink:0">
+        <div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div>
+        <div onclick="document.getElementById('photoUploadInput').click()" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.65rem;color:var(--black);font-weight:700">+</div>
+      </div>
+      <div style="flex:1">
+        <div id="profileName" style="font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.4rem">Loading...</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+          <span id="profileStatusBadge" class="chip chip-active">active</span>
+          <span id="profileProgramBadge" class="class-tag">—</span>
+          <span id="profileBeltBadge" style="display:none;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()">◆ Promote</button>
+        <button class="btn-sm gold" onclick="openEditStudent()">Edit</button>
+        <button class="btn-sm" onclick="toggleStudentStatus()">Change Status</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr">
+      <div style="padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem">
+        <div><div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
+        <div id="profileBeltSection" style="display:none">
+          <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
+          <div id="profileBeltInfo"></div>
+          <div id="profileBeltProgress" style="margin-top:0.75rem"></div>
+          <div id="profileBeltPalette" style="margin-top:0.75rem"></div>
+        </div>
+        <div><div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div><div id="profileClassTracker"></div></div>
+      </div>
+      <div style="padding:1.5rem">
+        <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;overflow-x:auto">
+          <button class="profile-tab active" id="tab-attendance" onclick="switchProfileTab('attendance')">Attendance</button>
+          <button class="profile-tab" id="tab-membership" onclick="switchProfileTab('membership')">Membership</button>
+          <button class="profile-tab" id="tab-promotions" onclick="switchProfileTab('promotions')">Belt History</button>
+          <button class="profile-tab" id="tab-notes" onclick="switchProfileTab('notes')">Notes</button>
+          <button class="profile-tab" id="tab-financial" onclick="switchProfileTab('financial')">Financial</button>
+        </div>
 
 ```
-<!-- Header -->
-<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
-  <button onclick="closeStudentProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">x</button>
-  <div style="position:relative;flex-shrink:0">
-    <div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div>
-    <div onclick="document.getElementById('photoUploadInput').click()" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.65rem;color:var(--black);font-weight:700">+</div>
-  </div>
-  <div style="flex:1">
-    <div id="profileName" style="font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.4rem">Loading...</div>
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
-      <span id="profileStatusBadge" class="chip chip-active">active</span>
-      <span id="profileProgramBadge" class="class-tag">—</span>
-      <span id="profileBeltBadge" style="display:none;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
-    </div>
-  </div>
-  <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
-    <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()">◆ Promote</button>
-    <button class="btn-sm gold" onclick="openEditStudent()">Edit</button>
-    <button class="btn-sm" onclick="toggleStudentStatus()">Change Status</button>
-  </div>
-</div>
+    <!-- ATTENDANCE -->
+    <div id="profileTabAttendance"><div id="profileAttendanceList" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
 
-<!-- Two Column Body -->
-<div style="display:grid;grid-template-columns:1fr 1.4fr">
-
-  <!-- Left Column -->
-  <div style="padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem">
-    <div>
-      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div>
-      <div id="profileContactInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-    </div>
-    <div id="profileBeltSection" style="display:none">
-      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
-      <div id="profileBeltInfo"></div>
-      <div id="profileBeltProgress" style="margin-top:0.75rem"></div>
-      <div id="profileBeltPalette" style="margin-top:0.75rem"></div>
-    </div>
-    <div>
-      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
-      <div id="profileClassTracker"></div>
-    </div>
-  </div>
-
-  <!-- Right Column — 5 tabs -->
-  <div style="padding:1.5rem">
-    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;overflow-x:auto">
-      <button class="profile-tab active" id="tab-attendance"  onclick="switchProfileTab('attendance')">Attendance</button>
-      <button class="profile-tab"        id="tab-membership"  onclick="switchProfileTab('membership')">Membership</button>
-      <button class="profile-tab"        id="tab-promotions"  onclick="switchProfileTab('promotions')">Belt History</button>
-      <button class="profile-tab"        id="tab-notes"       onclick="switchProfileTab('notes')">Notes</button>
-      <button class="profile-tab"        id="tab-financial"   onclick="switchProfileTab('financial')">Financial</button>
-    </div>
-
-    <!-- Attendance Tab -->
-    <div id="profileTabAttendance">
-      <div id="profileAttendanceList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-    </div>
-
-    <!-- Membership Tab -->
+    <!-- MEMBERSHIP TAB -->
     <div id="profileTabMembership" style="display:none">
-
-      <!-- Current plan card -->
       <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem">Current Plan</div>
       <div id="profileMemCurrentCard" class="mem-detail-card"></div>
-
-      <!-- Divider -->
       <div style="display:flex;align-items:center;gap:0.75rem;margin:1.25rem 0">
         <div style="flex:1;height:1px;background:var(--border)"></div>
-        <div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted)">Update Plan</div>
+        <div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted)">Assign / Update Plan</div>
         <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>
-
-      <!-- Plan selector -->
+      <p style="font-size:0.72rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">Select any membership below. The student will be automatically enrolled in that membership's program.</p>
       <div class="field" style="margin-bottom:0.75rem">
         <label>Select Membership Plan</label>
         <select id="profileMemSelect" style="width:100%">
-          <option value="">Loading available plans...</option>
+          <option value="">Loading plans...</option>
         </select>
       </div>
-
-      <!-- Start date -->
+      <div id="profileMemProgramPreview" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C;font-size:0.75rem;color:var(--muted2)"></div>
       <div class="field" style="margin-bottom:0.75rem">
         <label>Effective Date</label>
         <input type="date" id="profileMemEffectiveDate" />
       </div>
-
       <button class="btn-gold-full" onclick="saveProfileMembership()">Save Membership</button>
       <p class="form-msg" id="profileMemMsg"></p>
     </div>
 
-    <!-- Belt History Tab -->
-    <div id="profileTabPromotions" style="display:none">
-      <div id="profilePromotionHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-    </div>
+    <!-- BELT HISTORY -->
+    <div id="profileTabPromotions" style="display:none"><div id="profilePromotionHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
 
-    <!-- Notes Tab -->
+    <!-- NOTES -->
     <div id="profileTabNotes" style="display:none">
-      <div class="field" style="margin-bottom:0.75rem">
-        <textarea id="profileNoteInput" rows="3" placeholder="Add a note..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.75rem;resize:vertical"></textarea>
-      </div>
+      <div class="field" style="margin-bottom:0.75rem"><textarea id="profileNoteInput" rows="3" placeholder="Add a note..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.75rem;resize:vertical"></textarea></div>
       <button class="btn-sm gold" style="margin-bottom:1rem" onclick="saveProfileNote()">Add Note</button>
       <p class="form-msg" id="profileNoteMsg"></p>
       <div id="profileNoteDisplay" style="font-size:0.82rem;color:var(--muted2);font-style:italic;margin-top:0.5rem"></div>
     </div>
 
-    <!-- Financial Tab -->
+    <!-- FINANCIAL -->
     <div id="profileTabFinancial" style="display:none">
       <div style="text-align:center;padding:2rem 1rem">
         <div style="font-size:2rem;margin-bottom:1rem;opacity:0.3">◆</div>
         <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white);margin-bottom:0.5rem">Stripe Not Connected</div>
         <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Payment history will appear here once Stripe is connected.</div>
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:left">
-          <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Current Membership</div>
-          <div id="profileFinancialMembership" style="font-size:0.82rem;color:var(--muted2)"></div>
-        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:left"><div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Current Membership</div><div id="profileFinancialMembership" style="font-size:0.82rem;color:var(--muted2)"></div></div>
       </div>
     </div>
-
   </div>
 </div>
 ```
@@ -375,10 +344,7 @@
       </div>
       <div class="form-row">
         <div class="field"><label>Promotion Fee</label><div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold)">$</span><input type="number" id="blFee" value="0" min="0" step="0.01" /></div></div>
-        <div class="field"><label>Classes Required</label>
-          <input type="number" id="blClassesRequired" value="0" min="0" placeholder="0 = no minimum" />
-          <p style="font-size:0.58rem;color:var(--muted);margin-top:0.3rem">Classes needed before eligible for promotion</p>
-        </div>
+        <div class="field"><label>Classes Required</label><input type="number" id="blClassesRequired" value="0" min="0" /><p style="font-size:0.58rem;color:var(--muted);margin-top:0.3rem">Classes before eligible for promotion</p></div>
       </div>
       <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.5rem">Curriculum Videos</div>
       <p style="font-size:0.72rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">Add YouTube links students need to study to earn this belt.</p>
@@ -427,7 +393,7 @@
     <div class="modal-header"><span class="modal-title">Add New Class</span><button class="modal-close" onclick="closeAddClass()">x</button></div>
     <div class="modal-body">
       <div class="field"><label>Class Title</label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
-      <div class="form-row"><div class="field"><label>Style</label><select id="classStyle"><option value="BJJ">BJJ</option><option value="Karate">Karate</option><option value="Kickboxing">Kickboxing</option><option value="Kung Fu">Kung Fu</option><option value="Boxing">Boxing</option><option value="Yoga">Yoga</option><option value="Strength">Strength</option><option value="Mixed">Mixed</option></select></div><div class="field"><label>Age Group</label><select id="classAge"><option value="kids">Kids</option><option value="teens">Teens</option><option value="adults">Adults</option><option value="all">All Ages</option></select></div></div>
+      <div class="form-row"><div class="field"><label>Style</label><select id="classStyle"><option>BJJ</option><option>Karate</option><option>Kickboxing</option><option>Kung Fu</option><option>Boxing</option><option>Yoga</option><option>Strength</option><option>Mixed</option></select></div><div class="field"><label>Age Group</label><select id="classAge"><option value="kids">Kids</option><option value="teens">Teens</option><option value="adults">Adults</option><option value="all">All Ages</option></select></div></div>
       <div class="form-row"><div class="field"><label>Level</label><select id="classLevel"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="all">All Levels</option></select></div><div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div></div>
       <div class="form-row"><div class="field"><label>Start Time</label><input type="time" id="classStart" /></div><div class="field"><label>End Time</label><input type="time" id="classEnd" /></div></div>
       <div class="field"><label>Days of Week</label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
@@ -505,9 +471,10 @@
   const DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const DAY_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MILESTONES=[10,25,50,100,200,500,1000];
-  const ALL_PROFILE_TABS=['attendance','membership','promotions','notes','financial'];
+  const ALL_TABS=['attendance','membership','promotions','notes','financial'];
 
   var allClasses=[],allStudents=[],allPrograms=[],allMemberships=[],allBeltSystems=[];
+  var allMembershipPrograms=[];  // stores all membership_programs join rows
   var currentProfileStudent=null,currentProfileBeltLevels=[];
   var currentBeltSystemId=null,currentBeltLevelId=null;
 
@@ -527,23 +494,112 @@
     }catch(e){console.error(e);document.getElementById('loadingScreen').style.display='none';}
   }
 
-  async function loadSchool(){
-    var r=await sb.from('schools').select('*').eq('id',SCHOOL_ID).single(),d=r.data;
-    if(d){document.getElementById('schoolName').textContent=d.name;document.getElementById('topSchoolName').textContent=d.name;document.getElementById('settingName').value=d.name||'';document.getElementById('settingEmail').value=d.email||'';document.getElementById('settingPhone').value=d.phone||'';document.getElementById('settingCity').value=d.city||'';document.getElementById('settingState').value=d.state||'';if(d.color){document.getElementById('settingColor').value=d.color;document.getElementById('settingColorHex').value=d.color;applyBrandColor(d.color);}}
+  async function loadSchool(){var r=await sb.from('schools').select('*').eq('id',SCHOOL_ID).single(),d=r.data;if(d){document.getElementById('schoolName').textContent=d.name;document.getElementById('topSchoolName').textContent=d.name;document.getElementById('settingName').value=d.name||'';document.getElementById('settingEmail').value=d.email||'';document.getElementById('settingPhone').value=d.phone||'';document.getElementById('settingCity').value=d.city||'';document.getElementById('settingState').value=d.state||'';if(d.color){document.getElementById('settingColor').value=d.color;document.getElementById('settingColorHex').value=d.color;applyBrandColor(d.color);}}}
+  async function loadPrograms(){var r=await sb.from('programs').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');allPrograms=r.data||[];renderPrograms();}
+  function renderPrograms(){var el=document.getElementById('programsGrid');if(!allPrograms.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>';return;}el.innerHTML=allPrograms.map(function(p){var color=p.color||'#C9A84C';return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:'+color+'"></div><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem"><div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">'+p.name+'</div><div style="width:14px;height:14px;border-radius:50%;background:'+color+';flex-shrink:0"></div></div>'+(p.description?'<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">'+p.description+'</div>':'')+'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'+(p.age_group?'<span class="class-tag">'+p.age_group+'</span>':'')+(p.belt_system?'<span class="class-tag">'+p.belt_system+'</span>':'')+'</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn-sm gold" onclick="openAddMembershipForProgram(\''+p.id+'\')">+ Membership</button><button class="btn-sm">Edit</button></div></div></div>';}).join('');}
+
+  async function loadMemberships(){
+    var r=await sb.from('memberships').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');
+    allMemberships=r.data||[];
+    var r2=await sb.from('membership_programs').select('*');
+    allMembershipPrograms=r2.data||[];
+    renderMemberships();renderPrograms();
   }
 
-  async function loadPrograms(){var r=await sb.from('programs').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');allPrograms=r.data||[];renderPrograms();}
-  function renderPrograms(){
-    var el=document.getElementById('programsGrid');if(!allPrograms.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>';return;}
-    el.innerHTML=allPrograms.map(function(p){var color=p.color||'#C9A84C';return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:'+color+'"></div><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem"><div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">'+p.name+'</div><div style="width:14px;height:14px;border-radius:50%;background:'+color+';flex-shrink:0"></div></div>'+(p.description?'<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">'+p.description+'</div>':'')+'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'+(p.age_group?'<span class="class-tag">'+p.age_group+'</span>':'')+(p.belt_system?'<span class="class-tag">'+p.belt_system+'</span>':'')+'</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn-sm gold" onclick="openAddMembershipForProgram(\''+p.id+'\')">+ Membership</button><button class="btn-sm">Edit</button></div></div></div>';}).join('');
+  // ─── MEMBERSHIP TAB — SHOW ALL GROUPED BY PROGRAM ────
+  function loadProfileMembershipOptions(s){
+    var sel=document.getElementById('profileMemSelect');
+    sel.innerHTML='';
+    if(!allMemberships.length){sel.innerHTML='<option value="">No memberships set up yet</option>';return;}
+
+    // Build map: programId -> [memberships]
+    var grouped={};
+    var unlinked=[];
+    allMemberships.forEach(function(m){
+      var links=allMembershipPrograms.filter(function(mp){return mp.membership_id===m.id;});
+      if(!links.length){unlinked.push(m);}
+      else{
+        links.forEach(function(link){
+          if(!grouped[link.program_id])grouped[link.program_id]=[];
+          grouped[link.program_id].push(m);
+        });
+      }
+    });
+
+    var defaultOption=document.createElement('option');
+    defaultOption.value='';defaultOption.textContent='— Select a Membership —';
+    sel.appendChild(defaultOption);
+
+    // Add grouped optgroups
+    allPrograms.forEach(function(p){
+      var mems=grouped[p.id];
+      if(!mems||!mems.length)return;
+      var grp=document.createElement('optgroup');
+      grp.label=p.name;
+      mems.forEach(function(m){
+        var o=document.createElement('option');
+        o.value=m.id;
+        o.dataset.programId=p.id;
+        o.dataset.programName=p.name;
+        var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
+        o.textContent=m.name+' — '+price;
+        if(m.id===s.membership_id)o.selected=true;
+        grp.appendChild(o);
+      });
+      sel.appendChild(grp);
+    });
+
+    // Unlinked memberships
+    if(unlinked.length){
+      var grp2=document.createElement('optgroup');grp2.label='Other';
+      unlinked.forEach(function(m){var o=document.createElement('option');o.value=m.id;var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');o.textContent=m.name+' — '+price;if(m.id===s.membership_id)o.selected=true;grp2.appendChild(o);});
+      sel.appendChild(grp2);
+    }
+
+    document.getElementById('profileMemEffectiveDate').value=new Date().toISOString().split('T')[0];
+
+    // Show program preview when selection changes
+    sel.onchange=function(){
+      var opt=sel.options[sel.selectedIndex];
+      var preview=document.getElementById('profileMemProgramPreview');
+      if(opt&&opt.dataset.programId){
+        var prog=allPrograms.find(function(p){return p.id===opt.dataset.programId;});
+        if(prog){
+          preview.style.display='block';
+          preview.innerHTML='<span style="color:var(--gold)">◉</span> This will enroll the student in <strong style="color:#F5F0E8">'+prog.name+'</strong>';
+        }else{preview.style.display='none';}
+      }else{preview.style.display='none';}
+    };
+    // Trigger for pre-selected value
+    if(s.membership_id)sel.onchange();
+  }
+
+  async function saveProfileMembership(){
+    if(!currentProfileStudent)return;
+    var sel=document.getElementById('profileMemSelect');
+    var mid=sel.value;
+    if(!mid){setMsg('profileMemMsg','Please select a membership plan.','error');return;}
+    setMsg('profileMemMsg','Saving...','');
+
+    // Find which program this membership belongs to
+    var opt=sel.options[sel.selectedIndex];
+    var programId=opt&&opt.dataset.programId?opt.dataset.programId:currentProfileStudent.program_id;
+
+    var payload={membership_id:mid,start_date:document.getElementById('profileMemEffectiveDate').value||currentProfileStudent.start_date};
+    if(programId)payload.program_id=programId;
+
+    var r=await sb.from('students').update(payload).eq('id',currentProfileStudent.id);
+    if(r.error){setMsg('profileMemMsg',r.error.message,'error');}
+    else{
+      setMsg('profileMemMsg','Membership saved!','success');
+      await loadStudents();
+      setTimeout(async function(){await openStudentProfile(currentProfileStudent.id);switchProfileTab('membership');},600);
+    }
   }
 
   // ─── BELT SYSTEMS ────────────────────────────────────
   async function loadBeltSystems(){var r=await sb.from('belt_systems').select('*, belt_levels(id)').eq('school_id',SCHOOL_ID).order('name');allBeltSystems=r.data||[];renderBeltSystems();}
-  function renderBeltSystems(){
-    var el=document.getElementById('beltSystemsGrid');if(!allBeltSystems.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No belt systems yet.</div>';return;}
-    el.innerHTML=allBeltSystems.map(function(bs){var count=(bs.belt_levels&&bs.belt_levels.length)||0;return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:linear-gradient(90deg,#C9A84C,#8B6914)"></div><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">'+bs.name+'</div><div style="font-size:0.68rem;color:var(--gold)">'+count+' rank'+(count!==1?'s':'')+'</div></div>'+(bs.description?'<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">'+bs.description+'</div>':'')+'<div style="margin-top:1rem"><button class="btn-sm gold" onclick="openBeltSystemDetail(\''+bs.id+'\',\''+bs.name.replace(/'/g,'')+'\',\''+(bs.description||'').replace(/'/g,'')+'\')">View &amp; Edit Belts</button></div></div></div>';}).join('');
-  }
+  function renderBeltSystems(){var el=document.getElementById('beltSystemsGrid');if(!allBeltSystems.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No belt systems yet.</div>';return;}el.innerHTML=allBeltSystems.map(function(bs){var count=(bs.belt_levels&&bs.belt_levels.length)||0;return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:linear-gradient(90deg,#C9A84C,#8B6914)"></div><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">'+bs.name+'</div><div style="font-size:0.68rem;color:var(--gold)">'+count+' rank'+(count!==1?'s':'')+'</div></div>'+(bs.description?'<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">'+bs.description+'</div>':'')+'<div style="margin-top:1rem"><button class="btn-sm gold" onclick="openBeltSystemDetail(\''+bs.id+'\',\''+bs.name.replace(/'/g,'')+'\',\''+(bs.description||'').replace(/'/g,'')+'\')">View &amp; Edit Belts</button></div></div></div>';}).join('');}
   function openAddBeltSystem(){document.getElementById('bsName').value='';document.getElementById('bsDesc').value='';document.getElementById('beltSystemMsg').textContent='';document.getElementById('addBeltSystemModal').classList.add('active');}
   function closeAddBeltSystem(){document.getElementById('addBeltSystemModal').classList.remove('active');}
   async function saveBeltSystem(){var name=document.getElementById('bsName').value.trim();if(!name){setMsg('beltSystemMsg','Name required.','error');return;}setMsg('beltSystemMsg','Saving...','');var r=await sb.from('belt_systems').insert({school_id:SCHOOL_ID,name:name,description:document.getElementById('bsDesc').value.trim()});if(r.error){setMsg('beltSystemMsg',r.error.message,'error');}else{setMsg('beltSystemMsg','Created!','success');await loadBeltSystems();setTimeout(function(){closeAddBeltSystem();},800);}}
@@ -554,51 +610,21 @@
     var r=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',currentBeltSystemId).order('sort_order');
     var levels=r.data||[],el=document.getElementById('beltSystemLevelsList');
     if(!levels.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:3rem;font-style:italic">No belt levels yet. Click "+ Add Belt Level" to get started.</div>';return;}
-    el.innerHTML=levels.map(function(l,i){
-      var vids=l.belt_level_videos||[],cr=l.classes_required||0;
-      var vHtml=vids.length?vids.map(function(v){return '<div class="video-row"><div style="flex:1"><a href="'+v.youtube_url+'" target="_blank" style="color:var(--gold);font-size:0.75rem;word-break:break-all">▶ '+v.youtube_url+'</a>'+(v.description?'<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.2rem">'+v.description+'</div>':'')+'</div><button onclick="deleteVideo(\''+v.id+'\',\''+l.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:0 0.25rem;flex-shrink:0">✕</button></div>';}).join(''):'<div style="font-size:0.75rem;color:var(--muted);font-style:italic;padding:0.4rem 0">No videos yet.</div>';
-      return '<div class="belt-level-card"><div class="belt-level-header" onclick="toggleBeltExpand(\'bx-'+l.id+'\')">'
-        +'<div style="font-size:0.8rem;color:var(--muted);min-width:24px;text-align:center">'+(i+1)+'</div>'
-        +'<div style="width:40px;height:16px;border-radius:3px;background:'+l.color_hex+';border:1px solid rgba(255,255,255,0.15);flex-shrink:0"></div>'
-        +'<div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white);flex:1">'+l.name+'</div>'
-        +(cr>0?'<div style="font-size:0.68rem;color:var(--muted);margin-right:0.75rem">'+cr+' classes req.</div>':'')
-        +(l.promotion_fee>0?'<div style="font-size:0.75rem;color:var(--gold);margin-right:0.75rem">$'+parseFloat(l.promotion_fee).toFixed(2)+'</div>':'')
-        +'<div style="font-size:0.68rem;color:var(--muted)">'+vids.length+' video'+(vids.length!==1?'s':'')+'  ▾</div></div>'
-        +'<div id="bx-'+l.id+'" style="display:none;padding:0.75rem 1rem 1rem;border-top:1px solid var(--border)"><div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Curriculum Videos</div>'
-        +vHtml+'<button class="btn-sm gold" style="margin-top:0.6rem" onclick="openAddVideoModal(\''+l.id+'\')">+ Add Video</button></div></div>';
-    }).join('');
+    el.innerHTML=levels.map(function(l,i){var vids=l.belt_level_videos||[],cr=l.classes_required||0;var vHtml=vids.length?vids.map(function(v){return '<div class="video-row"><div style="flex:1"><a href="'+v.youtube_url+'" target="_blank" style="color:var(--gold);font-size:0.75rem;word-break:break-all">▶ '+v.youtube_url+'</a>'+(v.description?'<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.2rem">'+v.description+'</div>':'')+'</div><button onclick="deleteVideo(\''+v.id+'\',\''+l.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:0 0.25rem;flex-shrink:0">✕</button></div>';}).join(''):'<div style="font-size:0.75rem;color:var(--muted);font-style:italic;padding:0.4rem 0">No videos yet.</div>';return '<div class="belt-level-card"><div class="belt-level-header" onclick="toggleBeltExpand(\'bx-'+l.id+'\')">'+'<div style="font-size:0.8rem;color:var(--muted);min-width:24px;text-align:center">'+(i+1)+'</div>'+'<div style="width:40px;height:16px;border-radius:3px;background:'+l.color_hex+';border:1px solid rgba(255,255,255,0.15);flex-shrink:0"></div>'+'<div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white);flex:1">'+l.name+'</div>'+(cr>0?'<div style="font-size:0.68rem;color:var(--muted);margin-right:0.75rem">'+cr+' classes req.</div>':'')+(l.promotion_fee>0?'<div style="font-size:0.75rem;color:var(--gold);margin-right:0.75rem">$'+parseFloat(l.promotion_fee).toFixed(2)+'</div>':'')+'<div style="font-size:0.68rem;color:var(--muted)">'+vids.length+' video'+(vids.length!==1?'s':'')+'  ▾</div></div>'+'<div id="bx-'+l.id+'" style="display:none;padding:0.75rem 1rem 1rem;border-top:1px solid var(--border)"><div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Curriculum Videos</div>'+vHtml+'<button class="btn-sm gold" style="margin-top:0.6rem" onclick="openAddVideoModal(\''+l.id+'\')">+ Add Video</button></div></div>';}).join('');
   }
   function toggleBeltExpand(id){var el=document.getElementById(id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
   function openAddBeltLevel(){document.getElementById('blName').value='';document.getElementById('blColor').value='#FFFFFF';document.getElementById('blColorHex').value='#FFFFFF';document.getElementById('blFee').value='0';document.getElementById('blClassesRequired').value='0';document.getElementById('blVideoRows').innerHTML='';document.getElementById('beltLevelMsg').textContent='';document.getElementById('addBeltLevelModal').classList.add('active');}
   function closeAddBeltLevel(){document.getElementById('addBeltLevelModal').classList.remove('active');}
   function syncBeltColor(){var h=document.getElementById('blColorHex').value;if(/^#[0-9A-Fa-f]{6}$/.test(h))document.getElementById('blColor').value=h;}
   function addVideoRow(){var row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;gap:0.4rem;padding:0.6rem;background:var(--black);border:1px solid var(--border)';row.innerHTML='<input type="text" placeholder="YouTube URL" style="background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.8rem;padding:0.45rem 0.6rem" /><input type="text" placeholder="Description of this video..." style="background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.8rem;padding:0.45rem 0.6rem" />';document.getElementById('blVideoRows').appendChild(row);}
-  async function saveBeltLevel(){
-    if(!currentBeltSystemId)return;
-    var name=document.getElementById('blName').value.trim();if(!name){setMsg('beltLevelMsg','Belt name is required.','error');return;}
-    setMsg('beltLevelMsg','Saving...','');
-    var ex=await sb.from('belt_levels').select('sort_order').eq('belt_system_id',currentBeltSystemId).order('sort_order',{ascending:false}).limit(1);
-    var nextOrder=(ex.data&&ex.data.length)?(ex.data[0].sort_order+1):0;
-    var r=await sb.from('belt_levels').insert({school_id:SCHOOL_ID,belt_system_id:currentBeltSystemId,name:name,color_hex:document.getElementById('blColor').value,promotion_fee:parseFloat(document.getElementById('blFee').value)||0,classes_required:parseInt(document.getElementById('blClassesRequired').value)||0,sort_order:nextOrder}).select().single();
-    if(r.error){setMsg('beltLevelMsg',r.error.message,'error');return;}
-    var lid=r.data.id,vrows=document.getElementById('blVideoRows').querySelectorAll('div'),vins=[];
-    vrows.forEach(function(row,i){var inputs=row.querySelectorAll('input');var url=inputs[0].value.trim();if(url)vins.push({belt_level_id:lid,youtube_url:url,description:inputs[1].value.trim(),sort_order:i});});
-    if(vins.length)await sb.from('belt_level_videos').insert(vins);
-    setMsg('beltLevelMsg','Belt level saved!','success');await refreshBeltSystemLevels();setTimeout(function(){closeAddBeltLevel();},800);
-  }
+  async function saveBeltLevel(){if(!currentBeltSystemId)return;var name=document.getElementById('blName').value.trim();if(!name){setMsg('beltLevelMsg','Belt name is required.','error');return;}setMsg('beltLevelMsg','Saving...','');var ex=await sb.from('belt_levels').select('sort_order').eq('belt_system_id',currentBeltSystemId).order('sort_order',{ascending:false}).limit(1);var nextOrder=(ex.data&&ex.data.length)?(ex.data[0].sort_order+1):0;var r=await sb.from('belt_levels').insert({school_id:SCHOOL_ID,belt_system_id:currentBeltSystemId,name:name,color_hex:document.getElementById('blColor').value,promotion_fee:parseFloat(document.getElementById('blFee').value)||0,classes_required:parseInt(document.getElementById('blClassesRequired').value)||0,sort_order:nextOrder}).select().single();if(r.error){setMsg('beltLevelMsg',r.error.message,'error');return;}var lid=r.data.id,vrows=document.getElementById('blVideoRows').querySelectorAll('div'),vins=[];vrows.forEach(function(row,i){var inputs=row.querySelectorAll('input');var url=inputs[0].value.trim();if(url)vins.push({belt_level_id:lid,youtube_url:url,description:inputs[1].value.trim(),sort_order:i});});if(vins.length)await sb.from('belt_level_videos').insert(vins);setMsg('beltLevelMsg','Belt level saved!','success');await refreshBeltSystemLevels();setTimeout(function(){closeAddBeltLevel();},800);}
   function openAddVideoModal(lid){currentBeltLevelId=lid;document.getElementById('videoUrl').value='';document.getElementById('videoDesc').value='';document.getElementById('videoMsg').textContent='';document.getElementById('addVideoModal').classList.add('active');}
   function closeAddVideoModal(){document.getElementById('addVideoModal').classList.remove('active');currentBeltLevelId=null;}
   async function saveVideo(){var url=document.getElementById('videoUrl').value.trim();if(!url){setMsg('videoMsg','YouTube URL is required.','error');return;}setMsg('videoMsg','Saving...','');var ex=await sb.from('belt_level_videos').select('sort_order').eq('belt_level_id',currentBeltLevelId).order('sort_order',{ascending:false}).limit(1);var no=(ex.data&&ex.data.length)?(ex.data[0].sort_order+1):0;var r=await sb.from('belt_level_videos').insert({belt_level_id:currentBeltLevelId,youtube_url:url,description:document.getElementById('videoDesc').value.trim(),sort_order:no});if(r.error){setMsg('videoMsg',r.error.message,'error');}else{setMsg('videoMsg','Video added!','success');await refreshBeltSystemLevels();setTimeout(function(){closeAddVideoModal();},600);}}
   async function deleteVideo(vid,lid){await sb.from('belt_level_videos').delete().eq('id',vid);await refreshBeltSystemLevels();var ex=document.getElementById('bx-'+lid);if(ex)ex.style.display='block';}
 
   // ─── SEARCH ─────────────────────────────────────────
-  function filterMembers(){
-    var q=document.getElementById('memberSearch').value.toLowerCase().trim();
-    var filtered=q?allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||(s.email||'').toLowerCase().includes(q);}):allStudents;
-    var ce=document.getElementById('memberSearchCount');
-    if(q&&filtered.length!==allStudents.length){ce.textContent=filtered.length+' of '+allStudents.length+' shown';}else{ce.textContent='';}
-    renderMembersTableFiltered(filtered);
-  }
+  function filterMembers(){var q=document.getElementById('memberSearch').value.toLowerCase().trim();var filtered=q?allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||(s.email||'').toLowerCase().includes(q);}):allStudents;var ce=document.getElementById('memberSearchCount');if(q&&filtered.length!==allStudents.length){ce.textContent=filtered.length+' of '+allStudents.length+' shown';}else{ce.textContent='';}renderMembersTableFiltered(filtered);}
 
   // ─── STUDENT PROFILE ────────────────────────────────
   async function openStudentProfile(sid){
@@ -616,174 +642,57 @@
     else{av.innerHTML='<span id="profileInitials">'+ini+'</span>';}
     var st=s.status||'trial',sc=st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
     document.getElementById('profileStatusBadge').className='chip '+sc;document.getElementById('profileStatusBadge').textContent=st;
-    var pn=(s.programs&&s.programs.name)?s.programs.name:'—',pc=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
+    var pn=(s.programs&&s.programs.name)?s.programs.name:'No Program',pc=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
     var pb=document.getElementById('profileProgramBadge');pb.textContent=pn;pb.style.borderColor=pc;pb.style.color=pc;
-    var ci=document.getElementById('profileContactInfo');
-    ci.innerHTML=[{l:'Email',v:s.email||'—'},{l:'Phone',v:s.phone||'—'},{l:'DOB',v:s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'},{l:'Started',v:s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}].map(function(r){return '<div class="profile-info-row"><span class="profile-info-label">'+r.l+'</span><span style="color:#F5F0E8">'+r.v+'</span></div>';}).join('');
-    var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'None assigned',mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/mo':s.memberships.billing_type==='yearly'?'/yr':''):'—';
+    document.getElementById('profileContactInfo').innerHTML=[{l:'Email',v:s.email||'—'},{l:'Phone',v:s.phone||'—'},{l:'DOB',v:s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'},{l:'Started',v:s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}].map(function(r){return '<div class="profile-info-row"><span class="profile-info-label">'+r.l+'</span><span style="color:#F5F0E8">'+r.v+'</span></div>';}).join('');
+    var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'None',mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/mo':s.memberships.billing_type==='yearly'?'/yr':''):'—';
     document.getElementById('profileFinancialMembership').innerHTML='<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">'+mn+'</span></div><div class="profile-info-row"><span class="profile-info-label">Amount</span><span style="color:#C9A84C">'+mp+'</span></div>';
-
-    // Populate membership tab current card
     renderProfileMembershipCard(s);
-    await loadProfileMembershipOptions(s);
-
+    loadProfileMembershipOptions(s);
     var hasBelt=s.programs&&s.programs.belt_system==='Belt Progression';
-    var bs=document.getElementById('profileBeltSection');
-    if(hasBelt){
-      bs.style.display='block';document.getElementById('promoteBtn').style.display='inline-flex';
-      var bsid=s.programs.belt_system_id;
-      if(bsid){var br=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',bsid).order('sort_order');currentProfileBeltLevels=br.data||[];}
-      else{var br2=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('program_id',s.programs.id).order('sort_order');currentProfileBeltLevels=br2.data||[];}
-      await renderProfileBelt(s);
-    }else{bs.style.display='none';document.getElementById('promoteBtn').style.display='none';document.getElementById('profileBeltBadge').style.display='none';}
-    var nd=document.getElementById('profileNoteDisplay');
-    nd.innerHTML=s.notes?'<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+s.notes.replace(/\n/g,'<br>')+'</div>':'<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
+    var bsEl=document.getElementById('profileBeltSection');
+    if(hasBelt){bsEl.style.display='block';document.getElementById('promoteBtn').style.display='inline-flex';var bsid=s.programs.belt_system_id;if(bsid){var br=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',bsid).order('sort_order');currentProfileBeltLevels=br.data||[];}else{var br2=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('program_id',s.programs.id).order('sort_order');currentProfileBeltLevels=br2.data||[];}await renderProfileBelt(s);}
+    else{bsEl.style.display='none';document.getElementById('promoteBtn').style.display='none';document.getElementById('profileBeltBadge').style.display='none';}
+    var nd=document.getElementById('profileNoteDisplay');nd.innerHTML=s.notes?'<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+s.notes.replace(/\n/g,'<br>')+'</div>':'<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
     await loadProfileAttendance(sid);await loadPromotionHistory(sid);
   }
 
   function renderProfileMembershipCard(s){
-    var card=document.getElementById('profileMemCurrentCard');
-    var m=s.memberships;
-    if(!m){
-      card.innerHTML='<div style="font-size:0.8rem;color:var(--muted);font-style:italic;text-align:center;padding:0.5rem">No membership assigned yet. Select a plan below to enroll this student.</div>';
-      return;
-    }
-    var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type||'—';
+    var card=document.getElementById('profileMemCurrentCard'),m=s.memberships;
+    if(!m){card.innerHTML='<div style="font-size:0.8rem;color:var(--muted);font-style:italic;text-align:center;padding:0.5rem">No membership assigned yet. Select a plan below to enroll this student.</div>';return;}
+    var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||'—';
     var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
     var limit=m.class_limit_type==='unlimited'?'Unlimited':m.class_limit_type==='class_pack'?(m.class_limit_count||'?')+' classes':(m.class_limit_count||'?')+'/'+(m.class_limit_type==='per_week'?'week':'month');
     var renew=m.auto_renew?'<span style="color:#7DBD7D">Yes</span>':'<span style="color:var(--muted)">No</span>';
-    card.innerHTML='<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Plan</span><span style="font-size:0.85rem;color:#F5F0E8;font-family:var(--font-display)">'+m.name+'</span></div>'
-      +'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Type</span><span style="font-size:0.78rem;color:var(--muted2)">'+tl+'</span></div>'
-      +'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Price</span><span style="font-size:0.85rem;color:#C9A84C">'+price+'</span></div>'
-      +'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Class Access</span><span style="font-size:0.78rem;color:var(--muted2)">'+limit+'</span></div>'
-      +'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Auto-Renew</span>'+renew+'</div>';
+    card.innerHTML='<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Plan</span><span style="font-size:0.85rem;color:#F5F0E8;font-family:var(--font-display)">'+m.name+'</span></div>'+'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Type</span><span style="font-size:0.78rem;color:var(--muted2)">'+tl+'</span></div>'+'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Price</span><span style="font-size:0.85rem;color:#C9A84C">'+price+'</span></div>'+'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Class Access</span><span style="font-size:0.78rem;color:var(--muted2)">'+limit+'</span></div>'+'<div class="mem-detail-row"><span style="font-size:0.7rem;color:var(--muted)">Auto-Renew</span>'+renew+'</div>';
   }
 
-  async function loadProfileMembershipOptions(s){
-    var sel=document.getElementById('profileMemSelect');
-    sel.innerHTML='<option value="">— Select a Plan —</option>';
-    if(!s.program_id){sel.innerHTML='<option value="">No program assigned</option>';return;}
-    var r=await sb.from('membership_programs').select('membership_id').eq('program_id',s.program_id);
-    if(r.error||!r.data||!r.data.length){sel.innerHTML='<option value="">No memberships for this program</option>';return;}
-    var ids=r.data.map(function(x){return x.membership_id;}),mems=allMemberships.filter(function(m){return ids.indexOf(m.id)!==-1;});
-    if(!mems.length){sel.innerHTML='<option value="">No memberships available</option>';return;}
-    sel.innerHTML='<option value="">— Select a Plan —</option>';
-    mems.forEach(function(m){var o=document.createElement('option');o.value=m.id;var p='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');o.textContent=m.name+' — '+p;if(m.id===s.membership_id)o.selected=true;sel.appendChild(o);});
-    document.getElementById('profileMemEffectiveDate').value=new Date().toISOString().split('T')[0];
-  }
-
-  async function saveProfileMembership(){
-    if(!currentProfileStudent)return;
-    var mid=document.getElementById('profileMemSelect').value;
-    if(!mid){setMsg('profileMemMsg','Please select a membership plan.','error');return;}
-    setMsg('profileMemMsg','Saving...','');
-    var r=await sb.from('students').update({membership_id:mid,start_date:document.getElementById('profileMemEffectiveDate').value||currentProfileStudent.start_date}).eq('id',currentProfileStudent.id);
-    if(r.error){setMsg('profileMemMsg',r.error.message,'error');}
-    else{
-      setMsg('profileMemMsg','Membership updated!','success');
-      await loadStudents();
-      setTimeout(async function(){await openStudentProfile(currentProfileStudent.id);switchProfileTab('membership');},600);
-    }
-  }
-
-  // ─── BELT ───────────────────────────────────────────
   async function renderProfileBelt(s){
     var bel=document.getElementById('profileBeltInfo'),prog=document.getElementById('profileBeltProgress'),pal=document.getElementById('profileBeltPalette'),bad=document.getElementById('profileBeltBadge'),av=document.getElementById('profileAvatar');
     if(!currentProfileBeltLevels.length){bel.innerHTML='<div style="font-size:0.78rem;color:var(--muted);font-style:italic">No belt levels found. Go to Belt Progressions to set up levels.</div>';return;}
     var cb=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?currentProfileBeltLevels.indexOf(cb):-1,nb=currentProfileBeltLevels[ci+1]||null;
-    if(cb){
-      bad.style.display='inline-block';bad.textContent=cb.name;bad.style.background=cb.color_hex;bad.style.color=isLight(cb.color_hex)?'#111':'#fff';
-      av.style.borderColor=cb.color_hex;av.style.borderWidth='3px';
-      var vids=cb.belt_level_videos||[];
-      bel.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem"><div style="width:36px;height:14px;border-radius:2px;background:'+cb.color_hex+';border:1px solid rgba(255,255,255,0.2)"></div><div style="font-family:var(--font-display);font-size:0.95rem;color:#F5F0E8">'+cb.name+'</div></div>'+(nb?'<div style="font-size:0.68rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.68rem;color:#C9A84C;">Highest rank achieved!</div>')+(vids.length?'<div style="margin-top:0.5rem"><div style="font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Curriculum</div>'+vids.map(function(v){return '<a href="'+v.youtube_url+'" target="_blank" style="display:block;font-size:0.72rem;color:var(--gold);margin-bottom:0.2rem">▶ '+(v.description||v.youtube_url)+'</a>';}).join('')+'</div>':'');
-    }else{bel.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">No belt assigned. First rank: '+currentProfileBeltLevels[0].name+'</div>';av.style.borderColor='#444';}
-    if(nb&&(nb.classes_required||0)>0){
-      var cc=await loadClassesSincePromotion(s.id),req=nb.classes_required,pct=Math.min(100,Math.round((cc/req)*100)),elig=cc>=req;
-      prog.innerHTML='<div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Progress to '+nb.name+'</div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted2);margin-bottom:0.2rem"><span>'+cc+' classes since promotion</span><span>'+cc+'/'+req+'</span></div>'
-        +'<div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:'+pct+'%;background:'+(elig?'#5A9A6A':'#C9A84C')+'"></div></div>'
-        +(elig?'<div class="eligible-badge">✓ Eligible for promotion!</div>':'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem">'+(req-cc)+' more classes needed</div>');
-    }else if(nb){prog.innerHTML='<div style="font-size:0.68rem;color:var(--muted);font-style:italic">No class minimum for this promotion.</div>';}
-    else{prog.innerHTML='';}
+    if(cb){bad.style.display='inline-block';bad.textContent=cb.name;bad.style.background=cb.color_hex;bad.style.color=isLight(cb.color_hex)?'#111':'#fff';av.style.borderColor=cb.color_hex;av.style.borderWidth='3px';var vids=cb.belt_level_videos||[];bel.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem"><div style="width:36px;height:14px;border-radius:2px;background:'+cb.color_hex+';border:1px solid rgba(255,255,255,0.2)"></div><div style="font-family:var(--font-display);font-size:0.95rem;color:#F5F0E8">'+cb.name+'</div></div>'+(nb?'<div style="font-size:0.68rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.68rem;color:#C9A84C;">Highest rank achieved!</div>')+(vids.length?'<div style="margin-top:0.5rem"><div style="font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Curriculum</div>'+vids.map(function(v){return '<a href="'+v.youtube_url+'" target="_blank" style="display:block;font-size:0.72rem;color:var(--gold);margin-bottom:0.2rem">▶ '+(v.description||v.youtube_url)+'</a>';}).join('')+'</div>':'');}
+    else{bel.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">No belt assigned. First rank: '+currentProfileBeltLevels[0].name+'</div>';av.style.borderColor='#444';}
+    if(nb&&(nb.classes_required||0)>0){var cc=await loadClassesSincePromotion(s.id),req=nb.classes_required,pct=Math.min(100,Math.round((cc/req)*100)),elig=cc>=req;prog.innerHTML='<div style="font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Progress to '+nb.name+'</div>'+'<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted2);margin-bottom:0.2rem"><span>'+cc+' classes since promotion</span><span>'+cc+'/'+req+'</span></div>'+'<div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:'+pct+'%;background:'+(elig?'#5A9A6A':'#C9A84C')+'"></div></div>'+(elig?'<div class="eligible-badge">✓ Eligible for promotion!</div>':'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem">'+(req-cc)+' more classes needed</div>');}
+    else if(nb){prog.innerHTML='<div style="font-size:0.68rem;color:var(--muted);font-style:italic">No class minimum for this promotion.</div>';}else{prog.innerHTML='';}
     pal.innerHTML='<div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Belt Sequence</div><div style="display:flex;flex-wrap:wrap;gap:0.35rem">'+currentProfileBeltLevels.map(function(b){var isc=cb&&b.id===cb.id;return '<div title="'+b.name+'" style="display:flex;flex-direction:column;align-items:center;gap:0.2rem"><div style="width:22px;height:8px;border-radius:1px;background:'+b.color_hex+';border:1px solid rgba(255,255,255,0.15)'+(isc?';box-shadow:0 0 0 2px #C9A84C':'')+'"></div><div style="font-size:0.5rem;color:'+(isc?'#C9A84C':'#7A7060')+'">'+b.name.slice(0,4)+'</div></div>';}).join('')+'</div>';
   }
-
-  async function loadClassesSincePromotion(sid){
-    var pr=await sb.from('belt_promotions').select('promoted_at').eq('student_id',sid).order('promoted_at',{ascending:false}).limit(1);
-    var sinceDate=null;
-    if(pr.data&&pr.data.length){sinceDate=pr.data[0].promoted_at;}
-    else if(currentProfileStudent&&currentProfileStudent.start_date){sinceDate=currentProfileStudent.start_date+'T00:00:00';}
-    var q=sb.from('attendance').select('*',{count:'exact',head:true}).eq('student_id',sid);
-    if(sinceDate)q=q.gte('checked_in_at',sinceDate);
-    var cr=await q;return cr.count||0;
-  }
+  async function loadClassesSincePromotion(sid){var pr=await sb.from('belt_promotions').select('promoted_at').eq('student_id',sid).order('promoted_at',{ascending:false}).limit(1);var sinceDate=null;if(pr.data&&pr.data.length){sinceDate=pr.data[0].promoted_at;}else if(currentProfileStudent&&currentProfileStudent.start_date){sinceDate=currentProfileStudent.start_date+'T00:00:00';}var q=sb.from('attendance').select('*',{count:'exact',head:true}).eq('student_id',sid);if(sinceDate)q=q.gte('checked_in_at',sinceDate);var cr=await q;return cr.count||0;}
   function isLight(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128;}
 
-  // ─── PROMOTION ──────────────────────────────────────
-  async function openPromoteModal(){
-    if(!currentProfileStudent||!currentProfileBeltLevels.length)return;
-    var s=currentProfileStudent,cb=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
-    var from=cb||currentProfileBeltLevels[0],to=currentProfileBeltLevels[ci+1]||null;
-    if(!to){alert('This student has reached the highest belt level!');return;}
-    document.getElementById('promoteFromSwatch').style.background=from.color_hex;document.getElementById('promoteFromName').textContent=from.name;
-    document.getElementById('promoteToSwatch').style.background=to.color_hex;document.getElementById('promoteToName').textContent=to.name;
-    document.getElementById('promotionDate').value=new Date().toISOString().split('T')[0];
-    document.getElementById('promotionFee').value=to.promotion_fee||0;document.getElementById('promotionFeePaid').checked=false;
-    document.getElementById('promotionNotes').value='';document.getElementById('promotionMsg').textContent='';
-    var banner=document.getElementById('promoteEligibilityBanner');
-    if((to.classes_required||0)>0){
-      var count=await loadClassesSincePromotion(s.id),req=to.classes_required;
-      if(count>=req){banner.style.display='block';banner.style.background='rgba(90,154,106,0.12)';banner.style.border='1px solid rgba(90,154,106,0.3)';banner.style.color='#7DBD7D';banner.textContent='✓ Eligible — '+count+'/'+req+' classes completed.';}
-      else{banner.style.display='block';banner.style.background='rgba(201,168,76,0.08)';banner.style.border='1px solid rgba(201,168,76,0.2)';banner.style.color='#C9A84C';banner.textContent='⚠ '+count+'/'+req+' classes. Promotion at instructor\'s discretion.';}
-    }else{banner.style.display='none';}
-    var vids=to.belt_level_videos||[],ys=document.getElementById('promotionYoutubeSection'),vl=document.getElementById('promotionVideosList');
-    if(vids.length){ys.style.display='block';vl.innerHTML=vids.map(function(v){return '<a href="'+v.youtube_url+'" target="_blank" style="display:block;font-size:0.75rem;color:var(--gold);margin-bottom:0.3rem">▶ '+(v.description||v.youtube_url)+'</a>';}).join('');}else{ys.style.display='none';}
-    document.getElementById('promoteModal').classList.add('active');
-  }
+  async function openPromoteModal(){if(!currentProfileStudent||!currentProfileBeltLevels.length)return;var s=currentProfileStudent,cb=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?currentProfileBeltLevels.indexOf(cb):-1;var from=cb||currentProfileBeltLevels[0],to=currentProfileBeltLevels[ci+1]||null;if(!to){alert('This student has reached the highest belt level!');return;}document.getElementById('promoteFromSwatch').style.background=from.color_hex;document.getElementById('promoteFromName').textContent=from.name;document.getElementById('promoteToSwatch').style.background=to.color_hex;document.getElementById('promoteToName').textContent=to.name;document.getElementById('promotionDate').value=new Date().toISOString().split('T')[0];document.getElementById('promotionFee').value=to.promotion_fee||0;document.getElementById('promotionFeePaid').checked=false;document.getElementById('promotionNotes').value='';document.getElementById('promotionMsg').textContent='';var banner=document.getElementById('promoteEligibilityBanner');if((to.classes_required||0)>0){var count=await loadClassesSincePromotion(s.id),req=to.classes_required;if(count>=req){banner.style.display='block';banner.style.background='rgba(90,154,106,0.12)';banner.style.border='1px solid rgba(90,154,106,0.3)';banner.style.color='#7DBD7D';banner.textContent='Eligible — '+count+'/'+req+' classes completed.';}else{banner.style.display='block';banner.style.background='rgba(201,168,76,0.08)';banner.style.border='1px solid rgba(201,168,76,0.2)';banner.style.color='#C9A84C';banner.textContent=''+count+'/'+req+' classes. Promotion at instructor\'s discretion.';}}else{banner.style.display='none';}var vids=to.belt_level_videos||[],ys=document.getElementById('promotionYoutubeSection'),vl=document.getElementById('promotionVideosList');if(vids.length){ys.style.display='block';vl.innerHTML=vids.map(function(v){return '<a href="'+v.youtube_url+'" target="_blank" style="display:block;font-size:0.75rem;color:var(--gold);margin-bottom:0.3rem">▶ '+(v.description||v.youtube_url)+'</a>';}).join('');}else{ys.style.display='none';}document.getElementById('promoteModal').classList.add('active');}
   function closePromoteModal(){document.getElementById('promoteModal').classList.remove('active');}
-  async function confirmPromotion(){
-    if(!currentProfileStudent||!currentProfileBeltLevels.length)return;
-    var s=currentProfileStudent,cb=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
-    var from=cb||currentProfileBeltLevels[0],to=currentProfileBeltLevels[ci+1];if(!to)return;
-    setMsg('promotionMsg','Saving...','');
-    var upd=await sb.from('students').update({current_belt_id:to.id,current_belt:to.name}).eq('id',s.id);
-    if(upd.error){setMsg('promotionMsg',upd.error.message,'error');return;}
-    await sb.from('belt_promotions').insert({school_id:SCHOOL_ID,student_id:s.id,belt_from:from.name,belt_to:to.name,belt_from_id:from.id,belt_to_id:to.id,promotion_date:document.getElementById('promotionDate').value,promoted_at:new Date().toISOString(),promoted_by:document.getElementById('userName').textContent,fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,fee_paid:document.getElementById('promotionFeePaid').checked,notes:document.getElementById('promotionNotes').value.trim()});
-    setMsg('promotionMsg','Promoted to '+to.name+'!','success');await loadStudents();
-    setTimeout(async function(){closePromoteModal();await openStudentProfile(s.id);},800);
-  }
-  async function loadPromotionHistory(sid){
-    var r=await sb.from('belt_promotions').select('*').eq('student_id',sid).order('promoted_at',{ascending:false});
-    var el=document.getElementById('profilePromotionHistory'),data=r.data||[];
-    if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No promotions yet.</div>';return;}
-    el.innerHTML=data.map(function(p){var dt=p.promotion_date?new Date(p.promotion_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):new Date(p.promoted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});var fee=p.fee_charged>0?'$'+parseFloat(p.fee_charged).toFixed(2)+(p.fee_paid?' ✓':''):'';return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:#F5F0E8">'+p.belt_from+' → <strong>'+p.belt_to+'</strong></div><div style="font-size:0.68rem;color:var(--muted)">'+dt+'</div></div><div style="display:flex;gap:1rem">'+(p.promoted_by?'<div style="font-size:0.68rem;color:var(--muted)">By: '+p.promoted_by+'</div>':'')+(fee?'<div style="font-size:0.68rem;color:var(--gold)">'+fee+'</div>':'')+'</div>'+(p.notes?'<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.3rem;font-style:italic">'+p.notes+'</div>':'')+'</div>';}).join('');
-  }
-  async function loadProfileAttendance(sid){
-    var r=await sb.from('attendance').select('*, classes(name,title)').eq('student_id',sid).order('checked_in_at',{ascending:false}).limit(20);
-    var data=r.data||[],total=data.length,nm=MILESTONES.find(function(m){return m>total;})||null,pm=0;
-    for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)pm=MILESTONES[i];}
-    var pct=nm?Math.round(((total-pm)/(nm-pm))*100):100;
-    document.getElementById('profileClassTracker').innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem"><div style="font-family:var(--font-display);font-size:2rem;color:#C9A84C;line-height:1">'+total+'</div><div style="font-size:0.68rem;color:var(--muted)">classes attended</div></div><div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:'+pct+'%"></div></div>'+(nm?'<div style="font-size:0.68rem;color:var(--muted);">'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.68rem;color:#C9A84C;">All milestones reached!</div>');
-    var le=document.getElementById('profileAttendanceList');
-    if(!data.length){le.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';return;}
-    le.innerHTML=data.map(function(a){var cn=(a.classes&&(a.classes.name||a.classes.title))?(a.classes.name||a.classes.title):'Class';var dt=new Date(a.checked_in_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});var tm=new Date(a.checked_in_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C"><div style="font-size:0.8rem;color:#F5F0E8">'+cn+'</div><div style="font-size:0.68rem;color:var(--muted)">'+dt+' '+tm+'</div></div>';}).join('');
-  }
+  async function confirmPromotion(){if(!currentProfileStudent||!currentProfileBeltLevels.length)return;var s=currentProfileStudent,cb=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?currentProfileBeltLevels.indexOf(cb):-1;var from=cb||currentProfileBeltLevels[0],to=currentProfileBeltLevels[ci+1];if(!to)return;setMsg('promotionMsg','Saving...','');var upd=await sb.from('students').update({current_belt_id:to.id,current_belt:to.name}).eq('id',s.id);if(upd.error){setMsg('promotionMsg',upd.error.message,'error');return;}await sb.from('belt_promotions').insert({school_id:SCHOOL_ID,student_id:s.id,belt_from:from.name,belt_to:to.name,belt_from_id:from.id,belt_to_id:to.id,promotion_date:document.getElementById('promotionDate').value,promoted_at:new Date().toISOString(),promoted_by:document.getElementById('userName').textContent,fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,fee_paid:document.getElementById('promotionFeePaid').checked,notes:document.getElementById('promotionNotes').value.trim()});setMsg('promotionMsg','Promoted to '+to.name+'!','success');await loadStudents();setTimeout(async function(){closePromoteModal();await openStudentProfile(s.id);},800);}
+  async function loadPromotionHistory(sid){var r=await sb.from('belt_promotions').select('*').eq('student_id',sid).order('promoted_at',{ascending:false});var el=document.getElementById('profilePromotionHistory'),data=r.data||[];if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No promotions yet.</div>';return;}el.innerHTML=data.map(function(p){var dt=p.promotion_date?new Date(p.promotion_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):new Date(p.promoted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});var fee=p.fee_charged>0?'$'+parseFloat(p.fee_charged).toFixed(2)+(p.fee_paid?' ✓':''):'';return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:#F5F0E8">'+p.belt_from+' → <strong>'+p.belt_to+'</strong></div><div style="font-size:0.68rem;color:var(--muted)">'+dt+'</div></div><div style="display:flex;gap:1rem">'+(p.promoted_by?'<div style="font-size:0.68rem;color:var(--muted)">By: '+p.promoted_by+'</div>':'')+(fee?'<div style="font-size:0.68rem;color:var(--gold)">'+fee+'</div>':'')+'</div>'+(p.notes?'<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.3rem;font-style:italic">'+p.notes+'</div>':'')+'</div>';}).join('');}
+  async function loadProfileAttendance(sid){var r=await sb.from('attendance').select('*, classes(name,title)').eq('student_id',sid).order('checked_in_at',{ascending:false}).limit(20);var data=r.data||[],total=data.length,nm=MILESTONES.find(function(m){return m>total;})||null,pm=0;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)pm=MILESTONES[i];}var pct=nm?Math.round(((total-pm)/(nm-pm))*100):100;document.getElementById('profileClassTracker').innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem"><div style="font-family:var(--font-display);font-size:2rem;color:#C9A84C;line-height:1">'+total+'</div><div style="font-size:0.68rem;color:var(--muted)">classes attended</div></div><div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:'+pct+'%"></div></div>'+(nm?'<div style="font-size:0.68rem;color:var(--muted);">'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.68rem;color:#C9A84C;">All milestones reached!</div>');var le=document.getElementById('profileAttendanceList');if(!data.length){le.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';return;}le.innerHTML=data.map(function(a){var cn=(a.classes&&(a.classes.name||a.classes.title))?(a.classes.name||a.classes.title):'Class';var dt=new Date(a.checked_in_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});var tm=new Date(a.checked_in_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C"><div style="font-size:0.8rem;color:#F5F0E8">'+cn+'</div><div style="font-size:0.68rem;color:var(--muted)">'+dt+' '+tm+'</div></div>';}).join('');}
 
-  function switchProfileTab(tab){
-    ALL_PROFILE_TABS.forEach(function(t){
-      var el=document.getElementById('profileTab'+t.charAt(0).toUpperCase()+t.slice(1));
-      if(el)el.style.display=t===tab?'block':'none';
-      var b=document.getElementById('tab-'+t);if(b)b.classList.toggle('active',t===tab);
-    });
-  }
+  function switchProfileTab(tab){ALL_TABS.forEach(function(t){var el=document.getElementById('profileTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.style.display=t===tab?'block':'none';var b=document.getElementById('tab-'+t);if(b)b.classList.toggle('active',t===tab);});}
   function closeStudentProfile(){document.getElementById('studentProfileModal').classList.remove('active');currentProfileStudent=null;}
   async function saveProfileNote(){if(!currentProfileStudent)return;var note=document.getElementById('profileNoteInput').value.trim();if(!note)return;var ex=currentProfileStudent.notes||'',ts=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),nn=ex?ex+'\n\n['+ts+'] '+note:'['+ts+'] '+note;var r=await sb.from('students').update({notes:nn}).eq('id',currentProfileStudent.id);if(r.error){setMsg('profileNoteMsg',r.error.message,'error');}else{currentProfileStudent.notes=nn;document.getElementById('profileNoteInput').value='';document.getElementById('profileNoteDisplay').innerHTML='<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+nn.replace(/\n/g,'<br>')+'</div>';setMsg('profileNoteMsg','Note saved!','success');setTimeout(function(){document.getElementById('profileNoteMsg').textContent='';},2000);await loadStudents();}}
   async function toggleStudentStatus(){if(!currentProfileStudent)return;var c=currentProfileStudent.status||'trial',n=c==='active'?'trial':c==='trial'?'expired':'active';var r=await sb.from('students').update({status:n}).eq('id',currentProfileStudent.id);if(!r.error){await openStudentProfile(currentProfileStudent.id);await loadStudents();}}
   function openEditStudent(){if(!currentProfileStudent)return;var s=currentProfileStudent;document.getElementById('addStudentTitle').textContent='Edit Student';document.getElementById('stuEditId').value=s.id;document.getElementById('stuFirst').value=s.first_name||'';document.getElementById('stuLast').value=s.last_name||'';document.getElementById('stuDOB').value=s.date_of_birth||'';document.getElementById('stuPhone').value=s.phone||'';document.getElementById('stuEmail').value=s.email||'';document.getElementById('stuStartDate').value=s.start_date||'';document.getElementById('stuStatus').value=s.status||'active';document.getElementById('studentMsg').textContent='';populateStudentProgramDropdown();if(s.program_id){document.getElementById('stuProgram').value=s.program_id;filterMembershipsForProgram().then(function(){if(s.membership_id)document.getElementById('stuMembership').value=s.membership_id;});}document.getElementById('addStudentModal').classList.add('active');}
   async function handlePhotoUpload(event){if(!currentProfileStudent)return;var file=event.target.files[0];if(!file)return;var ext=file.name.split('.').pop(),path=currentProfileStudent.id+'.'+ext;var ur=await sb.storage.from('student-photos').upload(path,file,{upsert:true});if(ur.error){alert('Upload failed: '+ur.error.message);return;}var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;await sb.from('students').update({photo_url:pub}).eq('id',currentProfileStudent.id);currentProfileStudent.photo_url=pub;document.getElementById('profileAvatar').innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';await loadStudents();}
 
-  // ─── MEMBERSHIPS ────────────────────────────────────
-  async function loadMemberships(){var r=await sb.from('memberships').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');allMemberships=r.data||[];renderMemberships();renderPrograms();}
   function renderMemberships(){var tb=document.getElementById('membershipsTableBody');if(!allMemberships.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}tb.innerHTML=allMemberships.map(function(m){var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');var limit=m.class_limit_type==='unlimited'?'Unlimited':m.class_limit_type==='class_pack'?(m.class_limit_count||'?')+' classes':(m.class_limit_count||'?')+'/'+(m.class_limit_type==='per_week'?'wk':'mo');var renew=m.auto_renew?'<span style="color:var(--green);font-size:0.7rem">On</span>':'<span style="color:var(--muted);font-size:0.7rem">Off</span>';return '<tr><td class="name">'+m.name+'</td><td style="color:var(--muted2);font-size:0.72rem">—</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td>'+renew+'</td></tr>';}).join('');}
   function populateProgramCheckboxes(){var c=document.getElementById('memProgramChecks');if(!c)return;if(!allPrograms.length){c.innerHTML='<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet.</div>';return;}c.innerHTML=allPrograms.map(function(p){var dot='<span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.5rem"></span>';return '<label class="prog-check-label"><input type="checkbox" class="mem-prog-check" value="'+p.id+'" style="accent-color:#C9A84C;flex-shrink:0" />'+dot+'<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">'+p.name+'</span></label>';}).join('');}
   function openAddMembership(){document.getElementById('memName').value='';document.getElementById('memType').value='monthly';document.getElementById('memLength').value='1';document.getElementById('memUnit').value='months';document.getElementById('memPrice').value='';document.getElementById('memSignup').value='0';document.getElementById('memLimitType').value='unlimited';document.getElementById('memLimitCount').value='';document.getElementById('memAutoRenew').checked=true;document.getElementById('memAutopay').checked=true;document.getElementById('memTrial').checked=false;document.getElementById('classLimitField').style.display='none';document.getElementById('membershipMsg').textContent='';populateProgramCheckboxes();document.getElementById('addMembershipModal').classList.add('active');}
@@ -793,14 +702,12 @@
   function toggleMemType(){if(document.getElementById('memType').value==='class_pack'){document.getElementById('memLimitType').value='class_pack';document.getElementById('classLimitField').style.display='block';document.getElementById('memUnit').value='days';}}
   async function saveMembership(){var name=document.getElementById('memName').value.trim(),price=document.getElementById('memPrice').value,sp=Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){return cb.value;});if(!name){setMsg('membershipMsg','Name required.','error');return;}if(!sp.length){setMsg('membershipMsg','Select at least one program.','error');return;}if(!price){setMsg('membershipMsg','Price required.','error');return;}setMsg('membershipMsg','Saving...','');var lt=document.getElementById('memLimitType').value,lc=document.getElementById('memLimitCount').value;var r=await sb.from('memberships').insert({school_id:SCHOOL_ID,name:name,billing_type:document.getElementById('memType').value,billing_length:parseInt(document.getElementById('memLength').value)||1,billing_unit:document.getElementById('memUnit').value,price:parseFloat(price)||0,signup_fee:parseFloat(document.getElementById('memSignup').value)||0,class_limit_type:lt,class_limit_count:lc?parseInt(lc):null,trial:document.getElementById('memTrial').checked,auto_renew:document.getElementById('memAutoRenew').checked,autopay:document.getElementById('memAutopay').checked,active:true}).select();if(r.error){setMsg('membershipMsg',r.error.message,'error');}else{var nm=r.data&&r.data[0];if(nm&&sp.length){await sb.from('membership_programs').insert(sp.map(function(pid){return{membership_id:nm.id,program_id:pid};}));}setMsg('membershipMsg','Membership saved!','success');await loadMemberships();setTimeout(function(){closeAddMembership();},1000);}}
 
-  // ─── ADD / EDIT STUDENT ─────────────────────────────
   function openAddStudent(){var today=new Date().toISOString().split('T')[0];document.getElementById('addStudentTitle').textContent='Add New Student';document.getElementById('stuEditId').value='';document.getElementById('stuFirst').value='';document.getElementById('stuLast').value='';document.getElementById('stuDOB').value='';document.getElementById('stuPhone').value='';document.getElementById('stuEmail').value='';document.getElementById('stuStartDate').value=today;document.getElementById('stuStatus').value='active';document.getElementById('studentMsg').textContent='';document.getElementById('stuMembership').innerHTML='<option value="">— Select a Program first —</option>';populateStudentProgramDropdown();document.getElementById('addStudentModal').classList.add('active');}
   function closeAddStudent(){document.getElementById('addStudentModal').classList.remove('active');}
   function populateStudentProgramDropdown(){var sel=document.getElementById('stuProgram');sel.innerHTML='<option value="">— Select a Program —</option>';allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});}
   async function filterMembershipsForProgram(){var pid=document.getElementById('stuProgram').value,sel=document.getElementById('stuMembership');if(!pid){sel.innerHTML='<option value="">— Select a Program first —</option>';return;}sel.innerHTML='<option value="">Loading...</option>';var r=await sb.from('membership_programs').select('membership_id').eq('program_id',pid);if(r.error||!r.data||!r.data.length){sel.innerHTML='<option value="">No memberships for this program</option>';return;}var ids=r.data.map(function(x){return x.membership_id;}),mems=allMemberships.filter(function(m){return ids.indexOf(m.id)!==-1;});if(!mems.length){sel.innerHTML='<option value="">No memberships for this program</option>';return;}sel.innerHTML='<option value="">— Select a Membership —</option>';mems.forEach(function(m){var o=document.createElement('option');o.value=m.id;var p='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');o.textContent=m.name+' — '+p;sel.appendChild(o);});}
   async function saveStudent(){var eid=document.getElementById('stuEditId').value,first=document.getElementById('stuFirst').value.trim(),last=document.getElementById('stuLast').value.trim(),pid=document.getElementById('stuProgram').value,mid=document.getElementById('stuMembership').value;if(!first||!last){setMsg('studentMsg','First and last name required.','error');return;}if(!pid){setMsg('studentMsg','Please select a program.','error');return;}if(!mid){setMsg('studentMsg','Please select a membership.','error');return;}setMsg('studentMsg','Saving...','');var payload={first_name:first,last_name:last,email:document.getElementById('stuEmail').value.trim(),phone:document.getElementById('stuPhone').value.trim(),date_of_birth:document.getElementById('stuDOB').value||null,program_id:pid,membership_id:mid,plan_type:'membership',status:document.getElementById('stuStatus').value,start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0]};var r;if(eid){r=await sb.from('students').update(payload).eq('id',eid);}else{payload.school_id=SCHOOL_ID;r=await sb.from('students').insert(payload);}if(r.error){setMsg('studentMsg',r.error.message,'error');}else{setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadStudents();if(eid&&currentProfileStudent){await openStudentProfile(eid);}setTimeout(function(){closeAddStudent();},1200);}}
 
-  // ─── CLASSES ────────────────────────────────────────
   async function loadClasses(){var r=await sb.from('classes').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('start_time');allClasses=r.data||[];document.getElementById('anaClasses').textContent=allClasses.length;document.getElementById('anaWeekly').textContent=allClasses.reduce(function(a,c){return a+(c.days_of_week?c.days_of_week.length:0);},0);renderAllClasses();}
   async function loadStudents(){var r=await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id',SCHOOL_ID);allStudents=r.data||[];var active=allStudents.filter(function(s){return s.status==='active';}).length,pending=allStudents.filter(function(s){return s.status==='trial'||s.status==='paused';}).length,expired=allStudents.filter(function(s){return s.status==='expired'||s.status==='cancelled';}).length;document.getElementById('statTotal').textContent=allStudents.length;document.getElementById('statActive').textContent=active;document.getElementById('statPending').textContent=pending;document.getElementById('statExpired').textContent=expired;document.getElementById('totalMembers').textContent=allStudents.length;document.getElementById('todayStudentCount').textContent=active;document.getElementById('anaTotal').textContent=allStudents.length;document.getElementById('anaActive').textContent=active;renderMembersTable();}
   function renderMembersTable(){var q=document.getElementById('memberSearch');var query=q?q.value.toLowerCase().trim():'';var filtered=query?allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(query)||(s.email||'').toLowerCase().includes(query);}):allStudents;renderMembersTableFiltered(filtered);}
