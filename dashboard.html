@@ -10,6 +10,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .profile-tab { font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.6rem 1rem;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:#7A7060;cursor:pointer;transition:all 0.2s; }
+    .profile-tab.active { color:#C9A84C;border-color:#C9A84C; }
+    .profile-info-row { display:flex;gap:0.5rem;font-size:0.8rem;color:#9A8F80;align-items:flex-start; }
+    .profile-info-label { font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:#7A7060;min-width:70px;flex-shrink:0;padding-top:0.1rem; }
+    .milestone-bar-bg { height:4px;background:#222;border-radius:2px;margin:0.5rem 0;overflow:hidden; }
+    .milestone-bar-fill { height:100%;background:#C9A84C;border-radius:2px;transition:width 0.6s ease; }
+    .belt-swatch { width:28px;height:10px;border-radius:2px;display:inline-block;border:1px solid rgba(255,255,255,0.15); }
+    .belt-level-row { display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);margin-bottom:0.4rem; }
+    .prog-check-label { display:flex;align-items:center;gap:0.4rem;cursor:pointer; }
+  </style>
 </head>
 <body class="dashboard">
 
@@ -76,10 +87,7 @@
 <!-- SCHEDULE PAGE -->
 <div class="page active" id="page-schedule">
   <div class="today-banner">
-    <div>
-      <div class="today-label">Today</div>
-      <div class="today-date" id="todayFull"></div>
-    </div>
+    <div><div class="today-label">Today</div><div class="today-date" id="todayFull"></div></div>
     <div class="today-stats">
       <div class="today-stat"><span class="today-stat-num" id="todayClassCount">0</span><span class="today-stat-lbl">Classes</span></div>
       <div class="today-stat"><span class="today-stat-num" id="todayStudentCount">0</span><span class="today-stat-lbl">Active Members</span></div>
@@ -87,14 +95,8 @@
     </div>
     <button class="btn-sm gold" onclick="openAddClass()">+ Add Class</button>
   </div>
-  <div>
-    <div class="content-heading"><h2>Today's Classes</h2><div class="rule-h"></div></div>
-    <div class="schedule-grid" id="todaySchedule"><div class="no-classes">Loading schedule...</div></div>
-  </div>
-  <div>
-    <div class="content-heading"><h2>This Week</h2><div class="rule-h"></div></div>
-    <div class="week-grid" id="weekGrid"></div>
-  </div>
+  <div><div class="content-heading"><h2>Today's Classes</h2><div class="rule-h"></div></div><div class="schedule-grid" id="todaySchedule"><div class="no-classes">Loading schedule...</div></div></div>
+  <div><div class="content-heading"><h2>This Week</h2><div class="rule-h"></div></div><div class="week-grid" id="weekGrid"></div></div>
 </div>
 
 <!-- ALL CLASSES PAGE -->
@@ -107,9 +109,7 @@
 <div class="page" id="page-programs">
   <div class="content-heading"><h2>Programs</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()">+ Add Program</button></div>
   <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Programs group your classes and memberships by subject.</p>
-  <div id="programsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
-    <div class="no-classes">Loading programs...</div>
-  </div>
+  <div id="programsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"><div class="no-classes">Loading programs...</div></div>
 </div>
 
 <!-- MEMBERSHIPS PAGE -->
@@ -118,12 +118,7 @@
   <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Memberships define how students pay and how many classes they can attend.</p>
   <div class="panel">
     <div class="panel-header"><span class="panel-title">Membership Plans</span></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Name</th><th>Programs</th><th>Type</th><th>Price</th><th>Class Access</th><th>Auto-Renew</th></tr></thead>
-        <tbody id="membershipsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</td></tr></tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Programs</th><th>Type</th><th>Price</th><th>Class Access</th><th>Auto-Renew</th></tr></thead><tbody id="membershipsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -140,49 +135,27 @@
   </div>
   <div class="panel">
     <div class="panel-header"><span class="panel-title">Student Roster</span></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Program</th><th>Membership</th><th>Status</th><th>Joined</th></tr></thead>
-        <tbody id="membersTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Program</th><th>Membership</th><th>Status</th><th>Joined</th></tr></thead><tbody id="membersTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
 
 <!-- PAYMENTS PAGE -->
 <div class="page" id="page-payments">
   <div class="content-heading"><h2>Payments</h2><div class="rule-h"></div></div>
-  <div class="panel">
-    <div class="panel-header"><span class="panel-title">Transaction Ledger</span></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Invoice #</th><th>Student</th><th>Type</th><th>Amount</th><th>Fee (1.5%)</th><th>Net</th><th>Status</th><th>Date</th></tr></thead>
-        <tbody id="paymentsTableBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No payments recorded yet.</td></tr></tbody>
-      </table>
-    </div>
-  </div>
+  <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span></div><div class="table-wrap"><table><thead><tr><th>Invoice #</th><th>Student</th><th>Type</th><th>Amount</th><th>Fee (1.5%)</th><th>Net</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No payments recorded yet.</td></tr></tbody></table></div></div>
 </div>
 
 <!-- COMMUNICATIONS PAGE -->
 <div class="page" id="page-communications">
   <div class="content-heading"><h2>Communications</h2><div class="rule-h"></div></div>
-  <div class="panel">
-    <div class="panel-header"><span class="panel-title">Send Broadcast</span></div>
-    <div class="panel-body">
-      <div style="display:flex;flex-direction:column;gap:1rem;max-width:600px">
-        <div class="field"><label>Subject</label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
-        <div class="field"><label>Audience</label>
-          <select id="commAudience">
-            <option value="all">All Members</option>
-            <option value="active">Active Only</option>
-            <option value="expired">Expired Members</option>
-          </select>
-        </div>
-        <div class="field"><label>Message</label><textarea id="commBody" rows="5" placeholder="Write your message..."></textarea></div>
-        <button class="btn-sm gold" style="width:fit-content" onclick="sendCommunication()">Send Message</button>
-        <p class="form-msg" id="commMsg"></p>
-      </div>
-    </div>
+  <div class="panel"><div class="panel-header"><span class="panel-title">Send Broadcast</span></div>
+    <div class="panel-body"><div style="display:flex;flex-direction:column;gap:1rem;max-width:600px">
+      <div class="field"><label>Subject</label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
+      <div class="field"><label>Audience</label><select id="commAudience"><option value="all">All Members</option><option value="active">Active Only</option><option value="expired">Expired Members</option></select></div>
+      <div class="field"><label>Message</label><textarea id="commBody" rows="5" placeholder="Write your message..."></textarea></div>
+      <button class="btn-sm gold" style="width:fit-content" onclick="sendCommunication()">Send Message</button>
+      <p class="form-msg" id="commMsg"></p>
+    </div></div>
   </div>
 </div>
 
@@ -200,21 +173,18 @@
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
   <div class="content-heading"><h2>Settings</h2><div class="rule-h"></div></div>
-  <div class="panel">
-    <div class="panel-header"><span class="panel-title">School Profile</span></div>
+  <div class="panel"><div class="panel-header"><span class="panel-title">School Profile</span></div>
     <div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
       <div class="field"><label>School Name</label><input type="text" id="settingName" /></div>
       <div class="field"><label>Email</label><input type="email" id="settingEmail" /></div>
       <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
       <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
       <div class="field"><label>State</label><input type="text" id="settingState" /></div>
-      <div class="field">
-        <label>Brand Color</label>
+      <div class="field"><label>Brand Color</label>
         <div style="display:flex;gap:0.75rem;align-items:center">
           <input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
           <input type="text" id="settingColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncColorPicker()" />
         </div>
-        <p style="font-size:0.62rem;color:var(--muted);margin-top:0.4rem">This color will be applied across your dashboard and member portal.</p>
       </div>
       <button class="btn-sm gold" style="width:fit-content" onclick="saveSettings()">Save Changes</button>
       <p class="form-msg" id="settingsMsg"></p>
@@ -225,25 +195,23 @@
 <!-- BILLING PAGE -->
 <div class="page" id="page-billing">
   <div class="content-heading"><h2>Billing</h2><div class="rule-h"></div></div>
-  <div class="panel">
-    <div class="panel-body">
-      <p style="color:var(--muted2);margin-bottom:1.5rem">All plans include a <span style="color:var(--gold)">1.5% processing fee</span> on transactions.</p>
-      <div class="stats-grid" style="max-width:500px">
-        <div class="stat-card"><div class="stat-label">Current Plan</div><div class="stat-value" style="font-size:1.4rem">Pro</div><div class="stat-delta">$59/month</div></div>
-        <div class="stat-card"><div class="stat-label">Processing Fee</div><div class="stat-value" style="font-size:1.4rem">1.5%</div><div class="stat-delta">Per transaction</div></div>
-      </div>
+  <div class="panel"><div class="panel-body">
+    <p style="color:var(--muted2);margin-bottom:1.5rem">All plans include a <span style="color:var(--gold)">1.5% processing fee</span> on transactions.</p>
+    <div class="stats-grid" style="max-width:500px">
+      <div class="stat-card"><div class="stat-label">Current Plan</div><div class="stat-value" style="font-size:1.4rem">Pro</div><div class="stat-delta">$59/month</div></div>
+      <div class="stat-card"><div class="stat-label">Processing Fee</div><div class="stat-value" style="font-size:1.4rem">1.5%</div><div class="stat-delta">Per transaction</div></div>
     </div>
-  </div>
+  </div></div>
 </div>
 ```
 
   </div>
 </main>
 
-<!-- STUDENT PROFILE MODAL -->
+<!-- ═══════════════ STUDENT PROFILE MODAL ═══════════════ -->
 
 <div class="modal-overlay" id="studentProfileModal">
-  <div class="modal" style="width:800px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:0">
+  <div class="modal" style="width:820px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:0">
     <input type="file" id="photoUploadInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
 
 ```
@@ -251,7 +219,7 @@
 <div id="profileHeader" style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
   <button onclick="closeStudentProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">x</button>
   <div style="position:relative;flex-shrink:0">
-    <div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--gold-dk);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden">
+    <div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden">
       <span id="profileInitials">??</span>
     </div>
     <div onclick="document.getElementById('photoUploadInput').click()" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.65rem;color:var(--black);font-weight:700">+</div>
@@ -261,65 +229,60 @@
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
       <span id="profileStatusBadge" class="chip chip-active">active</span>
       <span id="profileProgramBadge" class="class-tag">—</span>
+      <span id="profileBeltBadge" style="display:none;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
     </div>
   </div>
-  <div style="display:flex;gap:0.5rem;flex-shrink:0">
+  <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+    <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()">◆ Promote</button>
     <button class="btn-sm gold" onclick="openEditStudent()">Edit</button>
     <button class="btn-sm" onclick="toggleStudentStatus()">Change Status</button>
   </div>
 </div>
 
 <!-- Two Column Body -->
-<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:0;padding:0">
+<div style="display:grid;grid-template-columns:1fr 1.3fr">
 
   <!-- Left Column -->
   <div style="padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem">
-
-    <!-- Contact Info -->
     <div>
       <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div>
       <div id="profileContactInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div>
     </div>
-
-    <!-- Membership -->
     <div>
       <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Membership</div>
       <div id="profileMembershipInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div>
     </div>
-
-    <!-- Belt Status -->
-    <div id="profileBeltSection">
-      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
+    <div id="profileBeltSection" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)">Belt Status</div>
+      </div>
       <div id="profileBeltInfo"></div>
+      <div id="profileBeltPalette" style="margin-top:0.75rem"></div>
     </div>
-
-    <!-- Class Tracker -->
     <div>
       <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
       <div id="profileClassTracker"></div>
     </div>
-
   </div>
 
   <!-- Right Column -->
   <div style="padding:1.5rem">
-    <!-- Tabs -->
     <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
       <button class="profile-tab active" id="tab-attendance" onclick="switchProfileTab('attendance')">Attendance</button>
+      <button class="profile-tab" id="tab-promotions" onclick="switchProfileTab('promotions')">Belt History</button>
       <button class="profile-tab" id="tab-notes" onclick="switchProfileTab('notes')">Notes</button>
       <button class="profile-tab" id="tab-financial" onclick="switchProfileTab('financial')">Financial</button>
     </div>
 
     <!-- Attendance Tab -->
-    <div id="profileTabAttendance">
-      <div id="profileAttendanceList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-    </div>
+    <div id="profileTabAttendance"><div id="profileAttendanceList" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
+
+    <!-- Belt History Tab -->
+    <div id="profileTabPromotions" style="display:none"><div id="profilePromotionHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
 
     <!-- Notes Tab -->
     <div id="profileTabNotes" style="display:none">
-      <div class="field" style="margin-bottom:0.75rem">
-        <textarea id="profileNoteInput" rows="3" placeholder="Add a note about this student..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.75rem;resize:vertical"></textarea>
-      </div>
+      <div class="field" style="margin-bottom:0.75rem"><textarea id="profileNoteInput" rows="3" placeholder="Add a note..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.75rem;resize:vertical"></textarea></div>
       <button class="btn-sm gold" style="margin-bottom:1rem" onclick="saveProfileNote()">Add Note</button>
       <p class="form-msg" id="profileNoteMsg"></p>
       <div id="profileNoteDisplay" style="font-size:0.82rem;color:var(--muted2);font-style:italic;margin-top:0.5rem"></div>
@@ -330,14 +293,13 @@
       <div style="text-align:center;padding:2rem 1rem">
         <div style="font-size:2rem;margin-bottom:1rem;opacity:0.3">◆</div>
         <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white);margin-bottom:0.5rem">Stripe Not Connected</div>
-        <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Payment history will appear here once Stripe is connected to your account.</div>
+        <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Payment history will appear here once Stripe is connected.</div>
         <div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:left">
-          <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Upcoming</div>
-          <div id="profileFinancialMembership" style="font-size:0.82rem;color:var(--muted2)">Loading membership details...</div>
+          <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Membership</div>
+          <div id="profileFinancialMembership" style="font-size:0.82rem;color:var(--muted2)"></div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 ```
@@ -345,24 +307,98 @@
   </div>
 </div>
 
+<!-- ═══════════════ BELT PROMOTION MODAL ═══════════════ -->
+
+<div class="modal-overlay" id="promoteModal">
+  <div class="modal" style="width:520px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div class="modal-header">
+      <span class="modal-title">Belt Promotion</span>
+      <button class="modal-close" onclick="closePromoteModal()">x</button>
+    </div>
+    <div class="modal-body">
+      <!-- From → To display -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-bottom:1.5rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border)">
+        <div style="text-align:center">
+          <div id="promoteFromSwatch" style="width:48px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);margin:0 auto 0.4rem"></div>
+          <div id="promoteFromName" style="font-size:0.72rem;color:var(--muted);text-transform:capitalize"></div>
+        </div>
+        <div style="color:var(--gold);font-size:1.2rem">→</div>
+        <div style="text-align:center">
+          <div id="promoteToSwatch" style="width:48px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);margin:0 auto 0.4rem"></div>
+          <div id="promoteToName" style="font-size:0.72rem;color:var(--white);font-weight:700;text-transform:capitalize"></div>
+        </div>
+      </div>
+
+```
+  <!-- Promotion date -->
+  <div class="field">
+    <label>Promotion Date</label>
+    <input type="date" id="promotionDate" />
+  </div>
+
+  <!-- Fee -->
+  <div class="form-row">
+    <div class="field"><label>Promotion Fee</label>
+      <div style="display:flex;align-items:center;gap:0.4rem">
+        <span style="color:var(--gold);font-size:0.9rem">$</span>
+        <input type="number" id="promotionFee" value="0" min="0" step="0.01" />
+      </div>
+    </div>
+    <div class="field" style="display:flex;align-items:flex-end;padding-bottom:0.25rem">
+      <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
+        <input type="checkbox" id="promotionFeePaid" style="accent-color:var(--gold)" /> Fee Collected
+      </label>
+    </div>
+  </div>
+
+  <!-- YouTube link for next belt -->
+  <div id="promotionYoutubeSection" style="display:none">
+    <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Curriculum for new rank</div>
+    <div id="promotionYoutubeLink" style="font-size:0.78rem;color:var(--gold);word-break:break-all"></div>
+  </div>
+
+  <!-- Notes -->
+  <div class="field">
+    <label>Notes (optional)</label>
+    <textarea id="promotionNotes" rows="3" placeholder="Add promotion notes..."></textarea>
+  </div>
+
+  <button class="btn-gold-full" onclick="confirmPromotion()">Confirm Promotion</button>
+  <p class="form-msg" id="promotionMsg"></p>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ═══════════════ BELT SETUP MODAL ═══════════════ -->
+
+<div class="modal-overlay" id="beltSetupModal">
+  <div class="modal" style="width:620px;max-width:96vw;max-height:92vh;overflow-y:auto">
+    <div class="modal-header">
+      <span class="modal-title" id="beltSetupTitle">Belt Levels</span>
+      <button class="modal-close" onclick="closeBeltSetup()">x</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Define each belt level for this program. Drag to reorder — students will be promoted in this sequence.</p>
+      <div id="beltLevelsList" style="margin-bottom:1rem"></div>
+      <button class="btn-sm gold" onclick="addBeltLevelRow()">+ Add Belt Level</button>
+      <div id="newBeltRows" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.5rem"></div>
+      <button class="btn-gold-full" style="margin-top:1rem" onclick="saveBeltLevels()">Save Belt Levels</button>
+      <p class="form-msg" id="beltSetupMsg"></p>
+    </div>
+  </div>
+</div>
+
 <!-- ATTENDANCE MODAL -->
 
 <div class="modal-overlay" id="attendanceModal">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="attendanceModalTitle">Class Attendance</span>
-      <button class="modal-close" onclick="closeAttendance()">x</button>
-    </div>
+    <div class="modal-header"><span class="modal-title" id="attendanceModalTitle">Class Attendance</span><button class="modal-close" onclick="closeAttendance()">x</button></div>
     <div class="modal-body">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div>
-          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div>
-          <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white)" id="attendanceDate"></div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div>
-          <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold)" id="attendanceCount">0</div>
-        </div>
+        <div><div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div><div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white)" id="attendanceDate"></div></div>
+        <div style="text-align:right"><div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div><div style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold)" id="attendanceCount">0</div></div>
       </div>
       <div id="attendanceList" style="display:flex;flex-direction:column;gap:0.5rem;max-height:400px;overflow-y:auto"></div>
       <p class="form-msg" id="attendanceMsg"></p>
@@ -374,48 +410,24 @@
 
 <div class="modal-overlay" id="addClassModal">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add New Class</span>
-      <button class="modal-close" onclick="closeAddClass()">x</button>
-    </div>
+    <div class="modal-header"><span class="modal-title">Add New Class</span><button class="modal-close" onclick="closeAddClass()">x</button></div>
     <div class="modal-body">
       <div class="field"><label>Class Title</label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
       <div class="form-row">
-        <div class="field"><label>Style</label>
-          <select id="classStyle">
-            <option value="BJJ">BJJ</option><option value="Karate">Karate</option><option value="Kickboxing">Kickboxing</option>
-            <option value="Kung Fu">Kung Fu</option><option value="Boxing">Boxing</option><option value="Yoga">Yoga</option>
-            <option value="Strength">Strength</option><option value="Mixed">Mixed</option>
-          </select>
-        </div>
-        <div class="field"><label>Age Group</label>
-          <select id="classAge">
-            <option value="kids">Kids</option><option value="teens">Teens</option><option value="adults">Adults</option><option value="all">All Ages</option>
-          </select>
-        </div>
+        <div class="field"><label>Style</label><select id="classStyle"><option value="BJJ">BJJ</option><option value="Karate">Karate</option><option value="Kickboxing">Kickboxing</option><option value="Kung Fu">Kung Fu</option><option value="Boxing">Boxing</option><option value="Yoga">Yoga</option><option value="Strength">Strength</option><option value="Mixed">Mixed</option></select></div>
+        <div class="field"><label>Age Group</label><select id="classAge"><option value="kids">Kids</option><option value="teens">Teens</option><option value="adults">Adults</option><option value="all">All Ages</option></select></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Level</label>
-          <select id="classLevel">
-            <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="all">All Levels</option>
-          </select>
-        </div>
+        <div class="field"><label>Level</label><select id="classLevel"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="all">All Levels</option></select></div>
         <div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div>
       </div>
       <div class="form-row">
         <div class="field"><label>Start Time</label><input type="time" id="classStart" /></div>
         <div class="field"><label>End Time</label><input type="time" id="classEnd" /></div>
       </div>
-      <div class="field">
-        <label>Days of Week</label>
+      <div class="field"><label>Days of Week</label>
         <div class="days-grid">
-          <button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button>
-          <button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button>
-          <button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button>
-          <button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button>
-          <button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button>
-          <button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button>
-          <button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button>
+          <button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button>
         </div>
       </div>
       <button class="btn-gold-full" onclick="saveClass()">Save Class</button>
@@ -428,29 +440,15 @@
 
 <div class="modal-overlay" id="addProgramModal">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add New Program</span>
-      <button class="modal-close" onclick="closeAddProgram()">x</button>
-    </div>
+    <div class="modal-header"><span class="modal-title">Add New Program</span><button class="modal-close" onclick="closeAddProgram()">x</button></div>
     <div class="modal-body">
       <div class="field"><label>Program Name</label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
       <div class="field"><label>Description</label><textarea id="progDesc" rows="3" placeholder="Brief description..."></textarea></div>
       <div class="form-row">
-        <div class="field"><label>Age Group</label>
-          <select id="progAge">
-            <option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option>
-            <option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option>
-          </select>
-        </div>
-        <div class="field"><label>Belt Progression</label>
-          <select id="progBelt">
-            <option value="Belt Progression">Belt Progression</option>
-            <option value="No Belt Progression">No Belt Progression</option>
-          </select>
-        </div>
+        <div class="field"><label>Age Group</label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div>
+        <div class="field"><label>Belt Progression</label><select id="progBelt"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
       </div>
-      <div class="field">
-        <label>Program Color</label>
+      <div class="field"><label>Program Color</label>
         <div style="display:flex;gap:0.75rem;align-items:center">
           <input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
           <input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" />
@@ -466,47 +464,22 @@
 
 <div class="modal-overlay" id="addMembershipModal">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add New Membership</span>
-      <button class="modal-close" onclick="closeAddMembership()">x</button>
-    </div>
+    <div class="modal-header"><span class="modal-title">Add New Membership</span><button class="modal-close" onclick="closeAddMembership()">x</button></div>
     <div class="modal-body">
       <div class="field"><label>Membership Name</label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
-      <div class="field">
-        <label>Programs (select all that apply)</label>
-        <div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.5rem;background:var(--black);border:1px solid var(--border)">
-          <div style="color:var(--muted);font-size:0.75rem;font-style:italic">Loading programs...</div>
-        </div>
+      <div class="field"><label>Programs (select all that apply)</label>
+        <div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.5rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.75rem;font-style:italic">Loading programs...</div></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Type</label>
-          <select id="memType" onchange="toggleMemType()">
-            <option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option>
-          </select>
-        </div>
-        <div class="field"><label>Length</label>
-          <div style="display:flex;gap:0.5rem">
-            <input type="number" id="memLength" value="1" min="1" style="width:60px" />
-            <select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select>
-          </div>
-        </div>
+        <div class="field"><label>Type</label><select id="memType" onchange="toggleMemType()"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option></select></div>
+        <div class="field"><label>Length</label><div style="display:flex;gap:0.5rem"><input type="number" id="memLength" value="1" min="1" style="width:60px" /><select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select></div></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Price</label>
-          <div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
-        </div>
-        <div class="field"><label>Signup Fee</label>
-          <div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
-        </div>
+        <div class="field"><label>Price</label><div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div></div>
+        <div class="field"><label>Signup Fee</label><div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div></div>
       </div>
-      <div class="field"><label>Class Access</label>
-        <select id="memLimitType" onchange="toggleClassLimit()">
-          <option value="unlimited">Unlimited</option><option value="per_week">Limited per Week</option><option value="per_month">Limited per Month</option><option value="class_pack">Class Pack (fixed quantity)</option>
-        </select>
-      </div>
-      <div class="field" id="classLimitField" style="display:none">
-        <label>Number of Classes</label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" />
-      </div>
+      <div class="field"><label>Class Access</label><select id="memLimitType" onchange="toggleClassLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Limited per Week</option><option value="per_month">Limited per Month</option><option value="class_pack">Class Pack (fixed quantity)</option></select></div>
+      <div class="field" id="classLimitField" style="display:none"><label>Number of Classes</label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" /></div>
       <div style="display:flex;gap:1.5rem;margin-bottom:1rem">
         <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer"><input type="checkbox" id="memAutoRenew" checked style="accent-color:var(--gold)" /> Auto-Renew</label>
         <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer"><input type="checkbox" id="memAutopay" checked style="accent-color:var(--gold)" /> Autopay</label>
@@ -522,10 +495,7 @@
 
 <div class="modal-overlay" id="addStudentModal">
   <div class="modal" style="width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
-    <div class="modal-header">
-      <span class="modal-title" id="addStudentTitle">Add New Student</span>
-      <button class="modal-close" onclick="closeAddStudent()">x</button>
-    </div>
+    <div class="modal-header"><span class="modal-title" id="addStudentTitle">Add New Student</span><button class="modal-close" onclick="closeAddStudent()">x</button></div>
     <div class="modal-body">
       <input type="hidden" id="stuEditId" value="" />
       <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Student Info</div>
@@ -539,17 +509,11 @@
       </div>
       <div class="field"><label>Email</label><input type="email" id="stuEmail" placeholder="student@email.com" /></div>
       <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Enrollment</div>
-      <div class="field"><label>Program</label>
-        <select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">— Select a Program —</option></select>
-      </div>
-      <div class="field"><label>Membership Plan</label>
-        <select id="stuMembership"><option value="">— Select a Program first —</option></select>
-      </div>
+      <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">— Select a Program —</option></select></div>
+      <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">— Select a Program first —</option></select></div>
       <div class="form-row">
         <div class="field"><label>Start Date</label><input type="date" id="stuStartDate" /></div>
-        <div class="field"><label>Status</label>
-          <select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option></select>
-        </div>
+        <div class="field"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option></select></div>
       </div>
       <button class="btn-gold-full" onclick="saveStudent()">Save Student</button>
       <p class="form-msg" id="studentMsg"></p>
@@ -557,578 +521,577 @@
   </div>
 </div>
 
-<style>
-.profile-tab {
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 0.6rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  color: #7A7060;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.profile-tab.active { color: #C9A84C; border-color: #C9A84C; }
-.profile-info-row {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: #9A8F80;
-  align-items: flex-start;
-}
-.profile-info-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #7A7060;
-  min-width: 70px;
-  flex-shrink: 0;
-  padding-top: 0.1rem;
-}
-.milestone-bar-bg {
-  height: 4px;
-  background: #222;
-  border-radius: 2px;
-  margin: 0.5rem 0;
-  overflow: hidden;
-}
-.milestone-bar-fill {
-  height: 100%;
-  background: #C9A84C;
-  border-radius: 2px;
-  transition: width 0.6s ease;
-}
-</style>
-
 <script>
   const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
   const SCHOOL_ID     = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-  const DAYS      = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MILESTONES = [10, 25, 50, 100, 200, 500, 1000];
+  const MILESTONES = [10,25,50,100,200,500,1000];
 
-  var allClasses     = [];
-  var allStudents    = [];
-  var allPrograms    = [];
-  var allMemberships = [];
-  var currentProfileStudent = null;
-  var brandColor = '#C9A84C';
+  var allClasses=[],allStudents=[],allPrograms=[],allMemberships=[];
+  var currentProfileStudent=null,currentProfileBeltLevels=[],pendingBeltRows=[];
+  var currentBeltSetupProgramId=null;
 
-  async function init() {
-    try {
-      var res = await sb.auth.getSession();
-      if (!res.data.session) { window.location.href = 'index.html'; return; }
-      var user = res.data.session.user;
-      var name = (user.user_metadata && user.user_metadata.full_name) || user.email.split('@')[0];
-      document.getElementById('userName').textContent    = name;
-      document.getElementById('userInitial').textContent = name.split(' ').map(function(n){ return n[0]; }).join('').slice(0,2).toUpperCase();
-      var now = new Date();
-      document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-      await loadSchool();
-      await loadPrograms();
-      await loadMemberships();
-      await loadClasses();
-      await loadStudents();
-      buildTodaySchedule();
-      buildWeekGrid();
-      document.getElementById('loadingScreen').style.display = 'none';
-    } catch(e) {
-      console.error('Init error:', e);
-      document.getElementById('loadingScreen').style.display = 'none';
-    }
+  // ─── INIT ───────────────────────────────────────────
+  async function init(){
+    try{
+      var res=await sb.auth.getSession();
+      if(!res.data.session){window.location.href='index.html';return;}
+      var user=res.data.session.user;
+      var name=(user.user_metadata&&user.user_metadata.full_name)||user.email.split('@')[0];
+      document.getElementById('userName').textContent=name;
+      document.getElementById('userInitial').textContent=name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();
+      var now=new Date();
+      document.getElementById('todayDate').textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      document.getElementById('todayFull').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+      await loadSchool();await loadPrograms();await loadMemberships();await loadClasses();await loadStudents();
+      buildTodaySchedule();buildWeekGrid();
+      document.getElementById('loadingScreen').style.display='none';
+    }catch(e){console.error('Init error:',e);document.getElementById('loadingScreen').style.display='none';}
   }
 
-  async function loadSchool() {
-    var res = await sb.from('schools').select('*').eq('id', SCHOOL_ID).single();
-    var d   = res.data;
-    if (d) {
-      document.getElementById('schoolName').textContent    = d.name;
-      document.getElementById('topSchoolName').textContent = d.name;
-      document.getElementById('settingName').value  = d.name  || '';
-      document.getElementById('settingEmail').value = d.email || '';
-      document.getElementById('settingPhone').value = d.phone || '';
-      document.getElementById('settingCity').value  = d.city  || '';
-      document.getElementById('settingState').value = d.state || '';
-      if (d.color) {
-        brandColor = d.color;
-        document.getElementById('settingColor').value    = d.color;
-        document.getElementById('settingColorHex').value = d.color;
-        applyBrandColor(d.color);
-      }
+  // ─── SCHOOL ─────────────────────────────────────────
+  async function loadSchool(){
+    var res=await sb.from('schools').select('*').eq('id',SCHOOL_ID).single();var d=res.data;
+    if(d){
+      document.getElementById('schoolName').textContent=d.name;document.getElementById('topSchoolName').textContent=d.name;
+      document.getElementById('settingName').value=d.name||'';document.getElementById('settingEmail').value=d.email||'';
+      document.getElementById('settingPhone').value=d.phone||'';document.getElementById('settingCity').value=d.city||'';
+      document.getElementById('settingState').value=d.state||'';
+      if(d.color){document.getElementById('settingColor').value=d.color;document.getElementById('settingColorHex').value=d.color;applyBrandColor(d.color);}
     }
   }
 
   // ─── PROGRAMS ───────────────────────────────────────
-  async function loadPrograms() {
-    var res = await sb.from('programs').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
-    allPrograms = res.data || [];
-    renderPrograms();
+  async function loadPrograms(){
+    var res=await sb.from('programs').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');
+    allPrograms=res.data||[];renderPrograms();
   }
 
-  function renderPrograms() {
-    var el = document.getElementById('programsGrid');
-    if (!allPrograms.length) { el.innerHTML = '<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>'; return; }
-    el.innerHTML = allPrograms.map(function(p) {
-      var color    = p.color || '#C9A84C';
-      var memCount = allMemberships.filter(function(m){ return m.program_id === p.id; }).length;
-      return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:' + color + '"></div><div class="panel-body">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">'
-        + '<div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">' + p.name + '</div>'
-        + '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';flex-shrink:0"></div></div>'
-        + (p.description ? '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">' + p.description + '</div>' : '')
-        + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'
-        + (p.age_group ? '<span class="class-tag">' + p.age_group + '</span>' : '')
-        + (p.belt_system ? '<span class="class-tag">' + p.belt_system + '</span>' : '') + '</div>'
-        + '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:1rem">' + memCount + ' membership' + (memCount !== 1 ? 's' : '') + '</div>'
-        + '<div style="display:flex;gap:0.5rem"><button class="btn-sm gold" onclick="openAddMembershipForProgram(\'' + p.id + '\')">+ Membership</button>'
-        + '<button class="btn-sm">Edit</button></div></div></div>';
+  function renderPrograms(){
+    var el=document.getElementById('programsGrid');
+    if(!allPrograms.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>';return;}
+    el.innerHTML=allPrograms.map(function(p){
+      var color=p.color||'#C9A84C';
+      var hasBelt=p.belt_system==='Belt Progression';
+      return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:'+color+'"></div><div class="panel-body">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">'
+        +'<div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">'+p.name+'</div>'
+        +'<div style="width:14px;height:14px;border-radius:50%;background:'+color+';flex-shrink:0"></div></div>'
+        +(p.description?'<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">'+p.description+'</div>':'')
+        +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'
+        +(p.age_group?'<span class="class-tag">'+p.age_group+'</span>':'')
+        +(p.belt_system?'<span class="class-tag">'+p.belt_system+'</span>':'')+'</div>'
+        +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap">'
+        +'<button class="btn-sm gold" onclick="openAddMembershipForProgram(\''+p.id+'\')">+ Membership</button>'
+        +(hasBelt?'<button class="btn-sm gold" onclick="openBeltSetup(\''+p.id+'\',\''+p.name+'\')">◆ Belt Levels</button>':'')
+        +'<button class="btn-sm">Edit</button>'
+        +'</div></div></div>';
     }).join('');
   }
 
-  function populateProgramCheckboxes() {
-    var container = document.getElementById('memProgramChecks');
-    if (!container) return;
-    if (!allPrograms.length) { container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet.</div>'; return; }
-    container.innerHTML = allPrograms.map(function(p) {
-      var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + (p.color || '#C9A84C') + ';display:inline-block;margin-right:0.5rem"></span>';
-      return '<label class="prog-check-label"><input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:#C9A84C;flex-shrink:0" />'
-        + dot + '<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">' + p.name + '</span></label>';
+  // ─── BELT SETUP ─────────────────────────────────────
+  async function openBeltSetup(programId,programName){
+    currentBeltSetupProgramId=programId;
+    pendingBeltRows=[];
+    document.getElementById('beltSetupTitle').textContent='Belt Levels — '+programName;
+    document.getElementById('beltSetupMsg').textContent='';
+    document.getElementById('newBeltRows').innerHTML='';
+    document.getElementById('beltSetupModal').classList.add('active');
+    await loadBeltLevels(programId);
+  }
+  function closeBeltSetup(){document.getElementById('beltSetupModal').classList.remove('active');currentBeltSetupProgramId=null;}
+
+  async function loadBeltLevels(programId){
+    var res=await sb.from('belt_levels').select('*').eq('program_id',programId).order('sort_order');
+    var levels=res.data||[];
+    var el=document.getElementById('beltLevelsList');
+    if(!levels.length){el.innerHTML='<div style="color:var(--muted);font-size:0.8rem;font-style:italic;margin-bottom:0.5rem">No belt levels yet. Add your first below.</div>';return;}
+    el.innerHTML=levels.map(function(l){
+      return '<div class="belt-level-row">'
+        +'<div class="belt-swatch" style="background:'+l.color_hex+'"></div>'
+        +'<div style="flex:1;font-size:0.85rem;color:var(--white)">'+l.name+'</div>'
+        +(l.promotion_fee>0?'<div style="font-size:0.72rem;color:var(--gold);margin-right:0.5rem">$'+parseFloat(l.promotion_fee).toFixed(2)+'</div>':'')
+        +(l.youtube_url?'<a href="'+l.youtube_url+'" target="_blank" style="font-size:0.65rem;color:var(--gold);text-decoration:none">▶ Video</a>':'')
+        +'</div>';
     }).join('');
   }
 
-  function openAddProgram() {
-    document.getElementById('progName').value = ''; document.getElementById('progDesc').value = '';
-    document.getElementById('progAge').value = 'Adults (18+)'; document.getElementById('progBelt').value = 'Belt Progression';
-    document.getElementById('progColor').value = '#C9A84C'; document.getElementById('progColorHex').value = '#C9A84C';
-    document.getElementById('programMsg').textContent = '';
-    document.getElementById('addProgramModal').classList.add('active');
-  }
-  function closeAddProgram() { document.getElementById('addProgramModal').classList.remove('active'); }
-  function syncProgColor() { var hex = document.getElementById('progColorHex').value; if (/^#[0-9A-Fa-f]{6}$/.test(hex)) document.getElementById('progColor').value = hex; }
-
-  async function saveProgram() {
-    var name = document.getElementById('progName').value.trim();
-    if (!name) { setMsg('programMsg', 'Program name is required.', 'error'); return; }
-    setMsg('programMsg', 'Saving...', '');
-    var res = await sb.from('programs').insert({ school_id: SCHOOL_ID, name: name, description: document.getElementById('progDesc').value.trim(), age_group: document.getElementById('progAge').value, belt_system: document.getElementById('progBelt').value, color: document.getElementById('progColor').value, active: true });
-    if (res.error) { setMsg('programMsg', res.error.message, 'error'); }
-    else { setMsg('programMsg', 'Program saved!', 'success'); await loadPrograms(); setTimeout(function(){ closeAddProgram(); }, 1000); }
+  function addBeltLevelRow(){
+    var rowId='belt-row-'+Date.now();
+    var div=document.createElement('div');
+    div.style.cssText='display:grid;grid-template-columns:40px 1fr 80px 1fr;gap:0.5rem;align-items:center;padding:0.5rem;background:var(--surface);border:1px solid var(--border)';
+    div.innerHTML='<input type="color" value="#FFFFFF" style="width:36px;height:32px;padding:1px;background:var(--black);border:1px solid var(--border);cursor:pointer" />'
+      +'<input type="text" placeholder="Belt name e.g. White" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.5rem" />'
+      +'<input type="number" placeholder="Fee $" min="0" step="0.01" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.5rem" />'
+      +'<input type="text" placeholder="YouTube URL (optional)" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.5rem" />';
+    document.getElementById('newBeltRows').appendChild(div);
   }
 
-  // ─── MEMBERSHIPS ────────────────────────────────────
-  async function loadMemberships() {
-    var res = await sb.from('memberships').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
-    allMemberships = res.data || [];
-    renderMemberships(); renderPrograms();
-  }
-
-  function renderMemberships() {
-    var tb = document.getElementById('membershipsTableBody');
-    if (!allMemberships.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>'; return; }
-    tb.innerHTML = allMemberships.map(function(m) {
-      var typeLabel = { monthly:'Monthly', yearly:'Yearly', trial:'Trial', class_pack:'Class Pack' }[m.billing_type] || m.billing_type;
-      var price = '$' + parseFloat(m.price || 0).toFixed(2) + (m.billing_type === 'monthly' ? '/mo' : m.billing_type === 'yearly' ? '/yr' : '');
-      var limit = m.class_limit_type === 'unlimited' ? 'Unlimited' : m.class_limit_type === 'class_pack' ? (m.class_limit_count || '?') + ' classes' : (m.class_limit_count || '?') + '/' + (m.class_limit_type === 'per_week' ? 'wk' : 'mo');
-      var renew = m.auto_renew ? '<span style="color:var(--green);font-size:0.7rem">On</span>' : '<span style="color:var(--muted);font-size:0.7rem">Off</span>';
-      return '<tr><td class="name">' + m.name + '</td><td style="color:var(--muted2);font-size:0.72rem">—</td><td><span class="chip chip-pending">' + typeLabel + '</span></td><td style="color:var(--gold)">' + price + '</td><td>' + limit + '</td><td>' + renew + '</td></tr>';
-    }).join('');
-  }
-
-  function openAddMembership() {
-    document.getElementById('memName').value = ''; document.getElementById('memType').value = 'monthly';
-    document.getElementById('memLength').value = '1'; document.getElementById('memUnit').value = 'months';
-    document.getElementById('memPrice').value = ''; document.getElementById('memSignup').value = '0';
-    document.getElementById('memLimitType').value = 'unlimited'; document.getElementById('memLimitCount').value = '';
-    document.getElementById('memAutoRenew').checked = true; document.getElementById('memAutopay').checked = true; document.getElementById('memTrial').checked = false;
-    document.getElementById('classLimitField').style.display = 'none'; document.getElementById('membershipMsg').textContent = '';
-    populateProgramCheckboxes();
-    document.getElementById('addMembershipModal').classList.add('active');
-  }
-  function openAddMembershipForProgram(programId) { openAddMembership(); setTimeout(function(){ var checks = document.querySelectorAll('.mem-prog-check'); checks.forEach(function(cb){ if (cb.value === programId) cb.checked = true; }); }, 50); }
-  function closeAddMembership() { document.getElementById('addMembershipModal').classList.remove('active'); }
-  function toggleClassLimit() { document.getElementById('classLimitField').style.display = document.getElementById('memLimitType').value === 'unlimited' ? 'none' : 'block'; }
-  function toggleMemType() { if (document.getElementById('memType').value === 'class_pack') { document.getElementById('memLimitType').value = 'class_pack'; document.getElementById('classLimitField').style.display = 'block'; document.getElementById('memUnit').value = 'days'; } }
-
-  async function saveMembership() {
-    var name = document.getElementById('memName').value.trim(), price = document.getElementById('memPrice').value;
-    var selectedPrograms = Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){ return cb.value; });
-    if (!name) { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
-    if (!selectedPrograms.length) { setMsg('membershipMsg', 'Select at least one program.', 'error'); return; }
-    if (!price) { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
-    setMsg('membershipMsg', 'Saving...', '');
-    var limitType = document.getElementById('memLimitType').value, limitCount = document.getElementById('memLimitCount').value;
-    var res = await sb.from('memberships').insert({ school_id: SCHOOL_ID, name: name, billing_type: document.getElementById('memType').value, billing_length: parseInt(document.getElementById('memLength').value) || 1, billing_unit: document.getElementById('memUnit').value, price: parseFloat(price) || 0, signup_fee: parseFloat(document.getElementById('memSignup').value) || 0, class_limit_type: limitType, class_limit_count: limitCount ? parseInt(limitCount) : null, trial: document.getElementById('memTrial').checked, auto_renew: document.getElementById('memAutoRenew').checked, autopay: document.getElementById('memAutopay').checked, active: true }).select();
-    if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
-    else {
-      var newMem = res.data && res.data[0];
-      if (newMem && selectedPrograms.length) { var links = selectedPrograms.map(function(pid){ return { membership_id: newMem.id, program_id: pid }; }); await sb.from('membership_programs').insert(links); }
-      setMsg('membershipMsg', 'Membership saved!', 'success'); await loadMemberships(); setTimeout(function(){ closeAddMembership(); }, 1000);
-    }
+  async function saveBeltLevels(){
+    if(!currentBeltSetupProgramId)return;
+    var rows=document.getElementById('newBeltRows').querySelectorAll('div');
+    if(!rows.length){setMsg('beltSetupMsg','Add at least one belt level.','error');return;}
+    setMsg('beltSetupMsg','Saving...','');
+    var existing=await sb.from('belt_levels').select('sort_order').eq('program_id',currentBeltSetupProgramId).order('sort_order',{ascending:false}).limit(1);
+    var startOrder=(existing.data&&existing.data.length)?(existing.data[0].sort_order+1):0;
+    var inserts=[];
+    rows.forEach(function(row,i){
+      var inputs=row.querySelectorAll('input');
+      var name=inputs[1].value.trim();
+      if(!name)return;
+      inserts.push({school_id:SCHOOL_ID,program_id:currentBeltSetupProgramId,name:name,color_hex:inputs[0].value,promotion_fee:parseFloat(inputs[2].value)||0,youtube_url:inputs[3].value.trim()||null,sort_order:startOrder+i});
+    });
+    if(!inserts.length){setMsg('beltSetupMsg','Please fill in belt names.','error');return;}
+    var res=await sb.from('belt_levels').insert(inserts);
+    if(res.error){setMsg('beltSetupMsg',res.error.message,'error');}
+    else{setMsg('beltSetupMsg','Belt levels saved!','success');document.getElementById('newBeltRows').innerHTML='';await loadBeltLevels(currentBeltSetupProgramId);}
   }
 
   // ─── STUDENT PROFILE ────────────────────────────────
-  async function openStudentProfile(studentId) {
-    currentProfileStudent = null;
-    document.getElementById('profileName').textContent = 'Loading...';
-    document.getElementById('profileInitials').textContent = '...';
+  async function openStudentProfile(studentId){
+    currentProfileStudent=null;currentProfileBeltLevels=[];
+    document.getElementById('profileName').textContent='Loading...';
     document.getElementById('studentProfileModal').classList.add('active');
     switchProfileTab('attendance');
+    var res=await sb.from('students').select('*, programs(name,color,belt_system,id), memberships(name,billing_type,price)').eq('id',studentId).single();
+    if(res.error||!res.data)return;
+    var s=res.data;currentProfileStudent=s;
+    var initials=((s.first_name?s.first_name[0]:'')+( s.last_name?s.last_name[0]:'')).toUpperCase();
+    document.getElementById('profileName').textContent=s.first_name+' '+s.last_name;
 
-    var res = await sb.from('students').select('*, programs(name, color, belt_system), memberships(name, billing_type, price)').eq('id', studentId).single();
-    if (res.error || !res.data) { return; }
-    var s = res.data;
-    currentProfileStudent = s;
-
-    // Header
-    var initials = (s.first_name ? s.first_name[0] : '') + (s.last_name ? s.last_name[0] : '');
-    document.getElementById('profileName').textContent = s.first_name + ' ' + s.last_name;
-    document.getElementById('profileInitials').textContent = initials.toUpperCase();
-    document.getElementById('profileModalTitle') && (document.getElementById('profileModalTitle').textContent = s.first_name + ' ' + s.last_name);
-
-    // Avatar - show photo if exists
-    var avatarEl = document.getElementById('profileAvatar');
-    if (s.photo_url) {
-      avatarEl.innerHTML = '<img src="' + s.photo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
-    } else {
-      avatarEl.innerHTML = '<span id="profileInitials">' + initials.toUpperCase() + '</span>';
-    }
+    // Avatar
+    var avatarEl=document.getElementById('profileAvatar');
+    if(s.photo_url){avatarEl.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';}
+    else{avatarEl.innerHTML='<span id="profileInitials">'+initials+'</span>';}
 
     // Status badge
-    var st = s.status || 'trial';
-    var sc = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
-    document.getElementById('profileStatusBadge').className = 'chip ' + sc;
-    document.getElementById('profileStatusBadge').textContent = st;
+    var st=s.status||'trial';
+    var sc=st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
+    document.getElementById('profileStatusBadge').className='chip '+sc;
+    document.getElementById('profileStatusBadge').textContent=st;
 
     // Program badge
-    var progName = (s.programs && s.programs.name) ? s.programs.name : '—';
-    var progColor = (s.programs && s.programs.color) ? s.programs.color : '#C9A84C';
-    var pb = document.getElementById('profileProgramBadge');
-    pb.textContent = progName;
-    pb.style.borderColor = progColor;
-    pb.style.color = progColor;
+    var progName=(s.programs&&s.programs.name)?s.programs.name:'—';
+    var progColor=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
+    var pb=document.getElementById('profileProgramBadge');
+    pb.textContent=progName;pb.style.borderColor=progColor;pb.style.color=progColor;
 
     // Contact info
-    var contactEl = document.getElementById('profileContactInfo');
-    contactEl.innerHTML = '';
-    var contactRows = [
-      { label: 'Email', value: s.email || '—' },
-      { label: 'Phone', value: s.phone || '—' },
-      { label: 'DOB', value: s.date_of_birth ? new Date(s.date_of_birth + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—' },
-      { label: 'Started', value: s.start_date ? new Date(s.start_date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—' }
-    ];
-    contactRows.forEach(function(r) {
-      contactEl.innerHTML += '<div class="profile-info-row"><span class="profile-info-label">' + r.label + '</span><span style="color:#F5F0E8">' + r.value + '</span></div>';
-    });
+    var ci=document.getElementById('profileContactInfo');
+    var rows=[{l:'Email',v:s.email||'—'},{l:'Phone',v:s.phone||'—'},{l:'DOB',v:s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'},{l:'Started',v:s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}];
+    ci.innerHTML=rows.map(function(r){return '<div class="profile-info-row"><span class="profile-info-label">'+r.l+'</span><span style="color:#F5F0E8">'+r.v+'</span></div>';}).join('');
 
-    // Membership info
-    var memEl = document.getElementById('profileMembershipInfo');
-    var memName = (s.memberships && s.memberships.name) ? s.memberships.name : '—';
-    var memPrice = s.memberships ? '$' + parseFloat(s.memberships.price || 0).toFixed(2) + (s.memberships.billing_type === 'monthly' ? '/mo' : s.memberships.billing_type === 'yearly' ? '/yr' : '') : '—';
-    memEl.innerHTML = '<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">' + memName + '</span></div>'
-      + '<div class="profile-info-row"><span class="profile-info-label">Price</span><span style="color:#C9A84C">' + memPrice + '</span></div>';
+    // Membership
+    var mi=document.getElementById('profileMembershipInfo');
+    var memName=(s.memberships&&s.memberships.name)?s.memberships.name:'—';
+    var memPrice=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/mo':s.memberships.billing_type==='yearly'?'/yr':''):'—';
+    mi.innerHTML='<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">'+memName+'</span></div><div class="profile-info-row"><span class="profile-info-label">Price</span><span style="color:#C9A84C">'+memPrice+'</span></div>';
+    document.getElementById('profileFinancialMembership').innerHTML='<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">'+memName+'</span></div><div class="profile-info-row"><span class="profile-info-label">Amount</span><span style="color:#C9A84C">'+memPrice+'</span></div>';
 
-    // Belt status
-    var beltSection = document.getElementById('profileBeltSection');
-    var beltEl = document.getElementById('profileBeltInfo');
-    if (s.programs && s.programs.belt_system === 'Belt Progression') {
-      beltSection.style.display = 'block';
-      var belt = s.current_belt || 'white';
-      var belts = ['white','yellow','orange','green','blue','purple','red','brown','black'];
-      var beltColors = { white:'#F5F0E8', yellow:'#F0C030', orange:'#E07820', green:'#4A8A5A', blue:'#3A6A9A', purple:'#7A4A9A', red:'#9A3A3A', brown:'#6A3A1A', black:'#1A1A1A' };
-      var beltIdx = belts.indexOf(belt);
-      beltEl.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem">'
-        + '<div style="width:32px;height:12px;border-radius:2px;background:' + (beltColors[belt] || '#C9A84C') + ';border:1px solid rgba(255,255,255,0.2)"></div>'
-        + '<div style="font-family:var(--font-display);font-size:0.9rem;color:#F5F0E8;text-transform:capitalize">' + belt + ' Belt</div></div>'
-        + (beltIdx < belts.length - 1 ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem">Next: ' + belts[beltIdx + 1] + ' belt</div>' : '<div style="font-size:0.68rem;color:#C9A84C;margin-top:0.4rem">Black Belt achieved!</div>');
+    // Belt section
+    var beltSection=document.getElementById('profileBeltSection');
+    var hasBelt=s.programs&&s.programs.belt_system==='Belt Progression';
+    if(hasBelt){
+      beltSection.style.display='block';
+      document.getElementById('promoteBtn').style.display='inline-flex';
+      var beltRes=await sb.from('belt_levels').select('*').eq('program_id',s.programs.id).order('sort_order');
+      currentProfileBeltLevels=beltRes.data||[];
+      renderProfileBelt(s);
     } else {
-      beltSection.style.display = 'none';
+      beltSection.style.display='none';
+      document.getElementById('promoteBtn').style.display='none';
+      document.getElementById('profileBeltBadge').style.display='none';
     }
-
-    // Financial tab preview
-    document.getElementById('profileFinancialMembership').innerHTML = '<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">' + memName + '</span></div><div class="profile-info-row"><span class="profile-info-label">Amount</span><span style="color:#C9A84C">' + memPrice + '</span></div>';
 
     // Notes
-    var noteEl = document.getElementById('profileNoteDisplay');
-    noteEl.innerHTML = s.notes ? '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">' + s.notes.replace(/\n/g, '<br>') + '</div>' : '<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
+    var nd=document.getElementById('profileNoteDisplay');
+    nd.innerHTML=s.notes?'<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+s.notes.replace(/\n/g,'<br>')+'</div>':'<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
 
-    // Load class tracker and attendance
     await loadProfileAttendance(studentId);
+    await loadPromotionHistory(studentId);
   }
 
-  async function loadProfileAttendance(studentId) {
-    var res = await sb.from('attendance').select('*, classes(name, title, start_time)').eq('student_id', studentId).order('checked_in_at', { ascending: false }).limit(20);
-    var data = res.data || [];
-    var total = data.length;
+  function renderProfileBelt(s){
+    var beltEl=document.getElementById('profileBeltInfo');
+    var paletteEl=document.getElementById('profileBeltPalette');
+    var badgeEl=document.getElementById('profileBeltBadge');
+    var avatarEl=document.getElementById('profileAvatar');
 
-    // Class Tracker
-    var trackerEl = document.getElementById('profileClassTracker');
-    var nextMilestone = MILESTONES.find(function(m){ return m > total; }) || null;
-    var prevMilestone = 0;
-    for (var i = 0; i < MILESTONES.length; i++) { if (MILESTONES[i] <= total) prevMilestone = MILESTONES[i]; }
-    var pct = nextMilestone ? Math.round(((total - prevMilestone) / (nextMilestone - prevMilestone)) * 100) : 100;
-
-    trackerEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem">'
-      + '<div style="font-family:var(--font-display);font-size:2rem;color:#C9A84C;line-height:1">' + total + '</div>'
-      + '<div style="font-size:0.68rem;color:var(--muted)">classes attended</div></div>'
-      + '<div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:' + pct + '%"></div></div>'
-      + (nextMilestone ? '<div style="font-size:0.68rem;color:var(--muted);">' + (nextMilestone - total) + ' classes to milestone ' + nextMilestone + '</div>' : '<div style="font-size:0.68rem;color:#C9A84C;">All milestones reached!</div>');
-
-    // Attendance list
-    var listEl = document.getElementById('profileAttendanceList');
-    if (!data.length) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';
+    if(!currentProfileBeltLevels.length){
+      beltEl.innerHTML='<div style="font-size:0.78rem;color:var(--muted);font-style:italic">No belt levels set up for this program. <a href="#" onclick="openBeltSetup(\''+s.programs.id+'\',\''+s.programs.name+'\')" style="color:var(--gold)">Add belt levels</a></div>';
       return;
     }
-    listEl.innerHTML = data.map(function(a) {
-      var cn = (a.classes && (a.classes.name || a.classes.title)) ? (a.classes.name || a.classes.title) : 'Class';
-      var dt = new Date(a.checked_in_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      var tm = new Date(a.checked_in_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C">'
-        + '<div style="font-size:0.8rem;color:#F5F0E8">' + cn + '</div>'
-        + '<div style="font-size:0.68rem;color:var(--muted)">' + dt + ' ' + tm + '</div></div>';
+
+    // Find current belt
+    var currentBelt=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;});
+    var currentIdx=currentBelt?currentProfileBeltLevels.indexOf(currentBelt):0;
+    var nextBelt=currentProfileBeltLevels[currentIdx+1]||null;
+
+    if(currentBelt){
+      // Belt badge in header
+      badgeEl.style.display='inline-block';
+      badgeEl.textContent=currentBelt.name;
+      badgeEl.style.background=currentBelt.color_hex;
+      badgeEl.style.color=isLightColor(currentBelt.color_hex)?'#111':'#fff';
+      // Avatar ring
+      avatarEl.style.borderColor=currentBelt.color_hex;
+      avatarEl.style.borderWidth='3px';
+
+      beltEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">'
+        +'<div style="width:36px;height:14px;border-radius:2px;background:'+currentBelt.color_hex+';border:1px solid rgba(255,255,255,0.2)"></div>'
+        +'<div style="font-family:var(--font-display);font-size:0.95rem;color:#F5F0E8">'+currentBelt.name+'</div></div>'
+        +(nextBelt?'<div style="font-size:0.68rem;color:var(--muted)">Next: '+nextBelt.name+'</div>':'<div style="font-size:0.68rem;color:#C9A84C">Highest rank achieved!</div>')
+        +(currentBelt.youtube_url?'<a href="'+currentBelt.youtube_url+'" target="_blank" style="display:inline-block;margin-top:0.5rem;font-size:0.68rem;color:var(--gold)">▶ Curriculum Video</a>':'');
+    } else {
+      beltEl.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">No belt assigned yet. First belt: '+currentProfileBeltLevels[0].name+'</div>';
+      avatarEl.style.borderColor='#444';
+    }
+
+    // Belt palette
+    paletteEl.innerHTML='<div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Belt Sequence</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:0.35rem">'
+      +currentProfileBeltLevels.map(function(b,i){
+        var isCurrent=currentBelt&&b.id===currentBelt.id;
+        return '<div title="'+b.name+'" style="display:flex;flex-direction:column;align-items:center;gap:0.2rem">'
+          +'<div style="width:22px;height:8px;border-radius:1px;background:'+b.color_hex+';border:1px solid rgba(255,255,255,0.15)'+(isCurrent?';box-shadow:0 0 0 2px #C9A84C':'')+'"></div>'
+          +'<div style="font-size:0.5rem;color:'+(isCurrent?'#C9A84C':'#7A7060')+'">'+b.name.slice(0,4)+'</div></div>';
+      }).join('')+'</div>';
+  }
+
+  function isLightColor(hex){
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return(r*299+g*587+b*114)/1000>128;
+  }
+
+  // ─── PROMOTION ──────────────────────────────────────
+  function openPromoteModal(){
+    if(!currentProfileStudent||!currentProfileBeltLevels.length)return;
+    var s=currentProfileStudent;
+    var currentBelt=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;});
+    var currentIdx=currentBelt?currentProfileBeltLevels.indexOf(currentBelt):-1;
+    var fromBelt=currentBelt||currentProfileBeltLevels[0];
+    var toBelt=currentProfileBeltLevels[currentIdx+1]||null;
+
+    if(!toBelt){alert('This student has reached the highest belt level!');return;}
+
+    document.getElementById('promoteFromSwatch').style.background=fromBelt.color_hex;
+    document.getElementById('promoteFromName').textContent=fromBelt.name;
+    document.getElementById('promoteToSwatch').style.background=toBelt.color_hex;
+    document.getElementById('promoteToName').textContent=toBelt.name;
+    document.getElementById('promotionDate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('promotionFee').value=toBelt.promotion_fee||0;
+    document.getElementById('promotionFeePaid').checked=false;
+    document.getElementById('promotionNotes').value='';
+    document.getElementById('promotionMsg').textContent='';
+
+    var ytSection=document.getElementById('promotionYoutubeSection');
+    var ytLink=document.getElementById('promotionYoutubeLink');
+    if(toBelt.youtube_url){
+      ytSection.style.display='block';
+      ytLink.innerHTML='<a href="'+toBelt.youtube_url+'" target="_blank" style="color:var(--gold)">▶ '+toBelt.youtube_url+'</a>';
+    } else { ytSection.style.display='none'; }
+
+    document.getElementById('promoteModal').classList.add('active');
+  }
+  function closePromoteModal(){document.getElementById('promoteModal').classList.remove('active');}
+
+  async function confirmPromotion(){
+    if(!currentProfileStudent||!currentProfileBeltLevels.length)return;
+    var s=currentProfileStudent;
+    var currentBelt=currentProfileBeltLevels.find(function(b){return b.id===s.current_belt_id;});
+    var currentIdx=currentBelt?currentProfileBeltLevels.indexOf(currentBelt):-1;
+    var fromBelt=currentBelt||currentProfileBeltLevels[0];
+    var toBelt=currentProfileBeltLevels[currentIdx+1];
+    if(!toBelt)return;
+
+    setMsg('promotionMsg','Saving...','');
+    var instrName=document.getElementById('userName').textContent;
+
+    // Update student belt
+    var upd=await sb.from('students').update({current_belt_id:toBelt.id,current_belt:toBelt.name}).eq('id',s.id);
+    if(upd.error){setMsg('promotionMsg',upd.error.message,'error');return;}
+
+    // Log promotion
+    await sb.from('belt_promotions').insert({
+      school_id:SCHOOL_ID,student_id:s.id,
+      belt_from:fromBelt.name,belt_to:toBelt.name,
+      belt_from_id:fromBelt.id,belt_to_id:toBelt.id,
+      promotion_date:document.getElementById('promotionDate').value,
+      promoted_at:new Date().toISOString(),
+      promoted_by:instrName,
+      fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,
+      fee_paid:document.getElementById('promotionFeePaid').checked,
+      notes:document.getElementById('promotionNotes').value.trim()
+    });
+
+    setMsg('promotionMsg','Promoted to '+toBelt.name+'!','success');
+    await loadStudents();
+    setTimeout(async function(){
+      closePromoteModal();
+      await openStudentProfile(s.id);
+    },1000);
+  }
+
+  async function loadPromotionHistory(studentId){
+    var res=await sb.from('belt_promotions').select('*').eq('student_id',studentId).order('promoted_at',{ascending:false});
+    var el=document.getElementById('profilePromotionHistory');
+    var data=res.data||[];
+    if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No promotions yet.</div>';return;}
+    el.innerHTML=data.map(function(p){
+      var dt=p.promotion_date?new Date(p.promotion_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):new Date(p.promoted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var fee=p.fee_charged>0?'$'+parseFloat(p.fee_charged).toFixed(2)+(p.fee_paid?' ✓':''):'';
+      return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem">'
+        +'<div style="font-size:0.85rem;color:#F5F0E8">'+p.belt_from+' → <strong>'+p.belt_to+'</strong></div>'
+        +'<div style="font-size:0.68rem;color:var(--muted)">'+dt+'</div></div>'
+        +'<div style="display:flex;gap:1rem">'
+        +(p.promoted_by?'<div style="font-size:0.68rem;color:var(--muted)">By: '+p.promoted_by+'</div>':'')
+        +(fee?'<div style="font-size:0.68rem;color:var(--gold)">'+fee+'</div>':'')
+        +'</div>'
+        +(p.notes?'<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.3rem;font-style:italic">'+p.notes+'</div>':'')
+        +'</div>';
     }).join('');
   }
 
-  function switchProfileTab(tab) {
-    document.getElementById('profileTabAttendance').style.display = tab === 'attendance' ? 'block' : 'none';
-    document.getElementById('profileTabNotes').style.display      = tab === 'notes'      ? 'block' : 'none';
-    document.getElementById('profileTabFinancial').style.display  = tab === 'financial'  ? 'block' : 'none';
-    document.querySelectorAll('.profile-tab').forEach(function(t){ t.classList.remove('active'); });
-    var activeTab = document.getElementById('tab-' + tab);
-    if (activeTab) activeTab.classList.add('active');
+  async function loadProfileAttendance(studentId){
+    var res=await sb.from('attendance').select('*, classes(name,title,start_time)').eq('student_id',studentId).order('checked_in_at',{ascending:false}).limit(20);
+    var data=res.data||[];var total=data.length;
+    var trackerEl=document.getElementById('profileClassTracker');
+    var nextMilestone=MILESTONES.find(function(m){return m>total;})||null;
+    var prevMilestone=0;
+    for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)prevMilestone=MILESTONES[i];}
+    var pct=nextMilestone?Math.round(((total-prevMilestone)/(nextMilestone-prevMilestone))*100):100;
+    trackerEl.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem"><div style="font-family:var(--font-display);font-size:2rem;color:#C9A84C;line-height:1">'+total+'</div><div style="font-size:0.68rem;color:var(--muted)">classes attended</div></div>'
+      +'<div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:'+pct+'%"></div></div>'
+      +(nextMilestone?'<div style="font-size:0.68rem;color:var(--muted);">'+(nextMilestone-total)+' to milestone '+nextMilestone+'</div>':'<div style="font-size:0.68rem;color:#C9A84C;">All milestones reached!</div>');
+    var listEl=document.getElementById('profileAttendanceList');
+    if(!data.length){listEl.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';return;}
+    listEl.innerHTML=data.map(function(a){
+      var cn=(a.classes&&(a.classes.name||a.classes.title))?( a.classes.name||a.classes.title):'Class';
+      var dt=new Date(a.checked_in_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      var tm=new Date(a.checked_in_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C"><div style="font-size:0.8rem;color:#F5F0E8">'+cn+'</div><div style="font-size:0.68rem;color:var(--muted)">'+dt+' '+tm+'</div></div>';
+    }).join('');
   }
 
-  function closeStudentProfile() {
-    document.getElementById('studentProfileModal').classList.remove('active');
-    currentProfileStudent = null;
-  }
-
-  async function saveProfileNote() {
-    if (!currentProfileStudent) return;
-    var note = document.getElementById('profileNoteInput').value.trim();
-    if (!note) return;
-    var existing = currentProfileStudent.notes || '';
-    var timestamp = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var newNote = existing ? existing + '\n\n[' + timestamp + '] ' + note : '[' + timestamp + '] ' + note;
-    var res = await sb.from('students').update({ notes: newNote }).eq('id', currentProfileStudent.id);
-    if (res.error) { setMsg('profileNoteMsg', res.error.message, 'error'); }
-    else {
-      currentProfileStudent.notes = newNote;
-      document.getElementById('profileNoteInput').value = '';
-      document.getElementById('profileNoteDisplay').innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">' + newNote.replace(/\n/g, '<br>') + '</div>';
-      setMsg('profileNoteMsg', 'Note saved!', 'success');
-      setTimeout(function(){ document.getElementById('profileNoteMsg').textContent = ''; }, 2000);
-      await loadStudents();
-    }
-  }
-
-  async function toggleStudentStatus() {
-    if (!currentProfileStudent) return;
-    var current = currentProfileStudent.status || 'trial';
-    var next = current === 'active' ? 'trial' : current === 'trial' ? 'expired' : 'active';
-    var res = await sb.from('students').update({ status: next }).eq('id', currentProfileStudent.id);
-    if (!res.error) { await openStudentProfile(currentProfileStudent.id); await loadStudents(); }
-  }
-
-  function openEditStudent() {
-    if (!currentProfileStudent) return;
-    var s = currentProfileStudent;
-    document.getElementById('addStudentTitle').textContent = 'Edit Student';
-    document.getElementById('stuEditId').value   = s.id;
-    document.getElementById('stuFirst').value    = s.first_name || '';
-    document.getElementById('stuLast').value     = s.last_name  || '';
-    document.getElementById('stuDOB').value      = s.date_of_birth || '';
-    document.getElementById('stuPhone').value    = s.phone || '';
-    document.getElementById('stuEmail').value    = s.email || '';
-    document.getElementById('stuStartDate').value = s.start_date || '';
-    document.getElementById('stuStatus').value   = s.status || 'active';
-    document.getElementById('studentMsg').textContent = '';
-    populateStudentProgramDropdown();
-    if (s.program_id) {
-      document.getElementById('stuProgram').value = s.program_id;
-      filterMembershipsForProgram().then(function() {
-        if (s.membership_id) document.getElementById('stuMembership').value = s.membership_id;
-      });
-    }
-    document.getElementById('addStudentModal').classList.add('active');
-  }
-
-  async function handlePhotoUpload(event) {
-    if (!currentProfileStudent) return;
-    var file = event.target.files[0];
-    if (!file) return;
-    var ext  = file.name.split('.').pop();
-    var path = currentProfileStudent.id + '.' + ext;
-    var uploadRes = await sb.storage.from('student-photos').upload(path, file, { upsert: true });
-    if (uploadRes.error) { alert('Photo upload failed: ' + uploadRes.error.message); return; }
-    var urlRes = sb.storage.from('student-photos').getPublicUrl(path);
-    var publicUrl = urlRes.data.publicUrl;
-    await sb.from('students').update({ photo_url: publicUrl }).eq('id', currentProfileStudent.id);
-    currentProfileStudent.photo_url = publicUrl;
-    document.getElementById('profileAvatar').innerHTML = '<img src="' + publicUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
-    await loadStudents();
-  }
-
-  // ─── ADD / EDIT STUDENT ─────────────────────────────
-  function openAddStudent() {
-    var today = new Date().toISOString().split('T')[0];
-    document.getElementById('addStudentTitle').textContent = 'Add New Student';
-    document.getElementById('stuEditId').value    = '';
-    document.getElementById('stuFirst').value     = '';
-    document.getElementById('stuLast').value      = '';
-    document.getElementById('stuDOB').value       = '';
-    document.getElementById('stuPhone').value     = '';
-    document.getElementById('stuEmail').value     = '';
-    document.getElementById('stuStartDate').value = today;
-    document.getElementById('stuStatus').value    = 'active';
-    document.getElementById('studentMsg').textContent = '';
-    document.getElementById('stuMembership').innerHTML = '<option value="">— Select a Program first —</option>';
-    populateStudentProgramDropdown();
-    document.getElementById('addStudentModal').classList.add('active');
-  }
-  function closeAddStudent() { document.getElementById('addStudentModal').classList.remove('active'); }
-
-  function populateStudentProgramDropdown() {
-    var sel = document.getElementById('stuProgram');
-    sel.innerHTML = '<option value="">— Select a Program —</option>';
-    allPrograms.forEach(function(p) { var opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; sel.appendChild(opt); });
-  }
-
-  async function filterMembershipsForProgram() {
-    var programId = document.getElementById('stuProgram').value;
-    var sel = document.getElementById('stuMembership');
-    if (!programId) { sel.innerHTML = '<option value="">— Select a Program first —</option>'; return; }
-    sel.innerHTML = '<option value="">Loading...</option>';
-    var res = await sb.from('membership_programs').select('membership_id').eq('program_id', programId);
-    if (res.error || !res.data || !res.data.length) { sel.innerHTML = '<option value="">No memberships for this program</option>'; return; }
-    var memIds = res.data.map(function(r){ return r.membership_id; });
-    var mems   = allMemberships.filter(function(m){ return memIds.indexOf(m.id) !== -1; });
-    if (!mems.length) { sel.innerHTML = '<option value="">No memberships for this program</option>'; return; }
-    sel.innerHTML = '<option value="">— Select a Membership —</option>';
-    mems.forEach(function(m) {
-      var opt = document.createElement('option'); opt.value = m.id;
-      var price = '$' + parseFloat(m.price || 0).toFixed(2) + (m.billing_type === 'monthly' ? '/mo' : m.billing_type === 'yearly' ? '/yr' : '');
-      opt.textContent = m.name + ' — ' + price;
-      sel.appendChild(opt);
+  function switchProfileTab(tab){
+    ['attendance','promotions','notes','financial'].forEach(function(t){
+      document.getElementById('profileTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display=t===tab?'block':'none';
+      var btn=document.getElementById('tab-'+t);if(btn){btn.classList.toggle('active',t===tab);}
     });
   }
 
-  async function saveStudent() {
-    var editId       = document.getElementById('stuEditId').value;
-    var first        = document.getElementById('stuFirst').value.trim();
-    var last         = document.getElementById('stuLast').value.trim();
-    var programId    = document.getElementById('stuProgram').value;
-    var membershipId = document.getElementById('stuMembership').value;
-    if (!first || !last)  { setMsg('studentMsg', 'First and last name are required.', 'error'); return; }
-    if (!programId)       { setMsg('studentMsg', 'Please select a program.', 'error'); return; }
-    if (!membershipId)    { setMsg('studentMsg', 'Please select a membership plan.', 'error'); return; }
-    setMsg('studentMsg', 'Saving...', '');
-    var payload = { first_name: first, last_name: last, email: document.getElementById('stuEmail').value.trim(), phone: document.getElementById('stuPhone').value.trim(), date_of_birth: document.getElementById('stuDOB').value || null, program_id: programId, membership_id: membershipId, plan_type: 'membership', status: document.getElementById('stuStatus').value, start_date: document.getElementById('stuStartDate').value || new Date().toISOString().split('T')[0] };
-    var res;
-    if (editId) {
-      res = await sb.from('students').update(payload).eq('id', editId);
-    } else {
-      payload.school_id = SCHOOL_ID;
-      res = await sb.from('students').insert(payload);
-    }
-    if (res.error) { setMsg('studentMsg', res.error.message, 'error'); }
-    else {
-      setMsg('studentMsg', first + ' ' + last + (editId ? ' updated!' : ' added!'), 'success');
+  function closeStudentProfile(){document.getElementById('studentProfileModal').classList.remove('active');currentProfileStudent=null;}
+
+  async function saveProfileNote(){
+    if(!currentProfileStudent)return;
+    var note=document.getElementById('profileNoteInput').value.trim();if(!note)return;
+    var existing=currentProfileStudent.notes||'';
+    var ts=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var newNote=existing?existing+'\n\n['+ts+'] '+note:'['+ts+'] '+note;
+    var res=await sb.from('students').update({notes:newNote}).eq('id',currentProfileStudent.id);
+    if(res.error){setMsg('profileNoteMsg',res.error.message,'error');}
+    else{
+      currentProfileStudent.notes=newNote;
+      document.getElementById('profileNoteInput').value='';
+      document.getElementById('profileNoteDisplay').innerHTML='<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+newNote.replace(/\n/g,'<br>')+'</div>';
+      setMsg('profileNoteMsg','Note saved!','success');
+      setTimeout(function(){document.getElementById('profileNoteMsg').textContent='';},2000);
       await loadStudents();
-      if (editId && currentProfileStudent) { await openStudentProfile(editId); }
-      setTimeout(function(){ closeAddStudent(); }, 1200);
+    }
+  }
+
+  async function toggleStudentStatus(){
+    if(!currentProfileStudent)return;
+    var current=currentProfileStudent.status||'trial';
+    var next=current==='active'?'trial':current==='trial'?'expired':'active';
+    var res=await sb.from('students').update({status:next}).eq('id',currentProfileStudent.id);
+    if(!res.error){await openStudentProfile(currentProfileStudent.id);await loadStudents();}
+  }
+
+  function openEditStudent(){
+    if(!currentProfileStudent)return;
+    var s=currentProfileStudent;
+    document.getElementById('addStudentTitle').textContent='Edit Student';
+    document.getElementById('stuEditId').value=s.id;
+    document.getElementById('stuFirst').value=s.first_name||'';document.getElementById('stuLast').value=s.last_name||'';
+    document.getElementById('stuDOB').value=s.date_of_birth||'';document.getElementById('stuPhone').value=s.phone||'';
+    document.getElementById('stuEmail').value=s.email||'';document.getElementById('stuStartDate').value=s.start_date||'';
+    document.getElementById('stuStatus').value=s.status||'active';document.getElementById('studentMsg').textContent='';
+    populateStudentProgramDropdown();
+    if(s.program_id){
+      document.getElementById('stuProgram').value=s.program_id;
+      filterMembershipsForProgram().then(function(){if(s.membership_id)document.getElementById('stuMembership').value=s.membership_id;});
+    }
+    document.getElementById('addStudentModal').classList.add('active');
+  }
+
+  async function handlePhotoUpload(event){
+    if(!currentProfileStudent)return;
+    var file=event.target.files[0];if(!file)return;
+    var ext=file.name.split('.').pop();var path=currentProfileStudent.id+'.'+ext;
+    var uploadRes=await sb.storage.from('student-photos').upload(path,file,{upsert:true});
+    if(uploadRes.error){alert('Photo upload failed: '+uploadRes.error.message);return;}
+    var urlRes=sb.storage.from('student-photos').getPublicUrl(path);
+    var publicUrl=urlRes.data.publicUrl;
+    await sb.from('students').update({photo_url:publicUrl}).eq('id',currentProfileStudent.id);
+    currentProfileStudent.photo_url=publicUrl;
+    document.getElementById('profileAvatar').innerHTML='<img src="'+publicUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+    await loadStudents();
+  }
+
+  // ─── MEMBERSHIPS ────────────────────────────────────
+  async function loadMemberships(){
+    var res=await sb.from('memberships').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('name');
+    allMemberships=res.data||[];renderMemberships();renderPrograms();
+  }
+  function renderMemberships(){
+    var tb=document.getElementById('membershipsTableBody');
+    if(!allMemberships.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}
+    tb.innerHTML=allMemberships.map(function(m){
+      var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
+      var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
+      var limit=m.class_limit_type==='unlimited'?'Unlimited':m.class_limit_type==='class_pack'?(m.class_limit_count||'?')+' classes':(m.class_limit_count||'?')+'/'+(m.class_limit_type==='per_week'?'wk':'mo');
+      var renew=m.auto_renew?'<span style="color:var(--green);font-size:0.7rem">On</span>':'<span style="color:var(--muted);font-size:0.7rem">Off</span>';
+      return '<tr><td class="name">'+m.name+'</td><td style="color:var(--muted2);font-size:0.72rem">—</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td>'+renew+'</td></tr>';
+    }).join('');
+  }
+  function populateProgramCheckboxes(){
+    var c=document.getElementById('memProgramChecks');if(!c)return;
+    if(!allPrograms.length){c.innerHTML='<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet.</div>';return;}
+    c.innerHTML=allPrograms.map(function(p){
+      var dot='<span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.5rem"></span>';
+      return '<label class="prog-check-label"><input type="checkbox" class="mem-prog-check" value="'+p.id+'" style="accent-color:#C9A84C;flex-shrink:0" />'+dot+'<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">'+p.name+'</span></label>';
+    }).join('');
+  }
+  function openAddMembership(){
+    document.getElementById('memName').value='';document.getElementById('memType').value='monthly';document.getElementById('memLength').value='1';document.getElementById('memUnit').value='months';
+    document.getElementById('memPrice').value='';document.getElementById('memSignup').value='0';document.getElementById('memLimitType').value='unlimited';document.getElementById('memLimitCount').value='';
+    document.getElementById('memAutoRenew').checked=true;document.getElementById('memAutopay').checked=true;document.getElementById('memTrial').checked=false;
+    document.getElementById('classLimitField').style.display='none';document.getElementById('membershipMsg').textContent='';
+    populateProgramCheckboxes();document.getElementById('addMembershipModal').classList.add('active');
+  }
+  function openAddMembershipForProgram(pid){openAddMembership();setTimeout(function(){document.querySelectorAll('.mem-prog-check').forEach(function(cb){if(cb.value===pid)cb.checked=true;});},50);}
+  function closeAddMembership(){document.getElementById('addMembershipModal').classList.remove('active');}
+  function toggleClassLimit(){document.getElementById('classLimitField').style.display=document.getElementById('memLimitType').value==='unlimited'?'none':'block';}
+  function toggleMemType(){if(document.getElementById('memType').value==='class_pack'){document.getElementById('memLimitType').value='class_pack';document.getElementById('classLimitField').style.display='block';document.getElementById('memUnit').value='days';}}
+  async function saveMembership(){
+    var name=document.getElementById('memName').value.trim(),price=document.getElementById('memPrice').value;
+    var sp=Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){return cb.value;});
+    if(!name){setMsg('membershipMsg','Name required.','error');return;}if(!sp.length){setMsg('membershipMsg','Select at least one program.','error');return;}if(!price){setMsg('membershipMsg','Price required.','error');return;}
+    setMsg('membershipMsg','Saving...','');
+    var lt=document.getElementById('memLimitType').value,lc=document.getElementById('memLimitCount').value;
+    var res=await sb.from('memberships').insert({school_id:SCHOOL_ID,name:name,billing_type:document.getElementById('memType').value,billing_length:parseInt(document.getElementById('memLength').value)||1,billing_unit:document.getElementById('memUnit').value,price:parseFloat(price)||0,signup_fee:parseFloat(document.getElementById('memSignup').value)||0,class_limit_type:lt,class_limit_count:lc?parseInt(lc):null,trial:document.getElementById('memTrial').checked,auto_renew:document.getElementById('memAutoRenew').checked,autopay:document.getElementById('memAutopay').checked,active:true}).select();
+    if(res.error){setMsg('membershipMsg',res.error.message,'error');}
+    else{
+      var nm=res.data&&res.data[0];
+      if(nm&&sp.length){await sb.from('membership_programs').insert(sp.map(function(pid){return{membership_id:nm.id,program_id:pid};}));}
+      setMsg('membershipMsg','Membership saved!','success');await loadMemberships();setTimeout(function(){closeAddMembership();},1000);
+    }
+  }
+
+  // ─── ADD / EDIT STUDENT ─────────────────────────────
+  function openAddStudent(){
+    var today=new Date().toISOString().split('T')[0];
+    document.getElementById('addStudentTitle').textContent='Add New Student';document.getElementById('stuEditId').value='';
+    document.getElementById('stuFirst').value='';document.getElementById('stuLast').value='';document.getElementById('stuDOB').value='';
+    document.getElementById('stuPhone').value='';document.getElementById('stuEmail').value='';
+    document.getElementById('stuStartDate').value=today;document.getElementById('stuStatus').value='active';document.getElementById('studentMsg').textContent='';
+    document.getElementById('stuMembership').innerHTML='<option value="">— Select a Program first —</option>';
+    populateStudentProgramDropdown();document.getElementById('addStudentModal').classList.add('active');
+  }
+  function closeAddStudent(){document.getElementById('addStudentModal').classList.remove('active');}
+  function populateStudentProgramDropdown(){var sel=document.getElementById('stuProgram');sel.innerHTML='<option value="">— Select a Program —</option>';allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});}
+  async function filterMembershipsForProgram(){
+    var pid=document.getElementById('stuProgram').value,sel=document.getElementById('stuMembership');
+    if(!pid){sel.innerHTML='<option value="">— Select a Program first —</option>';return;}
+    sel.innerHTML='<option value="">Loading...</option>';
+    var res=await sb.from('membership_programs').select('membership_id').eq('program_id',pid);
+    if(res.error||!res.data||!res.data.length){sel.innerHTML='<option value="">No memberships for this program</option>';return;}
+    var ids=res.data.map(function(r){return r.membership_id;});
+    var mems=allMemberships.filter(function(m){return ids.indexOf(m.id)!==-1;});
+    if(!mems.length){sel.innerHTML='<option value="">No memberships for this program</option>';return;}
+    sel.innerHTML='<option value="">— Select a Membership —</option>';
+    mems.forEach(function(m){var o=document.createElement('option');o.value=m.id;var p='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');o.textContent=m.name+' — '+p;sel.appendChild(o);});
+  }
+  async function saveStudent(){
+    var editId=document.getElementById('stuEditId').value;
+    var first=document.getElementById('stuFirst').value.trim(),last=document.getElementById('stuLast').value.trim();
+    var pid=document.getElementById('stuProgram').value,mid=document.getElementById('stuMembership').value;
+    if(!first||!last){setMsg('studentMsg','First and last name required.','error');return;}
+    if(!pid){setMsg('studentMsg','Please select a program.','error');return;}
+    if(!mid){setMsg('studentMsg','Please select a membership.','error');return;}
+    setMsg('studentMsg','Saving...','');
+    var payload={first_name:first,last_name:last,email:document.getElementById('stuEmail').value.trim(),phone:document.getElementById('stuPhone').value.trim(),date_of_birth:document.getElementById('stuDOB').value||null,program_id:pid,membership_id:mid,plan_type:'membership',status:document.getElementById('stuStatus').value,start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0]};
+    var res;
+    if(editId){res=await sb.from('students').update(payload).eq('id',editId);}
+    else{payload.school_id=SCHOOL_ID;res=await sb.from('students').insert(payload);}
+    if(res.error){setMsg('studentMsg',res.error.message,'error');}
+    else{
+      setMsg('studentMsg',first+' '+last+(editId?' updated!':' added!'),'success');
+      await loadStudents();
+      if(editId&&currentProfileStudent){await openStudentProfile(editId);}
+      setTimeout(function(){closeAddStudent();},1200);
     }
   }
 
   // ─── CLASSES ────────────────────────────────────────
-  async function loadClasses() {
-    var res = await sb.from('classes').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('start_time');
-    allClasses = res.data || [];
-    document.getElementById('anaClasses').textContent = allClasses.length;
-    document.getElementById('anaWeekly').textContent  = allClasses.reduce(function(a,c){ return a+(c.days_of_week?c.days_of_week.length:0); },0);
+  async function loadClasses(){
+    var res=await sb.from('classes').select('*').eq('school_id',SCHOOL_ID).eq('active',true).order('start_time');
+    allClasses=res.data||[];
+    document.getElementById('anaClasses').textContent=allClasses.length;
+    document.getElementById('anaWeekly').textContent=allClasses.reduce(function(a,c){return a+(c.days_of_week?c.days_of_week.length:0);},0);
     renderAllClasses();
   }
-
-  async function loadStudents() {
-    var res = await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id', SCHOOL_ID);
-    allStudents = res.data || [];
-    var active  = allStudents.filter(function(s){ return s.status === 'active'; }).length;
-    var pending = allStudents.filter(function(s){ return s.status === 'trial' || s.status === 'paused'; }).length;
-    var expired = allStudents.filter(function(s){ return s.status === 'expired' || s.status === 'cancelled'; }).length;
-    document.getElementById('statTotal').textContent    = allStudents.length;
-    document.getElementById('statActive').textContent   = active;
-    document.getElementById('statPending').textContent  = pending;
-    document.getElementById('statExpired').textContent  = expired;
-    document.getElementById('totalMembers').textContent = allStudents.length;
-    document.getElementById('todayStudentCount').textContent = active;
-    document.getElementById('anaTotal').textContent  = allStudents.length;
-    document.getElementById('anaActive').textContent = active;
+  async function loadStudents(){
+    var res=await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id',SCHOOL_ID);
+    allStudents=res.data||[];
+    var active=allStudents.filter(function(s){return s.status==='active';}).length;
+    var pending=allStudents.filter(function(s){return s.status==='trial'||s.status==='paused';}).length;
+    var expired=allStudents.filter(function(s){return s.status==='expired'||s.status==='cancelled';}).length;
+    document.getElementById('statTotal').textContent=allStudents.length;document.getElementById('statActive').textContent=active;
+    document.getElementById('statPending').textContent=pending;document.getElementById('statExpired').textContent=expired;
+    document.getElementById('totalMembers').textContent=allStudents.length;document.getElementById('todayStudentCount').textContent=active;
+    document.getElementById('anaTotal').textContent=allStudents.length;document.getElementById('anaActive').textContent=active;
     renderMembersTable();
   }
-
-  function getTodayClasses() {
-    var today = DAYS[new Date().getDay()];
-    return allClasses.filter(function(c){ return c.days_of_week && c.days_of_week.includes(today); }).sort(function(a,b){ return a.start_time>b.start_time?1:-1; });
-  }
-
-  function buildTodaySchedule() {
-    var tc = getTodayClasses();
-    document.getElementById('todayClassCount').textContent = tc.length;
-    document.getElementById('todaySchedule').innerHTML = tc.length ? tc.map(classCardHTML).join('') : '<div class="no-classes">No classes today. Rest day!</div>';
-  }
-
-  function classCardHTML(c) {
-    var dn=c.name||c.title||'Untitled', st=dn.replace(/'/g,'');
+  function getTodayClasses(){var today=DAYS[new Date().getDay()];return allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});}
+  function buildTodaySchedule(){var tc=getTodayClasses();document.getElementById('todayClassCount').textContent=tc.length;document.getElementById('todaySchedule').innerHTML=tc.length?tc.map(classCardHTML).join(''):'<div class="no-classes">No classes today. Rest day!</div>';}
+  function classCardHTML(c){
+    var dn=c.name||c.title||'Untitled',st=dn.replace(/'/g,'');
     var actions='<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')">Attendance</button><button class="btn-sm">Edit</button></div>';
     var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
     var meta=(c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'')+(c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'')+(c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
     return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'#C9A84C')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div><div class="class-tags">'+tags+'</div><div class="class-meta">'+meta+'</div></div>'+actions+'</div>';
   }
-
-  function buildWeekGrid() {
-    var now=new Date(),cur=now.getDay(),ws=new Date(now);ws.setDate(now.getDate()-cur);
-    var html='';
-    for(var i=0;i<7;i++){
-      var d=new Date(ws);d.setDate(ws.getDate()+i);var dn=DAYS[i];
-      var dc=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  function buildWeekGrid(){
+    var now=new Date(),cur=now.getDay(),ws=new Date(now);ws.setDate(now.getDate()-cur);var html='';
+    for(var i=0;i<7;i++){var d=new Date(ws);d.setDate(ws.getDate()+i);var dn=DAYS[i];var dc=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
       html+='<div class="week-day '+(i===cur?'today':'')+'"><div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
-      html+=dc.map(function(c){return '<div class="week-class-pill" style="border-color:'+(c.color||'#C9A84C')+'">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</div>';}).join('');
-      html+='</div>';
-    }
+      html+=dc.map(function(c){return '<div class="week-class-pill" style="border-color:'+(c.color||'#C9A84C')+'">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</div>';}).join('');html+='</div>';}
     document.getElementById('weekGrid').innerHTML=html;
   }
-
-  function renderMembersTable() {
+  function renderMembersTable(){
     var tb=document.getElementById('membersTableBody');
-    if(!allStudents.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No students yet. Add your first student!</td></tr>';return;}
+    if(!allStudents.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No students yet.</td></tr>';return;}
     tb.innerHTML=allStudents.map(function(s){
-      var st=s.status||'trial';
-      var sc=st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
+      var st=s.status||'trial',sc=st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
       var jd=s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      var pn=(s.programs&&s.programs.name)?s.programs.name:'—';
-      var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'—';
+      var pn=(s.programs&&s.programs.name)?s.programs.name:'—',mn=(s.memberships&&s.memberships.name)?s.memberships.name:'—';
       return '<tr style="cursor:pointer" onclick="openStudentProfile(\''+s.id+'\')">'
         +'<td class="name">'+s.first_name+' '+s.last_name+'</td><td>'+(s.email||'—')+'</td><td>'+pn+'</td><td>'+mn+'</td>'
         +'<td><span class="chip '+sc+'">'+st+'</span></td><td>'+jd+'</td></tr>';
     }).join('');
   }
-
-  function renderAllClasses() {
-    document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes">No classes yet.</div>';
-  }
+  function renderAllClasses(){document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes">No classes yet.</div>';}
 
   function openAddClass(){document.getElementById('addClassModal').classList.add('active');}
   function closeAddClass(){document.getElementById('addClassModal').classList.remove('active');}
   function toggleDay(btn){btn.classList.toggle('selected');}
-
   async function saveClass(){
     var title=document.getElementById('classTitle').value.trim(),start=document.getElementById('classStart').value,end=document.getElementById('classEnd').value;
     var days=Array.from(document.querySelectorAll('.day-btn.selected')).map(function(b){return b.dataset.day;}),cap=document.getElementById('classCapacity').value;
@@ -1140,18 +1103,15 @@
   }
 
   var currentAttendanceClassId=null,attendanceRecords={};
-
   async function openAttendance(classId,classTitle){
     currentAttendanceClassId=classId;attendanceRecords={};
     document.getElementById('attendanceModalTitle').textContent=classTitle+' — Attendance';
     document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
     document.getElementById('attendanceCount').textContent='0';document.getElementById('attendanceMsg').textContent='';
     document.getElementById('attendanceList').innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
-    document.getElementById('attendanceModal').classList.add('active');
-    await loadAttendanceStudents(classId);
+    document.getElementById('attendanceModal').classList.add('active');await loadAttendanceStudents(classId);
   }
   function closeAttendance(){document.getElementById('attendanceModal').classList.remove('active');currentAttendanceClassId=null;attendanceRecords={};}
-
   async function loadAttendanceStudents(classId){
     var list=document.getElementById('attendanceList');
     var res=await sb.from('students').select('*').eq('school_id',SCHOOL_ID).eq('status','active').order('last_name');
@@ -1164,13 +1124,11 @@
     data.forEach(function(s){
       var present=!!attendanceRecords[s.id],diamond=present?'◆':'◇',color=present?'var(--gold)':'var(--muted)',bc=present?'var(--gold-dk)':'var(--border)';
       html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid '+bc+'" id="row-'+s.id+'">';
-      html+='<div><div style="font-size:0.85rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div>';
-      html+='<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">'+(s.plan_type||'Member')+'</div></div>';
+      html+='<div><div style="font-size:0.85rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div><div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">'+(s.plan_type||'Member')+'</div></div>';
       html+='<button onclick="toggleAttendance(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')" id="btn-'+s.id+'" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:'+color+'">'+diamond+'</button></div>';
     });
     list.innerHTML=html;updateAttendanceCount();
   }
-
   async function toggleAttendance(studentId,studentName){
     var btn=document.getElementById('btn-'+studentId),row=document.getElementById('row-'+studentId),isPresent=!!attendanceRecords[studentId];
     if(isPresent){
@@ -1184,6 +1142,21 @@
   }
   function updateAttendanceCount(){document.getElementById('attendanceCount').textContent=Object.keys(attendanceRecords).length;}
 
+  function openAddProgram(){
+    document.getElementById('progName').value='';document.getElementById('progDesc').value='';document.getElementById('progAge').value='Adults (18+)';document.getElementById('progBelt').value='Belt Progression';
+    document.getElementById('progColor').value='#C9A84C';document.getElementById('progColorHex').value='#C9A84C';document.getElementById('programMsg').textContent='';
+    document.getElementById('addProgramModal').classList.add('active');
+  }
+  function closeAddProgram(){document.getElementById('addProgramModal').classList.remove('active');}
+  function syncProgColor(){var hex=document.getElementById('progColorHex').value;if(/^#[0-9A-Fa-f]{6}$/.test(hex))document.getElementById('progColor').value=hex;}
+  async function saveProgram(){
+    var name=document.getElementById('progName').value.trim();if(!name){setMsg('programMsg','Program name is required.','error');return;}
+    setMsg('programMsg','Saving...','');
+    var res=await sb.from('programs').insert({school_id:SCHOOL_ID,name:name,description:document.getElementById('progDesc').value.trim(),age_group:document.getElementById('progAge').value,belt_system:document.getElementById('progBelt').value,color:document.getElementById('progColor').value,active:true});
+    if(res.error){setMsg('programMsg',res.error.message,'error');}
+    else{setMsg('programMsg','Program saved!','success');await loadPrograms();setTimeout(function(){closeAddProgram();},1000);}
+  }
+
   async function sendCommunication(){
     var subject=document.getElementById('commSubject').value.trim(),body=document.getElementById('commBody').value.trim(),audience=document.getElementById('commAudience').value;
     if(!subject||!body){setMsg('commMsg','Please fill in all fields.','error');return;}
@@ -1191,41 +1164,36 @@
     var sess=await sb.auth.getSession();
     var count=audience==='all'?allStudents.length:allStudents.filter(function(s){return s.status===(audience==='active'?'active':'expired');}).length;
     var res=await sb.from('communications').insert({school_id:SCHOOL_ID,created_by:sess.data.session.user.id,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:count});
-    if(res.error){setMsg('commMsg',res.error.message,'error');}
-    else{setMsg('commMsg','Message sent!','success');document.getElementById('commSubject').value='';document.getElementById('commBody').value='';}
+    if(res.error){setMsg('commMsg',res.error.message,'error');}else{setMsg('commMsg','Message sent!','success');document.getElementById('commSubject').value='';document.getElementById('commBody').value='';}
   }
-
   async function saveSettings(){
     var color=document.getElementById('settingColor').value;
     var res=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),color:color}).eq('id',SCHOOL_ID);
     if(res.error){setMsg('settingsMsg',res.error.message,'error');}
     else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();applyBrandColor(color);}
   }
-
-  function applyBrandColor(color){document.documentElement.style.setProperty('--gold',color);brandColor=color;}
+  function applyBrandColor(color){document.documentElement.style.setProperty('--gold',color);}
   function syncColorPicker(){var hex=document.getElementById('settingColorHex').value;if(/^#[0-9A-Fa-f]{6}$/.test(hex)){document.getElementById('settingColor').value=hex;applyBrandColor(hex);}}
   function fmtTime(t){if(!t)return'';var p=t.split(':'),hr=parseInt(p[0]),min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
   function setMsg(id,text,type){var el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='form-msg '+(type||'');}
   function toggleSchoolMenu(){var m=document.getElementById('schoolMenu');m.style.display=m.style.display==='none'?'block':'none';}
   document.addEventListener('click',function(e){if(!e.target.closest('#schoolBtn'))document.getElementById('schoolMenu').style.display='none';});
-
   function navigate(page,el){
-    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
     var t=document.getElementById('page-'+page);if(t)t.classList.add('active');if(el)el.classList.add('active');
     var titles={schedule:"Today's Schedule",classes:'All Classes',programs:'Programs',memberships:'Memberships',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
-    document.getElementById('pageTitle').textContent=titles[page]||page;
-    document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('pageTitle').textContent=titles[page]||page;document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   }
-
   async function handleSignOut(){await sb.auth.signOut();window.location.href='index.html';}
 
-  document.getElementById('addClassModal').addEventListener('click',      function(e){if(e.target===this)closeAddClass();});
-  document.getElementById('attendanceModal').addEventListener('click',    function(e){if(e.target===this)closeAttendance();});
-  document.getElementById('addProgramModal').addEventListener('click',    function(e){if(e.target===this)closeAddProgram();});
-  document.getElementById('addMembershipModal').addEventListener('click', function(e){if(e.target===this)closeAddMembership();});
-  document.getElementById('addStudentModal').addEventListener('click',    function(e){if(e.target===this)closeAddStudent();});
+  document.getElementById('addClassModal').addEventListener('click',function(e){if(e.target===this)closeAddClass();});
+  document.getElementById('attendanceModal').addEventListener('click',function(e){if(e.target===this)closeAttendance();});
+  document.getElementById('addProgramModal').addEventListener('click',function(e){if(e.target===this)closeAddProgram();});
+  document.getElementById('addMembershipModal').addEventListener('click',function(e){if(e.target===this)closeAddMembership();});
+  document.getElementById('addStudentModal').addEventListener('click',function(e){if(e.target===this)closeAddStudent();});
   document.getElementById('studentProfileModal').addEventListener('click',function(e){if(e.target===this)closeStudentProfile();});
+  document.getElementById('promoteModal').addEventListener('click',function(e){if(e.target===this)closePromoteModal();});
+  document.getElementById('beltSetupModal').addEventListener('click',function(e){if(e.target===this)closeBeltSetup();});
 
   init();
 </script>
