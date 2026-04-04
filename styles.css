@@ -204,3 +204,147 @@ footer { background: var(--black); border-top: 1px solid var(--border); padding:
    To add new sections: follow the existing pattern.
    Never use hardcoded colors — always use var(--variable-name).
 ═══════════════════════════════════════════════════════════════ */
+/* ─────────────────────────────────────────────
+   DASHBOARD — Sidebar
+───────────────────────────────────────────── */
+html, body { height: 100%; }
+.sidebar { width: var(--sidebar); min-height: 100vh; background: var(--black); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+.sidebar-logo { padding: 1.75rem 1.5rem; border-bottom: 1px solid var(--border); }
+.sidebar-logo-text { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; letter-spacing: 0.16em; color: var(--gold); }
+.sidebar-school { font-size: 0.62rem; color: var(--muted2); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-nav { flex: 1; padding: 1.5rem 0; overflow-y: auto; }
+.nav-section-label { font-size: 0.55rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); padding: 0 1.5rem; margin-bottom: 0.5rem; margin-top: 1.25rem; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1.5rem; color: var(--muted2); cursor: pointer; transition: color 0.2s, background 0.2s; position: relative; font-size: 0.8rem; }
+.nav-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--gold); opacity: 0; transition: opacity 0.2s; }
+.nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--gold); background: var(--gold-bg); }
+.nav-item.active::before { opacity: 1; }
+.nav-icon { font-size: 0.85rem; width: 16px; text-align: center; }
+.sidebar-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); }
+.user-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-bg); border: 1px solid var(--gold-dk); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.7rem; color: var(--gold); flex-shrink: 0; }
+.user-name { font-size: 0.78rem; color: var(--white); }
+.user-role { font-size: 0.6rem; color: var(--muted); }
+.btn-signout { width: 100%; font-family: var(--font-ui); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.55rem; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+.btn-signout:hover { border-color: var(--red); color: #C07070; }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Main Layout
+───────────────────────────────────────────── */
+.main { margin-left: var(--sidebar); flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+.topbar { height: 64px; background: var(--black); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: sticky; top: 0; z-index: 40; }
+.topbar-title { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.1em; }
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.topbar-date { font-size: 0.68rem; color: var(--muted); }
+.badge-gold { background: var(--gold-bg); border: 1px solid var(--gold-dk); color: var(--gold); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.25rem 0.6rem; }
+.content { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
+.content-heading { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.25rem; }
+.content-heading h2 { font-family: var(--font-display); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); white-space: nowrap; }
+.rule-h { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border2), transparent); }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Today Banner
+───────────────────────────────────────────── */
+.today-banner { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.today-label { font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.today-date { font-family: var(--font-display); font-size: 1.1rem; color: var(--white); margin-top: 0.2rem; }
+.today-stats { display: flex; gap: 2rem; }
+.today-stat { text-align: center; }
+.today-stat-num { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); display: block; }
+.today-stat-lbl { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Classes
+───────────────────────────────────────────── */
+.schedule-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+.class-card { background: var(--surface); border: 1px solid var(--border); display: flex; align-items: stretch; overflow: hidden; transition: border-color 0.2s, transform 0.2s; cursor: pointer; }
+.class-card:hover { border-color: var(--gold-dk); transform: translateX(3px); }
+.class-color-bar { width: 4px; flex-shrink: 0; }
+.class-time { width: 90px; flex-shrink: 0; padding: 1rem; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border); text-align: center; }
+.class-time-start { font-family: var(--font-display); font-size: 1rem; color: var(--white); }
+.class-time-end { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+.class-info { flex: 1; padding: 1rem 1.25rem; }
+.class-title { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.06em; color: var(--white); margin-bottom: 0.4rem; }
+.class-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.class-tag { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border2); color: var(--muted2); }
+.class-meta { display: flex; gap: 1.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.class-meta-item { font-size: 0.72rem; color: var(--muted); }
+.class-meta-item span { color: var(--muted2); }
+.class-actions { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; border-left: 1px solid var(--border); }
+.btn-sm { font-family: var(--font-ui); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4rem 0.85rem; border: 1px solid var(--border); background: transparent; color: var(--muted2); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+.btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm.gold { background: var(--gold-bg); border-color: var(--gold-dk); color: var(--gold); }
+.no-classes { padding: 3rem; text-align: center; color: var(--muted); font-family: var(--font-body); font-style: italic; font-size: 1.1rem; border: 1px solid var(--border); background: var(--surface); }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Week Grid
+───────────────────────────────────────────── */
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.week-day { background: var(--surface); min-height: 120px; padding: 0.75rem; }
+.week-day.today { background: var(--surface2); }
+.week-day-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.week-day-name { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.week-day-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--white); line-height: 1.2; }
+.week-day.today .week-day-num { color: var(--gold); }
+.week-class-pill { font-size: 0.58rem; padding: 0.25rem 0.4rem; margin-bottom: 0.3rem; border-left: 2px solid; background: rgba(0,0,0,0.3); color: var(--muted2); cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Stats
+───────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+@media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+.stat-card { background: var(--surface); padding: 1.5rem; position: relative; overflow: hidden; }
+.stat-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--gold-dk), transparent); opacity: 0.5; }
+.stat-label { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+.stat-value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; color: var(--white); line-height: 1; margin-bottom: 0.5rem; }
+.stat-delta { font-size: 0.68rem; color: var(--muted); }
+.stat-delta.up { color: var(--green); }
+.stat-icon { position: absolute; top: 1.25rem; right: 1.25rem; font-size: 1.5rem; opacity: 0.12; color: var(--gold); }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Panels & Tables
+───────────────────────────────────────────── */
+.panel { background: var(--surface); border: 1px solid var(--border); }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+.panel-title { font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.panel-action { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; transition: color 0.2s; }
+.panel-action:hover { color: var(--gold); }
+.panel-body { padding: 1.5rem; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 1px solid var(--border); }
+th { font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 0.75rem 1rem; text-align: left; font-weight: 400; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(201,168,76,0.03); }
+td { padding: 0.85rem 1rem; font-size: 0.8rem; color: var(--muted2); }
+td.name { color: var(--white); }
+.chip { display: inline-block; font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.2rem 0.55rem; }
+.chip-active { background: rgba(90,154,106,0.12); border: 1px solid rgba(90,154,106,0.3); color: #7DBD7D; }
+.chip-pending { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); color: var(--gold); }
+.chip-expired { background: rgba(154,90,90,0.12); border: 1px solid rgba(154,90,90,0.3); color: #C07070; }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Modal & Forms
+───────────────────────────────────────────── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+.modal-overlay.active { display: flex; }
+.days-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.day-btn { font-family: var(--font-ui); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.4rem 0.65rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.day-btn.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+.btn-gold-full { width: 100%; font-family: var(--font-ui); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.9rem; background: var(--gold); color: var(--black); border: none; cursor: pointer; font-weight: 700; transition: background 0.2s; margin-top: 0.5rem; }
+.btn-gold-full:hover { background: var(--gold-lt); }
+.form-msg { font-size: 0.75rem; text-align: center; min-height: 1em; }
+.form-msg.success { color: #7DBD7D; }
+.form-msg.error { color: #C07070; }
+
+/* ─────────────────────────────────────────────
+   DASHBOARD — Pages & Loading
+───────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+#loadingScreen { position: fixed; inset: 0; background: var(--black); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+.loading-logo { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.2em; color: var(--gold); margin-bottom: 2rem; }
+.loading-bar-bg { width: 200px; height: 1px; background: var(--border); position: relative; overflow: hidden; }
+.loading-bar-fill { position: absolute; top: 0; left: -100%; bottom: 0; width: 100%; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: loading 1.2s infinite; }
+@keyframes loading { to { left: 100%; } }
