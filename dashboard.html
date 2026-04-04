@@ -27,15 +27,18 @@
     <div class="nav-section-label">Schedule</div>
     <div class="nav-item active" onclick="navigate('schedule',this)"><span class="nav-icon">◇</span> Schedule</div>
     <div class="nav-item" onclick="navigate('classes',this)"><span class="nav-icon">◈</span> All Classes</div>
+    <div class="nav-section-label">Programs</div>
+    <div class="nav-item" onclick="navigate('programs',this)"><span class="nav-icon">◉</span> Programs</div>
+    <div class="nav-item" onclick="navigate('memberships',this)"><span class="nav-icon">◆</span> Memberships</div>
     <div class="nav-section-label">Organization</div>
     <div class="nav-item" onclick="navigate('members',this)"><span class="nav-icon">◎</span> Members</div>
-    <div class="nav-item" onclick="navigate('payments',this)"><span class="nav-icon">◆</span> Payments</div>
+    <div class="nav-item" onclick="navigate('payments',this)"><span class="nav-icon">⊕</span> Payments</div>
     <div class="nav-item" onclick="navigate('communications',this)"><span class="nav-icon">◻</span> Communications</div>
     <div class="nav-section-label">Insights</div>
-    <div class="nav-item" onclick="navigate('analytics',this)"><span class="nav-icon">◉</span> Analytics</div>
+    <div class="nav-item" onclick="navigate('analytics',this)"><span class="nav-icon">◈</span> Analytics</div>
     <div class="nav-section-label">Account</div>
     <div class="nav-item" onclick="navigate('settings',this)"><span class="nav-icon">⊙</span> Settings</div>
-    <div class="nav-item" onclick="navigate('billing',this)"><span class="nav-icon">⊕</span> Billing</div>
+    <div class="nav-item" onclick="navigate('billing',this)"><span class="nav-icon">⊞</span> Billing</div>
   </div>
   <div class="sidebar-footer">
     <div class="user-info">
@@ -100,13 +103,48 @@
   <div class="schedule-grid" id="allClassesList"><div class="no-classes">Loading...</div></div>
 </div>
 
+<!-- PROGRAMS PAGE -->
+<div class="page" id="page-programs">
+  <div class="content-heading"><h2>Programs</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()">+ Add Program</button></div>
+  <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Programs group your classes and memberships by subject — e.g. Karate, BJJ, Little Tigers.</p>
+  <div id="programsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+    <div class="no-classes">Loading programs...</div>
+  </div>
+</div>
+
+<!-- MEMBERSHIPS PAGE -->
+<div class="page" id="page-memberships">
+  <div class="content-heading"><h2>Memberships</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddMembership()">+ Add Membership</button></div>
+  <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Memberships define how students pay and how many classes they can attend.</p>
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Membership Plans</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Program</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Class Access</th>
+            <th>Auto-Renew</th>
+          </tr>
+        </thead>
+        <tbody id="membershipsTableBody">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- MEMBERS PAGE -->
 <div class="page" id="page-members">
   <div class="content-heading"><h2>Members</h2><div class="rule-h"></div></div>
   <div class="stats-grid" style="margin-bottom:1.5rem">
     <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
     <div class="stat-card"><div class="stat-icon">◆</div><div class="stat-label">Active</div><div class="stat-value" id="statActive">0</div><div class="stat-delta up">Current</div></div>
-    <div class="stat-card"><div class="stat-icon">◇</div><div class="stat-label">Pending</div><div class="stat-value" id="statPending">0</div></div>
+    <div class="stat-card"><div class="stat-icon">◇</div><div class="stat-label">Trial</div><div class="stat-value" id="statPending">0</div></div>
     <div class="stat-card"><div class="stat-icon">⊕</div><div class="stat-label">Expired</div><div class="stat-value" id="statExpired">0</div></div>
   </div>
   <div class="panel">
@@ -301,29 +339,155 @@
   </div>
 </div>
 
+<!-- ADD PROGRAM MODAL -->
+
+<div class="modal-overlay" id="addProgramModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add New Program</span>
+      <button class="modal-close" onclick="closeAddProgram()">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Program Name</label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
+      <div class="field"><label>Description</label><textarea id="progDesc" rows="3" placeholder="Brief description of this program..."></textarea></div>
+      <div class="form-row">
+        <div class="field"><label>Age Group</label>
+          <select id="progAge">
+            <option value="Little Tigers (4-6)">Little Tigers (4-6)</option>
+            <option value="Kids (7-12)">Kids (7-12)</option>
+            <option value="Teens (13-17)">Teens (13-17)</option>
+            <option value="Adults (18+)" selected>Adults (18+)</option>
+            <option value="All Ages">All Ages</option>
+          </select>
+        </div>
+        <div class="field"><label>Belt System</label>
+          <select id="progBelt">
+            <option value="Colored Belts">Colored Belts</option>
+            <option value="Stripes">Stripes</option>
+            <option value="Degrees">Degrees</option>
+            <option value="None">None</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Program Color</label>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
+          <input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" />
+        </div>
+      </div>
+      <button class="btn-gold-full" onclick="saveProgram()">Save Program</button>
+      <p class="form-msg" id="programMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEMBERSHIP MODAL -->
+
+<div class="modal-overlay" id="addMembershipModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add New Membership</span>
+      <button class="modal-close" onclick="closeAddMembership()">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Membership Name</label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
+      <div class="field"><label>Program</label>
+        <select id="memProgram">
+          <option value="">— Select a Program —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Type</label>
+          <select id="memType" onchange="toggleMemType()">
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="trial">Trial</option>
+            <option value="class_pack">Class Pack</option>
+          </select>
+        </div>
+        <div class="field"><label>Length</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="memLength" value="1" min="1" style="width:60px" />
+            <select id="memUnit">
+              <option value="months">Months</option>
+              <option value="weeks">Weeks</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Price</label>
+          <div style="display:flex;align-items:center;gap:0.4rem">
+            <span style="color:var(--gold);font-size:0.9rem">$</span>
+            <input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="field"><label>Signup Fee</label>
+          <div style="display:flex;align-items:center;gap:0.4rem">
+            <span style="color:var(--gold);font-size:0.9rem">$</span>
+            <input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" />
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Class Access</label>
+        <select id="memLimitType" onchange="toggleClassLimit()">
+          <option value="unlimited">Unlimited</option>
+          <option value="per_week">Limited per Week</option>
+          <option value="per_month">Limited per Month</option>
+          <option value="class_pack">Class Pack (fixed quantity)</option>
+        </select>
+      </div>
+      <div class="field" id="classLimitField" style="display:none">
+        <label>Number of Classes</label>
+        <input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" />
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-bottom:1rem">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
+          <input type="checkbox" id="memAutoRenew" checked style="accent-color:var(--gold)" /> Auto-Renew
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
+          <input type="checkbox" id="memAutopay" checked style="accent-color:var(--gold)" /> Autopay
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
+          <input type="checkbox" id="memTrial" style="accent-color:var(--gold)" /> Trial Membership
+        </label>
+      </div>
+      <button class="btn-gold-full" onclick="saveMembership()">Save Membership</button>
+      <p class="form-msg" id="membershipMsg"></p>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
   const SCHOOL_ID     = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const DAYS      = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  let allClasses = [];
-  let allStudents = [];
+  var allClasses     = [];
+  var allStudents    = [];
+  var allPrograms    = [];
+  var allMemberships = [];
 
+  // ─── INIT ───────────────────────────────────────────
   async function init() {
-    const { data } = await sb.auth.getSession();
-    if (!data.session) { window.location.href = 'index.html'; return; }
-    const user = data.session.user;
-    const name = user.user_metadata?.full_name || user.email.split('@')[0];
-    document.getElementById('userName').textContent = name;
-    document.getElementById('userInitial').textContent = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-    const now = new Date();
+    var res = await sb.auth.getSession();
+    if (!res.data.session) { window.location.href = 'index.html'; return; }
+    var user = res.data.session.user;
+    var name = (user.user_metadata && user.user_metadata.full_name) || user.email.split('@')[0];
+    document.getElementById('userName').textContent    = name;
+    document.getElementById('userInitial').textContent = name.split(' ').map(function(n){ return n[0]; }).join('').slice(0,2).toUpperCase();
+    var now = new Date();
     document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
     document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
     await loadSchool();
+    await loadPrograms();
+    await loadMemberships();
     await loadClasses();
     await loadStudents();
     buildTodaySchedule();
@@ -331,43 +495,255 @@
     document.getElementById('loadingScreen').style.display = 'none';
   }
 
+  // ─── SCHOOL ─────────────────────────────────────────
   async function loadSchool() {
-    const { data } = await sb.from('schools').select('*').eq('id',SCHOOL_ID).single();
+    var res  = await sb.from('schools').select('*').eq('id', SCHOOL_ID).single();
+    var data = res.data;
     if (data) {
-      document.getElementById('schoolName').textContent = data.name;
+      document.getElementById('schoolName').textContent    = data.name;
       document.getElementById('topSchoolName').textContent = data.name;
-      document.getElementById('settingName').value  = data.name||'';
-      document.getElementById('settingEmail').value = data.email||'';
-      document.getElementById('settingPhone').value = data.phone||'';
-      document.getElementById('settingCity').value  = data.city||'';
-      document.getElementById('settingState').value = data.state||'';
+      document.getElementById('settingName').value  = data.name  || '';
+      document.getElementById('settingEmail').value = data.email || '';
+      document.getElementById('settingPhone').value = data.phone || '';
+      document.getElementById('settingCity').value  = data.city  || '';
+      document.getElementById('settingState').value = data.state || '';
       if (data.color) {
-        document.getElementById('settingColor').value = data.color;
+        document.getElementById('settingColor').value    = data.color;
         document.getElementById('settingColorHex').value = data.color;
         applyBrandColor(data.color);
       }
     }
   }
 
+  // ─── PROGRAMS ───────────────────────────────────────
+  async function loadPrograms() {
+    var res = await sb.from('programs').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
+    allPrograms = res.data || [];
+    renderPrograms();
+    populateProgramDropdown();
+  }
+
+  function renderPrograms() {
+    var el = document.getElementById('programsGrid');
+    if (!allPrograms.length) {
+      el.innerHTML = '<div class="no-classes" style="grid-column:1/-1">No programs yet. Add your first program to get started.</div>';
+      return;
+    }
+    el.innerHTML = allPrograms.map(function(p) {
+      var color       = p.color || '#C9A84C';
+      var memCount    = allMemberships.filter(function(m){ return m.program_id === p.id; }).length;
+      return '<div class="panel" style="overflow:hidden">'
+        + '<div style="height:4px;background:' + color + '"></div>'
+        + '<div class="panel-body">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">'
+        + '<div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">' + p.name + '</div>'
+        + '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';flex-shrink:0"></div>'
+        + '</div>'
+        + (p.description ? '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">' + p.description + '</div>' : '')
+        + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'
+        + (p.age_group   ? '<span class="class-tag">' + p.age_group   + '</span>' : '')
+        + (p.belt_system ? '<span class="class-tag">' + p.belt_system + '</span>' : '')
+        + '</div>'
+        + '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:1rem">' + memCount + ' membership' + (memCount !== 1 ? 's' : '') + '</div>'
+        + '<div style="display:flex;gap:0.5rem">'
+        + '<button class="btn-sm gold" onclick="openAddMembershipForProgram(\'' + p.id + '\')">+ Membership</button>'
+        + '<button class="btn-sm" onclick="editProgram(\'' + p.id + '\')">Edit</button>'
+        + '</div>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  function populateProgramDropdown() {
+    var sel = document.getElementById('memProgram');
+    sel.innerHTML = '<option value="">— Select a Program —</option>';
+    allPrograms.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value       = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function openAddProgram() {
+    document.getElementById('progName').value     = '';
+    document.getElementById('progDesc').value     = '';
+    document.getElementById('progAge').value      = 'Adults (18+)';
+    document.getElementById('progBelt').value     = 'Colored Belts';
+    document.getElementById('progColor').value    = '#C9A84C';
+    document.getElementById('progColorHex').value = '#C9A84C';
+    document.getElementById('programMsg').textContent = '';
+    document.getElementById('addProgramModal').classList.add('active');
+  }
+
+  function closeAddProgram() {
+    document.getElementById('addProgramModal').classList.remove('active');
+  }
+
+  function syncProgColor() {
+    var hex = document.getElementById('progColorHex').value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      document.getElementById('progColor').value = hex;
+    }
+  }
+
+  async function saveProgram() {
+    var name = document.getElementById('progName').value.trim();
+    if (!name) { setMsg('programMsg', 'Program name is required.', 'error'); return; }
+    setMsg('programMsg', 'Saving...', '');
+    var color = document.getElementById('progColor').value;
+    var res = await sb.from('programs').insert({
+      school_id:   SCHOOL_ID,
+      name:        name,
+      description: document.getElementById('progDesc').value.trim(),
+      age_group:   document.getElementById('progAge').value,
+      belt_system: document.getElementById('progBelt').value,
+      color:       color,
+      active:      true
+    });
+    if (res.error) { setMsg('programMsg', res.error.message, 'error'); }
+    else {
+      setMsg('programMsg', 'Program saved!', 'success');
+      await loadPrograms();
+      setTimeout(function(){ closeAddProgram(); }, 1000);
+    }
+  }
+
+  function editProgram(id) {
+    // Placeholder — edit modal coming in next build
+    alert('Edit coming soon!');
+  }
+
+  // ─── MEMBERSHIPS ────────────────────────────────────
+  async function loadMemberships() {
+    var res = await sb.from('memberships').select('*, programs(name, color)').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
+    allMemberships = res.data || [];
+    renderMemberships();
+    renderPrograms();
+  }
+
+  function renderMemberships() {
+    var tb = document.getElementById('membershipsTableBody');
+    if (!allMemberships.length) {
+      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet. Add your first membership plan.</td></tr>';
+      return;
+    }
+    tb.innerHTML = allMemberships.map(function(m) {
+      var progName  = (m.programs && m.programs.name) ? m.programs.name : '—';
+      var progColor = (m.programs && m.programs.color) ? m.programs.color : '#C9A84C';
+      var typeLabel = { monthly:'Monthly', yearly:'Yearly', trial:'Trial', class_pack:'Class Pack' }[m.billing_type] || m.billing_type;
+      var price     = '$' + parseFloat(m.price || 0).toFixed(2);
+      if (m.billing_type === 'monthly') price += '/mo';
+      if (m.billing_type === 'yearly')  price += '/yr';
+      var limit = m.class_limit_type === 'unlimited' ? 'Unlimited'
+                : m.class_limit_type === 'class_pack' ? (m.class_limit_count || '?') + ' classes'
+                : (m.class_limit_count || '?') + '/' + (m.class_limit_type === 'per_week' ? 'wk' : 'mo');
+      var renew = m.auto_renew ? '<span style="color:var(--green);font-size:0.7rem">On</span>' : '<span style="color:var(--muted);font-size:0.7rem">Off</span>';
+      return '<tr>'
+        + '<td class="name">' + m.name + '</td>'
+        + '<td><span style="display:inline-flex;align-items:center;gap:0.4rem"><span style="width:8px;height:8px;border-radius:50%;background:' + progColor + ';display:inline-block"></span>' + progName + '</span></td>'
+        + '<td><span class="chip chip-pending">' + typeLabel + '</span></td>'
+        + '<td style="color:var(--gold)">' + price + '</td>'
+        + '<td>' + limit + '</td>'
+        + '<td>' + renew + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function openAddMembership() {
+    document.getElementById('memName').value        = '';
+    document.getElementById('memProgram').value     = '';
+    document.getElementById('memType').value        = 'monthly';
+    document.getElementById('memLength').value      = '1';
+    document.getElementById('memUnit').value        = 'months';
+    document.getElementById('memPrice').value       = '';
+    document.getElementById('memSignup').value      = '0';
+    document.getElementById('memLimitType').value   = 'unlimited';
+    document.getElementById('memLimitCount').value  = '';
+    document.getElementById('memAutoRenew').checked = true;
+    document.getElementById('memAutopay').checked   = true;
+    document.getElementById('memTrial').checked     = false;
+    document.getElementById('classLimitField').style.display = 'none';
+    document.getElementById('membershipMsg').textContent = '';
+    document.getElementById('addMembershipModal').classList.add('active');
+  }
+
+  function openAddMembershipForProgram(programId) {
+    openAddMembership();
+    document.getElementById('memProgram').value = programId;
+  }
+
+  function closeAddMembership() {
+    document.getElementById('addMembershipModal').classList.remove('active');
+  }
+
+  function toggleClassLimit() {
+    var val = document.getElementById('memLimitType').value;
+    document.getElementById('classLimitField').style.display = val === 'unlimited' ? 'none' : 'block';
+  }
+
+  function toggleMemType() {
+    var type = document.getElementById('memType').value;
+    if (type === 'class_pack') {
+      document.getElementById('memLimitType').value = 'class_pack';
+      document.getElementById('classLimitField').style.display = 'block';
+      document.getElementById('memUnit').value = 'days';
+    }
+  }
+
+  async function saveMembership() {
+    var name = document.getElementById('memName').value.trim();
+    var prog = document.getElementById('memProgram').value;
+    var price = document.getElementById('memPrice').value;
+    if (!name)  { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
+    if (!prog)  { setMsg('membershipMsg', 'Please select a program.', 'error'); return; }
+    if (!price) { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
+    setMsg('membershipMsg', 'Saving...', '');
+    var limitType  = document.getElementById('memLimitType').value;
+    var limitCount = document.getElementById('memLimitCount').value;
+    var res = await sb.from('memberships').insert({
+      school_id:        SCHOOL_ID,
+      program_id:       prog,
+      name:             name,
+      billing_type:     document.getElementById('memType').value,
+      billing_length:   parseInt(document.getElementById('memLength').value) || 1,
+      billing_unit:     document.getElementById('memUnit').value,
+      price:            parseFloat(price) || 0,
+      signup_fee:       parseFloat(document.getElementById('memSignup').value) || 0,
+      class_limit_type: limitType,
+      class_limit_count: limitCount ? parseInt(limitCount) : null,
+      trial:            document.getElementById('memTrial').checked,
+      auto_renew:       document.getElementById('memAutoRenew').checked,
+      autopay:          document.getElementById('memAutopay').checked,
+      active:           true
+    });
+    if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
+    else {
+      setMsg('membershipMsg', 'Membership saved!', 'success');
+      await loadMemberships();
+      setTimeout(function(){ closeAddMembership(); }, 1000);
+    }
+  }
+
+  // ─── CLASSES ────────────────────────────────────────
   async function loadClasses() {
-    const { data } = await sb.from('classes').select('*').eq('school_id',SCHOOL_ID).eq('is_active',true).order('start_time');
-    allClasses = data || [];
+    var res = await sb.from('classes').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('start_time');
+    allClasses = res.data || [];
     document.getElementById('anaClasses').textContent = allClasses.length;
-    const weekly = allClasses.reduce((a,c)=>a+(c.days_of_week?c.days_of_week.length:0),0);
+    var weekly = allClasses.reduce(function(a,c){ return a + (c.days_of_week ? c.days_of_week.length : 0); }, 0);
     document.getElementById('anaWeekly').textContent = weekly;
     renderAllClasses();
   }
 
   async function loadStudents() {
-    const { data } = await sb.from('students').select('*').eq('school_id',SCHOOL_ID);
-    allStudents = data || [];
-    const active  = allStudents.filter(s=>s.membership_status==='active').length;
-    const pending = allStudents.filter(s=>s.membership_status==='pending').length;
-    const expired = allStudents.filter(s=>s.membership_status==='expired').length;
-    document.getElementById('statTotal').textContent   = allStudents.length;
-    document.getElementById('statActive').textContent  = active;
-    document.getElementById('statPending').textContent = pending;
-    document.getElementById('statExpired').textContent = expired;
+    var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID);
+    allStudents = res.data || [];
+    var active  = allStudents.filter(function(s){ return s.status === 'active'; }).length;
+    var pending = allStudents.filter(function(s){ return s.status === 'trial' || s.status === 'paused'; }).length;
+    var expired = allStudents.filter(function(s){ return s.status === 'expired' || s.status === 'cancelled'; }).length;
+    document.getElementById('statTotal').textContent    = allStudents.length;
+    document.getElementById('statActive').textContent   = active;
+    document.getElementById('statPending').textContent  = pending;
+    document.getElementById('statExpired').textContent  = expired;
     document.getElementById('totalMembers').textContent = allStudents.length;
     document.getElementById('todayStudentCount').textContent = active;
     document.getElementById('anaTotal').textContent  = allStudents.length;
@@ -376,60 +752,120 @@
   }
 
   function getTodayClasses() {
-    const today = DAYS[new Date().getDay()];
-    return allClasses.filter(c=>c.days_of_week&&c.days_of_week.includes(today)).sort((a,b)=>a.start_time>b.start_time?1:-1);
+    var today = DAYS[new Date().getDay()];
+    return allClasses.filter(function(c){ return c.days_of_week && c.days_of_week.includes(today); }).sort(function(a,b){ return a.start_time > b.start_time ? 1 : -1; });
   }
 
   function buildTodaySchedule() {
-    const tc = getTodayClasses();
+    var tc = getTodayClasses();
     document.getElementById('todayClassCount').textContent = tc.length;
-    const el = document.getElementById('todaySchedule');
+    var el = document.getElementById('todaySchedule');
     el.innerHTML = tc.length ? tc.map(classCardHTML).join('') : '<div class="no-classes">No classes today. Rest day!</div>';
   }
 
   function classCardHTML(c) {
-    var actions = '<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+c.title+'\')">Attendance</button><button class="btn-sm">Edit</button></div>';
-    var tags = (c.style?'<span class="class-tag">'+c.style+'</span>':'') + (c.level?'<span class="class-tag">'+c.level+'</span>':'') + (c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
-    var meta = (c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'') + (c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'') + (c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
-    return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'#C9A84C')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+c.title+'</div><div class="class-tags">'+tags+'</div><div class="class-meta">'+meta+'</div></div>'+actions+'</div>';
+    var displayName = c.name || c.title || 'Untitled Class';
+    var safeTitle   = displayName.replace(/'/g, '');
+    var actions = '<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\'' + c.id + '\',\'' + safeTitle + '\')">Attendance</button><button class="btn-sm">Edit</button></div>';
+    var tags = (c.style     ? '<span class="class-tag">' + c.style     + '</span>' : '')
+             + (c.level     ? '<span class="class-tag">' + c.level     + '</span>' : '')
+             + (c.age_group ? '<span class="class-tag">' + c.age_group + '</span>' : '');
+    var meta = (c.instructor_name ? '<div class="class-meta-item">Instructor: <span>' + c.instructor_name + '</span></div>' : '')
+             + (c.capacity        ? '<div class="class-meta-item">Capacity: <span>' + c.capacity + '</span></div>' : '')
+             + (c.days_of_week    ? '<div class="class-meta-item">Days: <span>' + c.days_of_week.map(function(d){ return d.slice(0,3); }).join(', ') + '</span></div>' : '');
+    return '<div class="class-card">'
+      + '<div class="class-color-bar" style="background:' + (c.color || '#C9A84C') + '"></div>'
+      + '<div class="class-time"><div class="class-time-start">' + fmtTime(c.start_time) + '</div><div class="class-time-end">' + fmtTime(c.end_time) + '</div></div>'
+      + '<div class="class-info"><div class="class-title">' + displayName + '</div><div class="class-tags">' + tags + '</div><div class="class-meta">' + meta + '</div></div>'
+      + actions + '</div>';
   }
 
   function buildWeekGrid() {
-    const now = new Date();
-    const cur = now.getDay();
-    const ws  = new Date(now); ws.setDate(now.getDate()-cur);
-    let html  = '';
-    for (let i=0;i<7;i++) {
-      const d = new Date(ws); d.setDate(ws.getDate()+i);
-      const dn = DAYS[i];
-      const dc = allClasses.filter(c=>c.days_of_week&&c.days_of_week.includes(dn)).sort((a,b)=>a.start_time>b.start_time?1:-1);
-      html += '<div class="week-day '+(i===cur?'today':'')+'">';
-      html += '<div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
-      html += dc.map(function(c){ return '<div class="week-class-pill" style="border-color:'+(c.color||'#C9A84C')+'">'+fmtTime(c.start_time)+' '+c.title+'</div>'; }).join('');
+    var now = new Date();
+    var cur = now.getDay();
+    var ws  = new Date(now); ws.setDate(now.getDate() - cur);
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+      var d  = new Date(ws); d.setDate(ws.getDate() + i);
+      var dn = DAYS[i];
+      var dc = allClasses.filter(function(c){ return c.days_of_week && c.days_of_week.includes(dn); }).sort(function(a,b){ return a.start_time > b.start_time ? 1 : -1; });
+      html += '<div class="week-day ' + (i === cur ? 'today' : '') + '">';
+      html += '<div class="week-day-header"><div class="week-day-name">' + DAY_SHORT[i] + '</div><div class="week-day-num">' + d.getDate() + '</div></div>';
+      html += dc.map(function(c){
+        var n = c.name || c.title || '';
+        return '<div class="week-class-pill" style="border-color:' + (c.color || '#C9A84C') + '">' + fmtTime(c.start_time) + ' ' + n + '</div>';
+      }).join('');
       html += '</div>';
     }
     document.getElementById('weekGrid').innerHTML = html;
   }
 
   function renderMembersTable() {
-    const tb = document.getElementById('membersTableBody');
-    if (!allStudents.length) { tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No members yet. Add your first student!</td></tr>'; return; }
-    tb.innerHTML = allStudents.map(function(s){
-      var sc = s.membership_status==='active'?'chip-active':s.membership_status==='pending'?'chip-pending':'chip-expired';
-      var jd = s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      return '<tr><td class="name">'+s.first_name+' '+s.last_name+'</td><td>'+(s.email||'—')+'</td><td>'+(s.membership_plan||'—')+'</td><td><span class="chip '+sc+'">'+s.membership_status+'</span></td><td>'+jd+'</td></tr>';
+    var tb = document.getElementById('membersTableBody');
+    if (!allStudents.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No members yet.</td></tr>';
+      return;
+    }
+    tb.innerHTML = allStudents.map(function(s) {
+      var st   = s.status || 'trial';
+      var sc   = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
+      var jd   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      var plan = s.plan_type || '—';
+      return '<tr>'
+        + '<td class="name">' + s.first_name + ' ' + s.last_name + '</td>'
+        + '<td>' + (s.email || '—') + '</td>'
+        + '<td>' + plan + '</td>'
+        + '<td><span class="chip ' + sc + '">' + st + '</span></td>'
+        + '<td>' + jd + '</td>'
+        + '</tr>';
     }).join('');
   }
 
   function renderAllClasses() {
-    const el = document.getElementById('allClassesList');
+    var el = document.getElementById('allClassesList');
     el.innerHTML = allClasses.length ? allClasses.map(classCardHTML).join('') : '<div class="no-classes">No classes yet. Add your first class!</div>';
   }
 
+  // ─── ADD CLASS ──────────────────────────────────────
   function openAddClass()  { document.getElementById('addClassModal').classList.add('active'); }
   function closeAddClass() { document.getElementById('addClassModal').classList.remove('active'); }
   function toggleDay(btn)  { btn.classList.toggle('selected'); }
 
+  async function saveClass() {
+    var title    = document.getElementById('classTitle').value.trim();
+    var start    = document.getElementById('classStart').value;
+    var end      = document.getElementById('classEnd').value;
+    var days     = Array.from(document.querySelectorAll('.day-btn.selected')).map(function(b){ return b.dataset.day; });
+    var capacity = document.getElementById('classCapacity').value;
+    if (!title || !start || !end || !days.length) { setMsg('classMsg', 'Fill in title, times, and select days.', 'error'); return; }
+    setMsg('classMsg', 'Saving...', '');
+    var res = await sb.from('classes').insert({
+      school_id:       SCHOOL_ID,
+      name:            title,
+      title:           title,
+      style:           document.getElementById('classStyle').value,
+      age_group:       document.getElementById('classAge').value,
+      level:           document.getElementById('classLevel').value,
+      capacity:        capacity ? parseInt(capacity) : null,
+      start_time:      start,
+      end_time:        end,
+      days_of_week:    days,
+      active:          true,
+      is_active:       true,
+      is_fixed:        true,
+      instructor_name: document.getElementById('userName').textContent
+    });
+    if (res.error) { setMsg('classMsg', res.error.message, 'error'); }
+    else {
+      setMsg('classMsg', 'Class saved!', 'success');
+      await loadClasses();
+      buildTodaySchedule();
+      buildWeekGrid();
+      setTimeout(function(){ closeAddClass(); document.getElementById('classMsg').textContent = ''; }, 1200);
+    }
+  }
+
+  // ─── ATTENDANCE ─────────────────────────────────────
   var currentAttendanceClassId = null;
   var attendanceRecords = {};
 
@@ -439,8 +875,8 @@
     document.getElementById('attendanceModalTitle').textContent = classTitle + ' — Attendance';
     document.getElementById('attendanceDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
     document.getElementById('attendanceCount').textContent = '0';
-    document.getElementById('attendanceMsg').textContent = '';
-    document.getElementById('attendanceList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
+    document.getElementById('attendanceMsg').textContent   = '';
+    document.getElementById('attendanceList').innerHTML    = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
     document.getElementById('attendanceModal').classList.add('active');
     await loadAttendanceStudents(classId);
   }
@@ -453,25 +889,24 @@
 
   async function loadAttendanceStudents(classId) {
     var list = document.getElementById('attendanceList');
-    var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
+    var res  = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('status', 'active').order('last_name');
     var data = res.data;
     if (!data || !data.length) {
       list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
       return;
     }
     var today = new Date().toISOString().split('T')[0];
-    var res2 = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
-    var existing = res2.data;
-    if (existing) existing.forEach(function(r) { attendanceRecords[r.student_id] = r.id; });
+    var res2  = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
+    if (res2.data) res2.data.forEach(function(r){ attendanceRecords[r.student_id] = r.id; });
     var html = '';
     data.forEach(function(s) {
-      var present = !!attendanceRecords[s.id];
-      var diamond = present ? '◆' : '◇';
-      var color = present ? 'var(--gold)' : 'var(--muted)';
+      var present     = !!attendanceRecords[s.id];
+      var diamond     = present ? '◆' : '◇';
+      var color       = present ? 'var(--gold)'    : 'var(--muted)';
       var borderColor = present ? 'var(--gold-dk)' : 'var(--border)';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid ' + borderColor + '" id="row-' + s.id + '">';
       html += '<div><div style="font-size:0.85rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>';
-      html += '<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">' + (s.membership_plan||'Member') + '</div></div>';
+      html += '<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">' + (s.plan_type || 'Member') + '</div></div>';
       html += '<button onclick="toggleAttendance(\'' + s.id + '\',\'' + s.first_name + ' ' + s.last_name + '\')" id="btn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:' + color + '">' + diamond + '</button>';
       html += '</div>';
     });
@@ -480,30 +915,30 @@
   }
 
   async function toggleAttendance(studentId, studentName) {
-    var btn = document.getElementById('btn-' + studentId);
-    var row = document.getElementById('row-' + studentId);
+    var btn       = document.getElementById('btn-' + studentId);
+    var row       = document.getElementById('row-' + studentId);
     var isPresent = !!attendanceRecords[studentId];
     if (isPresent) {
       var del = await sb.from('attendance').delete().eq('id', attendanceRecords[studentId]);
       if (!del.error) {
         delete attendanceRecords[studentId];
-        btn.textContent = '◇';
-        btn.style.color = 'var(--muted)';
+        btn.textContent       = '◇';
+        btn.style.color       = 'var(--muted)';
         row.style.borderColor = 'var(--border)';
         setMsg('attendanceMsg', studentName + ' removed.', '');
       }
     } else {
       var ins = await sb.from('attendance').insert({
-        school_id: SCHOOL_ID,
-        class_id: currentAttendanceClassId,
-        student_id: studentId,
+        school_id:     SCHOOL_ID,
+        class_id:      currentAttendanceClassId,
+        student_id:    studentId,
         checked_in_at: new Date().toISOString(),
-        method: 'staff'
+        method:        'staff'
       }).select().single();
       if (!ins.error) {
         attendanceRecords[studentId] = ins.data.id;
-        btn.textContent = '◆';
-        btn.style.color = 'var(--gold)';
+        btn.textContent       = '◆';
+        btn.style.color       = 'var(--gold)';
         row.style.borderColor = 'var(--gold-dk)';
         setMsg('attendanceMsg', studentName + ' marked present!', 'success');
       }
@@ -515,47 +950,24 @@
     document.getElementById('attendanceCount').textContent = Object.keys(attendanceRecords).length;
   }
 
-  async function saveClass() {
-    const title = document.getElementById('classTitle').value.trim();
-    const start = document.getElementById('classStart').value;
-    const end   = document.getElementById('classEnd').value;
-    const days  = Array.from(document.querySelectorAll('.day-btn.selected')).map(b=>b.dataset.day);
-    if (!title||!start||!end||!days.length) { setMsg('classMsg','Fill in title, times, and select days.','error'); return; }
-    setMsg('classMsg','Saving...','');
-    const { error } = await sb.from('classes').insert({
-      school_id: SCHOOL_ID, title,
-      style: document.getElementById('classStyle').value,
-      age_group: document.getElementById('classAge').value,
-      level: document.getElementById('classLevel').value,
-      capacity: document.getElementById('classCapacity').value ? parseInt(document.getElementById('classCapacity').value) : null,
-      start_time: start, end_time: end, days_of_week: days,
-      is_fixed: true, is_active: true,
-      instructor_name: document.getElementById('userName').textContent
-    });
-    if (error) { setMsg('classMsg',error.message,'error'); }
-    else {
-      setMsg('classMsg','Class saved!','success');
-      await loadClasses(); buildTodaySchedule(); buildWeekGrid();
-      setTimeout(function(){ closeAddClass(); document.getElementById('classMsg').textContent=''; },1200);
-    }
-  }
-
+  // ─── COMMUNICATIONS ─────────────────────────────────
   async function sendCommunication() {
-    const subject  = document.getElementById('commSubject').value.trim();
-    const body     = document.getElementById('commBody').value.trim();
-    const audience = document.getElementById('commAudience').value;
-    if (!subject||!body) { setMsg('commMsg','Please fill in all fields.','error'); return; }
-    setMsg('commMsg','Sending...','');
-    const { data:{ session } } = await sb.auth.getSession();
-    const count = audience==='all'?allStudents.length:allStudents.filter(s=>s.membership_status===(audience==='active'?'active':'expired')).length;
-    const { error } = await sb.from('communications').insert({ school_id:SCHOOL_ID, created_by:session.user.id, subject, body, audience, status:'sent', sent_at:new Date().toISOString(), recipient_count:count });
-    if (error) { setMsg('commMsg',error.message,'error'); }
-    else { setMsg('commMsg','Message sent!','success'); document.getElementById('commSubject').value=''; document.getElementById('commBody').value=''; }
+    var subject  = document.getElementById('commSubject').value.trim();
+    var body     = document.getElementById('commBody').value.trim();
+    var audience = document.getElementById('commAudience').value;
+    if (!subject || !body) { setMsg('commMsg', 'Please fill in all fields.', 'error'); return; }
+    setMsg('commMsg', 'Sending...', '');
+    var sess  = await sb.auth.getSession();
+    var count = audience === 'all' ? allStudents.length : allStudents.filter(function(s){ return s.status === (audience === 'active' ? 'active' : 'expired'); }).length;
+    var res   = await sb.from('communications').insert({ school_id: SCHOOL_ID, created_by: sess.data.session.user.id, subject: subject, body: body, audience: audience, status: 'sent', sent_at: new Date().toISOString(), recipient_count: count });
+    if (res.error) { setMsg('commMsg', res.error.message, 'error'); }
+    else { setMsg('commMsg', 'Message sent!', 'success'); document.getElementById('commSubject').value = ''; document.getElementById('commBody').value = ''; }
   }
 
+  // ─── SETTINGS ───────────────────────────────────────
   async function saveSettings() {
-    const color = document.getElementById('settingColor').value;
-    const { error } = await sb.from('schools').update({
+    var color = document.getElementById('settingColor').value;
+    var res   = await sb.from('schools').update({
       name:  document.getElementById('settingName').value.trim(),
       email: document.getElementById('settingEmail').value.trim(),
       phone: document.getElementById('settingPhone').value.trim(),
@@ -563,10 +975,11 @@
       state: document.getElementById('settingState').value.trim(),
       color: color
     }).eq('id', SCHOOL_ID);
-    if (error) { setMsg('settingsMsg', error.message, 'error'); }
+    if (res.error) { setMsg('settingsMsg', res.error.message, 'error'); }
     else {
       setMsg('settingsMsg', 'Saved!', 'success');
-      document.getElementById('schoolName').textContent = document.getElementById('settingName').value.trim();
+      document.getElementById('schoolName').textContent    = document.getElementById('settingName').value.trim();
+      document.getElementById('topSchoolName').textContent = document.getElementById('settingName').value.trim();
       applyBrandColor(color);
     }
   }
@@ -576,25 +989,27 @@
   }
 
   function syncColorPicker() {
-    const hex = document.getElementById('settingColorHex').value;
+    var hex = document.getElementById('settingColorHex').value;
     if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
       document.getElementById('settingColor').value = hex;
       applyBrandColor(hex);
     }
   }
 
+  // ─── UTILITIES ──────────────────────────────────────
   function fmtTime(t) {
     if (!t) return '';
     var parts = t.split(':');
-    var hr = parseInt(parts[0]);
-    var min = parts[1];
-    return (hr>12?hr-12:hr||12) + ':' + min + ' ' + (hr>=12?'PM':'AM');
+    var hr    = parseInt(parts[0]);
+    var min   = parts[1];
+    return (hr > 12 ? hr - 12 : hr || 12) + ':' + min + ' ' + (hr >= 12 ? 'PM' : 'AM');
   }
 
-  function setMsg(id,text,type) {
+  function setMsg(id, text, type) {
     var el = document.getElementById(id);
+    if (!el) return;
     el.textContent = text;
-    el.className = 'form-msg ' + (type||'');
+    el.className   = 'form-msg ' + (type || '');
   }
 
   function toggleSchoolMenu() {
@@ -613,15 +1028,23 @@
     var t = document.getElementById('page-' + page);
     if (t) t.classList.add('active');
     if (el) el.classList.add('active');
-    var titles = {schedule:"Today's Schedule",classes:'All Classes',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
-    document.getElementById('pageTitle').textContent = titles[page]||page;
-    document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+    var titles = {
+      schedule:'Today\'s Schedule', classes:'All Classes',
+      programs:'Programs', memberships:'Memberships',
+      members:'Members', payments:'Payments',
+      communications:'Communications', analytics:'Analytics',
+      settings:'Settings', billing:'Billing'
+    };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    document.querySelector('.main').scrollTo({top:0, behavior:'smooth'});
   }
 
-  async function handleSignOut() { await sb.auth.signOut(); window.location.href='index.html'; }
+  async function handleSignOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
-  document.getElementById('addClassModal').addEventListener('click', function(e){ if(e.target===this) closeAddClass(); });
-  document.getElementById('attendanceModal').addEventListener('click', function(e){ if(e.target===this) closeAttendance(); });
+  document.getElementById('addClassModal').addEventListener('click',      function(e){ if (e.target === this) closeAddClass(); });
+  document.getElementById('attendanceModal').addEventListener('click',    function(e){ if (e.target === this) closeAttendance(); });
+  document.getElementById('addProgramModal').addEventListener('click',    function(e){ if (e.target === this) closeAddProgram(); });
+  document.getElementById('addMembershipModal').addEventListener('click', function(e){ if (e.target === this) closeAddMembership(); });
 
   init();
 </script>
