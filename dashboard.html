@@ -240,6 +240,111 @@
   </div>
 </main>
 
+<!-- STUDENT PROFILE MODAL -->
+
+<div class="modal-overlay" id="studentProfileModal">
+  <div class="modal" style="width:800px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:0">
+    <input type="file" id="photoUploadInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
+
+```
+<!-- Profile Header -->
+<div id="profileHeader" style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
+  <button onclick="closeStudentProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">x</button>
+  <div style="position:relative;flex-shrink:0">
+    <div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--gold-dk);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden">
+      <span id="profileInitials">??</span>
+    </div>
+    <div onclick="document.getElementById('photoUploadInput').click()" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.65rem;color:var(--black);font-weight:700">+</div>
+  </div>
+  <div style="flex:1">
+    <div id="profileName" style="font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.4rem">Loading...</div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+      <span id="profileStatusBadge" class="chip chip-active">active</span>
+      <span id="profileProgramBadge" class="class-tag">—</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:0.5rem;flex-shrink:0">
+    <button class="btn-sm gold" onclick="openEditStudent()">Edit</button>
+    <button class="btn-sm" onclick="toggleStudentStatus()">Change Status</button>
+  </div>
+</div>
+
+<!-- Two Column Body -->
+<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:0;padding:0">
+
+  <!-- Left Column -->
+  <div style="padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem">
+
+    <!-- Contact Info -->
+    <div>
+      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div>
+      <div id="profileContactInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    </div>
+
+    <!-- Membership -->
+    <div>
+      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Membership</div>
+      <div id="profileMembershipInfo" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    </div>
+
+    <!-- Belt Status -->
+    <div id="profileBeltSection">
+      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
+      <div id="profileBeltInfo"></div>
+    </div>
+
+    <!-- Class Tracker -->
+    <div>
+      <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
+      <div id="profileClassTracker"></div>
+    </div>
+
+  </div>
+
+  <!-- Right Column -->
+  <div style="padding:1.5rem">
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
+      <button class="profile-tab active" id="tab-attendance" onclick="switchProfileTab('attendance')">Attendance</button>
+      <button class="profile-tab" id="tab-notes" onclick="switchProfileTab('notes')">Notes</button>
+      <button class="profile-tab" id="tab-financial" onclick="switchProfileTab('financial')">Financial</button>
+    </div>
+
+    <!-- Attendance Tab -->
+    <div id="profileTabAttendance">
+      <div id="profileAttendanceList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    </div>
+
+    <!-- Notes Tab -->
+    <div id="profileTabNotes" style="display:none">
+      <div class="field" style="margin-bottom:0.75rem">
+        <textarea id="profileNoteInput" rows="3" placeholder="Add a note about this student..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.75rem;resize:vertical"></textarea>
+      </div>
+      <button class="btn-sm gold" style="margin-bottom:1rem" onclick="saveProfileNote()">Add Note</button>
+      <p class="form-msg" id="profileNoteMsg"></p>
+      <div id="profileNoteDisplay" style="font-size:0.82rem;color:var(--muted2);font-style:italic;margin-top:0.5rem"></div>
+    </div>
+
+    <!-- Financial Tab -->
+    <div id="profileTabFinancial" style="display:none">
+      <div style="text-align:center;padding:2rem 1rem">
+        <div style="font-size:2rem;margin-bottom:1rem;opacity:0.3">◆</div>
+        <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white);margin-bottom:0.5rem">Stripe Not Connected</div>
+        <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Payment history will appear here once Stripe is connected to your account.</div>
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:left">
+          <div style="font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Upcoming</div>
+          <div id="profileFinancialMembership" style="font-size:0.82rem;color:var(--muted2)">Loading membership details...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
 <!-- ATTENDANCE MODAL -->
 
 <div class="modal-overlay" id="attendanceModal">
@@ -278,32 +383,21 @@
       <div class="form-row">
         <div class="field"><label>Style</label>
           <select id="classStyle">
-            <option value="BJJ">BJJ</option>
-            <option value="Karate">Karate</option>
-            <option value="Kickboxing">Kickboxing</option>
-            <option value="Kung Fu">Kung Fu</option>
-            <option value="Boxing">Boxing</option>
-            <option value="Yoga">Yoga</option>
-            <option value="Strength">Strength</option>
-            <option value="Mixed">Mixed</option>
+            <option value="BJJ">BJJ</option><option value="Karate">Karate</option><option value="Kickboxing">Kickboxing</option>
+            <option value="Kung Fu">Kung Fu</option><option value="Boxing">Boxing</option><option value="Yoga">Yoga</option>
+            <option value="Strength">Strength</option><option value="Mixed">Mixed</option>
           </select>
         </div>
         <div class="field"><label>Age Group</label>
           <select id="classAge">
-            <option value="kids">Kids</option>
-            <option value="teens">Teens</option>
-            <option value="adults">Adults</option>
-            <option value="all">All Ages</option>
+            <option value="kids">Kids</option><option value="teens">Teens</option><option value="adults">Adults</option><option value="all">All Ages</option>
           </select>
         </div>
       </div>
       <div class="form-row">
         <div class="field"><label>Level</label>
           <select id="classLevel">
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-            <option value="all">All Levels</option>
+            <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="all">All Levels</option>
           </select>
         </div>
         <div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div>
@@ -344,11 +438,8 @@
       <div class="form-row">
         <div class="field"><label>Age Group</label>
           <select id="progAge">
-            <option value="Little Tigers (4-6)">Little Tigers (4-6)</option>
-            <option value="Kids (7-12)">Kids (7-12)</option>
-            <option value="Teens (13-17)">Teens (13-17)</option>
-            <option value="Adults (18+)" selected>Adults (18+)</option>
-            <option value="All Ages">All Ages</option>
+            <option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option>
+            <option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option>
           </select>
         </div>
         <div class="field"><label>Belt Progression</label>
@@ -390,59 +481,36 @@
       <div class="form-row">
         <div class="field"><label>Type</label>
           <select id="memType" onchange="toggleMemType()">
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-            <option value="trial">Trial</option>
-            <option value="class_pack">Class Pack</option>
+            <option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option>
           </select>
         </div>
         <div class="field"><label>Length</label>
           <div style="display:flex;gap:0.5rem">
             <input type="number" id="memLength" value="1" min="1" style="width:60px" />
-            <select id="memUnit">
-              <option value="months">Months</option>
-              <option value="weeks">Weeks</option>
-              <option value="days">Days</option>
-            </select>
+            <select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select>
           </div>
         </div>
       </div>
       <div class="form-row">
         <div class="field"><label>Price</label>
-          <div style="display:flex;align-items:center;gap:0.4rem">
-            <span style="color:var(--gold);font-size:0.9rem">$</span>
-            <input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" />
-          </div>
+          <div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
         </div>
         <div class="field"><label>Signup Fee</label>
-          <div style="display:flex;align-items:center;gap:0.4rem">
-            <span style="color:var(--gold);font-size:0.9rem">$</span>
-            <input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" />
-          </div>
+          <div style="display:flex;align-items:center;gap:0.4rem"><span style="color:var(--gold);font-size:0.9rem">$</span><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
         </div>
       </div>
       <div class="field"><label>Class Access</label>
         <select id="memLimitType" onchange="toggleClassLimit()">
-          <option value="unlimited">Unlimited</option>
-          <option value="per_week">Limited per Week</option>
-          <option value="per_month">Limited per Month</option>
-          <option value="class_pack">Class Pack (fixed quantity)</option>
+          <option value="unlimited">Unlimited</option><option value="per_week">Limited per Week</option><option value="per_month">Limited per Month</option><option value="class_pack">Class Pack (fixed quantity)</option>
         </select>
       </div>
       <div class="field" id="classLimitField" style="display:none">
-        <label>Number of Classes</label>
-        <input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" />
+        <label>Number of Classes</label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" />
       </div>
       <div style="display:flex;gap:1.5rem;margin-bottom:1rem">
-        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
-          <input type="checkbox" id="memAutoRenew" checked style="accent-color:var(--gold)" /> Auto-Renew
-        </label>
-        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
-          <input type="checkbox" id="memAutopay" checked style="accent-color:var(--gold)" /> Autopay
-        </label>
-        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
-          <input type="checkbox" id="memTrial" style="accent-color:var(--gold)" /> Trial
-        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer"><input type="checkbox" id="memAutoRenew" checked style="accent-color:var(--gold)" /> Auto-Renew</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer"><input type="checkbox" id="memAutopay" checked style="accent-color:var(--gold)" /> Autopay</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer"><input type="checkbox" id="memTrial" style="accent-color:var(--gold)" /> Trial</label>
       </div>
       <button class="btn-gold-full" onclick="saveMembership()">Save Membership</button>
       <p class="form-msg" id="membershipMsg"></p>
@@ -455,10 +523,11 @@
 <div class="modal-overlay" id="addStudentModal">
   <div class="modal" style="width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
-      <span class="modal-title">Add New Student</span>
+      <span class="modal-title" id="addStudentTitle">Add New Student</span>
       <button class="modal-close" onclick="closeAddStudent()">x</button>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="stuEditId" value="" />
       <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Student Info</div>
       <div class="form-row">
         <div class="field"><label>First Name</label><input type="text" id="stuFirst" placeholder="First name" /></div>
@@ -471,22 +540,15 @@
       <div class="field"><label>Email</label><input type="email" id="stuEmail" placeholder="student@email.com" /></div>
       <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Enrollment</div>
       <div class="field"><label>Program</label>
-        <select id="stuProgram" onchange="filterMembershipsForProgram()">
-          <option value="">— Select a Program —</option>
-        </select>
+        <select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">— Select a Program —</option></select>
       </div>
       <div class="field"><label>Membership Plan</label>
-        <select id="stuMembership">
-          <option value="">— Select a Program first —</option>
-        </select>
+        <select id="stuMembership"><option value="">— Select a Program first —</option></select>
       </div>
       <div class="form-row">
         <div class="field"><label>Start Date</label><input type="date" id="stuStartDate" /></div>
         <div class="field"><label>Status</label>
-          <select id="stuStatus">
-            <option value="active">Active</option>
-            <option value="trial">Trial</option>
-          </select>
+          <select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option></select>
         </div>
       </div>
       <button class="btn-gold-full" onclick="saveStudent()">Save Student</button>
@@ -494,6 +556,53 @@
     </div>
   </div>
 </div>
+
+<style>
+.profile-tab {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: #7A7060;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.profile-tab.active { color: #C9A84C; border-color: #C9A84C; }
+.profile-info-row {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #9A8F80;
+  align-items: flex-start;
+}
+.profile-info-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7A7060;
+  min-width: 70px;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+.milestone-bar-bg {
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  margin: 0.5rem 0;
+  overflow: hidden;
+}
+.milestone-bar-fill {
+  height: 100%;
+  background: #C9A84C;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+</style>
 
 <script>
   const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
@@ -503,11 +612,14 @@
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
   const DAYS      = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MILESTONES = [10, 25, 50, 100, 200, 500, 1000];
 
   var allClasses     = [];
   var allStudents    = [];
   var allPrograms    = [];
   var allMemberships = [];
+  var currentProfileStudent = null;
+  var brandColor = '#C9A84C';
 
   async function init() {
     try {
@@ -546,6 +658,7 @@
       document.getElementById('settingCity').value  = d.city  || '';
       document.getElementById('settingState').value = d.state || '';
       if (d.color) {
+        brandColor = d.color;
         document.getElementById('settingColor').value    = d.color;
         document.getElementById('settingColorHex').value = d.color;
         applyBrandColor(d.color);
@@ -553,6 +666,7 @@
     }
   }
 
+  // ─── PROGRAMS ───────────────────────────────────────
   async function loadPrograms() {
     var res = await sb.from('programs').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
     allPrograms = res.data || [];
@@ -561,196 +675,320 @@
 
   function renderPrograms() {
     var el = document.getElementById('programsGrid');
-    if (!allPrograms.length) {
-      el.innerHTML = '<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>';
-      return;
-    }
+    if (!allPrograms.length) { el.innerHTML = '<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>'; return; }
     el.innerHTML = allPrograms.map(function(p) {
       var color    = p.color || '#C9A84C';
       var memCount = allMemberships.filter(function(m){ return m.program_id === p.id; }).length;
-      return '<div class="panel" style="overflow:hidden">'
-        + '<div style="height:4px;background:' + color + '"></div>'
-        + '<div class="panel-body">'
+      return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:' + color + '"></div><div class="panel-body">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">'
         + '<div style="font-family:var(--font-display);font-size:1rem;color:var(--white)">' + p.name + '</div>'
-        + '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';flex-shrink:0"></div>'
-        + '</div>'
+        + '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';flex-shrink:0"></div></div>'
         + (p.description ? '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">' + p.description + '</div>' : '')
         + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">'
-        + (p.age_group   ? '<span class="class-tag">' + p.age_group   + '</span>' : '')
-        + (p.belt_system ? '<span class="class-tag">' + p.belt_system + '</span>' : '')
-        + '</div>'
+        + (p.age_group ? '<span class="class-tag">' + p.age_group + '</span>' : '')
+        + (p.belt_system ? '<span class="class-tag">' + p.belt_system + '</span>' : '') + '</div>'
         + '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:1rem">' + memCount + ' membership' + (memCount !== 1 ? 's' : '') + '</div>'
-        + '<div style="display:flex;gap:0.5rem">'
-        + '<button class="btn-sm gold" onclick="openAddMembershipForProgram(\'' + p.id + '\')">+ Membership</button>'
-        + '<button class="btn-sm">Edit</button>'
-        + '</div></div></div>';
+        + '<div style="display:flex;gap:0.5rem"><button class="btn-sm gold" onclick="openAddMembershipForProgram(\'' + p.id + '\')">+ Membership</button>'
+        + '<button class="btn-sm">Edit</button></div></div></div>';
     }).join('');
   }
 
   function populateProgramCheckboxes() {
     var container = document.getElementById('memProgramChecks');
     if (!container) return;
-    if (!allPrograms.length) {
-      container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet.</div>';
-      return;
-    }
+    if (!allPrograms.length) { container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet.</div>'; return; }
     container.innerHTML = allPrograms.map(function(p) {
       var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + (p.color || '#C9A84C') + ';display:inline-block;margin-right:0.5rem"></span>';
-      return '<label class="prog-check-label">'
-        + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:#C9A84C;flex-shrink:0" />'
-        + dot
-        + '<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">' + p.name + '</span>'
-        + '</label>';
+      return '<label class="prog-check-label"><input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:#C9A84C;flex-shrink:0" />'
+        + dot + '<span style="color:#9A8F80;font-size:0.78rem;font-family:Arial,sans-serif">' + p.name + '</span></label>';
     }).join('');
   }
 
   function openAddProgram() {
-    document.getElementById('progName').value     = '';
-    document.getElementById('progDesc').value     = '';
-    document.getElementById('progAge').value      = 'Adults (18+)';
-    document.getElementById('progBelt').value     = 'Belt Progression';
-    document.getElementById('progColor').value    = '#C9A84C';
-    document.getElementById('progColorHex').value = '#C9A84C';
+    document.getElementById('progName').value = ''; document.getElementById('progDesc').value = '';
+    document.getElementById('progAge').value = 'Adults (18+)'; document.getElementById('progBelt').value = 'Belt Progression';
+    document.getElementById('progColor').value = '#C9A84C'; document.getElementById('progColorHex').value = '#C9A84C';
     document.getElementById('programMsg').textContent = '';
     document.getElementById('addProgramModal').classList.add('active');
   }
   function closeAddProgram() { document.getElementById('addProgramModal').classList.remove('active'); }
-
-  function syncProgColor() {
-    var hex = document.getElementById('progColorHex').value;
-    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) document.getElementById('progColor').value = hex;
-  }
+  function syncProgColor() { var hex = document.getElementById('progColorHex').value; if (/^#[0-9A-Fa-f]{6}$/.test(hex)) document.getElementById('progColor').value = hex; }
 
   async function saveProgram() {
     var name = document.getElementById('progName').value.trim();
     if (!name) { setMsg('programMsg', 'Program name is required.', 'error'); return; }
     setMsg('programMsg', 'Saving...', '');
-    var res = await sb.from('programs').insert({
-      school_id: SCHOOL_ID, name: name,
-      description: document.getElementById('progDesc').value.trim(),
-      age_group:   document.getElementById('progAge').value,
-      belt_system: document.getElementById('progBelt').value,
-      color:       document.getElementById('progColor').value,
-      active:      true
-    });
+    var res = await sb.from('programs').insert({ school_id: SCHOOL_ID, name: name, description: document.getElementById('progDesc').value.trim(), age_group: document.getElementById('progAge').value, belt_system: document.getElementById('progBelt').value, color: document.getElementById('progColor').value, active: true });
     if (res.error) { setMsg('programMsg', res.error.message, 'error'); }
     else { setMsg('programMsg', 'Program saved!', 'success'); await loadPrograms(); setTimeout(function(){ closeAddProgram(); }, 1000); }
   }
 
+  // ─── MEMBERSHIPS ────────────────────────────────────
   async function loadMemberships() {
     var res = await sb.from('memberships').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
     allMemberships = res.data || [];
-    renderMemberships();
-    renderPrograms();
+    renderMemberships(); renderPrograms();
   }
 
   function renderMemberships() {
     var tb = document.getElementById('membershipsTableBody');
-    if (!allMemberships.length) {
-      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';
-      return;
-    }
+    if (!allMemberships.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>'; return; }
     tb.innerHTML = allMemberships.map(function(m) {
       var typeLabel = { monthly:'Monthly', yearly:'Yearly', trial:'Trial', class_pack:'Class Pack' }[m.billing_type] || m.billing_type;
-      var price = '$' + parseFloat(m.price || 0).toFixed(2);
-      if (m.billing_type === 'monthly') price += '/mo';
-      if (m.billing_type === 'yearly')  price += '/yr';
-      var limit = m.class_limit_type === 'unlimited' ? 'Unlimited'
-                : m.class_limit_type === 'class_pack' ? (m.class_limit_count || '?') + ' classes'
-                : (m.class_limit_count || '?') + '/' + (m.class_limit_type === 'per_week' ? 'wk' : 'mo');
+      var price = '$' + parseFloat(m.price || 0).toFixed(2) + (m.billing_type === 'monthly' ? '/mo' : m.billing_type === 'yearly' ? '/yr' : '');
+      var limit = m.class_limit_type === 'unlimited' ? 'Unlimited' : m.class_limit_type === 'class_pack' ? (m.class_limit_count || '?') + ' classes' : (m.class_limit_count || '?') + '/' + (m.class_limit_type === 'per_week' ? 'wk' : 'mo');
       var renew = m.auto_renew ? '<span style="color:var(--green);font-size:0.7rem">On</span>' : '<span style="color:var(--muted);font-size:0.7rem">Off</span>';
-      return '<tr><td class="name">' + m.name + '</td><td style="color:var(--muted2);font-size:0.72rem">—</td>'
-        + '<td><span class="chip chip-pending">' + typeLabel + '</span></td>'
-        + '<td style="color:var(--gold)">' + price + '</td><td>' + limit + '</td><td>' + renew + '</td></tr>';
+      return '<tr><td class="name">' + m.name + '</td><td style="color:var(--muted2);font-size:0.72rem">—</td><td><span class="chip chip-pending">' + typeLabel + '</span></td><td style="color:var(--gold)">' + price + '</td><td>' + limit + '</td><td>' + renew + '</td></tr>';
     }).join('');
   }
 
   function openAddMembership() {
-    document.getElementById('memName').value        = '';
-    document.getElementById('memType').value        = 'monthly';
-    document.getElementById('memLength').value      = '1';
-    document.getElementById('memUnit').value        = 'months';
-    document.getElementById('memPrice').value       = '';
-    document.getElementById('memSignup').value      = '0';
-    document.getElementById('memLimitType').value   = 'unlimited';
-    document.getElementById('memLimitCount').value  = '';
-    document.getElementById('memAutoRenew').checked = true;
-    document.getElementById('memAutopay').checked   = true;
-    document.getElementById('memTrial').checked     = false;
-    document.getElementById('classLimitField').style.display = 'none';
-    document.getElementById('membershipMsg').textContent = '';
+    document.getElementById('memName').value = ''; document.getElementById('memType').value = 'monthly';
+    document.getElementById('memLength').value = '1'; document.getElementById('memUnit').value = 'months';
+    document.getElementById('memPrice').value = ''; document.getElementById('memSignup').value = '0';
+    document.getElementById('memLimitType').value = 'unlimited'; document.getElementById('memLimitCount').value = '';
+    document.getElementById('memAutoRenew').checked = true; document.getElementById('memAutopay').checked = true; document.getElementById('memTrial').checked = false;
+    document.getElementById('classLimitField').style.display = 'none'; document.getElementById('membershipMsg').textContent = '';
     populateProgramCheckboxes();
     document.getElementById('addMembershipModal').classList.add('active');
   }
-
-  function openAddMembershipForProgram(programId) {
-    openAddMembership();
-    setTimeout(function() {
-      var checks = document.querySelectorAll('.mem-prog-check');
-      checks.forEach(function(cb){ if (cb.value === programId) cb.checked = true; });
-    }, 50);
-  }
+  function openAddMembershipForProgram(programId) { openAddMembership(); setTimeout(function(){ var checks = document.querySelectorAll('.mem-prog-check'); checks.forEach(function(cb){ if (cb.value === programId) cb.checked = true; }); }, 50); }
   function closeAddMembership() { document.getElementById('addMembershipModal').classList.remove('active'); }
-
-  function toggleClassLimit() {
-    document.getElementById('classLimitField').style.display = document.getElementById('memLimitType').value === 'unlimited' ? 'none' : 'block';
-  }
-  function toggleMemType() {
-    if (document.getElementById('memType').value === 'class_pack') {
-      document.getElementById('memLimitType').value = 'class_pack';
-      document.getElementById('classLimitField').style.display = 'block';
-      document.getElementById('memUnit').value = 'days';
-    }
-  }
+  function toggleClassLimit() { document.getElementById('classLimitField').style.display = document.getElementById('memLimitType').value === 'unlimited' ? 'none' : 'block'; }
+  function toggleMemType() { if (document.getElementById('memType').value === 'class_pack') { document.getElementById('memLimitType').value = 'class_pack'; document.getElementById('classLimitField').style.display = 'block'; document.getElementById('memUnit').value = 'days'; } }
 
   async function saveMembership() {
-    var name             = document.getElementById('memName').value.trim();
-    var price            = document.getElementById('memPrice').value;
+    var name = document.getElementById('memName').value.trim(), price = document.getElementById('memPrice').value;
     var selectedPrograms = Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){ return cb.value; });
-    if (!name)                    { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
+    if (!name) { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
     if (!selectedPrograms.length) { setMsg('membershipMsg', 'Select at least one program.', 'error'); return; }
-    if (!price)                   { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
+    if (!price) { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
     setMsg('membershipMsg', 'Saving...', '');
-    var limitType  = document.getElementById('memLimitType').value;
-    var limitCount = document.getElementById('memLimitCount').value;
-    var res = await sb.from('memberships').insert({
-      school_id: SCHOOL_ID, name: name,
-      billing_type:      document.getElementById('memType').value,
-      billing_length:    parseInt(document.getElementById('memLength').value) || 1,
-      billing_unit:      document.getElementById('memUnit').value,
-      price:             parseFloat(price) || 0,
-      signup_fee:        parseFloat(document.getElementById('memSignup').value) || 0,
-      class_limit_type:  limitType,
-      class_limit_count: limitCount ? parseInt(limitCount) : null,
-      trial:             document.getElementById('memTrial').checked,
-      auto_renew:        document.getElementById('memAutoRenew').checked,
-      autopay:           document.getElementById('memAutopay').checked,
-      active:            true
-    }).select();
+    var limitType = document.getElementById('memLimitType').value, limitCount = document.getElementById('memLimitCount').value;
+    var res = await sb.from('memberships').insert({ school_id: SCHOOL_ID, name: name, billing_type: document.getElementById('memType').value, billing_length: parseInt(document.getElementById('memLength').value) || 1, billing_unit: document.getElementById('memUnit').value, price: parseFloat(price) || 0, signup_fee: parseFloat(document.getElementById('memSignup').value) || 0, class_limit_type: limitType, class_limit_count: limitCount ? parseInt(limitCount) : null, trial: document.getElementById('memTrial').checked, auto_renew: document.getElementById('memAutoRenew').checked, autopay: document.getElementById('memAutopay').checked, active: true }).select();
     if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
     else {
       var newMem = res.data && res.data[0];
-      if (newMem && selectedPrograms.length) {
-        var links = selectedPrograms.map(function(pid){ return { membership_id: newMem.id, program_id: pid }; });
-        await sb.from('membership_programs').insert(links);
-      }
-      setMsg('membershipMsg', 'Membership saved!', 'success');
-      await loadMemberships();
-      setTimeout(function(){ closeAddMembership(); }, 1000);
+      if (newMem && selectedPrograms.length) { var links = selectedPrograms.map(function(pid){ return { membership_id: newMem.id, program_id: pid }; }); await sb.from('membership_programs').insert(links); }
+      setMsg('membershipMsg', 'Membership saved!', 'success'); await loadMemberships(); setTimeout(function(){ closeAddMembership(); }, 1000);
     }
   }
 
-  // ─── ADD STUDENT ────────────────────────────────────
+  // ─── STUDENT PROFILE ────────────────────────────────
+  async function openStudentProfile(studentId) {
+    currentProfileStudent = null;
+    document.getElementById('profileName').textContent = 'Loading...';
+    document.getElementById('profileInitials').textContent = '...';
+    document.getElementById('studentProfileModal').classList.add('active');
+    switchProfileTab('attendance');
+
+    var res = await sb.from('students').select('*, programs(name, color, belt_system), memberships(name, billing_type, price)').eq('id', studentId).single();
+    if (res.error || !res.data) { return; }
+    var s = res.data;
+    currentProfileStudent = s;
+
+    // Header
+    var initials = (s.first_name ? s.first_name[0] : '') + (s.last_name ? s.last_name[0] : '');
+    document.getElementById('profileName').textContent = s.first_name + ' ' + s.last_name;
+    document.getElementById('profileInitials').textContent = initials.toUpperCase();
+    document.getElementById('profileModalTitle') && (document.getElementById('profileModalTitle').textContent = s.first_name + ' ' + s.last_name);
+
+    // Avatar - show photo if exists
+    var avatarEl = document.getElementById('profileAvatar');
+    if (s.photo_url) {
+      avatarEl.innerHTML = '<img src="' + s.photo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+    } else {
+      avatarEl.innerHTML = '<span id="profileInitials">' + initials.toUpperCase() + '</span>';
+    }
+
+    // Status badge
+    var st = s.status || 'trial';
+    var sc = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
+    document.getElementById('profileStatusBadge').className = 'chip ' + sc;
+    document.getElementById('profileStatusBadge').textContent = st;
+
+    // Program badge
+    var progName = (s.programs && s.programs.name) ? s.programs.name : '—';
+    var progColor = (s.programs && s.programs.color) ? s.programs.color : '#C9A84C';
+    var pb = document.getElementById('profileProgramBadge');
+    pb.textContent = progName;
+    pb.style.borderColor = progColor;
+    pb.style.color = progColor;
+
+    // Contact info
+    var contactEl = document.getElementById('profileContactInfo');
+    contactEl.innerHTML = '';
+    var contactRows = [
+      { label: 'Email', value: s.email || '—' },
+      { label: 'Phone', value: s.phone || '—' },
+      { label: 'DOB', value: s.date_of_birth ? new Date(s.date_of_birth + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—' },
+      { label: 'Started', value: s.start_date ? new Date(s.start_date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—' }
+    ];
+    contactRows.forEach(function(r) {
+      contactEl.innerHTML += '<div class="profile-info-row"><span class="profile-info-label">' + r.label + '</span><span style="color:#F5F0E8">' + r.value + '</span></div>';
+    });
+
+    // Membership info
+    var memEl = document.getElementById('profileMembershipInfo');
+    var memName = (s.memberships && s.memberships.name) ? s.memberships.name : '—';
+    var memPrice = s.memberships ? '$' + parseFloat(s.memberships.price || 0).toFixed(2) + (s.memberships.billing_type === 'monthly' ? '/mo' : s.memberships.billing_type === 'yearly' ? '/yr' : '') : '—';
+    memEl.innerHTML = '<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">' + memName + '</span></div>'
+      + '<div class="profile-info-row"><span class="profile-info-label">Price</span><span style="color:#C9A84C">' + memPrice + '</span></div>';
+
+    // Belt status
+    var beltSection = document.getElementById('profileBeltSection');
+    var beltEl = document.getElementById('profileBeltInfo');
+    if (s.programs && s.programs.belt_system === 'Belt Progression') {
+      beltSection.style.display = 'block';
+      var belt = s.current_belt || 'white';
+      var belts = ['white','yellow','orange','green','blue','purple','red','brown','black'];
+      var beltColors = { white:'#F5F0E8', yellow:'#F0C030', orange:'#E07820', green:'#4A8A5A', blue:'#3A6A9A', purple:'#7A4A9A', red:'#9A3A3A', brown:'#6A3A1A', black:'#1A1A1A' };
+      var beltIdx = belts.indexOf(belt);
+      beltEl.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem">'
+        + '<div style="width:32px;height:12px;border-radius:2px;background:' + (beltColors[belt] || '#C9A84C') + ';border:1px solid rgba(255,255,255,0.2)"></div>'
+        + '<div style="font-family:var(--font-display);font-size:0.9rem;color:#F5F0E8;text-transform:capitalize">' + belt + ' Belt</div></div>'
+        + (beltIdx < belts.length - 1 ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem">Next: ' + belts[beltIdx + 1] + ' belt</div>' : '<div style="font-size:0.68rem;color:#C9A84C;margin-top:0.4rem">Black Belt achieved!</div>');
+    } else {
+      beltSection.style.display = 'none';
+    }
+
+    // Financial tab preview
+    document.getElementById('profileFinancialMembership').innerHTML = '<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">' + memName + '</span></div><div class="profile-info-row"><span class="profile-info-label">Amount</span><span style="color:#C9A84C">' + memPrice + '</span></div>';
+
+    // Notes
+    var noteEl = document.getElementById('profileNoteDisplay');
+    noteEl.innerHTML = s.notes ? '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">' + s.notes.replace(/\n/g, '<br>') + '</div>' : '<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
+
+    // Load class tracker and attendance
+    await loadProfileAttendance(studentId);
+  }
+
+  async function loadProfileAttendance(studentId) {
+    var res = await sb.from('attendance').select('*, classes(name, title, start_time)').eq('student_id', studentId).order('checked_in_at', { ascending: false }).limit(20);
+    var data = res.data || [];
+    var total = data.length;
+
+    // Class Tracker
+    var trackerEl = document.getElementById('profileClassTracker');
+    var nextMilestone = MILESTONES.find(function(m){ return m > total; }) || null;
+    var prevMilestone = 0;
+    for (var i = 0; i < MILESTONES.length; i++) { if (MILESTONES[i] <= total) prevMilestone = MILESTONES[i]; }
+    var pct = nextMilestone ? Math.round(((total - prevMilestone) / (nextMilestone - prevMilestone)) * 100) : 100;
+
+    trackerEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem">'
+      + '<div style="font-family:var(--font-display);font-size:2rem;color:#C9A84C;line-height:1">' + total + '</div>'
+      + '<div style="font-size:0.68rem;color:var(--muted)">classes attended</div></div>'
+      + '<div class="milestone-bar-bg"><div class="milestone-bar-fill" style="width:' + pct + '%"></div></div>'
+      + (nextMilestone ? '<div style="font-size:0.68rem;color:var(--muted);">' + (nextMilestone - total) + ' classes to milestone ' + nextMilestone + '</div>' : '<div style="font-size:0.68rem;color:#C9A84C;">All milestones reached!</div>');
+
+    // Attendance list
+    var listEl = document.getElementById('profileAttendanceList');
+    if (!data.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';
+      return;
+    }
+    listEl.innerHTML = data.map(function(a) {
+      var cn = (a.classes && (a.classes.name || a.classes.title)) ? (a.classes.name || a.classes.title) : 'Class';
+      var dt = new Date(a.checked_in_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      var tm = new Date(a.checked_in_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #C9A84C">'
+        + '<div style="font-size:0.8rem;color:#F5F0E8">' + cn + '</div>'
+        + '<div style="font-size:0.68rem;color:var(--muted)">' + dt + ' ' + tm + '</div></div>';
+    }).join('');
+  }
+
+  function switchProfileTab(tab) {
+    document.getElementById('profileTabAttendance').style.display = tab === 'attendance' ? 'block' : 'none';
+    document.getElementById('profileTabNotes').style.display      = tab === 'notes'      ? 'block' : 'none';
+    document.getElementById('profileTabFinancial').style.display  = tab === 'financial'  ? 'block' : 'none';
+    document.querySelectorAll('.profile-tab').forEach(function(t){ t.classList.remove('active'); });
+    var activeTab = document.getElementById('tab-' + tab);
+    if (activeTab) activeTab.classList.add('active');
+  }
+
+  function closeStudentProfile() {
+    document.getElementById('studentProfileModal').classList.remove('active');
+    currentProfileStudent = null;
+  }
+
+  async function saveProfileNote() {
+    if (!currentProfileStudent) return;
+    var note = document.getElementById('profileNoteInput').value.trim();
+    if (!note) return;
+    var existing = currentProfileStudent.notes || '';
+    var timestamp = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var newNote = existing ? existing + '\n\n[' + timestamp + '] ' + note : '[' + timestamp + '] ' + note;
+    var res = await sb.from('students').update({ notes: newNote }).eq('id', currentProfileStudent.id);
+    if (res.error) { setMsg('profileNoteMsg', res.error.message, 'error'); }
+    else {
+      currentProfileStudent.notes = newNote;
+      document.getElementById('profileNoteInput').value = '';
+      document.getElementById('profileNoteDisplay').innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">' + newNote.replace(/\n/g, '<br>') + '</div>';
+      setMsg('profileNoteMsg', 'Note saved!', 'success');
+      setTimeout(function(){ document.getElementById('profileNoteMsg').textContent = ''; }, 2000);
+      await loadStudents();
+    }
+  }
+
+  async function toggleStudentStatus() {
+    if (!currentProfileStudent) return;
+    var current = currentProfileStudent.status || 'trial';
+    var next = current === 'active' ? 'trial' : current === 'trial' ? 'expired' : 'active';
+    var res = await sb.from('students').update({ status: next }).eq('id', currentProfileStudent.id);
+    if (!res.error) { await openStudentProfile(currentProfileStudent.id); await loadStudents(); }
+  }
+
+  function openEditStudent() {
+    if (!currentProfileStudent) return;
+    var s = currentProfileStudent;
+    document.getElementById('addStudentTitle').textContent = 'Edit Student';
+    document.getElementById('stuEditId').value   = s.id;
+    document.getElementById('stuFirst').value    = s.first_name || '';
+    document.getElementById('stuLast').value     = s.last_name  || '';
+    document.getElementById('stuDOB').value      = s.date_of_birth || '';
+    document.getElementById('stuPhone').value    = s.phone || '';
+    document.getElementById('stuEmail').value    = s.email || '';
+    document.getElementById('stuStartDate').value = s.start_date || '';
+    document.getElementById('stuStatus').value   = s.status || 'active';
+    document.getElementById('studentMsg').textContent = '';
+    populateStudentProgramDropdown();
+    if (s.program_id) {
+      document.getElementById('stuProgram').value = s.program_id;
+      filterMembershipsForProgram().then(function() {
+        if (s.membership_id) document.getElementById('stuMembership').value = s.membership_id;
+      });
+    }
+    document.getElementById('addStudentModal').classList.add('active');
+  }
+
+  async function handlePhotoUpload(event) {
+    if (!currentProfileStudent) return;
+    var file = event.target.files[0];
+    if (!file) return;
+    var ext  = file.name.split('.').pop();
+    var path = currentProfileStudent.id + '.' + ext;
+    var uploadRes = await sb.storage.from('student-photos').upload(path, file, { upsert: true });
+    if (uploadRes.error) { alert('Photo upload failed: ' + uploadRes.error.message); return; }
+    var urlRes = sb.storage.from('student-photos').getPublicUrl(path);
+    var publicUrl = urlRes.data.publicUrl;
+    await sb.from('students').update({ photo_url: publicUrl }).eq('id', currentProfileStudent.id);
+    currentProfileStudent.photo_url = publicUrl;
+    document.getElementById('profileAvatar').innerHTML = '<img src="' + publicUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+    await loadStudents();
+  }
+
+  // ─── ADD / EDIT STUDENT ─────────────────────────────
   function openAddStudent() {
     var today = new Date().toISOString().split('T')[0];
-    document.getElementById('stuFirst').value      = '';
-    document.getElementById('stuLast').value       = '';
-    document.getElementById('stuDOB').value        = '';
-    document.getElementById('stuPhone').value      = '';
-    document.getElementById('stuEmail').value      = '';
-    document.getElementById('stuStartDate').value  = today;
-    document.getElementById('stuStatus').value     = 'active';
+    document.getElementById('addStudentTitle').textContent = 'Add New Student';
+    document.getElementById('stuEditId').value    = '';
+    document.getElementById('stuFirst').value     = '';
+    document.getElementById('stuLast').value      = '';
+    document.getElementById('stuDOB').value       = '';
+    document.getElementById('stuPhone').value     = '';
+    document.getElementById('stuEmail').value     = '';
+    document.getElementById('stuStartDate').value = today;
+    document.getElementById('stuStatus').value    = 'active';
     document.getElementById('studentMsg').textContent = '';
     document.getElementById('stuMembership').innerHTML = '<option value="">— Select a Program first —</option>';
     populateStudentProgramDropdown();
@@ -761,11 +999,7 @@
   function populateStudentProgramDropdown() {
     var sel = document.getElementById('stuProgram');
     sel.innerHTML = '<option value="">— Select a Program —</option>';
-    allPrograms.forEach(function(p) {
-      var opt = document.createElement('option');
-      opt.value = p.id; opt.textContent = p.name;
-      sel.appendChild(opt);
-    });
+    allPrograms.forEach(function(p) { var opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; sel.appendChild(opt); });
   }
 
   async function filterMembershipsForProgram() {
@@ -780,17 +1014,15 @@
     if (!mems.length) { sel.innerHTML = '<option value="">No memberships for this program</option>'; return; }
     sel.innerHTML = '<option value="">— Select a Membership —</option>';
     mems.forEach(function(m) {
-      var opt = document.createElement('option');
-      opt.value = m.id;
-      var price = '$' + parseFloat(m.price || 0).toFixed(2);
-      if (m.billing_type === 'monthly') price += '/mo';
-      if (m.billing_type === 'yearly')  price += '/yr';
+      var opt = document.createElement('option'); opt.value = m.id;
+      var price = '$' + parseFloat(m.price || 0).toFixed(2) + (m.billing_type === 'monthly' ? '/mo' : m.billing_type === 'yearly' ? '/yr' : '');
       opt.textContent = m.name + ' — ' + price;
       sel.appendChild(opt);
     });
   }
 
   async function saveStudent() {
+    var editId       = document.getElementById('stuEditId').value;
     var first        = document.getElementById('stuFirst').value.trim();
     var last         = document.getElementById('stuLast').value.trim();
     var programId    = document.getElementById('stuProgram').value;
@@ -799,23 +1031,19 @@
     if (!programId)       { setMsg('studentMsg', 'Please select a program.', 'error'); return; }
     if (!membershipId)    { setMsg('studentMsg', 'Please select a membership plan.', 'error'); return; }
     setMsg('studentMsg', 'Saving...', '');
-    var res = await sb.from('students').insert({
-      school_id:     SCHOOL_ID,
-      first_name:    first,
-      last_name:     last,
-      email:         document.getElementById('stuEmail').value.trim(),
-      phone:         document.getElementById('stuPhone').value.trim(),
-      date_of_birth: document.getElementById('stuDOB').value || null,
-      program_id:    programId,
-      membership_id: membershipId,
-      plan_type:     'membership',
-      status:        document.getElementById('stuStatus').value,
-      start_date:    document.getElementById('stuStartDate').value || new Date().toISOString().split('T')[0]
-    });
+    var payload = { first_name: first, last_name: last, email: document.getElementById('stuEmail').value.trim(), phone: document.getElementById('stuPhone').value.trim(), date_of_birth: document.getElementById('stuDOB').value || null, program_id: programId, membership_id: membershipId, plan_type: 'membership', status: document.getElementById('stuStatus').value, start_date: document.getElementById('stuStartDate').value || new Date().toISOString().split('T')[0] };
+    var res;
+    if (editId) {
+      res = await sb.from('students').update(payload).eq('id', editId);
+    } else {
+      payload.school_id = SCHOOL_ID;
+      res = await sb.from('students').insert(payload);
+    }
     if (res.error) { setMsg('studentMsg', res.error.message, 'error'); }
     else {
-      setMsg('studentMsg', first + ' ' + last + ' added!', 'success');
+      setMsg('studentMsg', first + ' ' + last + (editId ? ' updated!' : ' added!'), 'success');
       await loadStudents();
+      if (editId && currentProfileStudent) { await openStudentProfile(editId); }
       setTimeout(function(){ closeAddStudent(); }, 1200);
     }
   }
@@ -848,7 +1076,7 @@
 
   function getTodayClasses() {
     var today = DAYS[new Date().getDay()];
-    return allClasses.filter(function(c){ return c.days_of_week && c.days_of_week.includes(today); }).sort(function(a,b){ return a.start_time > b.start_time ? 1:-1; });
+    return allClasses.filter(function(c){ return c.days_of_week && c.days_of_week.includes(today); }).sort(function(a,b){ return a.start_time>b.start_time?1:-1; });
   }
 
   function buildTodaySchedule() {
@@ -858,20 +1086,18 @@
   }
 
   function classCardHTML(c) {
-    var dn = c.name || c.title || 'Untitled';
-    var st = dn.replace(/'/g,'');
-    var actions = '<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\'' + c.id + '\',\'' + st + '\')">Attendance</button><button class="btn-sm">Edit</button></div>';
-    var tags = (c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
-    var meta = (c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'')+(c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'')+(c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
+    var dn=c.name||c.title||'Untitled', st=dn.replace(/'/g,'');
+    var actions='<div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')">Attendance</button><button class="btn-sm">Edit</button></div>';
+    var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'');
+    var meta=(c.instructor_name?'<div class="class-meta-item">Instructor: <span>'+c.instructor_name+'</span></div>':'')+(c.capacity?'<div class="class-meta-item">Capacity: <span>'+c.capacity+'</span></div>':'')+(c.days_of_week?'<div class="class-meta-item">Days: <span>'+c.days_of_week.map(function(d){return d.slice(0,3);}).join(', ')+'</span></div>':'');
     return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'#C9A84C')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div><div class="class-tags">'+tags+'</div><div class="class-meta">'+meta+'</div></div>'+actions+'</div>';
   }
 
   function buildWeekGrid() {
-    var now=new Date(), cur=now.getDay(), ws=new Date(now); ws.setDate(now.getDate()-cur);
+    var now=new Date(),cur=now.getDay(),ws=new Date(now);ws.setDate(now.getDate()-cur);
     var html='';
     for(var i=0;i<7;i++){
-      var d=new Date(ws); d.setDate(ws.getDate()+i);
-      var dn=DAYS[i];
+      var d=new Date(ws);d.setDate(ws.getDate()+i);var dn=DAYS[i];
       var dc=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
       html+='<div class="week-day '+(i===cur?'today':'')+'"><div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
       html+=dc.map(function(c){return '<div class="week-class-pill" style="border-color:'+(c.color||'#C9A84C')+'">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</div>';}).join('');
@@ -881,29 +1107,31 @@
   }
 
   function renderMembersTable() {
-    var tb = document.getElementById('membersTableBody');
-    if (!allStudents.length) { tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No students yet. Add your first student!</td></tr>'; return; }
-    tb.innerHTML = allStudents.map(function(s){
-      var st = s.status||'trial';
-      var sc = st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
-      var jd = s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      var pn = (s.programs&&s.programs.name)?s.programs.name:'—';
-      var mn = (s.memberships&&s.memberships.name)?s.memberships.name:'—';
-      return '<tr><td class="name">'+s.first_name+' '+s.last_name+'</td><td>'+(s.email||'—')+'</td><td>'+pn+'</td><td>'+mn+'</td><td><span class="chip '+sc+'">'+st+'</span></td><td>'+jd+'</td></tr>';
+    var tb=document.getElementById('membersTableBody');
+    if(!allStudents.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No students yet. Add your first student!</td></tr>';return;}
+    tb.innerHTML=allStudents.map(function(s){
+      var st=s.status||'trial';
+      var sc=st==='active'?'chip-active':(st==='trial'||st==='paused')?'chip-pending':'chip-expired';
+      var jd=s.created_at?new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      var pn=(s.programs&&s.programs.name)?s.programs.name:'—';
+      var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'—';
+      return '<tr style="cursor:pointer" onclick="openStudentProfile(\''+s.id+'\')">'
+        +'<td class="name">'+s.first_name+' '+s.last_name+'</td><td>'+(s.email||'—')+'</td><td>'+pn+'</td><td>'+mn+'</td>'
+        +'<td><span class="chip '+sc+'">'+st+'</span></td><td>'+jd+'</td></tr>';
     }).join('');
   }
 
   function renderAllClasses() {
-    document.getElementById('allClassesList').innerHTML = allClasses.length ? allClasses.map(classCardHTML).join('') : '<div class="no-classes">No classes yet.</div>';
+    document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes">No classes yet.</div>';
   }
 
-  function openAddClass()  { document.getElementById('addClassModal').classList.add('active'); }
-  function closeAddClass() { document.getElementById('addClassModal').classList.remove('active'); }
-  function toggleDay(btn)  { btn.classList.toggle('selected'); }
+  function openAddClass(){document.getElementById('addClassModal').classList.add('active');}
+  function closeAddClass(){document.getElementById('addClassModal').classList.remove('active');}
+  function toggleDay(btn){btn.classList.toggle('selected');}
 
-  async function saveClass() {
-    var title=document.getElementById('classTitle').value.trim(), start=document.getElementById('classStart').value, end=document.getElementById('classEnd').value;
-    var days=Array.from(document.querySelectorAll('.day-btn.selected')).map(function(b){return b.dataset.day;}), cap=document.getElementById('classCapacity').value;
+  async function saveClass(){
+    var title=document.getElementById('classTitle').value.trim(),start=document.getElementById('classStart').value,end=document.getElementById('classEnd').value;
+    var days=Array.from(document.querySelectorAll('.day-btn.selected')).map(function(b){return b.dataset.day;}),cap=document.getElementById('classCapacity').value;
     if(!title||!start||!end||!days.length){setMsg('classMsg','Fill in title, times, and select days.','error');return;}
     setMsg('classMsg','Saving...','');
     var res=await sb.from('classes').insert({school_id:SCHOOL_ID,name:title,title:title,style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:cap?parseInt(cap):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,is_fixed:true,instructor_name:document.getElementById('userName').textContent});
@@ -911,14 +1139,13 @@
     else{setMsg('classMsg','Class saved!','success');await loadClasses();buildTodaySchedule();buildWeekGrid();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
   }
 
-  var currentAttendanceClassId=null, attendanceRecords={};
+  var currentAttendanceClassId=null,attendanceRecords={};
 
   async function openAttendance(classId,classTitle){
-    currentAttendanceClassId=classId; attendanceRecords={};
+    currentAttendanceClassId=classId;attendanceRecords={};
     document.getElementById('attendanceModalTitle').textContent=classTitle+' — Attendance';
     document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    document.getElementById('attendanceCount').textContent='0';
-    document.getElementById('attendanceMsg').textContent='';
+    document.getElementById('attendanceCount').textContent='0';document.getElementById('attendanceMsg').textContent='';
     document.getElementById('attendanceList').innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
     document.getElementById('attendanceModal').classList.add('active');
     await loadAttendanceStudents(classId);
@@ -932,25 +1159,24 @@
     if(!data||!data.length){list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';return;}
     var today=new Date().toISOString().split('T')[0];
     var res2=await sb.from('attendance').select('*').eq('class_id',classId).gte('checked_in_at',today+'T00:00:00').lte('checked_in_at',today+'T23:59:59');
-    if(res2.data) res2.data.forEach(function(r){attendanceRecords[r.student_id]=r.id;});
+    if(res2.data)res2.data.forEach(function(r){attendanceRecords[r.student_id]=r.id;});
     var html='';
     data.forEach(function(s){
-      var present=!!attendanceRecords[s.id], diamond=present?'◆':'◇', color=present?'var(--gold)':'var(--muted)', bc=present?'var(--gold-dk)':'var(--border)';
+      var present=!!attendanceRecords[s.id],diamond=present?'◆':'◇',color=present?'var(--gold)':'var(--muted)',bc=present?'var(--gold-dk)':'var(--border)';
       html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid '+bc+'" id="row-'+s.id+'">';
       html+='<div><div style="font-size:0.85rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div>';
       html+='<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">'+(s.plan_type||'Member')+'</div></div>';
       html+='<button onclick="toggleAttendance(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')" id="btn-'+s.id+'" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:'+color+'">'+diamond+'</button></div>';
     });
-    list.innerHTML=html;
-    updateAttendanceCount();
+    list.innerHTML=html;updateAttendanceCount();
   }
 
   async function toggleAttendance(studentId,studentName){
-    var btn=document.getElementById('btn-'+studentId), row=document.getElementById('row-'+studentId), isPresent=!!attendanceRecords[studentId];
+    var btn=document.getElementById('btn-'+studentId),row=document.getElementById('row-'+studentId),isPresent=!!attendanceRecords[studentId];
     if(isPresent){
       var del=await sb.from('attendance').delete().eq('id',attendanceRecords[studentId]);
       if(!del.error){delete attendanceRecords[studentId];btn.textContent='◇';btn.style.color='var(--muted)';row.style.borderColor='var(--border)';setMsg('attendanceMsg',studentName+' removed.','');}
-    } else {
+    }else{
       var ins=await sb.from('attendance').insert({school_id:SCHOOL_ID,class_id:currentAttendanceClassId,student_id:studentId,checked_in_at:new Date().toISOString(),method:'staff'}).select().single();
       if(!ins.error){attendanceRecords[studentId]=ins.data.id;btn.textContent='◆';btn.style.color='var(--gold)';row.style.borderColor='var(--gold-dk)';setMsg('attendanceMsg',studentName+' marked present!','success');}
     }
@@ -959,7 +1185,7 @@
   function updateAttendanceCount(){document.getElementById('attendanceCount').textContent=Object.keys(attendanceRecords).length;}
 
   async function sendCommunication(){
-    var subject=document.getElementById('commSubject').value.trim(), body=document.getElementById('commBody').value.trim(), audience=document.getElementById('commAudience').value;
+    var subject=document.getElementById('commSubject').value.trim(),body=document.getElementById('commBody').value.trim(),audience=document.getElementById('commAudience').value;
     if(!subject||!body){setMsg('commMsg','Please fill in all fields.','error');return;}
     setMsg('commMsg','Sending...','');
     var sess=await sb.auth.getSession();
@@ -976,10 +1202,9 @@
     else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();applyBrandColor(color);}
   }
 
-  function applyBrandColor(color){document.documentElement.style.setProperty('--gold',color);}
+  function applyBrandColor(color){document.documentElement.style.setProperty('--gold',color);brandColor=color;}
   function syncColorPicker(){var hex=document.getElementById('settingColorHex').value;if(/^#[0-9A-Fa-f]{6}$/.test(hex)){document.getElementById('settingColor').value=hex;applyBrandColor(hex);}}
-
-  function fmtTime(t){if(!t)return '';var p=t.split(':'),hr=parseInt(p[0]),min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
+  function fmtTime(t){if(!t)return'';var p=t.split(':'),hr=parseInt(p[0]),min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
   function setMsg(id,text,type){var el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='form-msg '+(type||'');}
   function toggleSchoolMenu(){var m=document.getElementById('schoolMenu');m.style.display=m.style.display==='none'?'block':'none';}
   document.addEventListener('click',function(e){if(!e.target.closest('#schoolBtn'))document.getElementById('schoolMenu').style.display='none';});
@@ -987,9 +1212,7 @@
   function navigate(page,el){
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
     document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-    var t=document.getElementById('page-'+page);
-    if(t)t.classList.add('active');
-    if(el)el.classList.add('active');
+    var t=document.getElementById('page-'+page);if(t)t.classList.add('active');if(el)el.classList.add('active');
     var titles={schedule:"Today's Schedule",classes:'All Classes',programs:'Programs',memberships:'Memberships',members:'Members',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
     document.getElementById('pageTitle').textContent=titles[page]||page;
     document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
@@ -1002,6 +1225,7 @@
   document.getElementById('addProgramModal').addEventListener('click',    function(e){if(e.target===this)closeAddProgram();});
   document.getElementById('addMembershipModal').addEventListener('click', function(e){if(e.target===this)closeAddMembership();});
   document.getElementById('addStudentModal').addEventListener('click',    function(e){if(e.target===this)closeAddStudent();});
+  document.getElementById('studentProfileModal').addEventListener('click',function(e){if(e.target===this)closeStudentProfile();});
 
   init();
 </script>
