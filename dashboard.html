@@ -211,6 +211,29 @@
 
   </div>
 </main>
+<!-- ATTENDANCE MODAL -->
+<div class="modal-overlay" id="attendanceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="attendanceModalTitle">Class Attendance</span>
+      <button class="modal-close" onclick="closeAttendance()">x</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div>
+          <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--white)" id="attendanceDate"></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div>
+          <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold)" id="attendanceCount">0</div>
+        </div>
+      </div>
+      <div id="attendanceList" style="display:flex;flex-direction:column;gap:0.5rem;max-height:400px;overflow-y:auto"></div>
+      <p class="form-msg" id="attendanceMsg"></p>
+    </div>
+  </div>
+</div>
 
 <!-- ADD CLASS MODAL -->
 
@@ -376,7 +399,7 @@
           ${c.days_of_week?`<div class="class-meta-item">Days: <span>${c.days_of_week.map(d=>d.slice(0,3)).join(', ')}</span></div>`:''}
         </div>
       </div>
-      <div class="class-actions"><button class="btn-sm gold">Attendance</button><button class="btn-sm">Edit</button></div>
+      <div class="class-actions"><button class="btn-sm gold" onclick="openAttendance('${c.id}','${c.title}')">Attendance</button><button class="btn-sm">Edit</button></div>
     </div>`;
   }
 
@@ -415,6 +438,85 @@
   function openAddClass()  { document.getElementById('addClassModal').classList.add('active'); }
   function closeAddClass() { document.getElementById('addClassModal').classList.remove('active'); }
   function toggleDay(btn)  { btn.classList.toggle('selected'); }
+
+  let currentAttendanceClassId = null;
+let attendanceRecords = {};
+
+async function openAttendance(classId, classTitle) {
+  currentAttendanceClassId = classId;
+  attendanceRecords = {};
+  document.getElementById('attendanceModalTitle').textContent = classTitle + ' — Attendance';
+  document.getElementById('attendanceDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('attendanceCount').textContent = '0';
+  document.getElementById('attendanceMsg').textContent = '';
+  document.getElementById('attendanceList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading students...</div>';
+  document.getElementById('attendanceModal').classList.add('active');
+  await loadAttendanceStudents(classId);
+}
+
+function closeAttendance() {
+  document.getElementById('attendanceModal').classList.remove('active');
+  currentAttendanceClassId = null;
+  attendanceRecords = {};
+}
+
+async function loadAttendanceStudents(classId) {
+  const { data } = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
+  const list = document.getElementById('attendanceList');
+  if (!data || !data.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const { data: existing } = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
+  existing?.forEach(r => { attendanceRecords[r.student_id] = r.id; });
+  list.innerHTML = data.map(s => {
+    const present = !!attendanceRecords[s.id];
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid var(--border);transition:border-color 0.2s" id="row-${s.id}">
+      <div>
+        <div style="font-size:0.85rem;color:var(--white)">${s.first_name} ${s.last_name}</div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">${s.membership_plan||'Member'} · ${s.pack_classes_remaining!=null?s.pack_classes_remaining+' classes left':'Active'}</div>
+      </div>
+      <button onclick="toggleAttendance('${s.id}','${s.first_name} ${s.last_name}')" id="btn-${s.id}" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:${present?'var(--gold)':'var(--muted)');transition:color 0.2s">${present?'◆':'◇'}</button>
+    </div>`;
+  }).join('');
+  updateAttendanceCount();
+}
+async function toggleAttendance(studentId, studentName) {
+  const btn = document.getElementById('btn-' + studentId);
+  const row = document.getElementById('row-' + studentId);
+  const isPresent = !!attendanceRecords[studentId];
+  if (isPresent) {
+    const { error } = await sb.from('attendance').delete().eq('id', attendanceRecords[studentId]);
+    if (!error) {
+      delete attendanceRecords[studentId];
+      btn.textContent = '◇';
+      btn.style.color = 'var(--muted)';
+      row.style.borderColor = 'var(--border)';
+      setMsg('attendanceMsg', studentName + ' removed.', '');
+    }
+  } else {
+    const { data, error } = await sb.from('attendance').insert({
+      school_id: SCHOOL_ID,
+      class_id: currentAttendanceClassId,
+      student_id: studentId,
+      checked_in_at: new Date().toISOString(),
+      method: 'staff'
+    }).select().single();
+    if (!error) {
+      attendanceRecords[studentId] = data.id;
+      btn.textContent = '◆';
+      btn.style.color = 'var(--gold)';
+      row.style.borderColor = 'var(--gold-dk)';
+      setMsg('attendanceMsg', studentName + ' marked present!', 'success');
+    }
+  }
+  updateAttendanceCount();
+}
+
+function updateAttendanceCount() {
+  document.getElementById('attendanceCount').textContent = Object.keys(attendanceRecords).length;
+}
 
   async function saveClass() {
     const title = document.getElementById('classTitle').value.trim();
