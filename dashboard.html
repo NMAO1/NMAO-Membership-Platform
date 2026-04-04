@@ -123,7 +123,7 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Program</th>
+            <th>Programs</th>
             <th>Type</th>
             <th>Price</th>
             <th>Class Access</th>
@@ -360,11 +360,11 @@
             <option value="All Ages">All Ages</option>
           </select>
         </div>
-        <div class="field"><label>Belt System</label>
-<select id="progBelt">
-  <option value="Belt Progression">Belt Progression</option>
-  <option value="No Belt Progression">No Belt Progression</option>
-</select>
+        <div class="field"><label>Belt Progression</label>
+          <select id="progBelt">
+            <option value="Belt Progression">Belt Progression</option>
+            <option value="No Belt Progression">No Belt Progression</option>
+          </select>
         </div>
       </div>
       <div class="field">
@@ -390,12 +390,12 @@
     </div>
     <div class="modal-body">
       <div class="field"><label>Membership Name</label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
-<div class="field">
-  <label>Programs (select all that apply)</label>
-  <div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.5rem;background:var(--black);border:1px solid var(--border)">
-    <div style="color:var(--muted);font-size:0.75rem;font-style:italic">Loading programs...</div>
-  </div>
-</div>
+      <div class="field">
+        <label>Programs (select all that apply)</label>
+        <div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.5rem;background:var(--black);border:1px solid var(--border)">
+          <div style="color:var(--muted);font-size:0.75rem;font-style:italic">Loading programs...</div>
+        </div>
+      </div>
       <div class="form-row">
         <div class="field"><label>Type</label>
           <select id="memType" onchange="toggleMemType()">
@@ -450,7 +450,7 @@
           <input type="checkbox" id="memAutopay" checked style="accent-color:var(--gold)" /> Autopay
         </label>
         <label style="display:flex;align-items:center;gap:0.5rem;font-family:var(--font-ui);font-size:0.72rem;color:var(--muted2);cursor:pointer">
-          <input type="checkbox" id="memTrial" style="accent-color:var(--gold)" /> Trial Membership
+          <input type="checkbox" id="memTrial" style="accent-color:var(--gold)" /> Trial
         </label>
       </div>
       <button class="btn-gold-full" onclick="saveMembership()">Save Membership</button>
@@ -475,23 +475,28 @@
 
   // ─── INIT ───────────────────────────────────────────
   async function init() {
-    var res = await sb.auth.getSession();
-    if (!res.data.session) { window.location.href = 'index.html'; return; }
-    var user = res.data.session.user;
-    var name = (user.user_metadata && user.user_metadata.full_name) || user.email.split('@')[0];
-    document.getElementById('userName').textContent    = name;
-    document.getElementById('userInitial').textContent = name.split(' ').map(function(n){ return n[0]; }).join('').slice(0,2).toUpperCase();
-    var now = new Date();
-    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    await loadSchool();
-    await loadPrograms();
-    await loadMemberships();
-    await loadClasses();
-    await loadStudents();
-    buildTodaySchedule();
-    buildWeekGrid();
-    document.getElementById('loadingScreen').style.display = 'none';
+    try {
+      var res = await sb.auth.getSession();
+      if (!res.data.session) { window.location.href = 'index.html'; return; }
+      var user = res.data.session.user;
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email.split('@')[0];
+      document.getElementById('userName').textContent    = name;
+      document.getElementById('userInitial').textContent = name.split(' ').map(function(n){ return n[0]; }).join('').slice(0,2).toUpperCase();
+      var now = new Date();
+      document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+      await loadSchool();
+      await loadPrograms();
+      await loadMemberships();
+      await loadClasses();
+      await loadStudents();
+      buildTodaySchedule();
+      buildWeekGrid();
+      document.getElementById('loadingScreen').style.display = 'none';
+    } catch(e) {
+      console.error('Init error:', e);
+      document.getElementById('loadingScreen').style.display = 'none';
+    }
   }
 
   // ─── SCHOOL ─────────────────────────────────────────
@@ -519,7 +524,6 @@
     var res = await sb.from('programs').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
     allPrograms = res.data || [];
     renderPrograms();
-    populateProgramDropdown();
   }
 
   function renderPrograms() {
@@ -529,8 +533,8 @@
       return;
     }
     el.innerHTML = allPrograms.map(function(p) {
-      var color       = p.color || '#C9A84C';
-      var memCount    = allMemberships.filter(function(m){ return m.program_id === p.id; }).length;
+      var color    = p.color || '#C9A84C';
+      var memCount = allMemberships.filter(function(m){ return m.program_id === p.id; }).length;
       return '<div class="panel" style="overflow:hidden">'
         + '<div style="height:4px;background:' + color + '"></div>'
         + '<div class="panel-body">'
@@ -546,32 +550,32 @@
         + '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:1rem">' + memCount + ' membership' + (memCount !== 1 ? 's' : '') + '</div>'
         + '<div style="display:flex;gap:0.5rem">'
         + '<button class="btn-sm gold" onclick="openAddMembershipForProgram(\'' + p.id + '\')">+ Membership</button>'
-        + '<button class="btn-sm" onclick="editProgram(\'' + p.id + '\')">Edit</button>'
+        + '<button class="btn-sm">Edit</button>'
         + '</div>'
         + '</div></div>';
     }).join('');
   }
 
-function populateProgramCheckboxes() {
-  var container = document.getElementById('memProgramChecks');
-  if (!container) return;
-  if (!allPrograms.length) {
-    container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet. Add a program first.</div>';
-    return;
+  function populateProgramCheckboxes() {
+    var container = document.getElementById('memProgramChecks');
+    if (!container) return;
+    if (!allPrograms.length) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;font-style:italic">No programs yet. Add a program first.</div>';
+      return;
+    }
+    container.innerHTML = allPrograms.map(function(p) {
+      var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + (p.color || '#C9A84C') + ';display:inline-block;margin-right:0.5rem"></span>';
+      return '<label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-ui);font-size:0.78rem;color:var(--muted2);cursor:pointer">'
+        + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:var(--gold)" />'
+        + dot + p.name + '</label>';
+    }).join('');
   }
-  container.innerHTML = allPrograms.map(function(p) {
-    var dot = '<span style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';display:inline-block;margin-right:0.5rem"></span>';
-    return '<label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-ui);font-size:0.78rem;color:var(--muted2);cursor:pointer">'
-      + '<input type="checkbox" class="mem-prog-check" value="' + p.id + '" style="accent-color:var(--gold)" />'
-      + dot + p.name + '</label>';
-  }).join('');
-}
 
   function openAddProgram() {
     document.getElementById('progName').value     = '';
     document.getElementById('progDesc').value     = '';
     document.getElementById('progAge').value      = 'Adults (18+)';
-    document.getElementById('progBelt').value     = 'Colored Belts';
+    document.getElementById('progBelt').value     = 'Belt Progression';
     document.getElementById('progColor').value    = '#C9A84C';
     document.getElementById('progColorHex').value = '#C9A84C';
     document.getElementById('programMsg').textContent = '';
@@ -593,14 +597,13 @@ function populateProgramCheckboxes() {
     var name = document.getElementById('progName').value.trim();
     if (!name) { setMsg('programMsg', 'Program name is required.', 'error'); return; }
     setMsg('programMsg', 'Saving...', '');
-    var color = document.getElementById('progColor').value;
     var res = await sb.from('programs').insert({
       school_id:   SCHOOL_ID,
       name:        name,
       description: document.getElementById('progDesc').value.trim(),
       age_group:   document.getElementById('progAge').value,
       belt_system: document.getElementById('progBelt').value,
-      color:       color,
+      color:       document.getElementById('progColor').value,
       active:      true
     });
     if (res.error) { setMsg('programMsg', res.error.message, 'error'); }
@@ -611,14 +614,9 @@ function populateProgramCheckboxes() {
     }
   }
 
-  function editProgram(id) {
-    // Placeholder — edit modal coming in next build
-    alert('Edit coming soon!');
-  }
-
   // ─── MEMBERSHIPS ────────────────────────────────────
   async function loadMemberships() {
-    var res = await sb.from('memberships').select('*, programs(name, color)').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
+    var res = await sb.from('memberships').select('*').eq('school_id', SCHOOL_ID).eq('active', true).order('name');
     allMemberships = res.data || [];
     renderMemberships();
     renderPrograms();
@@ -631,8 +629,6 @@ function populateProgramCheckboxes() {
       return;
     }
     tb.innerHTML = allMemberships.map(function(m) {
-      var progName  = (m.programs && m.programs.name) ? m.programs.name : '—';
-      var progColor = (m.programs && m.programs.color) ? m.programs.color : '#C9A84C';
       var typeLabel = { monthly:'Monthly', yearly:'Yearly', trial:'Trial', class_pack:'Class Pack' }[m.billing_type] || m.billing_type;
       var price     = '$' + parseFloat(m.price || 0).toFixed(2);
       if (m.billing_type === 'monthly') price += '/mo';
@@ -640,10 +636,12 @@ function populateProgramCheckboxes() {
       var limit = m.class_limit_type === 'unlimited' ? 'Unlimited'
                 : m.class_limit_type === 'class_pack' ? (m.class_limit_count || '?') + ' classes'
                 : (m.class_limit_count || '?') + '/' + (m.class_limit_type === 'per_week' ? 'wk' : 'mo');
-      var renew = m.auto_renew ? '<span style="color:var(--green);font-size:0.7rem">On</span>' : '<span style="color:var(--muted);font-size:0.7rem">Off</span>';
+      var renew = m.auto_renew
+        ? '<span style="color:var(--green);font-size:0.7rem">On</span>'
+        : '<span style="color:var(--muted);font-size:0.7rem">Off</span>';
       return '<tr>'
         + '<td class="name">' + m.name + '</td>'
-        + '<td><span style="display:inline-flex;align-items:center;gap:0.4rem"><span style="width:8px;height:8px;border-radius:50%;background:' + progColor + ';display:inline-block"></span>' + progName + '</span></td>'
+        + '<td style="color:var(--muted2);font-size:0.72rem">—</td>'
         + '<td><span class="chip chip-pending">' + typeLabel + '</span></td>'
         + '<td style="color:var(--gold)">' + price + '</td>'
         + '<td>' + limit + '</td>'
@@ -654,7 +652,6 @@ function populateProgramCheckboxes() {
 
   function openAddMembership() {
     document.getElementById('memName').value        = '';
-    document.getElementById('memProgram').value     = '';
     document.getElementById('memType').value        = 'monthly';
     document.getElementById('memLength').value      = '1';
     document.getElementById('memUnit').value        = 'months';
@@ -665,20 +662,21 @@ function populateProgramCheckboxes() {
     document.getElementById('memAutoRenew').checked = true;
     document.getElementById('memAutopay').checked   = true;
     document.getElementById('memTrial').checked     = false;
-    document.getElementById('classLimitField').style.display = 'none';
+    document.getElementById('classLimitField').style.display  = 'none';
     document.getElementById('membershipMsg').textContent = '';
+    populateProgramCheckboxes();
     document.getElementById('addMembershipModal').classList.add('active');
   }
 
-function openAddMembershipForProgram(programId) {
-  openAddMembership();
-  setTimeout(function() {
-    var checks = document.querySelectorAll('.mem-prog-check');
-    checks.forEach(function(cb) {
-      if (cb.value === programId) cb.checked = true;
-    });
-  }, 50);
-}
+  function openAddMembershipForProgram(programId) {
+    openAddMembership();
+    setTimeout(function() {
+      var checks = document.querySelectorAll('.mem-prog-check');
+      checks.forEach(function(cb) {
+        if (cb.value === programId) cb.checked = true;
+      });
+    }, 50);
+  }
 
   function closeAddMembership() {
     document.getElementById('addMembershipModal').classList.remove('active');
@@ -699,12 +697,12 @@ function openAddMembershipForProgram(programId) {
   }
 
   async function saveMembership() {
-    var name = document.getElementById('memName').value.trim();
-    var price = document.getElementById('memPrice').value;
+    var name             = document.getElementById('memName').value.trim();
+    var price            = document.getElementById('memPrice').value;
     var selectedPrograms = Array.from(document.querySelectorAll('.mem-prog-check:checked')).map(function(cb){ return cb.value; });
-    if (!name)  { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
+    if (!name)                  { setMsg('membershipMsg', 'Membership name is required.', 'error'); return; }
     if (!selectedPrograms.length) { setMsg('membershipMsg', 'Select at least one program.', 'error'); return; }
-    if (!price) { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
+    if (!price)                 { setMsg('membershipMsg', 'Please enter a price.', 'error'); return; }
     setMsg('membershipMsg', 'Saving...', '');
     var limitType  = document.getElementById('memLimitType').value;
     var limitCount = document.getElementById('memLimitCount').value;
@@ -723,19 +721,19 @@ function openAddMembershipForProgram(programId) {
       autopay:          document.getElementById('memAutopay').checked,
       active:           true
     }).select();
-if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
-else {
-  var newMem = res.data && res.data[0];
-  if (newMem && selectedPrograms.length) {
-    var links = selectedPrograms.map(function(pid) {
-      return { membership_id: newMem.id, program_id: pid };
-    });
-    await sb.from('membership_programs').insert(links);
-  }
-  setMsg('membershipMsg', 'Membership saved!', 'success');
-  await loadMemberships();
-  setTimeout(function(){ closeAddMembership(); }, 1000);
-}
+    if (res.error) { setMsg('membershipMsg', res.error.message, 'error'); }
+    else {
+      var newMem = res.data && res.data[0];
+      if (newMem && selectedPrograms.length) {
+        var links = selectedPrograms.map(function(pid) {
+          return { membership_id: newMem.id, program_id: pid };
+        });
+        await sb.from('membership_programs').insert(links);
+      }
+      setMsg('membershipMsg', 'Membership saved!', 'success');
+      await loadMemberships();
+      setTimeout(function(){ closeAddMembership(); }, 1000);
+    }
   }
 
   // ─── CLASSES ────────────────────────────────────────
@@ -824,11 +822,10 @@ else {
       var st   = s.status || 'trial';
       var sc   = st === 'active' ? 'chip-active' : (st === 'trial' || st === 'paused') ? 'chip-pending' : 'chip-expired';
       var jd   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-      var plan = s.plan_type || '—';
       return '<tr>'
         + '<td class="name">' + s.first_name + ' ' + s.last_name + '</td>'
         + '<td>' + (s.email || '—') + '</td>'
-        + '<td>' + plan + '</td>'
+        + '<td>' + (s.plan_type || '—') + '</td>'
         + '<td><span class="chip ' + sc + '">' + st + '</span></td>'
         + '<td>' + jd + '</td>'
         + '</tr>';
@@ -1043,7 +1040,7 @@ else {
     if (t) t.classList.add('active');
     if (el) el.classList.add('active');
     var titles = {
-      schedule:'Today\'s Schedule', classes:'All Classes',
+      schedule:"Today's Schedule", classes:'All Classes',
       programs:'Programs', memberships:'Memberships',
       members:'Members', payments:'Payments',
       communications:'Communications', analytics:'Analytics',
