@@ -179,6 +179,15 @@
       <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
       <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
       <div class="field"><label>State</label><input type="text" id="settingState" /></div>
+      <div class="field">
+  <label>Brand Color</label>
+  <div style="display:flex;gap:0.75rem;align-items:center">
+    <input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
+    <input type="text" id="settingColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncColorPicker()" />
+  </div>
+  <p style="font-size:0.62rem;color:var(--muted);margin-top:0.4rem">This color will be applied across your dashboard and member portal.</p>
+</div>
+
       <button class="btn-sm gold" style="width:fit-content" onclick="saveSettings()">Save Changes</button>
       <p class="form-msg" id="settingsMsg"></p>
     </div>
@@ -307,6 +316,12 @@
       document.getElementById('settingPhone').value = data.phone||'';
       document.getElementById('settingCity').value  = data.city||'';
       document.getElementById('settingState').value = data.state||'';
+      if (data.color) {
+  document.getElementById('settingColor').value = data.color;
+  document.getElementById('settingColorHex').value = data.color;
+  applyBrandColor(data.color);
+}
+
     }
   }
 
@@ -439,17 +454,36 @@
     else { setMsg('commMsg','Message sent!','success'); document.getElementById('commSubject').value=''; document.getElementById('commBody').value=''; }
   }
 
-  async function saveSettings() {
-    const { error } = await sb.from('schools').update({
-      name:  document.getElementById('settingName').value.trim(),
-      email: document.getElementById('settingEmail').value.trim(),
-      phone: document.getElementById('settingPhone').value.trim(),
-      city:  document.getElementById('settingCity').value.trim(),
-      state: document.getElementById('settingState').value.trim()
-    }).eq('id',SCHOOL_ID);
-    if (error) { setMsg('settingsMsg',error.message,'error'); }
-    else { setMsg('settingsMsg','Saved!','success'); document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim(); }
+async function saveSettings() {
+  const color = document.getElementById('settingColor').value;
+  const { error } = await sb.from('schools').update({
+    name:  document.getElementById('settingName').value.trim(),
+    email: document.getElementById('settingEmail').value.trim(),
+    phone: document.getElementById('settingPhone').value.trim(),
+    city:  document.getElementById('settingCity').value.trim(),
+    state: document.getElementById('settingState').value.trim(),
+    color: color
+  }).eq('id', SCHOOL_ID);
+  if (error) { setMsg('settingsMsg', error.message, 'error'); }
+  else {
+    setMsg('settingsMsg', 'Saved!', 'success');
+    document.getElementById('schoolName').textContent = document.getElementById('settingName').value.trim();
+    applyBrandColor(color);
   }
+}
+
+function applyBrandColor(color) {
+  document.documentElement.style.setProperty('--gold', color);
+}
+
+function syncColorPicker() {
+  const hex = document.getElementById('settingColorHex').value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    document.getElementById('settingColor').value = hex;
+    applyBrandColor(hex);
+  }
+}
+
 
   function fmtTime(t) {
     if (!t) return '';
