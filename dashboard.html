@@ -460,18 +460,34 @@ async function loadAttendanceStudents(classId) {
   const today = new Date().toISOString().split('T')[0];
   const { data: existing } = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
   existing?.forEach(r => { attendanceRecords[r.student_id] = r.id; });
-  list.innerHTML = data.map(s => {
-    const present = !!attendanceRecords[s.id];
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid var(--border);transition:border-color 0.2s" id="row-${s.id}">
-      <div>
-        <div style="font-size:0.85rem;color:var(--white)">${s.first_name} ${s.last_name}</div>
-        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">${s.membership_plan||'Member'} · ${s.pack_classes_remaining!=null?s.pack_classes_remaining+' classes left':'Active'}</div>
-      </div>
-      <button onclick="toggleAttendance('${s.id}','${s.first_name} ${s.last_name}')" id="btn-${s.id}" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:${present?'var(--gold)':'var(--muted)');transition:color 0.2s">${present?'◆':'◇'}</button>
-    </div>`;
-  }).join('');
+async function loadAttendanceStudents(classId) {
+  var list = document.getElementById('attendanceList');
+  var res = await sb.from('students').select('*').eq('school_id', SCHOOL_ID).eq('membership_status', 'active').order('last_name');
+  var data = res.data;
+  if (!data || !data.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students found.</div>';
+    return;
+  }
+  var today = new Date().toISOString().split('T')[0];
+  var res2 = await sb.from('attendance').select('*').eq('class_id', classId).gte('checked_in_at', today + 'T00:00:00').lte('checked_in_at', today + 'T23:59:59');
+  var existing = res2.data;
+  if (existing) existing.forEach(function(r) { attendanceRecords[r.student_id] = r.id; });
+  var html = '';
+  data.forEach(function(s) {
+    var present = !!attendanceRecords[s.id];
+    var diamond = present ? '◆' : '◇';
+    var color = present ? 'var(--gold)' : 'var(--muted)';
+    var borderColor = present ? 'var(--gold-dk)' : 'var(--border)';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid ' + borderColor + '" id="row-' + s.id + '">';
+    html += '<div><div style="font-size:0.85rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>';
+    html += '<div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">' + (s.membership_plan||'Member') + '</div></div>';
+    html += '<button onclick="toggleAttendance(\'' + s.id + '\',\'' + s.first_name + ' ' + s.last_name + '\')" id="btn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:' + color + '">' + diamond + '</button>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
   updateAttendanceCount();
 }
+
 async function toggleAttendance(studentId, studentName) {
   const btn = document.getElementById('btn-' + studentId);
   const row = document.getElementById('row-' + studentId);
