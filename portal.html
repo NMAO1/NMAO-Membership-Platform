@@ -2,310 +2,367 @@
 
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NMAO Platform — Professional Management Suite</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://js.stripe.com/v3/"></script>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Portal — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+      --black:#0A0A0A;--surface:#141414;--surface2:#1A1A1A;
+      --border:#2A2520;--border2:#332E28;
+      --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;
+      --green:#5A9A6A;
+      --font-display:'Cormorant Garamond',serif;
+      --font-ui:'Lato',sans-serif;
+    }
+    body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;}
+
+```
+/* ── LOGIN SCREEN ── */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.login-logo{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:0.25rem;}
+.login-tagline{font-size:0.75rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3rem;}
+.login-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:400px;}
+.login-title{font-family:var(--font-display);font-size:1.4rem;color:var(--white);margin-bottom:0.5rem;}
+.login-sub{font-size:0.78rem;color:var(--muted);margin-bottom:2rem;line-height:1.5;}
+.field{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
+.field label{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);}
+.field input{background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.75rem 1rem;outline:none;transition:border-color 0.2s;}
+.field input:focus{border-color:var(--gold);}
+.btn-gold{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.9rem;border:none;cursor:pointer;transition:opacity 0.2s;}
+.btn-gold:hover{opacity:0.88;}
+.btn-gold:disabled{opacity:0.5;cursor:not-allowed;}
+.form-msg{font-size:0.75rem;margin-top:0.75rem;text-align:center;min-height:1.1rem;}
+.form-msg.success{color:var(--green);}
+.form-msg.error{color:#E07070;}
+
+/* ── SUCCESS SCREEN ── */
+#successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;}
+.success-icon{font-size:3rem;color:var(--gold);margin-bottom:1.5rem;}
+.success-title{font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.75rem;}
+.success-sub{font-size:0.85rem;color:var(--muted);max-width:360px;line-height:1.6;}
+
+/* ── PORTAL ── */
+#portalScreen{display:none;}
+.portal-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.portal-logo{font-family:var(--font-display);font-size:1.3rem;color:var(--gold);letter-spacing:0.14em;}
+.portal-school{font-size:0.7rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.1rem;}
+.portal-signout{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 0.8rem;cursor:pointer;}
+.portal-body{max-width:680px;margin:0 auto;padding:2rem 1.5rem;}
+
+/* Profile hero */
+.profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
+.hero-avatar{width:72px;height:72px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;}
+.hero-name{font-family:var(--font-display);font-size:1.4rem;color:var(--white);margin-bottom:0.35rem;}
+.hero-tags{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.chip{font-family:var(--font-ui);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:2px;}
+.chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
+.chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
+.prog-tag{font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:2px;border:1px solid;font-family:var(--font-ui);letter-spacing:0.08em;}
+
+/* Sections */
+.portal-section{margin-bottom:1.5rem;}
+.section-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;}
+.info-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem;}
+.info-row{display:flex;gap:0.75rem;margin-bottom:0.6rem;font-size:0.82rem;}
+.info-label{color:var(--muted);min-width:90px;flex-shrink:0;font-size:0.7rem;letter-spacing:0.08em;padding-top:0.05rem;}
+.info-value{color:var(--white);}
+
+/* Belt card */
+.belt-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem;}
+.belt-current{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+.belt-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:0.3rem 0;}
+.belt-bar-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+.belt-palette{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.75rem;}
+.belt-pip{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.belt-pip-bar{width:24px;height:9px;border-radius:2px;border:1px solid rgba(255,255,255,0.12);}
+.belt-pip-label{font-size:0.48rem;color:var(--muted);}
+.belt-pip.current .belt-pip-label{color:var(--gold);}
+.eligible-badge{display:inline-block;background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:2px;}
+
+/* Class tracker */
+.tracker-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem;}
+.tracker-number{font-family:var(--font-display);font-size:3rem;color:var(--gold);line-height:1;}
+.milestone-bar{height:4px;background:var(--border);border-radius:2px;margin:0.5rem 0;overflow:hidden;}
+.milestone-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.8s ease;}
+
+/* Attendance list */
+.att-row{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem;}
+
+/* Video list */
+.video-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold-dk);margin-bottom:0.5rem;}
+.video-play{color:var(--gold);font-size:1rem;flex-shrink:0;padding-top:0.05rem;}
+
+/* Loading */
+#portalLoading{text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.85rem;}
+```
+
+  </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ══ LOGIN SCREEN ══ -->
 
-<nav>
-  <div class="nav-logo">NMAO <span>Platform</span></div>
-  <ul class="nav-links">
-    <li><a href="#ecosystem">Ecosystem</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#pricing">Pricing</a></li>
-<li><button class="btn-nav" onclick="openModal('login')">Sign In</button></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
-
-<section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-ring"></div>
-  <p class="hero-tag">National Martial Arts Organization</p>
-  <h1 class="hero-title">The Platform Built<br><em>For Martial Arts</em></h1>
-  <p class="hero-sub">NMAO unifies your school management, student portal, and payments into one platform — built exclusively for martial arts schools.</p>
-  <div class="hero-ctas">
-    <button class="btn-primary" onclick="openModal('signup')">Start Your School</button>
-    <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
+<div id="loginScreen">
+  <div class="login-logo">NMAO</div>
+  <div class="login-tagline">Member Portal</div>
+  <div class="login-card">
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Enter your email address and we'll send you a secure sign-in link. No password needed.</div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()" />
+    </div>
+    <button class="btn-gold" id="loginBtn" onclick="sendMagicLink()">Send Sign-In Link</button>
+    <p class="form-msg" id="loginMsg"></p>
   </div>
-  <div class="hero-stats">
-    <div class="stat-item"><span class="stat-num">500+</span><span class="stat-lbl">Schools</span></div>
-    <div class="stat-item"><span class="stat-num">$12M+</span><span class="stat-lbl">Processed</span></div>
-    <div class="stat-item"><span class="stat-num">99.9%</span><span class="stat-lbl">Uptime</span></div>
+</div>
+
+<!-- ══ SUCCESS SCREEN ══ -->
+
+<div id="successScreen">
+  <div class="success-icon">◆</div>
+  <div class="success-title">Check your email</div>
+  <div class="success-sub">We sent a sign-in link to <strong id="sentEmail"></strong>. Click the link in your email to access your member portal.</div>
+</div>
+
+<!-- ══ PORTAL SCREEN ══ -->
+
+<div id="portalScreen">
+  <div class="portal-header">
+    <div>
+      <div class="portal-logo">NMAO</div>
+      <div class="portal-school" id="portalSchoolName">Member Portal</div>
+    </div>
+    <button class="portal-signout" onclick="portalSignOut()">Sign Out</button>
   </div>
-</section>
 
-<!-- ECOSYSTEM -->
+  <div class="portal-body">
+    <div id="portalLoading">Loading your profile...</div>
+    <div id="portalContent" style="display:none">
 
-<section id="ecosystem">
-  <p class="section-label">The NMAO Ecosystem</p>
-  <h2 class="section-title">Three Products. One Network.</h2>
-  <p class="section-body">Each product stands alone — together they create an unstoppable martial arts community.</p>
-  <div class="eco-grid">
-    <div class="eco-card">
-      <div class="eco-icon">◈</div>
-      <h3 class="eco-title">NMAO Accreditation</h3>
-      <p class="eco-text">Earn your school's official NMAO certification and gain credibility across the network.</p>
-      <span class="eco-badge">Available Now</span>
-    </div>
-    <div class="eco-card current">
-      <div class="eco-icon">◆</div>
-      <h3 class="eco-title">NMAO Platform</h3>
-      <p class="eco-text">Manage students, classes, payments, and communications — all in one place.</p>
-      <span class="eco-badge">You Are Here</span>
-    </div>
-    <div class="eco-card">
-      <div class="eco-icon">◇</div>
-      <h3 class="eco-title">NMAO Tournament</h3>
-      <p class="eco-text">Connect your students to monthly tournaments and competitions across the network.</p>
-      <span class="eco-badge">Coming Soon</span>
-    </div>
-  </div>
-</section>
-
-<!-- FEATURES -->
-
-<section id="features">
-  <p class="section-label">What We Offer</p>
-  <h2 class="section-title">Everything Your School Needs</h2>
-  <p class="section-body">Purpose-built for martial arts schools. No generic software, no compromises.</p>
-  <div class="feat-grid">
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Management</h3><p class="feat-text">Full student profiles, belt rank tracking, attendance history, and membership status in one roster.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Class Scheduling</h3><p class="feat-text">Build your weekly schedule, manage custom events, and let students RSVP from their portal.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Payment Collection</h3><p class="feat-text">Collect dues, event fees, and memberships automatically. Transparent processing, no surprises.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Portal</h3><p class="feat-text">Your students get their own branded app to view their schedule, membership, and connect with the community.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">School Branding</h3><p class="feat-text">Every school gets a fully white-labeled portal in their own colors. Your brand, powered by NMAO.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Network Directory</h3><p class="feat-text">Connect with other NMAO schools, share events, and grow your martial arts community nationwide.</p></div>
-  </div>
-</section>
-
-<!-- PRICING -->
-
-<section id="pricing">
-  <p class="section-label">Investment</p>
-  <h2 class="section-title">Simple, Honest Pricing</h2>
-  <p class="section-body">Half the price of ZenPlanner. Twice the focus on martial arts.</p>
-  <div class="price-grid">
-    <div class="plan">
-      <p class="plan-name">Starter</p>
-      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">59</span><span class="plan-period">/mo</span></div>
-      <p class="plan-desc">Everything a growing martial arts school needs to manage students, schedule classes, and collect payments.</p>
-      <div class="plan-divider"></div>
-      <ul class="plan-features">
-        <li>Up to 50 active students</li>
-        <li>Class scheduling and calendar</li>
-        <li>Student roster management</li>
-        <li>Student member portal</li>
-        <li>Payment collection</li>
-        <li>Email announcements</li>
-      </ul>
-      <button class="btn-plan" onclick="selectPlan('starter',59)">Get Started</button>
-    </div>
-    <div class="plan featured">
-      <div class="plan-badge">Most Popular</div>
-      <p class="plan-name">Professional</p>
-      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">79</span><span class="plan-period">/mo</span></div>
-      <p class="plan-desc">Advanced tools for established schools ready to streamline operations and deepen member engagement.</p>
-      <div class="plan-divider"></div>
-      <ul class="plan-features">
-        <li>Up to 200 active students</li>
-        <li>Everything in Starter</li>
-        <li>Belt rank tracking</li>
-        <li>Custom school branding</li>
-        <li>Advanced analytics</li>
-        <li>Priority support</li>
-      </ul>
-      <button class="btn-plan" onclick="selectPlan('professional',79)">Get Started</button>
-    </div>
-    <div class="plan">
-      <p class="plan-name">Enterprise</p>
-      <div class="plan-price"><span class="plan-dollar">$</span><span class="plan-amount">99</span><span class="plan-period">/mo</span></div>
-      <p class="plan-desc">The complete NMAO experience for high-volume schools and multi-location operations.</p>
-      <div class="plan-divider"></div>
-      <ul class="plan-features">
-        <li>Unlimited students</li>
-        <li>Everything in Professional</li>
-        <li>Multi-location support</li>
-        <li>White-label custom domain</li>
-        <li>Dedicated account manager</li>
-        <li>Phone support</li>
-      </ul>
-      <button class="btn-plan" onclick="selectPlan('enterprise',99)">Get Started</button>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-
-<section id="testimonials">
-  <p class="section-label">Testimonials</p>
-  <h2 class="section-title">Trusted by Leading Schools</h2>
-  <p class="section-body">Schools that have made NMAO Platform the foundation of their operations.</p>
-  <div class="test-grid">
-    <div class="testimonial">
-      <p class="test-text">NMAO Platform transformed how we manage our school. The student portal alone is worth every penny — parents love it.</p>
-      <p class="test-author">Sensei Michael Chen</p>
-      <p class="test-role">Dragon's Gate Martial Arts, Brooklyn NY</p>
-    </div>
-    <div class="testimonial">
-      <p class="test-text">We switched from ZenPlanner and saved over $100 a month. The platform is more intuitive and actually built for martial arts.</p>
-      <p class="test-author">Master James Whitfield</p>
-      <p class="test-role">Meridian BJJ Academy, Austin TX</p>
-    </div>
-    <div class="testimonial">
-      <p class="test-text">The belt rank tracking and attendance system is exactly what we needed. Our students are more engaged than ever.</p>
-      <p class="test-author">Sifu Elena Reyes</p>
-      <p class="test-role">Southwest Kung Fu Institute, Phoenix AZ</p>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-
-<section id="cta">
-  <p class="section-label">Get Started</p>
-  <h2 class="section-title">Your School Deserves Better</h2>
-  <p class="section-body">Join hundreds of martial arts schools already running on NMAO Platform.</p>
-  <span class="gold-rule"></span>
-  <button class="btn-primary" onclick="selectPlan('professional',79)">Start Your School Today</button>
-</section>
-
-<!-- FOOTER -->
-
-<footer>
-  <div class="footer-logo">NMAO</div>
-  <span class="footer-copy">2025 NMAO Platform. All rights reserved.</span>
-  <ul class="footer-links">
-    <li><a href="#">Privacy</a></li>
-    <li><a href="#">Terms</a></li>
-    <li><a href="#">Contact</a></li>
-  </ul>
-</footer>
-
-<!-- MODAL -->
-
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <button class="modal-x" onclick="closeModal()">x</button>
-    <p class="modal-h" id="mH">Welcome Back</p>
-    <p class="modal-s" id="mS">Access your NMAO dashboard</p>
-    <div class="plan-pill" id="mPill" style="display:none">
-      <span class="pill-n" id="mPN">Professional</span>
-      <span class="pill-p" id="mPP">$79/mo</span>
-    </div>
-    <div class="tabs">
-      <button class="tab on" id="tL" onclick="switchTab('login')">Sign In</button>
-      <button class="tab" id="tS" onclick="switchTab('signup')">Create Account</button>
-    </div>
-    <div id="fL">
-      <div class="field"><label>Email</label><input type="email" id="lE" placeholder="you@school.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="lP" placeholder="password"></div>
-      <button class="btn-sub" onclick="doLogin()">Sign In</button>
-    </div>
-    <div id="fS" style="display:none">
-      <div class="field"><label>School Name</label><input type="text" id="sN" placeholder="Your Martial Arts School"></div>
-      <div class="field"><label>Your Name</label><input type="text" id="sNm" placeholder="Sensei / Master / Sifu"></div>
-      <div class="field"><label>Email</label><input type="email" id="sE" placeholder="you@school.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="sP" placeholder="Create a password"></div>
-      <div class="field"><label>Plan</label>
-        <select id="sPl">
-          <option value="starter">Starter - $59/month</option>
-          <option value="professional" selected>Professional - $79/month</option>
-          <option value="enterprise">Enterprise - $99/month</option>
-        </select>
+```
+  <!-- Profile Hero -->
+  <div class="profile-hero">
+    <div class="hero-avatar" id="heroAvatar"></div>
+    <div>
+      <div class="hero-name" id="heroName"></div>
+      <div class="hero-tags">
+        <span class="chip" id="heroStatus"></span>
+        <span class="prog-tag" id="heroProgram"></span>
+        <span id="heroBeltBadge" style="display:none;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
       </div>
-      <button class="btn-sub" id="sSub" onclick="doSignup()">Create Account and Subscribe</button>
     </div>
-    <p class="msg" id="mMsg"></p>
+  </div>
+
+  <!-- Membership -->
+  <div class="portal-section">
+    <div class="section-label">Membership</div>
+    <div class="info-card" id="membershipCard"></div>
+  </div>
+
+  <!-- Belt Progress (shown only for belt programs) -->
+  <div class="portal-section" id="beltSection" style="display:none">
+    <div class="section-label">Belt Progress</div>
+    <div class="belt-card" id="beltCard"></div>
+  </div>
+
+  <!-- Class Tracker -->
+  <div class="portal-section">
+    <div class="section-label">Class Tracker</div>
+    <div class="tracker-card" id="trackerCard"></div>
+  </div>
+
+  <!-- Curriculum Videos (shown if belt has videos) -->
+  <div class="portal-section" id="curriculumSection" style="display:none">
+    <div class="section-label">Your Curriculum</div>
+    <p style="font-size:0.75rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">Materials for your current rank:</p>
+    <div id="curriculumList"></div>
+  </div>
+
+  <!-- Recent Attendance -->
+  <div class="portal-section">
+    <div class="section-label">Recent Attendance</div>
+    <div id="attendanceSection"></div>
+  </div>
+
+</div>
+```
+
   </div>
 </div>
 
 <script>
-var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
-var SKEY = 'YOUR_SUPABASE_ANON_KEY';
-var sc = supabase.createClient(SURL, SKEY);
-var stripe = Stripe('pk_test_51THQDyLNJ1kmY0YwuPyrwANWtajj1AZrLPrNEuV7EWOurT1Q6NAVFUdbEmaBke2X1j0waK5X59ycvyqV8J1eOghV00wfR16u3j');
-var PLANS = {
-  starter:      { name:'Starter',      price:59, pid:'price_1TI4HbLNJ1kmY0YwVoBaECKp' },
-  professional: { name:'Professional', price:79, pid:'price_1TI4IDLNJ1kmY0YwlLOXltD9' },
-  enterprise:   { name:'Enterprise',   price:99, pid:'price_1TI4JOLNJ1kmY0YwjU0pzZKs' }
-};
+  const SUPABASE_URL  = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+  const SCHOOL_ID = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+  const {createClient}=supabase,sb=createClient(SUPABASE_URL,SUPABASE_ANON);
+  const MILESTONES=[10,25,50,100,200,500,1000];
+  const PORTAL_URL='https://nmao1.github.io/NMAO-Membership-Platform/portal.html';
 
-function selectPlan(p, price) {
-  openModal('signup');
-  document.getElementById('sPl').value = p;
-  document.getElementById('mPill').style.display = 'flex';
-  document.getElementById('mPN').textContent = PLANS[p].name;
-  document.getElementById('mPP').textContent = '$' + price + '/mo';
-}
-function openModal(tab) {
-  document.getElementById('overlay').classList.add('open');
-  switchTab(tab || 'login');
-}
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('mMsg').textContent = '';
-}
-function switchTab(t) {
-  var login = t === 'login';
-  document.getElementById('fL').style.display = login ? 'block' : 'none';
-  document.getElementById('fS').style.display = login ? 'none' : 'block';
-  document.getElementById('tL').className = 'tab' + (login ? ' on' : '');
-  document.getElementById('tS').className = 'tab' + (!login ? ' on' : '');
-  document.getElementById('mH').textContent = login ? 'Welcome Back' : 'Start Your School';
-  document.getElementById('mS').textContent = login ? 'Access your NMAO dashboard' : 'Create your account and choose a plan';
-  document.getElementById('mPill').style.display = login ? 'none' : 'flex';
-  document.getElementById('mMsg').textContent = '';
-}
-function setMsg(t, c) {
-  var el = document.getElementById('mMsg');
-  el.textContent = t;
-  el.className = 'msg ' + c;
-}
-async function doLogin() {
-  var e = document.getElementById('lE').value.trim();
-  var p = document.getElementById('lP').value;
-  if (!e || !p) { setMsg('Please fill in all fields.', 'er'); return; }
-  setMsg('Signing in...', '');
-  var r = await sc.auth.signInWithPassword({ email:e, password:p });
-  if (r.error) { setMsg(r.error.message, 'er'); }
-  else { window.location.href = 'dashboard.html'; }
-}
-async function doSignup() {
-  var school = document.getElementById('sN').value.trim();
-  var name   = document.getElementById('sNm').value.trim();
-  var email  = document.getElementById('sE').value.trim();
-  var pass   = document.getElementById('sP').value;
-  var plan   = document.getElementById('sPl').value;
-  if (!school || !name || !email || !pass) { setMsg('Please fill in all fields.', 'er'); return; }
-  var btn = document.getElementById('sSub');
-  btn.disabled = true; btn.textContent = 'Creating account...'; setMsg('', '');
-  var auth = await sc.auth.signUp({ email:email, password:pass, options:{ data:{ full_name:name } } });
-  if (auth.error) { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Create Account and Subscribe'; return; }
-  var p = PLANS[plan];
-  await sc.from('schools').insert({ name:school, email:email, owner_id:auth.data.user.id, plan:plan, plan_price:p.price, plan_status:'trialing', is_active:true, slug:school.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-') });
-  btn.textContent = 'Redirecting to checkout...';
-  setMsg('Account created! Taking you to secure payment...', 'ok');
-  setTimeout(async function() {
-    var r = await stripe.redirectToCheckout({
-      lineItems: [{ price:p.pid, quantity:1 }],
-      mode: 'subscription',
-      successUrl: window.location.origin + '/NMAO-Membership-Platform/dashboard.html',
-      cancelUrl:  window.location.origin + '/NMAO-Membership-Platform/index.html',
-      customerEmail: email
-    });
-    if (r.error) { setMsg(r.error.message, 'er'); btn.disabled = false; btn.textContent = 'Create Account and Subscribe'; }
-  }, 1500);
-}
-document.getElementById('overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-sc.auth.getSession().then(function(r) { if (r.data.session) window.location.href = 'dashboard.html'; });
+  async function init(){
+    // Handle magic link token in URL
+    var hash=window.location.hash;
+    if(hash&&hash.includes('access_token')){
+      var res=await sb.auth.getSession();
+      if(res.data.session){
+        window.history.replaceState(null,'',window.location.pathname);
+        showPortal(res.data.session.user);
+        return;
+      }
+    }
+    // Check existing session
+    var r=await sb.auth.getSession();
+    if(r.data&&r.data.session){showPortal(r.data.session.user);}
+    else{document.getElementById('loginScreen').style.display='flex';}
+  }
+
+  async function sendMagicLink(){
+    var email=document.getElementById('loginEmail').value.trim();
+    if(!email||!email.includes('@')){setLoginMsg('Please enter a valid email address.','error');return;}
+    var btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Sending...';
+    var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:PORTAL_URL}});
+    if(r.error){setLoginMsg(r.error.message,'error');btn.disabled=false;btn.textContent='Send Sign-In Link';}
+    else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
+  }
+
+  function setLoginMsg(text,type){var el=document.getElementById('loginMsg');el.textContent=text;el.className='form-msg '+(type||'');}
+
+  async function showPortal(user){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('successScreen').style.display='none';
+    document.getElementById('portalScreen').style.display='block';
+    // Load school name
+    var sr=await sb.from('schools').select('name,color').eq('id',SCHOOL_ID).single();
+    if(sr.data){
+      document.getElementById('portalSchoolName').textContent=sr.data.name;
+      if(sr.data.color)document.documentElement.style.setProperty('--gold',sr.data.color);
+    }
+    // Load student by email
+    var email=user.email;
+    var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('school_id',SCHOOL_ID).eq('email',email).single();
+    if(r.error||!r.data){document.getElementById('portalLoading').innerHTML='<div style="color:#E07070">No student record found for <strong>'+email+'</strong>.<br><br>Please contact your school to ensure your email address is on file.</div>';return;}
+    var s=r.data;
+    document.getElementById('portalLoading').style.display='none';
+    document.getElementById('portalContent').style.display='block';
+    buildPortal(s);
+  }
+
+  async function buildPortal(s){
+    // Avatar
+    var ini=((s.first_name?s.first_name[0]:'')+( s.last_name?s.last_name[0]:'')).toUpperCase();
+    var av=document.getElementById('heroAvatar');
+    if(s.photo_url){av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';}
+    else{av.textContent=ini;}
+
+    document.getElementById('heroName').textContent=s.first_name+' '+s.last_name;
+
+    // Status chip
+    var st=s.status||'trial';
+    var sc=document.getElementById('heroStatus');
+    sc.textContent=st;sc.className='chip '+(st==='active'?'chip-active':'chip-trial');
+
+    // Program tag
+    var pc=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
+    var pn=(s.programs&&s.programs.name)?s.programs.name:'—';
+    var pt=document.getElementById('heroProgram');
+    pt.textContent=pn;pt.style.borderColor=pc;pt.style.color=pc;
+
+    // Membership card
+    var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'—';
+    var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'—';
+    var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'—';
+    document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label">Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label">Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label">Class Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label">Started</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—')+'</div></div>';
+
+    // Belt section
+    var hasBelt=s.programs&&s.programs.belt_system==='Belt Progression';
+    if(hasBelt){
+      var bsid=s.programs.belt_system_id;var beltLevels=[];
+      if(bsid){var br=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',bsid).order('sort_order');beltLevels=br.data||[];}
+      if(beltLevels.length){await buildBeltSection(s,beltLevels);}
+    }
+
+    // Class tracker + attendance
+    await buildTracker(s);
+    await buildAttendance(s.id);
+  }
+
+  async function buildBeltSection(s,levels){
+    document.getElementById('beltSection').style.display='block';
+    var cb=levels.find(function(b){return b.id===s.current_belt_id;}),ci=cb?levels.indexOf(cb):-1,nb=levels[ci+1]||null;
+
+    // Header belt badge
+    if(cb){var bad=document.getElementById('heroBeltBadge');bad.style.display='inline-block';bad.textContent=cb.name;bad.style.background=cb.color_hex;bad.style.color=isLight(cb.color_hex)?'#111':'#fff';document.getElementById('heroAvatar').style.borderColor=cb.color_hex;}
+
+    var html='';
+    if(cb){
+      html+='<div class="belt-current"><div style="width:48px;height:18px;border-radius:3px;background:'+cb.color_hex+';border:1px solid rgba(255,255,255,0.15)"></div><div><div style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)">'+cb.name+'</div>'+(nb?'<div style="font-size:0.72rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.72rem;color:var(--gold)">Highest rank achieved!</div>')+'</div></div>';
+    }else{html+='<div style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">Starting rank: '+(levels[0]?levels[0].name:'—')+'</div>';}
+
+    // Progress bar toward next belt
+    if(nb&&(nb.classes_required||0)>0){
+      var count=await getClassesSincePromotion(s);var req=nb.classes_required;
+      var pct=Math.min(100,Math.round((count/req)*100));var eligible=count>=req;
+      html+='<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted2);margin-bottom:0.3rem"><span>Progress toward '+nb.name+'</span><span>'+count+'/'+req+' classes</span></div><div class="belt-bar"><div class="belt-bar-fill" style="width:'+pct+'%;background:'+(eligible?'#5A9A6A':'#C9A84C')+'"></div></div>'+(eligible?'<div class="eligible-badge" style="margin-top:0.4rem">✓ Eligible for promotion — speak to your instructor!</div>':'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem">'+(req-count)+' more classes until eligible for promotion</div>')+'</div>';
+    }
+
+    // Belt palette
+    html+='<div style="font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Your Rank Progression</div><div class="belt-palette">';
+    levels.forEach(function(b){var isc=cb&&b.id===cb.id;html+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px #C9A84C':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,5)+'</div></div>';});
+    html+='</div>';
+
+    document.getElementById('beltCard').innerHTML=html;
+
+    // Curriculum videos for current belt
+    if(cb&&cb.belt_level_videos&&cb.belt_level_videos.length){
+      document.getElementById('curriculumSection').style.display='block';
+      document.getElementById('curriculumList').innerHTML=cb.belt_level_videos.map(function(v){return '<div class="video-item"><div class="video-play">▶</div><div><a href="'+v.youtube_url+'" target="_blank" style="color:var(--gold);font-size:0.82rem;text-decoration:none;display:block;margin-bottom:0.2rem">'+(v.description||'View Video')+'</a><div style="font-size:0.68rem;color:var(--muted);word-break:break-all">'+v.youtube_url+'</div></div></div>';}).join('');
+    }
+  }
+
+  async function getClassesSincePromotion(s){
+    var pr=await sb.from('belt_promotions').select('promoted_at').eq('student_id',s.id).order('promoted_at',{ascending:false}).limit(1);
+    var since=null;
+    if(pr.data&&pr.data.length){since=pr.data[0].promoted_at;}
+    else if(s.start_date){since=s.start_date+'T00:00:00';}
+    var q=sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',s.id);
+    if(since)q=q.gte('noted_at',since);
+    var r=await q;return r.count||0;
+  }
+
+  async function buildTracker(s){
+    var r=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',s.id);
+    var total=r.count||0;
+    var nm=MILESTONES.find(function(m){return m>total;})||null,pm=0;
+    for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)pm=MILESTONES[i];}
+    var pct=nm?Math.round(((total-pm)/(nm-pm))*100):100;
+    document.getElementById('trackerCard').innerHTML='<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem"><div class="tracker-number">'+total+'</div><div style="font-size:0.78rem;color:var(--muted)">total classes attended</div></div><div class="milestone-bar"><div class="milestone-fill" style="width:'+pct+'%"></div></div>'+(nm?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem">'+(nm-total)+' classes until milestone '+nm+'</div>':'<div style="font-size:0.72rem;color:var(--gold);margin-top:0.3rem">All milestones achieved! 🥋</div>');
+  }
+
+  async function buildAttendance(sid){
+    var r=await sb.from('class_attendance').select('*, class_sessions(session_date,start_time,classes(name,title))').eq('student_id',sid).order('noted_at',{ascending:false}).limit(10);
+    var data=r.data||[];
+    var el=document.getElementById('attendanceSection');
+    if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic;background:var(--surface);border:1px solid var(--border)">No attendance recorded yet.</div>';return;}
+    el.innerHTML=data.map(function(a){
+      var sess=a.class_sessions,cls=sess&&sess.classes;
+      var cn=cls?(cls.name||cls.title||'Class'):'Class';
+      var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—');
+      var tm=sess&&sess.start_time?fmtTime(sess.start_time):'';
+      return '<div class="att-row"><div style="font-size:0.82rem;color:var(--white)">'+cn+'</div><div style="font-size:0.7rem;color:var(--muted)">'+dt+(tm?' &bull; '+tm:'')+'</div></div>';
+    }).join('');
+  }
+
+  function isLight(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128;}
+  function fmtTime(t){if(!t)return'';var p=t.split(':'),hr=parseInt(p[0]),min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
+  async function portalSignOut(){await sb.auth.signOut();document.getElementById('portalScreen').style.display='none';document.getElementById('loginScreen').style.display='flex';}
+
+  init();
 </script>
 
 </body>
