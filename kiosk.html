@@ -6,117 +6,255 @@
   <title>NMAO Kiosk</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&family=Inter:wght@300;400;600&family=Oswald:wght@300;400;600&family=Nunito:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root{
-      --gold:#C9A84C;--black:#0A0A0A;--surface:#141414;
-      --border:#2A2520;--white:#F5F0E8;--muted:#7A7060;
-      --font-display:'Cormorant Garamond',serif;
-      --font-ui:'Lato',sans-serif;
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+      --black:#0A0A0A;--surface:#141414;--border:#2A2520;
+      --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
+      --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
     }
-    body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none;}
+    html,body{height:100%;}
+    body{background:var(--black);color:var(--white);font-family:var(--font-ui);
+      min-height:100vh;display:flex;flex-direction:column;align-items:center;
+      user-select:none;overflow-x:hidden;}
 
-    /* HEADER */
-    .kiosk-header{width:100%;padding:2rem 2rem 1rem;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid var(--border);}
-    .kiosk-logo{max-height:72px;max-width:280px;object-fit:contain;margin-bottom:0.75rem;}
-    .kiosk-logo-text{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:0.25rem;}
-    .kiosk-school-name{font-size:0.85rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;}
+    /* ── HEADER ── */
+    .kiosk-header{
+      width:100%;padding:1.75rem 2rem 1.5rem;
+      display:flex;flex-direction:column;align-items:center;
+      background:var(--surface);position:relative;
+    }
+    .kiosk-header::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);
+      opacity:0.4;
+    }
+    .kiosk-logo{max-height:64px;max-width:260px;object-fit:contain;margin-bottom:0.6rem;}
+    .kiosk-logo-text{
+      font-family:var(--font-display);font-size:2.2rem;color:var(--gold);
+      letter-spacing:0.18em;margin-bottom:0.25rem;line-height:1;
+    }
+    .kiosk-school-name{font-size:0.72rem;color:var(--muted);letter-spacing:0.22em;text-transform:uppercase;}
 
-    /* MAIN */
-    .kiosk-body{flex:1;width:100%;max-width:720px;padding:2.5rem 1.5rem;display:flex;flex-direction:column;align-items:center;}
+    /* ── BODY ── */
+    .kiosk-body{
+      flex:1;width:100%;max-width:680px;
+      padding:3rem 1.5rem;
+      display:flex;flex-direction:column;align-items:center;
+    }
 
-    /* SEARCH */
-    .kiosk-prompt{font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.5rem;text-align:center;}
-    .kiosk-sub{font-size:0.9rem;color:var(--muted);margin-bottom:2rem;text-align:center;}
-    .kiosk-search-wrap{position:relative;width:100%;margin-bottom:2rem;}
-    .kiosk-search{width:100%;background:var(--surface);border:2px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:1.5rem;padding:1.25rem 1.5rem;outline:none;border-radius:4px;transition:border-color 0.2s;text-align:center;letter-spacing:0.05em;}
+    /* ── CURRENT CLASS BANNER ── */
+    .kiosk-current-class{
+      width:100%;background:var(--gold-bg);
+      border:1px solid rgba(201,168,76,0.2);
+      padding:0.85rem 1.25rem;margin-bottom:2.5rem;text-align:center;
+    }
+    .kiosk-current-class-label{
+      font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:0.2rem;
+    }
+    .kiosk-current-class-name{font-family:var(--font-display);font-size:1.15rem;color:var(--gold);}
+
+    /* ── SEARCH VIEW ── */
+    .kiosk-prompt{
+      font-family:var(--font-display);font-size:2.2rem;color:var(--white);
+      margin-bottom:0.4rem;text-align:center;letter-spacing:0.02em;
+    }
+    .kiosk-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;text-align:center;letter-spacing:0.08em;}
+    .kiosk-search-wrap{width:100%;margin-bottom:1.5rem;}
+    .kiosk-search{
+      width:100%;background:var(--surface);border:2px solid var(--border);
+      color:var(--white);font-family:var(--font-display);font-size:1.6rem;
+      padding:1.1rem 1.5rem;outline:none;transition:border-color 0.2s;
+      text-align:center;letter-spacing:0.04em;
+    }
     .kiosk-search:focus{border-color:var(--gold);}
-    .kiosk-search::placeholder{color:var(--muted);font-size:1.2rem;}
+    .kiosk-search::placeholder{color:var(--muted);font-size:1.1rem;font-family:var(--font-ui);font-style:italic;}
 
-    /* STUDENT CARDS */
-    .kiosk-results{width:100%;display:flex;flex-direction:column;gap:0.75rem;}
-    .kiosk-student-card{background:var(--surface);border:2px solid var(--border);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1.5rem;cursor:pointer;transition:all 0.2s;border-radius:4px;}
-    .kiosk-student-card:hover{border-color:var(--gold);background:rgba(201,168,76,0.06);}
-    .kiosk-avatar{width:64px;height:64px;border-radius:50%;background:rgba(201,168,76,0.12);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
-    .kiosk-student-name{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.2rem;}
-    .kiosk-student-program{font-size:0.82rem;color:var(--muted);}
+    /* ── STUDENT CARDS ── */
+    .kiosk-results{width:100%;display:flex;flex-direction:column;gap:0.6rem;}
+    .kiosk-student-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-left:3px solid var(--border);
+      padding:1.1rem 1.35rem;display:flex;align-items:center;gap:1.25rem;
+      cursor:pointer;transition:all 0.18s;
+    }
+    .kiosk-student-card:hover,.kiosk-student-card:active{
+      border-color:var(--gold);border-left-color:var(--gold);
+      background:rgba(201,168,76,0.05);transform:translateX(3px);
+    }
+    .kiosk-avatar{
+      width:58px;height:58px;border-radius:50%;background:var(--gold-bg);
+      border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-display);font-size:1.3rem;color:var(--gold);
+      flex-shrink:0;overflow:hidden;
+    }
+    .kiosk-student-name{
+      font-family:var(--font-display);font-size:1.35rem;color:var(--white);
+      margin-bottom:0.15rem;letter-spacing:0.02em;
+    }
+    .kiosk-student-program{font-size:0.75rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+    .kiosk-empty{
+      text-align:center;padding:2rem;color:var(--muted);font-style:italic;
+      font-size:0.92rem;border:1px solid var(--border);background:var(--surface);width:100%;
+    }
 
-    /* CHECK IN BUTTON */
-    .kiosk-checkin-wrap{width:100%;margin-top:1rem;}
-    .kiosk-selected-card{background:var(--surface);border:2px solid var(--gold);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;margin-bottom:1.25rem;border-radius:4px;}
-    .btn-checkin{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1.4rem;letter-spacing:0.12em;text-transform:uppercase;padding:1.4rem;border:none;cursor:pointer;border-radius:4px;transition:opacity 0.2s;}
-    .btn-checkin:hover{opacity:0.9;}
-    .btn-checkin:active{opacity:0.75;}
-    .btn-back{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.82rem;padding:0.6rem 1.25rem;cursor:pointer;margin-top:0.75rem;border-radius:4px;}
+    /* ── CHECK-IN VIEW ── */
+    .kiosk-class-info{
+      width:100%;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.25);
+      padding:0.75rem 1rem;margin-bottom:1.25rem;
+      font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.06em;
+    }
+    .kiosk-selected-card{
+      width:100%;background:var(--surface);border:2px solid var(--gold);
+      padding:1.35rem 1.5rem;display:flex;align-items:center;gap:1.35rem;margin-bottom:1.5rem;
+    }
+    .btn-checkin{
+      width:100%;background:var(--gold);color:var(--black);
+      font-family:'Libre Baskerville',serif;font-size:1.2rem;letter-spacing:0.14em;
+      text-transform:uppercase;padding:1.35rem;border:none;cursor:pointer;
+      font-weight:700;transition:opacity 0.2s,transform 0.15s;
+    }
+    .btn-checkin:hover{opacity:0.92;}
+    .btn-checkin:active{transform:scale(0.98);}
+    .btn-checkin:disabled{opacity:0.6;cursor:not-allowed;}
+    .btn-back{
+      background:none;border:1px solid var(--border);color:var(--muted);
+      font-family:var(--font-ui);font-size:0.75rem;letter-spacing:0.12em;
+      text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;
+      margin-top:0.85rem;transition:all 0.2s;
+    }
     .btn-back:hover{border-color:var(--muted);color:var(--white);}
 
-    /* CLASS INFO */
-    .kiosk-class-info{background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);padding:0.75rem 1rem;margin-bottom:1.25rem;border-radius:4px;font-size:0.85rem;color:var(--gold);text-align:center;}
-
-    /* NO CLASS */
-    .kiosk-no-class{background:rgba(224,112,112,0.08);border:1px solid rgba(224,112,112,0.2);padding:1rem;border-radius:4px;font-size:0.85rem;color:#E07070;text-align:center;margin-bottom:1rem;}
-
-    /* CELEBRATION */
-    #kioskCelebration{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
+    /* ── CELEBRATION ── */
+    #kioskCelebration{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);
+      z-index:999;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;padding:2rem;
+    }
     #kioskCelebration.active{display:flex;}
-    .celeb-emoji{font-size:5rem;margin-bottom:1rem;animation:celebPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
-    @keyframes celebPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
-    .celeb-title{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);margin-bottom:0.5rem;}
-    .celeb-sub{font-size:1rem;color:var(--muted);margin-bottom:0.25rem;}
-    .celeb-class{font-size:0.9rem;color:var(--white);margin-top:0.5rem;}
 
-    /* NO RESULTS */
-    .kiosk-empty{text-align:center;padding:2rem;color:var(--muted);font-style:italic;}
+    .celeb-logo-wrap{
+      display:flex;flex-direction:column;align-items:center;margin-bottom:1.75rem;
+      animation:celebFadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .celeb-logo{
+      max-height:80px;max-width:220px;object-fit:contain;
+      margin-bottom:1.25rem;
+    }
+    .celeb-logo-text{
+      font-family:var(--font-display);font-size:2.2rem;color:var(--gold);
+      letter-spacing:0.18em;margin-bottom:1.25rem;line-height:1;
+    }
+    .celeb-check{
+      width:76px;height:76px;border-radius:50%;background:var(--gold);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 48px rgba(201,168,76,0.35);
+      animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .celeb-check i{font-size:2rem;color:var(--black);font-weight:900;}
 
-    /* CURRENT CLASS BANNER */
-    .kiosk-current-class{width:100%;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);padding:0.85rem 1.25rem;margin-bottom:1.5rem;border-radius:4px;text-align:center;}
-    .kiosk-current-class-label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;}
-    .kiosk-current-class-name{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);}
+    .celeb-name{
+      font-family:var(--font-display);font-size:3rem;color:var(--white);
+      margin-bottom:0.5rem;letter-spacing:0.04em;
+      animation:celebFadeUp 0.5s 0.35s both;
+    }
+    .celeb-subtitle{
+      font-size:0.7rem;letter-spacing:0.26em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:0.5rem;
+      animation:celebFadeUp 0.5s 0.45s both;
+    }
+    .celeb-class{
+      font-size:0.85rem;color:var(--muted);
+      animation:celebFadeUp 0.5s 0.5s both;
+    }
+    .celeb-progress{
+      position:fixed;bottom:0;left:0;height:3px;background:var(--gold);
+      width:100%;transform-origin:left;
+      animation:progressShrink 3s linear forwards;
+    }
+
+    @keyframes celebFadeUp{
+      from{opacity:0;transform:translateY(18px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    @keyframes celebPop{
+      from{opacity:0;transform:scale(0);}
+      to{opacity:1;transform:scale(1);}
+    }
+    @keyframes progressShrink{
+      from{transform:scaleX(1);}
+      to{transform:scaleX(0);}
+    }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="kiosk-header">
   <img id="kioskLogoImg" class="kiosk-logo" src="" alt="" style="display:none" />
   <div id="kioskLogoText" class="kiosk-logo-text">NMAO</div>
   <div class="kiosk-school-name" id="kioskSchoolName">Member Check-In</div>
 </div>
 
+<!-- BODY -->
 <div class="kiosk-body">
 
   <div id="kioskCurrentClass" class="kiosk-current-class" style="display:none">
-    <div class="kiosk-current-class-label">Current Class</div>
+    <div class="kiosk-current-class-label">
+      <i class="fa-solid fa-circle" style="font-size:0.45rem;color:var(--green);margin-right:0.4rem;vertical-align:middle"></i>Now In Session
+    </div>
     <div class="kiosk-current-class-name" id="kioskCurrentClassName"></div>
   </div>
 
-  <div id="kioskSearchView">
-    <div class="kiosk-prompt">Welcome!</div>
+  <!-- Search -->
+  <div id="kioskSearchView" style="width:100%;display:flex;flex-direction:column;align-items:center">
+    <div class="kiosk-prompt">Welcome</div>
     <div class="kiosk-sub">Type your name to check in</div>
     <div class="kiosk-search-wrap">
-      <input type="text" class="kiosk-search" id="kioskSearch" placeholder="Start typing your name..." oninput="searchStudents()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <input type="text" class="kiosk-search" id="kioskSearch"
+        placeholder="Start typing your name..."
+        oninput="searchStudents()"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
     </div>
     <div class="kiosk-results" id="kioskResults"></div>
   </div>
 
-  <div id="kioskCheckinView" style="display:none">
+  <!-- Check-In Confirmation -->
+  <div id="kioskCheckinView" style="display:none;width:100%;flex-direction:column;align-items:center">
     <div class="kiosk-class-info" id="kioskCheckinClassInfo"></div>
     <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
-    <div class="kiosk-checkin-wrap">
-      <button class="btn-checkin" onclick="confirmCheckin()">&#10003; Check In</button>
-      <br />
-      <button class="btn-back" onclick="backToSearch()">&#8592; Back</button>
+    <div style="width:100%">
+      <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()">
+        <i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In
+      </button>
+      <div style="text-align:center">
+        <button class="btn-back" onclick="backToSearch()">
+          <i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back
+        </button>
+      </div>
     </div>
   </div>
 
 </div>
 
+<!-- CELEBRATION -->
 <div id="kioskCelebration">
-  <div class="celeb-emoji">&#10003;</div>
-  <div class="celeb-title" id="celebName"></div>
-  <div class="celeb-sub">You are checked in!</div>
+  <div class="celeb-logo-wrap">
+    <img id="celebLogoImg" class="celeb-logo" src="" alt="" style="display:none" />
+    <div id="celebLogoText" class="celeb-logo-text" style="display:none">NMAO</div>
+    <div class="celeb-check">
+      <i class="fa-solid fa-check"></i>
+    </div>
+  </div>
+  <div class="celeb-name" id="celebName"></div>
+  <div class="celeb-subtitle">Checked In</div>
   <div class="celeb-class" id="celebClass"></div>
+  <div class="celeb-progress" id="celebProgress"></div>
 </div>
 
 <script>
@@ -138,9 +276,15 @@ async function init(){
       if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
       if(d.font_family)document.documentElement.style.setProperty('--font-display','\''+d.font_family+'\',serif');
       if(d.logo_url){
+        // Header
         document.getElementById('kioskLogoImg').src=d.logo_url;
         document.getElementById('kioskLogoImg').style.display='block';
         document.getElementById('kioskLogoText').style.display='none';
+        // Celebration
+        document.getElementById('celebLogoImg').src=d.logo_url;
+        document.getElementById('celebLogoImg').style.display='block';
+      } else {
+        document.getElementById('celebLogoText').style.display='block';
       }
     }
     await loadStudents();
@@ -165,14 +309,16 @@ async function detectCurrentClass(){
     if(!c.days_of_week||!c.days_of_week.includes(today))return false;
     var start=c.start_time?c.start_time.slice(0,5):'00:00';
     var end=c.end_time?c.end_time.slice(0,5):'23:59';
-    return start<=timeStr&&timeStr<=end||( start>=cutoffStr&&start<=timeStr);
+    return (start<=timeStr&&timeStr<=end)||(start>=cutoffStr&&start<=timeStr);
   });
   if(active.length){
     active.sort(function(a,b){return a.start_time>b.start_time?-1:1;});
     currentClass=active[0];
     document.getElementById('kioskCurrentClass').style.display='block';
-    document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' '+fmtTime(currentClass.start_time);
+    document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' \u00b7 '+fmtTime(currentClass.start_time);
     await getOrCreateSession();
+  } else {
+    document.getElementById('kioskCurrentClass').style.display='none';
   }
 }
 
@@ -181,7 +327,10 @@ async function getOrCreateSession(){
   var today=new Date().toISOString().split('T')[0];
   var sr=await sb.from('class_sessions').select('id').eq('class_id',currentClass.id).eq('session_date',today).limit(1);
   if(sr.data&&sr.data.length){currentSessionId=sr.data[0].id;}
-  else{var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
+  else{
+    var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();
+    if(!cr.error)currentSessionId=cr.data.id;
+  }
 }
 
 function searchStudents(){
@@ -190,14 +339,29 @@ function searchStudents(){
     var q=document.getElementById('kioskSearch').value.toLowerCase().trim();
     var el=document.getElementById('kioskResults');
     if(!q||q.length<2){el.innerHTML='';return;}
-    var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||s.first_name.toLowerCase().startsWith(q)||s.last_name.toLowerCase().startsWith(q);});
-    if(!filtered.length){el.innerHTML='<div class="kiosk-empty">No students found. See the front desk.</div>';return;}
+    var filtered=allStudents.filter(function(s){
+      return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||
+        s.first_name.toLowerCase().startsWith(q)||
+        s.last_name.toLowerCase().startsWith(q);
+    });
+    if(!filtered.length){
+      el.innerHTML='<div class="kiosk-empty"><i class="fa-solid fa-circle-question" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.3"></i>No students found.<br>Please see the front desk.</div>';
+      return;
+    }
     el.innerHTML=filtered.slice(0,6).map(function(s){
       var ini=(s.first_name[0]+s.last_name[0]).toUpperCase();
       var pc=(s.programs&&s.programs.color)?s.programs.color:'var(--gold)';
       var pn=(s.programs&&s.programs.name)?s.programs.name:'Member';
-      var avatarHtml=s.photo_url?'<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
-      return '<div class="kiosk-student-card" onclick="selectStudent(\''+s.id+'\')"><div class="kiosk-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div><div><div class="kiosk-student-name">'+s.first_name+' '+s.last_name+'</div><div class="kiosk-student-program">'+pn+'</div></div></div>';
+      var avatarHtml=s.photo_url?
+        '<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':
+        '<span style="font-size:1.2rem">'+ini+'</span>';
+      return '<div class="kiosk-student-card" onclick="selectStudent(\''+s.id+'\')">'+
+        '<div class="kiosk-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div>'+
+        '<div>'+
+          '<div class="kiosk-student-name">'+s.first_name+' '+s.last_name+'</div>'+
+          '<div class="kiosk-student-program">'+pn+'</div>'+
+        '</div>'+
+      '</div>';
     }).join('');
   },200);
 }
@@ -208,26 +372,34 @@ function selectStudent(sid){
   var ini=(selectedStudent.first_name[0]+selectedStudent.last_name[0]).toUpperCase();
   var pc=(selectedStudent.programs&&selectedStudent.programs.color)?selectedStudent.programs.color:'var(--gold)';
   var pn=(selectedStudent.programs&&selectedStudent.programs.name)?selectedStudent.programs.name:'Member';
-  var avatarHtml=selectedStudent.photo_url?'<img src="'+selectedStudent.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
-  document.getElementById('kioskSelectedCard').innerHTML='<div class="kiosk-avatar" style="width:72px;height:72px;border-radius:50%;background:rgba(201,168,76,0.12);border:2px solid '+pc+';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;color:var(--gold);flex-shrink:0;overflow:hidden">'+avatarHtml+'</div><div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--white)">'+selectedStudent.first_name+' '+selectedStudent.last_name+'</div><div style="font-size:0.85rem;color:var(--muted)">'+pn+'</div></div>';
-  var classInfo=currentClass?'Checking in to: '+(currentClass.name||currentClass.title||'Class')+' at '+fmtTime(currentClass.start_time):'No active class — recording drop-in attendance';
-  document.getElementById('kioskCheckinClassInfo').textContent=classInfo;
+  var avatarHtml=selectedStudent.photo_url?
+    '<img src="'+selectedStudent.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':
+    '<span style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)">'+ini+'</span>';
+  document.getElementById('kioskSelectedCard').innerHTML=
+    '<div style="width:68px;height:68px;border-radius:50%;background:var(--gold-bg);border:2px solid '+pc+';display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'+
+    '<div>'+
+      '<div style="font-family:var(--font-display);font-size:1.65rem;color:var(--white);letter-spacing:0.02em">'+selectedStudent.first_name+' '+selectedStudent.last_name+'</div>'+
+      '<div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.2rem">'+pn+'</div>'+
+    '</div>';
+  document.getElementById('kioskCheckinClassInfo').innerHTML=currentClass?
+    '<i class="fa-solid fa-person-walking" style="margin-right:0.5rem"></i>Checking into: '+(currentClass.name||currentClass.title||'Class')+' at '+fmtTime(currentClass.start_time):
+    '<i class="fa-solid fa-circle-info" style="margin-right:0.5rem"></i>No active class \u2014 recording drop-in attendance';
   document.getElementById('kioskSearchView').style.display='none';
-  document.getElementById('kioskCheckinView').style.display='block';
+  document.getElementById('kioskCheckinView').style.display='flex';
 }
 
 async function confirmCheckin(){
   if(!selectedStudent)return;
-  var btn=document.querySelector('.btn-checkin');
-  btn.textContent='Checking in...';
+  var btn=document.getElementById('checkinBtn');
   btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.6rem"></i>Checking in...';
   try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
     if(!sid){
       if(!currentClass){
         var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);
-        if(fc.data&&fc.data.length){currentClass=fc.data[0];}
+        if(fc.data&&fc.data.length)currentClass=fc.data[0];
       }
       if(currentClass){
         var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();
@@ -242,10 +414,15 @@ async function confirmCheckin(){
 }
 
 function showCelebration(){
-  var name=selectedStudent.first_name;
-  var className=currentClass?(currentClass.name||currentClass.title||'class'):'class';
-  document.getElementById('celebName').textContent='Welcome, '+name+'!';
-  document.getElementById('celebClass').textContent=currentClass?('Checked in to '+className):'Attendance recorded';
+  document.getElementById('celebName').textContent=selectedStudent.first_name+' '+selectedStudent.last_name;
+  document.getElementById('celebClass').textContent=currentClass?
+    'Checked in to '+(currentClass.name||currentClass.title||'class'):
+    'Attendance recorded';
+  // Restart progress bar animation
+  var prog=document.getElementById('celebProgress');
+  prog.style.animation='none';
+  prog.offsetHeight;
+  prog.style.animation='progressShrink 3s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');
   setTimeout(function(){
     document.getElementById('kioskCelebration').classList.remove('active');
@@ -256,7 +433,7 @@ function showCelebration(){
 function backToSearch(){
   selectedStudent=null;
   document.getElementById('kioskCheckinView').style.display='none';
-  document.getElementById('kioskSearchView').style.display='block';
+  document.getElementById('kioskSearchView').style.display='flex';
 }
 
 function resetKiosk(){
@@ -264,14 +441,21 @@ function resetKiosk(){
   document.getElementById('kioskSearch').value='';
   document.getElementById('kioskResults').innerHTML='';
   document.getElementById('kioskCheckinView').style.display='none';
-  document.getElementById('kioskSearchView').style.display='block';
-  var btn=document.querySelector('.btn-checkin');
-  if(btn){btn.textContent='&#10003; Check In';btn.disabled=false;}
+  document.getElementById('kioskSearchView').style.display='flex';
+  var btn=document.getElementById('checkinBtn');
+  if(btn){
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In';
+  }
   document.getElementById('kioskSearch').focus();
   detectCurrentClass();
 }
 
-function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
+function fmtTime(t){
+  if(!t)return'';
+  var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];
+  return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');
+}
 
 init();
 document.getElementById('kioskSearch').focus();
