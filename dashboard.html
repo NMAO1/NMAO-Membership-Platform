@@ -1697,7 +1697,7 @@ function setCalView(view){calView=view;try{localStorage.setItem('nmao_cal_view',
 function initCalView(){var v=calView||'week';document.getElementById('calViewWeek').classList.toggle('active',v==='week');document.getElementById('calViewMonth').classList.toggle('active',v==='month');document.getElementById('calWeekView').style.display=v==='week'?'block':'none';document.getElementById('calMonthView').style.display=v==='month'?'block':'none';if(v==='month')buildMonthCalendar();else buildCalendar();}
 function shiftWeek(dir){calWeekOffset+=dir;buildCalendar();}
 function shiftMonth(dir){calMonthOffset+=dir;buildMonthCalendar();}
-</script><script>
+
 function buildCalendar(){
   var now=new Date();var start=new Date(now);start.setDate(now.getDate()-now.getDay()+(calWeekOffset*7));
   var end=new Date(start);end.setDate(start.getDate()+6);
@@ -2257,16 +2257,6 @@ async function handleSignOut(){await sb.auth.signOut();window.location.href='ind
 init();
 setTimeout(function(){initCalView();},500);
 </script>
-  <script>
-try{
-  if(typeof init !== 'function'){
-    document.getElementById('loadingScreen').innerHTML='<div style="padding:2rem;font-family:monospace"><p style="color:#C9A84C;font-size:1.1rem">Script Parse Error</p><p style="color:#E07070">The main script block failed to parse.</p><p style="color:#9A8F80">A syntax error exists somewhere in the JavaScript. The file needs to be checked for invalid characters.</p></div>';
-  }
-}catch(e){
-  document.getElementById('loadingScreen').innerHTML='<div style="padding:2rem;color:#E07070;font-family:monospace">'+e.message+'</div>';
-}
-</script>
-
 </body>
 </html>
 
