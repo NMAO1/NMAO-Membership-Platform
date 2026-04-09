@@ -22,9 +22,9 @@
       min-height:100vh;display:flex;flex-direction:column;align-items:center;
       user-select:none;overflow-x:hidden;}
 
-    /* ── HEADER ── */
+    /* HEADER */
     .kiosk-header{
-      width:100%;padding:1.75rem 2rem 1.5rem;
+      width:100%;padding:2rem 2rem 1.5rem;
       display:flex;flex-direction:column;align-items:center;
       background:var(--surface);position:relative;
     }
@@ -33,25 +33,37 @@
       background:linear-gradient(90deg,transparent,var(--gold),transparent);
       opacity:0.4;
     }
-    .kiosk-logo{max-height:64px;max-width:260px;object-fit:contain;margin-bottom:0.6rem;}
+    .kiosk-logo{max-height:110px;max-width:300px;object-fit:contain;margin-bottom:0.75rem;}
     .kiosk-logo-text{
-      font-family:var(--font-display);font-size:2.2rem;color:var(--gold);
+      font-family:var(--font-display);font-size:2.8rem;color:var(--gold);
       letter-spacing:0.18em;margin-bottom:0.25rem;line-height:1;
     }
     .kiosk-school-name{font-size:0.72rem;color:var(--muted);letter-spacing:0.22em;text-transform:uppercase;}
 
-    /* ── BODY ── */
+    /* MODE TOGGLE */
+    .kiosk-mode-bar{
+      width:100%;display:flex;justify-content:center;gap:0;
+      border-bottom:1px solid var(--border);background:var(--surface);
+    }
+    .kiosk-mode-btn{
+      padding:0.65rem 2rem;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;
+      background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-ui);
+      border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;
+    }
+    .kiosk-mode-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+    /* BODY */
     .kiosk-body{
       flex:1;width:100%;max-width:680px;
-      padding:3rem 1.5rem;
+      padding:2.5rem 1.5rem;
       display:flex;flex-direction:column;align-items:center;
     }
 
-    /* ── CURRENT CLASS BANNER ── */
+    /* CURRENT CLASS BANNER */
     .kiosk-current-class{
       width:100%;background:var(--gold-bg);
       border:1px solid rgba(201,168,76,0.2);
-      padding:0.85rem 1.25rem;margin-bottom:2.5rem;text-align:center;
+      padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;
     }
     .kiosk-current-class-label{
       font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;
@@ -59,7 +71,7 @@
     }
     .kiosk-current-class-name{font-family:var(--font-display);font-size:1.15rem;color:var(--gold);}
 
-    /* ── SEARCH VIEW ── */
+    /* SEARCH VIEW */
     .kiosk-prompt{
       font-family:var(--font-display);font-size:2.2rem;color:var(--white);
       margin-bottom:0.4rem;text-align:center;letter-spacing:0.02em;
@@ -75,7 +87,7 @@
     .kiosk-search:focus{border-color:var(--gold);}
     .kiosk-search::placeholder{color:var(--muted);font-size:1.1rem;font-family:var(--font-ui);font-style:italic;}
 
-    /* ── STUDENT CARDS ── */
+    /* STUDENT CARDS */
     .kiosk-results{width:100%;display:flex;flex-direction:column;gap:0.6rem;}
     .kiosk-student-card{
       background:var(--surface);border:1px solid var(--border);
@@ -98,12 +110,44 @@
       margin-bottom:0.15rem;letter-spacing:0.02em;
     }
     .kiosk-student-program{font-size:0.75rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+
+    /* FAMILY CARD */
+    .kiosk-family-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-left:3px solid rgba(201,168,76,0.4);
+      padding:1rem 1.35rem;width:100%;
+    }
+    .kiosk-family-label{
+      font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:0.75rem;
+      display:flex;align-items:center;gap:0.5rem;
+    }
+    .kiosk-family-children{display:flex;flex-direction:column;gap:0.4rem;}
+    .kiosk-child-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0.65rem 0.75rem;background:var(--black);border:1px solid var(--border);
+      cursor:pointer;transition:all 0.15s;
+    }
+    .kiosk-child-row:hover{border-color:var(--gold);}
+    .kiosk-child-row.selected{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+    .kiosk-child-name{font-family:var(--font-display);font-size:1.1rem;color:var(--white);}
+    .kiosk-child-prog{font-size:0.68rem;color:var(--muted);margin-top:0.1rem;}
+    .kiosk-child-check{font-size:1.3rem;color:var(--muted);transition:color 0.15s;}
+    .kiosk-child-row.selected .kiosk-child-check{color:var(--gold);}
+    .btn-family-checkin{
+      width:100%;background:var(--gold);color:var(--black);
+      font-family:'Libre Baskerville',serif;font-size:1rem;letter-spacing:0.14em;
+      text-transform:uppercase;padding:1rem;border:none;cursor:pointer;
+      font-weight:700;margin-top:0.75rem;transition:opacity 0.2s;
+    }
+    .btn-family-checkin:hover{opacity:0.92;}
+
     .kiosk-empty{
       text-align:center;padding:2rem;color:var(--muted);font-style:italic;
       font-size:0.92rem;border:1px solid var(--border);background:var(--surface);width:100%;
     }
 
-    /* ── CHECK-IN VIEW ── */
+    /* CHECK-IN VIEW */
     .kiosk-class-info{
       width:100%;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.25);
       padding:0.75rem 1rem;margin-bottom:1.25rem;
@@ -130,37 +174,53 @@
     }
     .btn-back:hover{border-color:var(--muted);color:var(--white);}
 
-    /* ── CELEBRATION ── */
+    /* REGISTRATION VIEW */
+    .reg-field{margin-bottom:1.25rem;}
+    .reg-field label{display:block;font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
+    .reg-input{
+      width:100%;background:var(--surface);border:2px solid var(--border);
+      color:var(--white);font-family:var(--font-ui);font-size:1.1rem;
+      padding:0.9rem 1.1rem;outline:none;transition:border-color 0.2s;
+    }
+    .reg-input:focus{border-color:var(--gold);}
+    .btn-reg-submit{
+      width:100%;background:var(--gold);color:var(--black);
+      font-family:'Libre Baskerville',serif;font-size:1.1rem;letter-spacing:0.14em;
+      text-transform:uppercase;padding:1.2rem;border:none;cursor:pointer;
+      font-weight:700;margin-top:0.5rem;transition:opacity 0.2s;
+    }
+    .btn-reg-submit:hover{opacity:0.92;}
+    .btn-reg-submit:disabled{opacity:0.6;cursor:not-allowed;}
+    .reg-msg{font-size:0.85rem;text-align:center;margin-top:0.75rem;min-height:1.2em;}
+    .reg-msg.success{color:#7DBD7D;}
+    .reg-msg.error{color:#E07070;}
+
+    /* CELEBRATION */
     #kioskCelebration{
       display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);
       z-index:999;flex-direction:column;align-items:center;justify-content:center;
       text-align:center;padding:2rem;
     }
     #kioskCelebration.active{display:flex;}
-
     .celeb-logo-wrap{
-      display:flex;flex-direction:column;align-items:center;margin-bottom:1.75rem;
+      display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;
       animation:celebFadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    .celeb-logo{
-      max-height:80px;max-width:220px;object-fit:contain;
-      margin-bottom:1.25rem;
-    }
+    .celeb-logo{max-height:100px;max-width:260px;object-fit:contain;margin-bottom:1.25rem;}
     .celeb-logo-text{
-      font-family:var(--font-display);font-size:2.2rem;color:var(--gold);
+      font-family:var(--font-display);font-size:2.5rem;color:var(--gold);
       letter-spacing:0.18em;margin-bottom:1.25rem;line-height:1;
     }
     .celeb-check{
-      width:76px;height:76px;border-radius:50%;background:var(--gold);
+      width:80px;height:80px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
-      box-shadow:0 0 48px rgba(201,168,76,0.35);
+      box-shadow:0 0 56px rgba(201,168,76,0.4);
       animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    .celeb-check i{font-size:2rem;color:var(--black);font-weight:900;}
-
+    .celeb-check i{font-size:2.2rem;color:var(--black);font-weight:900;}
     .celeb-name{
-      font-family:var(--font-display);font-size:3rem;color:var(--white);
-      margin-bottom:0.5rem;letter-spacing:0.04em;
+      font-family:var(--font-display);font-size:3.2rem;color:var(--white);
+      margin-bottom:0.4rem;letter-spacing:0.04em;
       animation:celebFadeUp 0.5s 0.35s both;
     }
     .celeb-subtitle{
@@ -169,15 +229,32 @@
       animation:celebFadeUp 0.5s 0.45s both;
     }
     .celeb-class{
-      font-size:0.85rem;color:var(--muted);
+      font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;
       animation:celebFadeUp 0.5s 0.5s both;
     }
-    .celeb-progress{
-      position:fixed;bottom:0;left:0;height:3px;background:var(--gold);
-      width:100%;transform-origin:left;
-      animation:progressShrink 3s linear forwards;
+    .celeb-count{
+      font-size:0.78rem;color:var(--muted2);
+      animation:celebFadeUp 0.5s 0.55s both;
     }
-
+    .celeb-milestone{
+      margin-top:1.25rem;padding:1rem 1.5rem;
+      border:1px solid rgba(201,168,76,0.3);
+      background:rgba(201,168,76,0.06);
+      max-width:380px;
+      animation:celebFadeUp 0.5s 0.65s both;
+    }
+    .celeb-milestone-num{
+      font-family:var(--font-display);font-size:2rem;color:var(--gold);
+      line-height:1;margin-bottom:0.35rem;
+    }
+    .celeb-milestone-msg{
+      font-size:0.88rem;color:var(--muted2);font-style:italic;line-height:1.5;
+    }
+    .celeb-progress{
+      position:fixed;bottom:0;left:0;height:4px;
+      width:100%;transform-origin:left;
+      animation:progressShrink 3.5s linear forwards;
+    }
     @keyframes celebFadeUp{
       from{opacity:0;transform:translateY(18px);}
       to{opacity:1;transform:translateY(0);}
@@ -201,6 +278,16 @@
   <div class="kiosk-school-name" id="kioskSchoolName">Member Check-In</div>
 </div>
 
+<!-- MODE BAR -->
+<div class="kiosk-mode-bar">
+  <button class="kiosk-mode-btn active" id="modeCheckin" onclick="setMode('checkin')">
+    <i class="fa-solid fa-person-walking" style="margin-right:0.4rem"></i>Check In
+  </button>
+  <button class="kiosk-mode-btn" id="modeRegister" onclick="setMode('register')">
+    <i class="fa-solid fa-user-plus" style="margin-right:0.4rem"></i>New Student
+  </button>
+</div>
+
 <!-- BODY -->
 <div class="kiosk-body">
 
@@ -211,33 +298,58 @@
     <div class="kiosk-current-class-name" id="kioskCurrentClassName"></div>
   </div>
 
-  <!-- Search -->
-  <div id="kioskSearchView" style="width:100%;display:flex;flex-direction:column;align-items:center">
-    <div class="kiosk-prompt">Welcome</div>
-    <div class="kiosk-sub">Type your name to check in</div>
-    <div class="kiosk-search-wrap">
-      <input type="text" class="kiosk-search" id="kioskSearch"
-        placeholder="Start typing your name..."
-        oninput="searchStudents()"
-        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-    </div>
-    <div class="kiosk-results" id="kioskResults"></div>
-  </div>
+  <!-- CHECK-IN MODE -->
+  <div id="modeCheckinView" style="width:100%;display:flex;flex-direction:column;align-items:center">
 
-  <!-- Check-In Confirmation -->
-  <div id="kioskCheckinView" style="display:none;width:100%;flex-direction:column;align-items:center">
-    <div class="kiosk-class-info" id="kioskCheckinClassInfo"></div>
-    <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
-    <div style="width:100%">
-      <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()">
-        <i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In
-      </button>
-      <div style="text-align:center">
-        <button class="btn-back" onclick="backToSearch()">
-          <i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back
+    <!-- Search -->
+    <div id="kioskSearchView" style="width:100%;display:flex;flex-direction:column;align-items:center">
+      <div class="kiosk-prompt">Welcome</div>
+      <div class="kiosk-sub">Type your name to check in</div>
+      <div class="kiosk-search-wrap">
+        <input type="text" class="kiosk-search" id="kioskSearch"
+          placeholder="Start typing your name..."
+          oninput="searchStudents()"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      </div>
+      <div class="kiosk-results" id="kioskResults"></div>
+    </div>
+
+    <!-- Single Student Check-In -->
+    <div id="kioskCheckinView" style="display:none;width:100%;flex-direction:column;align-items:center">
+      <div class="kiosk-class-info" id="kioskCheckinClassInfo"></div>
+      <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
+      <div style="width:100%">
+        <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()">
+          <i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In
         </button>
+        <div style="text-align:center">
+          <button class="btn-back" onclick="backToSearch()">
+            <i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back
+          </button>
+        </div>
       </div>
     </div>
+
+  </div>
+
+  <!-- REGISTER MODE -->
+  <div id="modeRegisterView" style="display:none;width:100%">
+    <div class="kiosk-prompt" style="margin-bottom:0.4rem">Welcome!</div>
+    <div class="kiosk-sub" style="margin-bottom:2rem">Tell us about yourself</div>
+    <div class="reg-field"><label>First Name *</label><input type="text" class="reg-input" id="regFirst" placeholder="First name" autocomplete="off" /></div>
+    <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" /></div>
+    <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" /></div>
+    <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" /></div>
+    <div class="reg-field">
+      <label>Program Interest</label>
+      <select class="reg-input" id="regProgram" style="cursor:pointer">
+        <option value="">-- Select a program --</option>
+      </select>
+    </div>
+    <button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()">
+      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit
+    </button>
+    <div class="reg-msg" id="regMsg"></div>
   </div>
 
 </div>
@@ -247,14 +359,19 @@
   <div class="celeb-logo-wrap">
     <img id="celebLogoImg" class="celeb-logo" src="" alt="" style="display:none" />
     <div id="celebLogoText" class="celeb-logo-text" style="display:none">NMAO</div>
-    <div class="celeb-check">
+    <div class="celeb-check" id="celebCheck" style="background:var(--gold)">
       <i class="fa-solid fa-check"></i>
     </div>
   </div>
   <div class="celeb-name" id="celebName"></div>
-  <div class="celeb-subtitle">Checked In</div>
+  <div class="celeb-subtitle" id="celebSubtitle">Checked In</div>
   <div class="celeb-class" id="celebClass"></div>
-  <div class="celeb-progress" id="celebProgress"></div>
+  <div class="celeb-count" id="celebCount"></div>
+  <div class="celeb-milestone" id="celebMilestone" style="display:none">
+    <div class="celeb-milestone-num" id="celebMilestoneNum"></div>
+    <div class="celeb-milestone-msg" id="celebMilestoneMsg"></div>
+  </div>
+  <div class="celeb-progress" id="celebProgress" style="background:var(--gold)"></div>
 </div>
 
 <script>
@@ -263,12 +380,19 @@ var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
 var sb=supabase.createClient(SURL,SKEY);
 
-var allStudents=[],currentClass=null,currentSessionId=null,selectedStudent=null,searchTimer=null;
+var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
+var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1000 classes. You have achieved something extraordinary.'};
+
+var allStudents=[],allFamilies=[],allPrograms=[],currentClass=null,currentSessionId=null;
+var selectedStudent=null,selectedFamilyChildren=[],searchTimer=null;
+var schoolData={},currentMode='checkin';
+var familyCheckinQueue=[],familyCheckinIndex=0;
 
 async function init(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url').eq('id',SID).single();
+    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
     if(r.data){
+      schoolData=r.data;
       var d=r.data;
       document.getElementById('kioskSchoolName').textContent=d.name||'Member Check-In';
       if(d.color)document.documentElement.style.setProperty('--gold',d.color);
@@ -276,25 +400,34 @@ async function init(){
       if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
       if(d.font_family)document.documentElement.style.setProperty('--font-display','\''+d.font_family+'\',serif');
       if(d.logo_url){
-        // Header
         document.getElementById('kioskLogoImg').src=d.logo_url;
         document.getElementById('kioskLogoImg').style.display='block';
         document.getElementById('kioskLogoText').style.display='none';
-        // Celebration
         document.getElementById('celebLogoImg').src=d.logo_url;
         document.getElementById('celebLogoImg').style.display='block';
-      } else {
+      }else{
         document.getElementById('celebLogoText').style.display='block';
       }
     }
     await loadStudents();
+    await loadFamilies();
+    await loadPrograms();
     await detectCurrentClass();
+    document.getElementById('kioskSearch').focus();
   }catch(e){console.error('Kiosk init error:',e);}
 }
 
 async function loadStudents(){
-  var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
+  var r=await sb.from('students').select('*, programs(name,color,belt_system_id)').eq('school_id',SID).eq('status','active').order('last_name');
   allStudents=r.data||[];
+}
+
+async function loadFamilies(){
+  try{var r=await sb.from('families').select('*').eq('school_id',SID).order('name');allFamilies=r.data||[];}catch(e){allFamilies=[];}
+}
+
+async function loadPrograms(){
+  try{var r=await sb.from('programs').select('id,name').eq('school_id',SID).eq('active',true).order('name');allPrograms=r.data||[];var sel=document.getElementById('regProgram');allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});}catch(e){}
 }
 
 async function detectCurrentClass(){
@@ -309,7 +442,7 @@ async function detectCurrentClass(){
     if(!c.days_of_week||!c.days_of_week.includes(today))return false;
     var start=c.start_time?c.start_time.slice(0,5):'00:00';
     var end=c.end_time?c.end_time.slice(0,5):'23:59';
-    return (start<=timeStr&&timeStr<=end)||(start>=cutoffStr&&start<=timeStr);
+    return(start<=timeStr&&timeStr<=end)||(start>=cutoffStr&&start<=timeStr);
   });
   if(active.length){
     active.sort(function(a,b){return a.start_time>b.start_time?-1:1;});
@@ -317,7 +450,7 @@ async function detectCurrentClass(){
     document.getElementById('kioskCurrentClass').style.display='block';
     document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' \u00b7 '+fmtTime(currentClass.start_time);
     await getOrCreateSession();
-  } else {
+  }else{
     document.getElementById('kioskCurrentClass').style.display='none';
   }
 }
@@ -327,10 +460,17 @@ async function getOrCreateSession(){
   var today=new Date().toISOString().split('T')[0];
   var sr=await sb.from('class_sessions').select('id').eq('class_id',currentClass.id).eq('session_date',today).limit(1);
   if(sr.data&&sr.data.length){currentSessionId=sr.data[0].id;}
-  else{
-    var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();
-    if(!cr.error)currentSessionId=cr.data.id;
-  }
+  else{var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
+}
+
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('modeCheckin').classList.toggle('active',mode==='checkin');
+  document.getElementById('modeRegister').classList.toggle('active',mode==='register');
+  document.getElementById('modeCheckinView').style.display=mode==='checkin'?'flex':'none';
+  document.getElementById('modeRegisterView').style.display=mode==='register'?'block':'none';
+  if(mode==='checkin')document.getElementById('kioskSearch').focus();
+  else document.getElementById('regFirst').focus();
 }
 
 function searchStudents(){
@@ -339,31 +479,104 @@ function searchStudents(){
     var q=document.getElementById('kioskSearch').value.toLowerCase().trim();
     var el=document.getElementById('kioskResults');
     if(!q||q.length<2){el.innerHTML='';return;}
-    var filtered=allStudents.filter(function(s){
+
+    var familyMatches=allFamilies.filter(function(f){return f.name.toLowerCase().includes(q);});
+    var studentMatches=allStudents.filter(function(s){
       return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||
-        s.first_name.toLowerCase().startsWith(q)||
-        s.last_name.toLowerCase().startsWith(q);
+        s.first_name.toLowerCase().startsWith(q)||s.last_name.toLowerCase().startsWith(q);
     });
-    if(!filtered.length){
+
+    if(!familyMatches.length&&!studentMatches.length){
       el.innerHTML='<div class="kiosk-empty"><i class="fa-solid fa-circle-question" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.3"></i>No students found.<br>Please see the front desk.</div>';
       return;
     }
-    el.innerHTML=filtered.slice(0,6).map(function(s){
+
+    var html='';
+
+    familyMatches.forEach(function(f){
+      var children=allStudents.filter(function(s){return s.family_id===f.id;});
+      if(!children.length)return;
+      html+='<div class="kiosk-family-card">';
+      html+='<div class="kiosk-family-label"><i class="fa-solid fa-people-roof"></i>'+f.name+'</div>';
+      html+='<div class="kiosk-family-children" id="family-'+f.id+'">';
+      children.forEach(function(s){
+        var ini=(s.first_name[0]+s.last_name[0]).toUpperCase();
+        var pc=(s.programs&&s.programs.color)?s.programs.color:'var(--gold)';
+        var pn=(s.programs&&s.programs.name)?s.programs.name:'Member';
+        html+='<div class="kiosk-child-row" id="childrow-'+s.id+'" onclick="toggleFamilyChild(\''+s.id+'\')">'+
+          '<div>'+
+            '<div class="kiosk-child-name">'+s.first_name+' '+s.last_name+'</div>'+
+            '<div class="kiosk-child-prog">'+pn+'</div>'+
+          '</div>'+
+          '<i class="fa-solid fa-circle kiosk-child-check"></i>'+
+        '</div>';
+      });
+      html+='</div>';
+      html+='<button class="btn-family-checkin" onclick="confirmFamilyCheckin(\''+f.id+'\')">'+
+        '<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Check In Selected'+
+      '</button>';
+      html+='</div>';
+    });
+
+    studentMatches.slice(0,6).forEach(function(s){
       var ini=(s.first_name[0]+s.last_name[0]).toUpperCase();
       var pc=(s.programs&&s.programs.color)?s.programs.color:'var(--gold)';
       var pn=(s.programs&&s.programs.name)?s.programs.name:'Member';
       var avatarHtml=s.photo_url?
         '<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':
         '<span style="font-size:1.2rem">'+ini+'</span>';
-      return '<div class="kiosk-student-card" onclick="selectStudent(\''+s.id+'\')">'+
+      html+='<div class="kiosk-student-card" onclick="selectStudent(\''+s.id+'\')">'+
         '<div class="kiosk-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div>'+
         '<div>'+
           '<div class="kiosk-student-name">'+s.first_name+' '+s.last_name+'</div>'+
           '<div class="kiosk-student-program">'+pn+'</div>'+
         '</div>'+
       '</div>';
-    }).join('');
+    });
+
+    el.innerHTML=html;
+    selectedFamilyChildren=[];
   },200);
+}
+
+function toggleFamilyChild(sid){
+  var row=document.getElementById('childrow-'+sid);
+  var icon=row?row.querySelector('.kiosk-child-check'):null;
+  var idx=selectedFamilyChildren.indexOf(sid);
+  if(idx===-1){
+    selectedFamilyChildren.push(sid);
+    if(row)row.classList.add('selected');
+    if(icon){icon.classList.remove('fa-circle');icon.classList.add('fa-circle-check');}
+  }else{
+    selectedFamilyChildren.splice(idx,1);
+    if(row)row.classList.remove('selected');
+    if(icon){icon.classList.remove('fa-circle-check');icon.classList.add('fa-circle');}
+  }
+}
+
+async function confirmFamilyCheckin(familyId){
+  if(!selectedFamilyChildren.length){return;}
+  var btn=document.querySelector('.btn-family-checkin');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Checking in...';}
+  familyCheckinQueue=selectedFamilyChildren.slice();
+  familyCheckinIndex=0;
+  await processFamilyQueue();
+}
+
+async function processFamilyQueue(){
+  if(familyCheckinIndex>=familyCheckinQueue.length){return;}
+  var sid=familyCheckinQueue[familyCheckinIndex];
+  var s=allStudents.find(function(x){return x.id===sid;});
+  if(!s){familyCheckinIndex++;await processFamilyQueue();return;}
+  selectedStudent=s;
+  await doCheckinForStudent(s,function(){
+    familyCheckinIndex++;
+    if(familyCheckinIndex<familyCheckinQueue.length){
+      setTimeout(async function(){await processFamilyQueue();},3600);
+    }else{
+      setTimeout(function(){resetKiosk();},3600);
+    }
+  });
 }
 
 function selectStudent(sid){
@@ -393,41 +606,131 @@ async function confirmCheckin(){
   var btn=document.getElementById('checkinBtn');
   btn.disabled=true;
   btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.6rem"></i>Checking in...';
+  await doCheckinForStudent(selectedStudent,function(){setTimeout(resetKiosk,3600);});
+}
+
+async function doCheckinForStudent(student,callback){
   try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
     if(!sid){
-      if(!currentClass){
-        var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);
-        if(fc.data&&fc.data.length)currentClass=fc.data[0];
-      }
-      if(currentClass){
-        var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();
-        if(!cr.error)sid=cr.data.id;
-      }
+      if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
+      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)sid=cr.data.id;}
     }
-    if(sid){
-      await sb.from('class_attendance').insert({session_id:sid,student_id:selectedStudent.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});
-    }
-    showCelebration();
-  }catch(e){console.error('Check-in error:',e);showCelebration();}
+    if(sid){await sb.from('class_attendance').insert({session_id:sid,student_id:student.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});}
+    var totalCount=await getStudentAttendanceCount(student.id);
+    var beltColor=await getStudentBeltColor(student);
+    showCelebration(student,totalCount,beltColor,callback);
+  }catch(e){console.error('Check-in error:',e);showCelebration(student,null,null,callback);}
 }
 
-function showCelebration(){
-  document.getElementById('celebName').textContent=selectedStudent.first_name+' '+selectedStudent.last_name;
+async function getStudentAttendanceCount(sid){
+  try{var r=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',sid).eq('school_id',SID);return r.count||0;}catch(e){return 0;}
+}
+
+async function getStudentBeltColor(student){
+  try{
+    if(!student.current_belt_id)return null;
+    var r=await sb.from('belt_levels').select('color_hex').eq('id',student.current_belt_id).single();
+    return(r.data&&r.data.color_hex)?r.data.color_hex:null;
+  }catch(e){return null;}
+}
+
+function showCelebration(student,classCount,beltColor,callback){
+  var accentColor=beltColor||getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
+  var check=document.getElementById('celebCheck');
+  var prog=document.getElementById('celebProgress');
+  check.style.background=accentColor;
+  check.style.boxShadow='0 0 56px '+accentColor+'66';
+  prog.style.background=accentColor;
+
+  document.getElementById('celebName').textContent=student.first_name+' '+student.last_name;
+  document.getElementById('celebSubtitle').textContent='Checked In';
   document.getElementById('celebClass').textContent=currentClass?
     'Checked in to '+(currentClass.name||currentClass.title||'class'):
     'Attendance recorded';
-  // Restart progress bar animation
-  var prog=document.getElementById('celebProgress');
+
+  if(classCount&&classCount>0){
+    document.getElementById('celebCount').textContent=classCount+' class'+(classCount===1?'':'es')+' total';
+  }else{
+    document.getElementById('celebCount').textContent='';
+  }
+
+  var milestoneEl=document.getElementById('celebMilestone');
+  if(classCount&&MILESTONES.includes(classCount)){
+    var milestoneMessages=schoolData.milestone_messages||{};
+    var msg=milestoneMessages[classCount]?milestoneMessages[classCount].message:DEFAULT_MESSAGES[classCount];
+    if(msg){
+      document.getElementById('celebMilestoneNum').textContent=classCount+' Classes!';
+      document.getElementById('celebMilestoneMsg').textContent=msg;
+      milestoneEl.style.display='block';
+      milestoneEl.style.borderColor=accentColor+'55';
+    }else{milestoneEl.style.display='none';}
+  }else{milestoneEl.style.display='none';}
+
   prog.style.animation='none';
   prog.offsetHeight;
-  prog.style.animation='progressShrink 3s linear forwards';
+  prog.style.animation='progressShrink 3.5s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');
   setTimeout(function(){
     document.getElementById('kioskCelebration').classList.remove('active');
-    resetKiosk();
-  },3000);
+    if(callback)callback();
+  },3500);
+}
+
+async function submitRegistration(){
+  var first=document.getElementById('regFirst').value.trim();
+  var last=document.getElementById('regLast').value.trim();
+  var email=document.getElementById('regEmail').value.trim();
+  var phone=document.getElementById('regPhone').value.trim();
+  var progId=document.getElementById('regProgram').value;
+  var msg=document.getElementById('regMsg');
+  if(!first||!last){msg.textContent='Please enter first and last name.';msg.className='reg-msg error';return;}
+  var btn=document.getElementById('regSubmitBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Submitting...';
+  msg.textContent='';msg.className='reg-msg';
+  try{
+    var payload={school_id:SID,first_name:first,last_name:last,status:'new',source:'kiosk'};
+    if(email)payload.email=email;
+    if(phone)payload.phone=phone;
+    if(progId)payload.program_id=progId;
+    var r=await sb.from('leads').insert(payload);
+    if(r.error){msg.textContent='Something went wrong. Please see the front desk.';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';return;}
+    showRegistrationSuccess(first);
+  }catch(e){msg.textContent='Something went wrong. Please see the front desk.';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';}
+}
+
+function showRegistrationSuccess(firstName){
+  var goldColor=getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
+  var check=document.getElementById('celebCheck');
+  var prog=document.getElementById('celebProgress');
+  check.style.background=goldColor;
+  prog.style.background=goldColor;
+  document.getElementById('celebName').textContent=firstName;
+  document.getElementById('celebSubtitle').textContent='Welcome to the School!';
+  document.getElementById('celebClass').textContent='We will be in touch soon.';
+  document.getElementById('celebCount').textContent='';
+  document.getElementById('celebMilestone').style.display='none';
+  prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
+  document.getElementById('kioskCelebration').classList.add('active');
+  setTimeout(function(){
+    document.getElementById('kioskCelebration').classList.remove('active');
+    resetRegistrationForm();
+    setMode('checkin');
+  },3500);
+}
+
+function resetRegistrationForm(){
+  document.getElementById('regFirst').value='';
+  document.getElementById('regLast').value='';
+  document.getElementById('regEmail').value='';
+  document.getElementById('regPhone').value='';
+  document.getElementById('regProgram').value='';
+  document.getElementById('regMsg').textContent='';
+  document.getElementById('regMsg').className='reg-msg';
+  var btn=document.getElementById('regSubmitBtn');
+  btn.disabled=false;
+  btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';
 }
 
 function backToSearch(){
@@ -437,16 +740,13 @@ function backToSearch(){
 }
 
 function resetKiosk(){
-  selectedStudent=null;
+  selectedStudent=null;selectedFamilyChildren=[];familyCheckinQueue=[];familyCheckinIndex=0;
   document.getElementById('kioskSearch').value='';
   document.getElementById('kioskResults').innerHTML='';
   document.getElementById('kioskCheckinView').style.display='none';
   document.getElementById('kioskSearchView').style.display='flex';
   var btn=document.getElementById('checkinBtn');
-  if(btn){
-    btn.disabled=false;
-    btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In';
-  }
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In';}
   document.getElementById('kioskSearch').focus();
   detectCurrentClass();
 }
@@ -458,7 +758,6 @@ function fmtTime(t){
 }
 
 init();
-document.getElementById('kioskSearch').focus();
 </script>
 </body>
 </html>
