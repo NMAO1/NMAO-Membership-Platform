@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Staff App — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ── BASE ─────────────────────────────────────── */
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    :root{
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.09);
+      --black:#0A0A0A;--near:#111111;--surface:#161616;--surface2:#1C1C1C;
+      --border:#252525;--border2:#2E2E2E;
+      --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;
+      --green:#5A9A6A;--green-bg:rgba(90,154,106,0.12);--green-border:rgba(90,154,106,0.35);
+      --amber:#C9843C;--amber-bg:rgba(201,132,60,0.12);--amber-border:rgba(201,132,60,0.35);
+      --red:#9A5A5A;--red-bg:rgba(154,90,90,0.12);--red-border:rgba(154,90,90,0.35);
+      --blue:#5A7A9A;
+      --font-display:'Libre Baskerville',Georgia,serif;
+      --font-ui:'Lato',sans-serif;
+      --nav-h:68px;--header-h:60px;
+      --tap:56px;/* minimum tap target */
+    }
+    html,body{height:100%;overflow:hidden;}
+    body{background:var(--black);color:var(--white);font-family:var(--font-ui);font-size:16px;line-height:1.5;}
+    input,button,select,textarea{font-family:var(--font-ui);}
+    button{cursor:pointer;}
+    a{color:inherit;text-decoration:none;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-track{background:var(--black);}
+    ::-webkit-scrollbar-thumb{background:var(--border2);}
+
+```
+/* ── LOGIN ────────────────────────────────────── */
+#loginScreen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100vh;padding:1.5rem;background:var(--black);
+}
+.login-mark{font-family:var(--font-display);font-size:2rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:0.25rem;}
+.login-sub{font-size:0.8rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:2.5rem;}
+.login-card{background:var(--surface);border:1px solid var(--border);padding:2rem;width:100%;max-width:400px;}
+.login-eyebrow{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem;}
+.login-title{font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.5rem;}
+.login-desc{font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6;}
+.input-field{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-size:1rem;padding:0.9rem 1rem;outline:none;transition:border-color 0.2s;margin-bottom:0.85rem;}
+.input-field:focus{border-color:var(--gold);}
+.btn-login{width:100%;background:var(--gold);color:var(--black);font-family:var(--font-display);font-size:0.82rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;transition:opacity 0.2s;}
+.btn-login:hover{opacity:0.9;}
+.btn-login:disabled{opacity:0.5;cursor:not-allowed;}
+.login-msg{font-size:0.82rem;text-align:center;margin-top:0.75rem;min-height:1.1rem;}
+.login-msg.ok{color:#7DBD7D;}
+.login-msg.er{color:#E07070;}
+.staff-badge{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.25rem 0.65rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);margin-bottom:1.5rem;}
+
+/* ── SUCCESS ─────────────────────────────────── */
+#successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;padding:2rem;}
+.success-icon{font-size:2.5rem;color:var(--gold);margin-bottom:1rem;}
+.success-title{font-family:var(--font-display);font-size:1.4rem;margin-bottom:0.5rem;}
+.success-desc{font-size:0.88rem;color:var(--muted);max-width:320px;line-height:1.6;}
+
+/* ── STAFF APP SHELL ─────────────────────────── */
+#staffApp{display:none;height:100vh;flex-direction:column;position:relative;overflow:hidden;}
+
+/* Sticky header */
+.staff-header{
+  height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1rem;
+  flex-shrink:0;position:relative;z-index:50;
+}
+.staff-header-left{display:flex;align-items:center;gap:0.75rem;}
+.staff-header-logo{max-height:36px;max-width:100px;object-fit:contain;}
+.staff-header-school{font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:0.1em;}
+.staff-header-right{display:flex;align-items:center;gap:0.75rem;}
+.notif-btn{width:44px;height:44px;background:none;border:1px solid var(--border);color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;position:relative;transition:all 0.2s;}
+.notif-btn.has-alerts{border-color:var(--amber);color:var(--amber);}
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--amber);}
+
+/* Tab content area */
+.staff-content{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + 8px);}
+
+/* Bottom Navigation */
+.staff-nav{
+  height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);
+  display:flex;flex-shrink:0;
+  position:absolute;bottom:0;left:0;right:0;z-index:50;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0.25rem;background:none;border:none;color:var(--muted);
+  font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;
+  transition:color 0.2s;padding:0.35rem 0;
+  position:relative;
+}
+.nav-btn i{font-size:1.35rem;margin-bottom:0.1rem;}
+.nav-btn.active{color:var(--gold);}
+.nav-btn.active::before{content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:var(--gold);}
+.nav-badge{
+  position:absolute;top:6px;right:calc(50% - 20px);
+  background:var(--amber);color:var(--black);
+  font-size:0.55rem;font-weight:700;padding:0.1rem 0.35rem;border-radius:10px;
+  font-family:var(--font-ui);min-width:16px;text-align:center;
+}
+
+/* ── TABS ────────────────────────────────────── */
+.tab-panel{display:none;padding:1rem;}
+.tab-panel.active{display:block;}
+
+/* ── TODAY TAB ───────────────────────────────── */
+.today-greeting{margin-bottom:1.5rem;}
+.greeting-name{font-family:var(--font-display);font-size:1.6rem;color:var(--white);line-height:1.2;}
+.greeting-date{font-size:0.82rem;color:var(--muted);margin-top:0.25rem;}
+.quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:1.5rem;}
+.qstat{background:var(--surface);border:1px solid var(--border);padding:0.85rem 0.6rem;text-align:center;}
+.qstat-num{font-family:var(--font-display);font-size:1.8rem;color:var(--gold);line-height:1;}
+.qstat-lbl{font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:0.2rem;}
+.section-head{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;}
+.section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* Membership alert banner */
+.membership-alert-bar{
+  display:none;background:var(--amber-bg);border:1px solid var(--amber-border);
+  border-left:3px solid var(--amber);padding:0.85rem 1rem;margin-bottom:1rem;
+  cursor:pointer;
+}
+.membership-alert-bar:hover{border-left-color:var(--gold);}
+.membership-alert-text{font-size:0.88rem;color:var(--amber);display:flex;align-items:center;gap:0.5rem;}
+.membership-alert-sub{font-size:0.75rem;color:var(--muted);margin-top:0.15rem;}
+
+/* Class row in lists */
+.class-row{
+  display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);
+  min-height:var(--tap);padding:0.85rem 1rem;margin-bottom:0.5rem;cursor:pointer;
+  transition:border-color 0.2s;gap:1rem;
+  border-left:3px solid var(--border);
+}
+.class-row:hover,.class-row:active{border-left-color:var(--gold);border-color:var(--border2);}
+.class-row.active-session{border-left-color:var(--green);}
+.class-row-time{font-family:var(--font-display);font-size:1rem;color:var(--gold);min-width:70px;flex-shrink:0;}
+.class-row-info{flex:1;min-width:0;}
+.class-row-name{font-size:1rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.class-row-tags{font-size:0.75rem;color:var(--muted);margin-top:0.15rem;}
+.class-row-meta{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:0.25rem;}
+.class-count-badge{font-size:0.72rem;color:var(--muted2);}
+.class-chevron{color:var(--muted);font-size:0.85rem;}
+.no-classes{text-align:center;padding:3rem 1rem;color:var(--muted);font-style:italic;background:var(--surface);border:1px solid var(--border);}
+
+/* ── CLASS VIEW OVERLAY ──────────────────────── */
+#classView{
+  position:absolute;top:var(--header-h);left:0;right:0;bottom:0;
+  background:var(--black);z-index:80;
+  display:none;flex-direction:column;
+  transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+#classView.open{display:flex;transform:translateX(0);}
+.cv-header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 1rem;height:var(--tap);display:flex;align-items:center;gap:1rem;flex-shrink:0;
+}
+.cv-back{background:none;border:none;color:var(--gold);font-size:1.2rem;padding:0.5rem 0.5rem 0.5rem 0;display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;}
+.cv-title{flex:1;min-width:0;}
+.cv-class-name{font-family:var(--font-display);font-size:1rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cv-class-time{font-size:0.75rem;color:var(--gold);}
+.cv-actions{display:flex;gap:0.5rem;}
+.cv-action-btn{height:40px;padding:0 0.75rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;}
+.cv-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.cv-tab{
+  flex:1;height:var(--tap);display:flex;align-items:center;justify-content:center;
+  gap:0.4rem;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted);border:none;background:none;
+  border-bottom:2px solid transparent;transition:all 0.2s;
+}
+.cv-tab.active{color:var(--gold);border-color:var(--gold);}
+.cv-tab-badge{background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:10px;min-width:20px;text-align:center;}
+.cv-tab-badge.green{background:var(--green-bg);border-color:var(--green-border);color:#7DBD7D;}
+.cv-content{flex:1;overflow-y:auto;padding-bottom:0.5rem;}
+
+/* Search bar */
+.search-bar-wrap{position:sticky;top:0;z-index:20;background:var(--black);padding:0.75rem;border-bottom:1px solid var(--border);}
+.search-bar{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:1rem;padding:0.75rem 1rem 0.75rem 2.8rem;outline:none;transition:border-color 0.2s;}
+.search-bar:focus{border-color:var(--gold);}
+.search-icon{position:absolute;left:1.5rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.9rem;pointer-events:none;}
+.search-bar-inner{position:relative;}
+
+/* Student rows */
+.student-row{
+  display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;
+  border-bottom:1px solid var(--border);min-height:var(--tap);
+  transition:background 0.15s;
+}
+.student-row:active{background:rgba(255,255,255,0.03);}
+.student-row.checked-in{background:rgba(90,154,106,0.06);}
+.student-avatar{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:0.9rem;color:var(--gold);
+  background:var(--gold-bg);border:2px solid var(--border);overflow:hidden;
+}
+.student-avatar img{width:100%;height:100%;object-fit:cover;}
+.student-info{flex:1;min-width:0;}
+.student-name{font-size:1rem;color:var(--white);}
+.student-meta{display:flex;gap:0.4rem;margin-top:0.2rem;flex-wrap:wrap;align-items:center;}
+.belt-chip{
+  font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.2rem 0.5rem;border-radius:2px;font-family:var(--font-ui);
+  border:1px solid rgba(255,255,255,0.15);
+}
+.mem-chip{font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.18rem 0.5rem;border-radius:2px;font-family:var(--font-ui);}
+.mem-active{background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;}
+.mem-trial{background:var(--amber-bg);border:1px solid var(--amber-border);color:#D4A070;}
+.mem-warn{background:var(--red-bg);border:1px solid var(--red-border);color:#C07070;}
+.eligible-star{color:var(--gold);font-size:0.85rem;}
+.student-action{flex-shrink:0;}
+.btn-checkin{
+  height:44px;padding:0 1.1rem;background:var(--gold);color:var(--black);
+  border:none;font-family:var(--font-display);font-size:0.72rem;
+  letter-spacing:0.12em;text-transform:uppercase;transition:opacity 0.15s;
+  white-space:nowrap;
+}
+.btn-checkin:active{opacity:0.8;}
+.btn-checkin.checked{background:none;border:1px solid var(--green-border);color:#7DBD7D;}
+.btn-checkin.loading{opacity:0.6;cursor:not-allowed;}
+.btn-promote{
+  height:44px;padding:0 1rem;background:none;
+  border:1px solid var(--gold-dk);color:var(--gold);
+  font-family:var(--font-display);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
+}
+.section-note{font-size:0.82rem;color:var(--muted);font-style:italic;padding:1rem;text-align:center;}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);}
+.empty-state i{font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;}
+.empty-state-text{font-size:0.88rem;font-style:italic;}
+
+/* ── CLASSES TAB ─────────────────────────────── */
+.day-block{margin-bottom:1.25rem;}
+.day-label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
+
+/* ── SESSIONS TAB ────────────────────────────── */
+.sessions-board{display:flex;flex-direction:column;gap:0.85rem;}
+.session-slot{
+  background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--border);
+  padding:1rem;min-height:var(--tap);
+}
+.session-slot.booked{border-left-color:var(--gold);}
+.session-slot-time{font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.25rem;}
+.session-slot-type{font-size:0.75rem;color:var(--white);}
+.session-slot-instr{font-size:0.75rem;color:var(--muted);margin-top:0.15rem;}
+.btn-book-slot{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:var(--tap);
+  background:none;border:1px dashed var(--border2);color:var(--muted);
+  font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:0.5rem;transition:all 0.2s;
+}
+.btn-book-slot:hover{border-color:var(--gold);color:var(--gold);}
+.instr-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:0.35rem;}
+
+/* ── TESTS TAB ───────────────────────────────── */
+.test-card{background:var(--surface);border:1px solid var(--border);padding:1rem;margin-bottom:0.85rem;}
+.test-card-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.75rem;}
+.test-date{font-family:var(--font-display);font-size:1rem;color:var(--white);}
+.test-prog{font-size:0.75rem;color:var(--muted);}
+.test-student-row{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0;border-top:1px solid var(--border);}
+.test-student-name{flex:1;font-size:0.95rem;color:var(--white);}
+.test-student-belt{font-size:0.75rem;color:var(--muted);}
+.test-result-btns{display:flex;gap:0.4rem;}
+.btn-pass{height:40px;padding:0 0.85rem;background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s;}
+.btn-pass:hover,.btn-pass.selected{background:#7DBD7D;color:var(--black);}
+.btn-hold{height:40px;padding:0 0.85rem;background:var(--red-bg);border:1px solid var(--red-border);color:#C07070;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s;}
+.btn-hold:hover,.btn-hold.selected{background:#C07070;color:var(--black);}
+.tests-no-setup{text-align:center;padding:3rem 1rem;color:var(--muted);}
+
+/* ── PROFILE TAB ─────────────────────────────── */
+.profile-hero{background:var(--surface);border:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--gold-dk);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
+.profile-name{font-family:var(--font-display);font-size:1.3rem;color:var(--white);}
+.profile-title{font-size:0.82rem;color:var(--muted);margin-top:0.15rem;}
+.profile-cert{font-size:0.68rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase;display:inline-block;margin-top:0.4rem;}
+.cert-certified{background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;}
+.cert-pending{background:var(--amber-bg);border:1px solid var(--amber-border);color:#D4A070;}
+.cert-uncertified{background:var(--red-bg);border:1px solid var(--red-border);color:#C07070;}
+.profile-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1rem;}
+.profile-stat{background:var(--surface);border:1px solid var(--border);padding:0.85rem;text-align:center;}
+.profile-stat-num{font-family:var(--font-display);font-size:1.6rem;color:var(--gold);}
+.profile-stat-lbl{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);}
+.profile-info{background:var(--surface);border:1px solid var(--border);padding:1rem;margin-bottom:0.85rem;}
+.profile-info-row{display:flex;padding:0.65rem 0;border-bottom:1px solid var(--border);gap:0.75rem;align-items:flex-start;}
+.profile-info-row:last-child{border-bottom:none;}
+.profile-info-label{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:0.05rem;}
+.profile-info-value{font-size:0.92rem;color:var(--white);}
+.btn-signout{
+  width:100%;height:var(--tap);background:none;border:1px solid var(--border);
+  color:var(--muted);font-family:var(--font-ui);font-size:0.82rem;letter-spacing:0.14em;
+  text-transform:uppercase;transition:all 0.2s;
+}
+.btn-signout:hover{border-color:var(--red);color:#C07070;}
+
+/* ── PROMOTE MODAL ───────────────────────────── */
+#promoteModal{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;
+  align-items:flex-end;justify-content:center;padding-bottom:0;
+}
+#promoteModal.open{display:flex;}
+.promote-sheet{
+  background:var(--surface);border-top:1px solid var(--border);
+  width:100%;max-width:600px;padding:1.75rem 1.5rem;
+  animation:slideUp 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.promote-belt-vis{display:flex;align-items:center;gap:1rem;margin:1.25rem 0;}
+.belt-swatch{width:56px;height:20px;border-radius:3px;border:1px solid rgba(255,255,255,0.15);}
+.promote-title{font-family:var(--font-display);font-size:1.2rem;color:var(--white);margin-bottom:0.25rem;}
+.promote-sub{font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:1.25rem;}
+.promote-btns{display:flex;gap:0.75rem;}
+.btn-confirm-promote{flex:1;height:var(--tap);background:var(--gold);color:var(--black);border:none;font-family:var(--font-display);font-size:0.82rem;letter-spacing:0.14em;text-transform:uppercase;}
+.btn-cancel-promote{flex:0 0 auto;height:var(--tap);padding:0 1.25rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;}
+
+/* ── TOAST ───────────────────────────────────── */
+#toast{
+  position:fixed;bottom:calc(var(--nav-h) + 1rem);left:1rem;right:1rem;
+  background:var(--surface2);border:1px solid var(--border);padding:0.85rem 1rem;
+  font-size:0.88rem;color:var(--white);z-index:300;
+  transform:translateY(120%);transition:transform 0.25s;
+  display:flex;align-items:center;gap:0.5rem;max-width:500px;margin:0 auto;
+}
+#toast.show{transform:translateY(0);}
+#toast.toast-ok i{color:#7DBD7D;}
+#toast.toast-warn i{color:#D4A070;}
+#toast.toast-err i{color:#C07070;}
+
+/* ── SPINNER ─────────────────────────────────── */
+.spin{animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-row{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:2rem;color:var(--muted);font-size:0.88rem;font-style:italic;}
+```
+
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════════ -->
+
+<div id="loginScreen">
+  <div class="login-mark" id="loginMark">NMAO</div>
+  <div class="login-sub" id="loginSubSchool">Staff Portal</div>
+  <div class="staff-badge"><i class="fa-solid fa-shield-halved"></i> Instructors Only</div>
+  <div class="login-card">
+    <div class="login-eyebrow">Staff App</div>
+    <div class="login-title">Sign in</div>
+    <div class="login-desc">Enter your instructor email. We'll send a secure sign-in link.</div>
+    <input type="email" id="loginEmail" class="input-field" placeholder="instructor@email.com" onkeydown="if(event.key==='Enter')sendStaffLink()" />
+    <button class="btn-login" id="loginBtn" onclick="sendStaffLink()">
+      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link
+    </button>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SUCCESS SCREEN
+════════════════════════════════════════════ -->
+
+<div id="successScreen">
+  <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+  <div class="success-title">Check your email</div>
+  <div class="success-desc">Sign-in link sent to <strong id="sentEmail"></strong>. Tap it on your phone to open the staff app.</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STAFF APP
+════════════════════════════════════════════ -->
+
+<div id="staffApp">
+
+  <!-- Sticky Header -->
+
+  <div class="staff-header">
+    <div class="staff-header-left">
+      <img id="staffLogoImg" class="staff-header-logo" src="" alt="" style="display:none" />
+      <div class="staff-header-school" id="staffSchoolName">NMAO</div>
+    </div>
+    <div class="staff-header-right">
+      <button class="notif-btn" id="notifBtn" onclick="toggleAlerts()" title="Membership Alerts">
+        <i class="fa-solid fa-bell"></i>
+        <div class="notif-dot" id="notifDot" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scrollable Content -->
+
+  <div class="staff-content" id="staffContent">
+
+```
+<!-- TODAY TAB -->
+<div class="tab-panel active" id="tabToday">
+  <div class="today-greeting">
+    <div class="greeting-name" id="todayGreeting">Good morning</div>
+    <div class="greeting-date" id="todayDate"></div>
+  </div>
+
+  <!-- Membership Alert Banner -->
+  <div class="membership-alert-bar" id="membershipAlertBar" onclick="showMembershipAlerts()">
+    <div class="membership-alert-text">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span id="membershipAlertText">Membership alerts</span>
+    </div>
+    <div class="membership-alert-sub">Tap to view students with inactive memberships</div>
+  </div>
+
+  <div class="quick-stats">
+    <div class="qstat"><div class="qstat-num" id="qsClasses">—</div><div class="qstat-lbl">Classes Today</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsExpected">—</div><div class="qstat-lbl">Expected</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsCheckedIn">—</div><div class="qstat-lbl">Checked In</div></div>
+  </div>
+
+  <div class="section-head">Today's Classes</div>
+  <div id="todayClassList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
+</div>
+
+<!-- CLASSES TAB -->
+<div class="tab-panel" id="tabClasses">
+  <div class="section-head" style="margin-bottom:1rem">Full Weekly Schedule</div>
+  <div id="classesWeekList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
+</div>
+
+<!-- SESSIONS TAB -->
+<div class="tab-panel" id="tabSessions">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div class="section-head" style="margin-bottom:0">Sessions Board</div>
+    <button style="background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.45rem 0.85rem;" onclick="openBookSession()">
+      <i class="fa-solid fa-plus" style="margin-right:0.3rem"></i>Book
+    </button>
+  </div>
+  <div id="sessionsBoard"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
+</div>
+
+<!-- TESTS TAB -->
+<div class="tab-panel" id="tabTests">
+  <div class="section-head" style="margin-bottom:1rem">Belt Tests</div>
+  <div id="testsList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
+</div>
+
+<!-- PROFILE TAB -->
+<div class="tab-panel" id="tabProfile">
+  <div class="profile-hero">
+    <div class="profile-avatar" id="profileAvatar"></div>
+    <div>
+      <div class="profile-name" id="profileName">Instructor</div>
+      <div class="profile-title" id="profileTitle"></div>
+      <div class="profile-cert" id="profileCert"></div>
+    </div>
+  </div>
+
+  <div class="profile-stat-row">
+    <div class="profile-stat"><div class="profile-stat-num" id="psTodayClasses">—</div><div class="profile-stat-lbl">Today</div></div>
+    <div class="profile-stat"><div class="profile-stat-num" id="psThisWeek">—</div><div class="profile-stat-lbl">This Week</div></div>
+    <div class="profile-stat"><div class="profile-stat-num" id="psStudents">—</div><div class="profile-stat-lbl">Students</div></div>
+  </div>
+
+  <div class="profile-info" id="profileInfoCard"></div>
+
+  <button class="btn-signout" onclick="staffSignOut()">
+    <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.5rem"></i>Sign Out
+  </button>
+</div>
+```
+
+  </div><!-- end staff-content -->
+
+  <!-- Class View Overlay (slides in from right) -->
+
+  <div id="classView">
+    <div class="cv-header">
+      <button class="cv-back" onclick="closeClassView()">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </button>
+      <div class="cv-title">
+        <div class="cv-class-name" id="cvClassName">Class</div>
+        <div class="cv-class-time" id="cvClassTime"></div>
+      </div>
+    </div>
+    <div class="cv-tabs">
+      <button class="cv-tab active" id="cvtAll" onclick="switchCvTab('all')">
+        <i class="fa-solid fa-users"></i> All <span class="cv-tab-badge" id="cvBadgeAll">—</span>
+      </button>
+      <button class="cv-tab" id="cvtCheckin" onclick="switchCvTab('checkin')">
+        <i class="fa-solid fa-clipboard-check"></i> In <span class="cv-tab-badge green" id="cvBadgeCheckin">0</span>
+      </button>
+      <button class="cv-tab" id="cvtEligible" onclick="switchCvTab('eligible')">
+        <i class="fa-solid fa-ranking-star"></i> Eligible <span class="cv-tab-badge" id="cvBadgeEligible">—</span>
+      </button>
+    </div>
+    <div class="cv-content">
+      <!-- All Students tab -->
+      <div id="cvPanelAll">
+        <div class="search-bar-wrap">
+          <div class="search-bar-inner">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="search" id="cvSearch" class="search-bar" placeholder="Search students..." oninput="filterStudents(this.value)" />
+          </div>
+        </div>
+        <div id="cvStudentList"></div>
+      </div>
+      <!-- Checked In tab -->
+      <div id="cvPanelCheckin" style="display:none">
+        <div id="cvCheckedInList"></div>
+      </div>
+      <!-- Eligible tab -->
+      <div id="cvPanelEligible" style="display:none">
+        <div id="cvEligibleList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+
+  <nav class="staff-nav">
+    <button class="nav-btn active" id="navToday" onclick="switchTab('Today')">
+      <i class="fa-solid fa-sun"></i>Today
+    </button>
+    <button class="nav-btn" id="navClasses" onclick="switchTab('Classes')">
+      <i class="fa-solid fa-calendar-week"></i>Classes
+    </button>
+    <button class="nav-btn" id="navSessions" onclick="switchTab('Sessions')">
+      <i class="fa-solid fa-person-chalkboard"></i>Sessions
+    </button>
+    <button class="nav-btn" id="navTests" onclick="switchTab('Tests')">
+      <span class="nav-badge" id="testsBadge" style="display:none">0</span>
+      <i class="fa-solid fa-ranking-star"></i>Tests
+    </button>
+    <button class="nav-btn" id="navProfile" onclick="switchTab('Profile')">
+      <i class="fa-solid fa-circle-user"></i>Profile
+    </button>
+  </nav>
+
+</div><!-- end staffApp -->
+
+<!-- ════════════════════════════════════════════
+     PROMOTE MODAL
+════════════════════════════════════════════ -->
+
+<div id="promoteModal">
+  <div class="promote-sheet">
+    <div class="section-head">Belt Promotion</div>
+    <div class="promote-title" id="promoteStudentName">Student Name</div>
+    <div class="promote-belt-vis">
+      <div class="belt-swatch" id="promoteFromSwatch"></div>
+      <span style="color:var(--muted)">→</span>
+      <div class="belt-swatch" id="promoteToSwatch"></div>
+      <div>
+        <div style="font-size:0.88rem;color:var(--white)" id="promoteToName"></div>
+        <div style="font-size:0.72rem;color:var(--muted)" id="promoteFromName"></div>
+      </div>
+    </div>
+    <div class="promote-sub" id="promoteSub"></div>
+    <div class="promote-btns">
+      <button class="btn-cancel-promote" onclick="closePromoteModal()">Cancel</button>
+      <button class="btn-confirm-promote" id="promoteConfirmBtn" onclick="confirmPromotion()">
+        <i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Confirm Promotion
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MEMBERSHIP ALERTS MODAL
+════════════════════════════════════════════ -->
+
+<div id="alertsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.5rem;animation:slideUp 0.25s ease;max-height:70vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-shrink:0">
+      <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-triangle-exclamation"></i> Membership Alerts</div>
+      <button onclick="document.getElementById('alertsModal').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.1rem;padding:0.25rem"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="overflow-y:auto;" id="alertsModalList"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     BOOK SESSION MODAL (simplified)
+════════════════════════════════════════════ -->
+
+<div id="bookSessionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.75rem 1.5rem;animation:slideUp 0.25s ease;">
+    <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem">Book a Session</div>
+    <div style="margin-bottom:0.85rem">
+      <label style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.35rem">Date</label>
+      <input type="date" id="bookDate" class="input-field" style="margin-bottom:0" />
+    </div>
+    <div style="margin-bottom:0.85rem">
+      <label style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.35rem">Time</label>
+      <input type="time" id="bookTime" class="input-field" style="margin-bottom:0" />
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.35rem">Notes</label>
+      <input type="text" id="bookNotes" class="input-field" placeholder="Private lesson, open mat..." style="margin-bottom:0" />
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button onclick="document.getElementById('bookSessionModal').style.display='none'" style="flex:0 0 auto;height:var(--tap);padding:0 1.25rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;">Cancel</button>
+      <button onclick="saveBookedSession()" style="flex:1;height:var(--tap);background:var(--gold);color:var(--black);border:none;font-family:var(--font-display);font-size:0.82rem;letter-spacing:0.14em;text-transform:uppercase;"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Book Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+
+<div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastText">Done</span></div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────────────────────
+var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+var STAFF_URL='https://nmao1.github.io/NMAO-Membership-Platform/staff.html';
+var sb=supabase.createClient(SURL,SKEY);
+var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var INSTR_COLORS=['#C9A84C','#5A9A6A','#5A7A9A','#9A7A5A','#7A5A9A','#9A5A7A','#5A9A9A'];
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+var currentInstructor=null;
+var schoolData={};
+var allStudents=[];        // all students for school, loaded once
+var allBeltLevels=[];      // all belt levels, loaded once
+var allInstructors=[];     // for color-coding sessions board
+var allClasses=[];         // all active classes
+var classSessionId=null;   // current class session being viewed
+var currentClassData=null; // class data for the active view
+var checkedInIds=new Set();// student IDs checked into current session
+var cvActiveTab='all';
+var promoteData=null;      // { student, fromLevel, toLevel }
+var membershipAlerts=[];   // students with inactive memberships who checked in today
+
+// ─────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────
+async function init(){
+  try{
+    await loadSchoolBranding();
+    var hash=window.location.hash;
+    if(hash&&hash.includes('access_token')){
+      var res=await sb.auth.getSession();
+      if(res.data&&res.data.session){
+        window.history.replaceState(null,'',window.location.pathname);
+        await startStaffApp(res.data.session.user);
+        return;
+      }
+    }
+    var r=await sb.auth.getSession();
+    if(r.data&&r.data.session){
+      await startStaffApp(r.data.session.user);
+    }else{
+      document.getElementById('loginScreen').style.display='flex';
+    }
+  }catch(e){
+    console.error('init error:',e);
+    document.getElementById('loginScreen').style.display='flex';
+  }
+}
+
+async function loadSchoolBranding(){
+  try{
+    var r=await sb.from('schools').select('name,color,bg_color,logo_url').eq('id',SID).single();
+    if(!r.data)return;
+    schoolData=r.data;
+    if(r.data.color)document.documentElement.style.setProperty('--gold',r.data.color);
+    var sn=r.data.name||'NMAO';
+    document.getElementById('staffSchoolName').textContent=sn;
+    document.getElementById('loginMark').textContent=sn;
+    document.title=sn+' — Staff App';
+    if(r.data.logo_url){
+      var img=document.getElementById('staffLogoImg');
+      img.src=r.data.logo_url;img.style.display='block';
+      document.getElementById('staffSchoolName').style.display='none';
+    }
+  }catch(e){}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  AUTH
+// ─────────────────────────────────────────────────────────────
+async function sendStaffLink(){
+  var email=document.getElementById('loginEmail').value.trim();
+  if(!email||!email.includes('@')){setLoginMsg('Enter a valid email.','er');return;}
+  var btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Sending...';
+  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
+  if(r.error){setLoginMsg(r.error.message,'er');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link';}
+  else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
+}
+function setLoginMsg(t,c){var el=document.getElementById('loginMsg');el.textContent=t;el.className='login-msg '+(c||'');}
+
+async function startStaffApp(user){
+  // Verify instructor record
+  var r=await sb.from('instructors').select('*').eq('school_id',SID).eq('email',user.email).eq('active',true).maybeSingle();
+  if(r.error||!r.data){
+    document.getElementById('loginScreen').style.display='flex';
+    setLoginMsg('No instructor account found for '+user.email,'er');
+    return;
+  }
+  currentInstructor=r.data;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('staffApp').style.display='flex';
+  await loadCoreData();
+  buildTodayTab();
+  buildProfileTab();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CORE DATA — loaded once, used everywhere
+// ─────────────────────────────────────────────────────────────
+async function loadCoreData(){
+  var [studR,classR,instrR,levR]=await Promise.all([
+    sb.from('students').select('*, programs(name,color), memberships(name,billing_type,price)').eq('school_id',SID).in('status',['active','trial','paused']).order('first_name'),
+    sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time'),
+    sb.from('instructors').select('id,first_name,last_name,name,email,active').eq('school_id',SID).eq('active',true),
+    sb.from('belt_levels').select('*').order('sort_order')
+  ]);
+  allStudents=studR.data||[];
+  allClasses=classR.data||[];
+  allInstructors=instrR.data||[];
+  allBeltLevels=levR.data||[];
+  // Assign color per instructor
+  allInstructors.forEach(function(ins,i){ins._color=INSTR_COLORS[i%INSTR_COLORS.length];});
+}
+
+// ─────────────────────────────────────────────────────────────
+//  TODAY TAB
+// ─────────────────────────────────────────────────────────────
+async function buildTodayTab(){
+  var now=new Date();
+  var instrName=getInstrName(currentInstructor);
+  var hour=now.getHours();
+  var greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  document.getElementById('todayGreeting').textContent=greet+', '+instrName;
+  document.getElementById('todayDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  var today=DAYS[now.getDay()];
+  var todayStr=now.toISOString().split('T')[0];
+
+  // Today's classes
+  var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
+  document.getElementById('qsClasses').textContent=todayClasses.length;
+
+  // Enrolled count total
+  var totalExpected=0;
+  todayClasses.forEach(function(c){totalExpected+=c.enrolled_count||0;});
+  document.getElementById('qsExpected').textContent=totalExpected||'—';
+
+  // Total checked in today
+  var attR=await sb.from('class_attendance').select('student_id',{count:'exact',head:false}).eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
+  var checkedInToday=(attR.data||[]).length;
+  document.getElementById('qsCheckedIn').textContent=checkedInToday||0;
+
+  // Membership alerts — students who checked in with inactive/expired memberships
+  await loadMembershipAlerts(attR.data||[]);
+
+  // Render class list
+  var el=document.getElementById('todayClassList');
+  if(!todayClasses.length){
+    el.innerHTML='<div class="no-classes"><i class="fa-regular fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-style:italic;color:var(--muted)">No classes scheduled today.</div></div>';
+    return;
+  }
+
+  // Load today's sessions to get attendance counts
+  var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
+  var sessMap={};(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;});
+
+  el.innerHTML=todayClasses.map(function(c){
+    var cn=c.name||c.title||'Class';
+    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+    var hasSess=!!sessMap[c.id];
+    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">' +
+      '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>' +
+      '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
+      '<div class="class-row-meta">'+
+        (hasSess?'<span style="font-size:0.62rem;color:#7DBD7D;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-circle" style="font-size:0.45rem;margin-right:0.3rem"></i>Active</span>':'<span style="font-size:0.62rem;color:var(--muted)">Not started</span>')+
+        '<i class="fa-solid fa-chevron-right class-chevron"></i>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  // Update profile stats
+  document.getElementById('psTodayClasses').textContent=todayClasses.length;
+}
+
+async function loadMembershipAlerts(todayAtt){
+  if(!todayAtt.length)return;
+  var todayIds=new Set(todayAtt.map(function(a){return a.student_id;}));
+  membershipAlerts=allStudents.filter(function(s){
+    return todayIds.has(s.id)&&s.status!=='active'&&s.status!=='trial';
+  });
+  if(membershipAlerts.length){
+    var bar=document.getElementById('membershipAlertBar');
+    bar.style.display='block';
+    document.getElementById('membershipAlertText').textContent=membershipAlerts.length+' student'+(membershipAlerts.length!==1?'s':'')+' with inactive membership checked in today';
+    document.getElementById('notifDot').style.display='block';
+    document.getElementById('notifBtn').classList.add('has-alerts');
+  }
+}
+
+function toggleAlerts(){showMembershipAlerts();}
+
+function showMembershipAlerts(){
+  if(!membershipAlerts.length){showToast('No membership alerts today','ok');return;}
+  var listEl=document.getElementById('alertsModalList');
+  listEl.innerHTML=membershipAlerts.map(function(s){
+    var cn=s.programs?s.programs.name:'—';
+    var st=s.status||'unknown';
+    return '<div style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">'+
+      '<div style="width:40px;height:40px;border-radius:50%;background:var(--amber-bg);border:1px solid var(--amber-border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.85rem;color:var(--amber);flex-shrink:0">'+
+        s.first_name[0]+s.last_name[0]+
+      '</div>'+
+      '<div style="flex:1"><div style="font-size:0.95rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div>'+
+      '<div style="font-size:0.75rem;color:var(--muted)">'+cn+'</div></div>'+
+      '<span style="font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;background:var(--red-bg);border:1px solid var(--red-border);color:#C07070">'+st+'</span>'+
+    '</div>';
+  }).join('');
+  document.getElementById('alertsModal').style.display='flex';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CLASSES TAB
+// ─────────────────────────────────────────────────────────────
+function buildClassesTab(){
+  var el=document.getElementById('classesWeekList');
+  var now=new Date();var todayStr=now.toISOString().split('T')[0];
+  var html='';var hasAny=false;
+
+  for(var i=0;i<7;i++){
+    var d=new Date(now);d.setDate(now.getDate()+i);
+    var dateStr=d.toISOString().split('T')[0];
+    var dayName=DAYS[d.getDay()];
+    var isToday=i===0;
+    var dayLabel=isToday?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+
+    var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    if(!dayClasses.length)continue;
+    hasAny=true;
+    html+='<div class="day-block"><div class="day-label">'+dayLabel+'</div>';
+    dayClasses.forEach(function(c){
+      var cn=c.name||c.title||'Class';var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+      html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">' +
+        '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+
+        '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
+        '<div class="class-row-meta"><i class="fa-solid fa-chevron-right class-chevron"></i></div>'+
+      '</div>';
+    });
+    html+='</div>';
+  }
+  if(!hasAny)html='<div class="no-classes"><i class="fa-regular fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-style:italic;color:var(--muted)">No classes scheduled this week.</div></div>';
+  el.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CLASS VIEW — 3-part (All | Checked In | Eligible)
+// ─────────────────────────────────────────────────────────────
+async function openClassView(classId,dateStr){
+  currentClassData=allClasses.find(function(c){return c.id===classId;})||null;
+  if(!currentClassData)return;
+  classSessionId=null;
+  checkedInIds=new Set();
+
+  // Show overlay
+  document.getElementById('classView').classList.add('open');
+  var cn=currentClassData.name||currentClassData.title||'Class';
+  document.getElementById('cvClassName').textContent=cn;
+  document.getElementById('cvClassTime').textContent=fmtTime(currentClassData.start_time)+(currentClassData.end_time?' — '+fmtTime(currentClassData.end_time):'');
+
+  // Show loading in student list
+  document.getElementById('cvStudentList').innerHTML='<div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div>';
+  document.getElementById('cvCheckedInList').innerHTML='<div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i></div>';
+  document.getElementById('cvEligibleList').innerHTML='<div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i></div>';
+
+  // Clear search
+  document.getElementById('cvSearch').value='';
+
+  // Load or create class session
+  var sr=await sb.from('class_sessions').select('id').eq('class_id',classId).eq('session_date',dateStr).limit(1);
+  if(sr.data&&sr.data.length){
+    classSessionId=sr.data[0].id;
+  }
+
+  // Load attendance if session exists
+  if(classSessionId){
+    var ar=await sb.from('class_attendance').select('student_id').eq('session_id',classSessionId);
+    (ar.data||[]).forEach(function(a){checkedInIds.add(a.student_id);});
+  }
+
+  // Store dateStr for check-in
+  currentClassData._dateStr=dateStr;
+
+  // Render all three tabs
+  renderCvAllStudents('');
+  renderCvCheckedIn();
+  renderCvEligible();
+}
+
+function closeClassView(){
+  document.getElementById('classView').classList.remove('open');
+  // Re-render today stats
+  if(currentClassData)buildTodayTab();
+}
+
+// ── All Students ──
+function renderCvAllStudents(searchTerm){
+  var q=searchTerm.toLowerCase().trim();
+  // Sort: eligible first, then by name
+  var sorted=[].concat(allStudents).sort(function(a,b){
+    var aElig=isEligible(a)?-1:0;var bElig=isEligible(b)?-1:0;
+    if(aElig!==bElig)return aElig-bElig;
+    return (a.first_name+a.last_name)<(b.first_name+b.last_name)?-1:1;
+  });
+  if(q)sorted=sorted.filter(function(s){return (s.first_name+' '+s.last_name).toLowerCase().includes(q);});
+
+  document.getElementById('cvBadgeAll').textContent=sorted.length;
+
+  var el=document.getElementById('cvStudentList');
+  if(!sorted.length){
+    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><div class="empty-state-text">No students found.</div></div>';
+    return;
+  }
+  el.innerHTML=sorted.map(function(s){return renderStudentRow(s,true);}).join('');
+}
+
+// ── Checked In ──
+function renderCvCheckedIn(){
+  var checked=allStudents.filter(function(s){return checkedInIds.has(s.id);});
+  document.getElementById('cvBadgeCheckin').textContent=checkedInIds.size;
+  var el=document.getElementById('cvCheckedInList');
+  if(!checked.length){
+    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-clipboard"></i><div class="empty-state-text">No students checked in yet.</div></div>';
+    return;
+  }
+  el.innerHTML=checked.map(function(s){return renderStudentRow(s,false);}).join('');
+}
+
+// ── Eligible for Promotion ──
+function renderCvEligible(){
+  var eligible=allStudents.filter(isEligible);
+  document.getElementById('cvBadgeEligible').textContent=eligible.length;
+  var el=document.getElementById('cvEligibleList');
+  if(!eligible.length){
+    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No students currently eligible for promotion.</div></div>';
+    return;
+  }
+  var html='<div style="padding:0.75rem;background:var(--gold-bg);border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--muted);display:flex;align-items:center;gap:0.5rem"><i class="fa-solid fa-circle-info" style="color:var(--gold)"></i>These students have met all requirements for their next belt.</div>';
+  html+=eligible.map(function(s){return renderEligibleRow(s);}).join('');
+  el.innerHTML=html;
+}
+
+function renderStudentRow(s,showCheckin){
+  var ini=(s.first_name[0]+(s.last_name?s.last_name[0]:'')).toUpperCase();
+  var isIn=checkedInIds.has(s.id);
+  var elig=isEligible(s);
+  var beltLevel=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+  var beltHtml='';
+  if(beltLevel){
+    var tc=isLight(beltLevel.color_hex)?'#111':'#fff';
+    beltHtml='<span class="belt-chip" style="background:'+beltLevel.color_hex+';color:'+tc+'">'+beltLevel.name+'</span>';
+  }
+  var st=s.status||'trial';
+  var memClass=st==='active'?'mem-active':st==='trial'?'mem-trial':'mem-warn';
+  var memLabel=st==='active'?'Active':st==='trial'?'Trial':st.charAt(0).toUpperCase()+st.slice(1);
+  var eligBadge=elig?'<span class="eligible-star" title="Eligible for promotion"><i class="fa-solid fa-star"></i></span>':'';
+  var actionHtml='';
+  if(showCheckin){
+    actionHtml='<div class="student-action"><button class="btn-checkin'+(isIn?' checked':'')+'" id="chkbtn-'+s.id+'" onclick="toggleCheckin(\''+s.id+'\',event)">'+(isIn?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>In':'Check In')+'</button></div>';
+  }else{
+    actionHtml='<div class="student-action"><button class="btn-checkin checked" onclick="toggleCheckin(\''+s.id+'\',event)" id="chkbtn-'+s.id+'"><i class="fa-solid fa-check" style="margin-right:0.3rem"></i>In</button></div>';
+  }
+  return '<div class="student-row'+(isIn?' checked-in':'')+'" id="srow-'+s.id+'">'+
+    '<div class="student-avatar">'+
+      (s.photo_url?'<img src="'+s.photo_url+'" alt="'+ini+'" />':ini)+
+    '</div>'+
+    '<div class="student-info">'+
+      '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
+      '<div class="student-meta">'+beltHtml+'<span class="mem-chip '+memClass+'">'+memLabel+'</span>'+eligBadge+'</div>'+
+    '</div>'+
+    actionHtml+
+  '</div>';
+}
+
+function renderEligibleRow(s){
+  var ini=(s.first_name[0]+(s.last_name?s.last_name[0]:'')).toUpperCase();
+  var beltLevel=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+  var idx=beltLevel?allBeltLevels.indexOf(beltLevel):-1;
+  var nextLevel=allBeltLevels[idx+1]||null;
+  var fromName=beltLevel?beltLevel.name:'Starting';
+  var toName=nextLevel?nextLevel.name:'—';
+  var fromColor=beltLevel?beltLevel.color_hex:'#888';
+  var toColor=nextLevel?nextLevel.color_hex:'#888';
+  return '<div class="student-row" id="erow-'+s.id+'">'+
+    '<div class="student-avatar">'+
+      (s.photo_url?'<img src="'+s.photo_url+'" alt="'+ini+'" />':ini)+
+    '</div>'+
+    '<div class="student-info">'+
+      '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
+      '<div class="student-meta">'+
+        '<span style="display:flex;align-items:center;gap:0.3rem">'+
+          '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+fromColor+'"></span>'+
+          '<i class="fa-solid fa-arrow-right" style="font-size:0.65rem;color:var(--muted)"></i>'+
+          '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+toColor+'"></span>'+
+          '<span style="font-size:0.75rem;color:var(--muted2)">'+fromName+' → '+toName+'</span>'+
+        '</span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="student-action"><button class="btn-promote" onclick="openPromoteModal(\''+s.id+'\')">Promote</button></div>'+
+  '</div>';
+}
+
+function filterStudents(q){renderCvAllStudents(q);}
+
+function switchCvTab(tab){
+  cvActiveTab=tab;
+  var tabs=['all','checkin','eligible'];
+  tabs.forEach(function(t){
+    var btn=document.getElementById('cvt'+t.charAt(0).toUpperCase()+t.slice(1));
+    var panel=document.getElementById('cvPanel'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(btn)btn.classList.toggle('active',t===tab);
+    if(panel)panel.style.display=t===tab?'block':'none';
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CHECK IN
+// ─────────────────────────────────────────────────────────────
+async function toggleCheckin(studentId,event){
+  event.stopPropagation();
+  var btn=document.getElementById('chkbtn-'+studentId);
+  if(btn){btn.classList.add('loading');btn.disabled=true;}
+
+  var isIn=checkedInIds.has(studentId);
+
+  if(isIn){
+    // Undo check-in
+    if(classSessionId){
+      await sb.from('class_attendance').delete().eq('session_id',classSessionId).eq('student_id',studentId);
+    }
+    checkedInIds.delete(studentId);
+    showToast('Check-in removed','warn');
+  }else{
+    // Get/create session
+    if(!classSessionId){
+      var cr=await sb.from('class_sessions').insert({
+        class_id:currentClassData.id,school_id:SID,
+        session_date:currentClassData._dateStr,status:'scheduled'
+      }).select().single();
+      if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
+      classSessionId=cr.data.id;
+    }
+    // Insert attendance
+    var ir=await sb.from('class_attendance').insert({
+      session_id:classSessionId,student_id:studentId,
+      school_id:SID,status:'present',noted_at:new Date().toISOString()
+    });
+    if(ir.error&&!ir.error.message.includes('duplicate')){
+      showToast('Error: '+ir.error.message,'err');
+      if(btn){btn.classList.remove('loading');btn.disabled=false;}return;
+    }
+    checkedInIds.add(studentId);
+
+    // Check for membership alert
+    var student=allStudents.find(function(s){return s.id===studentId;});
+    if(student&&student.status!=='active'&&student.status!=='trial'){
+      if(!membershipAlerts.find(function(s){return s.id===studentId;})){
+        membershipAlerts.push(student);
+        document.getElementById('membershipAlertBar').style.display='block';
+        document.getElementById('membershipAlertText').textContent=membershipAlerts.length+' student'+(membershipAlerts.length!==1?'s':'')+' with inactive membership';
+        document.getElementById('notifDot').style.display='block';
+        document.getElementById('notifBtn').classList.add('has-alerts');
+      }
+    }
+
+    showToast(student?student.first_name+' checked in':'Checked in','ok');
+  }
+
+  // Update UI in all tabs
+  var row=document.getElementById('srow-'+studentId);
+  if(row){
+    row.className='student-row'+(checkedInIds.has(studentId)?' checked-in':'');
+    // Rebuild just the action button inline
+    var newBtn=row.querySelector('.btn-checkin');
+    if(newBtn){
+      var nowIn=checkedInIds.has(studentId);
+      newBtn.className='btn-checkin'+(nowIn?' checked':'');
+      newBtn.innerHTML=nowIn?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>In':'Check In';
+      newBtn.disabled=false;
+    }
+  }
+
+  // Rebuild checked-in tab
+  renderCvCheckedIn();
+  document.getElementById('qsCheckedIn').textContent=checkedInIds.size;
+
+  if(btn&&!row){btn.classList.remove('loading');btn.disabled=false;}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  BELT PROMOTION
+// ─────────────────────────────────────────────────────────────
+function isEligible(s){
+  return s.status!=='cancelled'&&s.skills_completed>=s.skills_total&&s.current_belt!=='black';
+}
+
+function openPromoteModal(studentId){
+  var student=allStudents.find(function(s){return s.id===studentId;});
+  if(!student)return;
+  var beltLevel=allBeltLevels.find(function(l){return l.id===student.current_belt_id;})||null;
+  var idx=beltLevel?allBeltLevels.indexOf(beltLevel):-1;
+  var nextLevel=allBeltLevels[idx+1]||null;
+  if(!nextLevel){showToast('Already at highest rank','warn');return;}
+  promoteData={student:student,fromLevel:beltLevel,toLevel:nextLevel};
+  document.getElementById('promoteStudentName').textContent=student.first_name+' '+student.last_name;
+  document.getElementById('promoteFromSwatch').style.background=beltLevel?beltLevel.color_hex:'#888';
+  document.getElementById('promoteToSwatch').style.background=nextLevel.color_hex;
+  document.getElementById('promoteFromName').textContent=(beltLevel?beltLevel.name:'Starting')+' Belt';
+  document.getElementById('promoteToName').textContent=nextLevel.name+' Belt';
+  document.getElementById('promoteSub').textContent='This will record a promotion and update '+student.first_name+' to '+nextLevel.name+' belt.';
+  document.getElementById('promoteModal').classList.add('open');
+}
+
+function closePromoteModal(){document.getElementById('promoteModal').classList.remove('open');}
+
+async function confirmPromotion(){
+  if(!promoteData)return;
+  var btn=document.getElementById('promoteConfirmBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.4rem"></i>Promoting...';
+  var s=promoteData.student;var fromL=promoteData.fromLevel;var toL=promoteData.toLevel;
+  var instrName=getInstrName(currentInstructor);
+  var [ur,pr]=await Promise.all([
+    sb.from('students').update({current_belt_id:toL.id,skills_completed:0}).eq('id',s.id),
+    sb.from('belt_promotions').insert({
+      school_id:SID,student_id:s.id,
+      belt_from:fromL?fromL.name:'Starting',belt_to:toL.name,
+      promoted_at:new Date().toISOString(),
+      promoted_by_name:instrName,
+    })
+  ]);
+  if(ur.error){showToast('Error: '+ur.error.message,'err');}
+  else{
+    // Update local state
+    s.current_belt_id=toL.id;s.skills_completed=0;
+    closePromoteModal();
+    showToast(s.first_name+' promoted to '+toL.name+'!','ok');
+    renderCvAllStudents(document.getElementById('cvSearch').value);
+    renderCvEligible();
+    renderCvCheckedIn();
+  }
+  btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Confirm Promotion';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SESSIONS TAB
+// ─────────────────────────────────────────────────────────────
+async function buildSessionsTab(){
+  var el=document.getElementById('sessionsBoard');
+  try{
+    // Try to load sessions from today forward
+    var r=await sb.from('sessions').select('*, session_types(name,color), instructors(first_name,last_name,name)').eq('school_id',SID).gte('session_date',new Date().toISOString().split('T')[0]).order('session_date').order('start_time').limit(30);
+    var sessions=r.data||[];
+    if(!sessions.length){
+      el.innerHTML='<div class="empty-state"><i class="fa-solid fa-calendar-plus"></i><div class="empty-state-text">No sessions booked yet.</div><button onclick="openBookSession()" style="margin-top:1rem;height:var(--tap);padding:0 1.5rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-plus" style="margin-right:0.4rem"></i>Book First Session</button></div>';
+      return;
+    }
+    el.innerHTML=sessions.map(function(sess){
+      var typeName=sess.session_types?sess.session_types.name:'Session';
+      var typeColor=sess.session_types?sess.session_types.color:INSTR_COLORS[0];
+      var instrObj=sess.instructors;var instrName=instrObj?getInstrName(instrObj):'—';
+      var dt=new Date(sess.session_date+'T00:00:00');
+      var dateLabel=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      return '<div class="session-slot booked" style="border-left-color:'+typeColor+'">'+
+        '<div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">'+dateLabel+'</div>'+
+        '<div class="session-slot-time">'+fmtTime(sess.start_time)+(sess.end_time?' — '+fmtTime(sess.end_time):'')+'</div>'+
+        '<div class="session-slot-type"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+typeColor+';margin-right:0.4rem"></span>'+typeName+'</div>'+
+        '<div class="session-slot-instr"><i class="fa-solid fa-user-tie" style="margin-right:0.35rem;color:var(--gold);font-size:0.75rem"></i>'+instrName+'</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){
+    // sessions table may not exist
+    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-calendar-week"></i><div class="empty-state-text">Sessions board not configured yet.</div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">Ask your admin to set up sessions in the dashboard.</div></div>';
+  }
+}
+
+function openBookSession(){
+  var now=new Date();
+  document.getElementById('bookDate').value=now.toISOString().split('T')[0];
+  document.getElementById('bookTime').value='10:00';
+  document.getElementById('bookNotes').value='';
+  document.getElementById('bookSessionModal').style.display='flex';
+}
+
+async function saveBookedSession(){
+  var date=document.getElementById('bookDate').value;
+  var time=document.getElementById('bookTime').value;
+  var notes=document.getElementById('bookNotes').value;
+  if(!date||!time){showToast('Please fill in date and time','warn');return;}
+  try{
+    await sb.from('sessions').insert({
+      school_id:SID,session_date:date,start_time:time,
+      instructor_id:currentInstructor.id,notes:notes,status:'scheduled'
+    });
+    document.getElementById('bookSessionModal').style.display='none';
+    showToast('Session booked','ok');
+    buildSessionsTab();
+  }catch(e){
+    showToast('Could not book: '+e.message,'err');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  TESTS TAB
+// ─────────────────────────────────────────────────────────────
+async function buildTestsTab(){
+  var el=document.getElementById('testsList');
+  try{
+    var r=await sb.from('belt_tests').select('*, programs(name), belt_test_students(*, students(first_name,last_name,current_belt_id))').eq('school_id',SID).gte('test_date',new Date().toISOString().split('T')[0]).order('test_date').limit(10);
+    var tests=r.data||[];
+    if(!tests.length){
+      el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No belt tests scheduled.</div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">Belt tests are created in the dashboard.</div></div>';
+      document.getElementById('testsBadge').style.display='none';
+      return;
+    }
+    document.getElementById('testsBadge').textContent=tests.length;
+    document.getElementById('testsBadge').style.display='block';
+    el.innerHTML=tests.map(function(test){
+      var dt=new Date(test.test_date+'T00:00:00');var dateLabel=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+      var prog=test.programs?test.programs.name:'All Programs';
+      var students=test.belt_test_students||[];
+      return '<div class="test-card">'+
+        '<div class="test-card-header"><div class="test-date">'+dateLabel+'</div><div class="test-prog">'+prog+'</div></div>'+
+        (students.length?students.map(function(ts){
+          var s=ts.students;if(!s)return '';
+          var bl=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+          var beltName=bl?bl.name:'—';
+          var isPassed=ts.result==='passed';var isHeld=ts.result==='held';
+          return '<div class="test-student-row">'+
+            '<div style="flex:1"><div class="test-student-name">'+s.first_name+' '+s.last_name+'</div>'+
+            '<div class="test-student-belt">'+beltName+' Belt</div></div>'+
+            '<div class="test-result-btns">'+
+              '<button class="btn-pass'+(isPassed?' selected':'')+'" onclick="recordTestResult(\''+ts.id+'\',\'passed\',this)">Pass</button>'+
+              '<button class="btn-hold'+(isHeld?' selected':'')+'" onclick="recordTestResult(\''+ts.id+'\',\'held\',this)">Hold</button>'+
+            '</div></div>';
+        }).join(''):'<div style="font-size:0.85rem;color:var(--muted);padding:0.5rem 0;font-style:italic">No students assigned to this test.</div>')+
+      '</div>';
+    }).join('');
+  }catch(e){
+    // belt_tests may not exist yet
+    el.innerHTML='<div class="tests-no-setup"><i class="fa-solid fa-ranking-star" style="font-size:2rem;opacity:0.2;display:block;margin-bottom:1rem"></i><div style="font-size:0.88rem;color:var(--muted)">Belt testing not configured yet.</div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">Belt tests are scheduled from the admin dashboard.</div></div>';
+  }
+}
+
+async function recordTestResult(testStudentId,result,btn){
+  btn.disabled=true;
+  var r=await sb.from('belt_test_students').update({result:result}).eq('id',testStudentId);
+  if(r.error){showToast('Error saving result','err');btn.disabled=false;return;}
+  // Update button states
+  var row=btn.closest('.test-student-row');
+  row.querySelectorAll('.btn-pass,.btn-hold').forEach(function(b){b.classList.remove('selected');b.disabled=false;});
+  btn.classList.add('selected');
+  showToast(result==='passed'?'Passed!':'Held for next test','ok');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  PROFILE TAB
+// ─────────────────────────────────────────────────────────────
+async function buildProfileTab(){
+  var s=currentInstructor;
+  var name=getInstrName(s);
+  var ini=(s.first_name?s.first_name[0]:s.name?s.name[0]:'I').toUpperCase();
+  var av=document.getElementById('profileAvatar');
+  if(s.photo_url)av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  else av.textContent=ini;
+  document.getElementById('profileName').textContent=name;
+  document.getElementById('profileTitle').textContent=s.title||'Instructor';
+  var certEl=document.getElementById('profileCert');
+  var cs=s.nmao_cert_status||'uncertified';
+  certEl.textContent=cs==='certified'?'NMAO Certified':cs==='pending'?'Certification Pending':'Not Certified';
+  certEl.className='profile-cert cert-'+cs;
+
+  // Stats
+  var todayDow=DAYS[new Date().getDay()];
+  var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(todayDow);}).length;
+  document.getElementById('psTodayClasses').textContent=todayClasses;
+  document.getElementById('psStudents').textContent=allStudents.filter(function(st){return st.status==='active';}).length;
+
+  // Week count
+  var now=new Date();var weekStart=new Date(now);weekStart.setDate(now.getDate()-now.getDay());
+  var weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
+  var wkCount=0;
+  DAYS.forEach(function(d,i){if(i>=weekStart.getDay()&&i<=weekEnd.getDay())allClasses.forEach(function(c){if(c.days_of_week&&c.days_of_week.includes(d))wkCount++;});});
+  document.getElementById('psThisWeek').textContent=wkCount;
+
+  document.getElementById('profileInfoCard').innerHTML=[
+    '<div class="profile-info-row"><div class="profile-info-label">Email</div><div class="profile-info-value">'+(s.email||'—')+'</div></div>',
+    '<div class="profile-info-row"><div class="profile-info-label">Role</div><div class="profile-info-value">'+(s.role?s.role.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}):'Instructor')+'</div></div>',
+    s.nmao_cert_expiry?'<div class="profile-info-row"><div class="profile-info-label">Cert Expiry</div><div class="profile-info-value">'+new Date(s.nmao_cert_expiry+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</div></div>':'',
+    '<div class="profile-info-row"><div class="profile-info-label">School</div><div class="profile-info-value">'+(schoolData.name||'—')+'</div></div>'
+  ].join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────────────────────
+function switchTab(name){
+  var tabs=['Today','Classes','Sessions','Tests','Profile'];
+  tabs.forEach(function(t){
+    var panel=document.getElementById('tab'+t);var btn=document.getElementById('nav'+t);
+    if(panel)panel.classList.toggle('active',t===name);
+    if(btn)btn.classList.toggle('active',t===name);
+  });
+  // Lazy-load tabs
+  if(name==='Classes')buildClassesTab();
+  if(name==='Sessions')buildSessionsTab();
+  if(name==='Tests')buildTestsTab();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  UTILITIES
+// ─────────────────────────────────────────────────────────────
+function getInstrName(i){
+  if(!i)return 'Instructor';
+  if(i.first_name)return i.first_name+(i.last_name?' '+i.last_name:'');
+  return i.name||'Instructor';
+}
+
+function fmtTime(t){
+  if(!t)return'';
+  var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];
+  return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');
+}
+
+function isLight(hex){
+  if(!hex||hex.length<7)return false;
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return(r*299+g*587+b*114)/1000>128;
+}
+
+var toastTimer=null;
+function showToast(msg,type){
+  var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
+  document.getElementById('toastText').textContent=msg;
+  t.className='show toast-'+(type||'ok');
+  ic.className='fa-solid '+(type==='ok'?'fa-circle-check':type==='err'?'fa-circle-exclamation':'fa-triangle-exclamation');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+async function staffSignOut(){await sb.auth.signOut();window.location.reload();}
+
+// ─────────────────────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────────────────────
+init();
+</script>
+
+</body>
+</html>
