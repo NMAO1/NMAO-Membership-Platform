@@ -2235,7 +2235,50 @@ function renderInstructors(){
 function openAddInstructor(){document.getElementById('addInstructorTitle').textContent='Add Instructor';document.getElementById('instrEditId').value='';document.getElementById('instrFirst').value='';document.getElementById('instrLast').value='';document.getElementById('instrEmail').value='';document.getElementById('instrNotes').value='';document.getElementById('instructorMsg').textContent='';document.getElementById('addInstructorModal').classList.add('active');}
 function openEditInstructor(iid){var i=allInstructors.find(function(x){return x.id===iid;});if(!i)return;document.getElementById('addInstructorTitle').textContent='Edit Instructor';document.getElementById('instrEditId').value=i.id;document.getElementById('instrFirst').value=i.first_name||'';document.getElementById('instrLast').value=i.last_name||'';document.getElementById('instrEmail').value=i.email||'';document.getElementById('instrNotes').value=i.notes||'';document.getElementById('instructorMsg').textContent='';document.getElementById('addInstructorModal').classList.add('active');}
 function closeAddInstructor(){document.getElementById('addInstructorModal').classList.remove('active');}
-async function saveInstructor(){var eid=document.getElementById('instrEditId').value;var first=document.getElementById('instrFirst').value.trim();var last=document.getElementById('instrLast').value.trim();if(!first||!last){setMsg('instructorMsg','First and last name required.','error');return;}setMsg('instructorMsg','Saving...','');var payload={first_name:first,last_name:last,email:document.getElementById('instrEmail').value.trim(),active:true};var r;if(eid){r=await sb.from('instructors').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('instructors').insert(payload);}if(r.error){setMsg('instructorMsg',r.error.message,'error');}else{setMsg('instructorMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadInstructors();setTimeout(closeAddInstructor,1000);}}
+async function saveInstructor(){var eid=document.getElementById('instrEditId').value;var first=document.getElementById('instrFirst').value.trim();var last=document.getElementById('instrLast').value.trim();if(!first||!last){setMsg('instructorMsg','First and last name required.','error');return;}setMsg('instructorMsg','Saving...','');var payload={first_name:first,last_name:last,email:document.getElementById('instrEmail').value.trim(),active:true};var r;if(eid){r=await sb.from('instructors').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('instructors').insert(payload);}if(r.error){setMsg('instructorMsg',r.error.message,'error');}else{setMsg('instructorMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadInstructors();setTimeout(closeAddInstructor,1000);}}async function sendInstructorMagicLink(instrId){
+  var instr=allInstructors.find(function(x){return x.id===instrId;});
+  if(!instr||!instr.email){alert('This instructor has no email address on file.');return;}
+  var btn=document.getElementById('mlink-'+instrId);
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...';}
+  var r=await sb.auth.signInWithOtp({email:instr.email,options:{emailRedirectTo:'https://nmao1.github.io/NMAO-Membership-Platform/staff.html'}});
+  if(r.error){if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-link"></i> Send Link';}alert('Error: '+r.error.message);}
+  else{if(btn){btn.innerHTML='<i class="fa-solid fa-check"></i> Sent!';btn.style.color='#7DBD7D';}setTimeout(function(){if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-link"></i> Send Link';btn.style.color='';}},3000);}
+}
+
+async function toggleInstructorSchedule(instrId){
+  var schedRow=document.getElementById('sched-'+instrId);
+  var btn=document.getElementById('sbtn-'+instrId);
+  if(!schedRow)return;
+  var isOpen=schedRow.style.display!=='none';
+  if(isOpen){schedRow.style.display='none';if(btn)btn.classList.remove('gold');return;}
+  schedRow.style.display='table-row';if(btn)btn.classList.add('gold');
+  var instr=allInstructors.find(function(x){return x.id===instrId;});
+  var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
+  var instrClasses=allClasses.filter(function(c){return c.instructor_name===name;});
+  var body=document.getElementById('schedbody-'+instrId);
+  if(!instrClasses.length){body.innerHTML='<div style="font-size:0.85rem;color:var(--muted);font-style:italic">No classes assigned.</div>';return;}
+  var now=new Date();var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  var classIds=instrClasses.map(function(c){return c.id;});
+  var sessR=await sb.from('class_sessions').select('id',{count:'exact',head:true}).eq('school_id',SID).in('class_id',classIds).gte('session_date',monthStart);
+  var taughtThisMonth=sessR.count||0;
+  var html='<div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">'+name+"'s Schedule</div>";
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.35rem;margin-bottom:0.85rem">';
+  instrClasses.forEach(function(c){var cn=c.name||c.title||'Class';var days=(c.days_of_week||[]).map(function(d){return d.slice(0,3).charAt(0).toUpperCase()+d.slice(1,3);}).join('/');html+='<div style="font-size:0.82rem;color:var(--white)"><i class="fa-solid fa-circle" style="font-size:0.4rem;color:var(--gold);margin-right:0.5rem;vertical-align:middle"></i>'+cn+' <span style="color:var(--muted)">'+days+' '+fmtTime(c.start_time)+'</span></div>';});
+  html+='</div><div style="font-size:0.78rem;color:var(--muted2)"><i class="fa-solid fa-clipboard-check" style="color:var(--gold);margin-right:0.4rem"></i><strong style="color:var(--white)">'+taughtThisMonth+'</strong> session'+(taughtThisMonth!==1?'s':'')+' taught this month</div>';
+  body.innerHTML=html;
+}
+
+async function toggleInstructorActive(instrId){
+  var instr=allInstructors.find(function(x){return x.id===instrId;});if(!instr)return;
+  var newActive=!instr.active;var btn=document.getElementById('abtn-'+instrId);
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  var r=await sb.from('instructors').update({active:newActive}).eq('id',instrId);
+  if(r.error){alert('Error: '+r.error.message);if(btn){btn.disabled=false;btn.textContent=instr.active?'Deactivate':'Activate';}return;}
+  instr.active=newActive;
+  var irow=document.getElementById('irow-'+instrId);if(irow){var statusTd=irow.querySelector('td:nth-child(4)');if(statusTd)statusTd.innerHTML=newActive?'<span class="chip chip-active">active</span>':'<span class="chip chip-expired">inactive</span>';}
+  if(btn){btn.disabled=false;btn.textContent=newActive?'Deactivate':'Activate';btn.style.borderColor=newActive?'rgba(154,90,90,0.4)':'rgba(90,154,106,0.4)';btn.style.color=newActive?'#C07070':'#7DBD7D';}
+}
+
 
 async function loadProducts(){try{var r=await sb.from('products').select('*').eq('school_id',SID).eq('active',true).order('name');allProducts=r.data||[];renderProducts();}catch(e){allProducts=[];document.getElementById('productGrid').innerHTML='<div class="no-classes" style="grid-column:1/-1">Products table not found.</div>';}}
 function renderProducts(){var q=(document.getElementById('productSearch')?document.getElementById('productSearch').value:'').toLowerCase();var cat=document.getElementById('productCategoryFilter')?document.getElementById('productCategoryFilter').value:'';var filtered=allProducts.filter(function(p){var matchQ=!q||(p.name||'').toLowerCase().includes(q);var matchCat=!cat||p.category===cat;var matchFilter=productFilter==='all'||(productFilter==='featured'&&p.featured)||(productFilter==='quicklist'&&p.quick_list)||(productFilter==='memberapp'&&p.member_app);return matchQ&&matchCat&&matchFilter;});var el=document.getElementById('productGrid');if(!filtered.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No products found.</div>';return;}el.innerHTML=filtered.map(function(p){var badges='';if(p.featured)badges+='<span class="chip chip-pending" style="font-size:0.65rem">Featured</span>';if(p.quick_list)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold)">Quick List</span>';if(p.member_app)badges+='<span class="chip chip-active" style="font-size:0.65rem">App</span>';if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';var badgeTag=p.badge_style&&p.badge_text?'<div class="product-badge-tag badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';return '<div class="product-card" onclick="openEditProduct(\''+p.id+'\')" style="position:relative">'+badgeTag+imgHtml+'<div class="product-body"><div class="product-name">'+p.name+'</div><div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem">'+p.category+(p.subcategory?' / '+p.subcategory:'')+'</div><div class="product-price">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div><div class="product-badges">'+badges+'</div></div></div>';}).join('');}
