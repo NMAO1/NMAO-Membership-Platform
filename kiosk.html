@@ -22,7 +22,6 @@
       min-height:100vh;display:flex;flex-direction:column;align-items:center;
       user-select:none;overflow-x:hidden;}
 
-    /* HEADER */
     .kiosk-header{
       width:100%;padding:2rem 2rem 1.5rem;
       display:flex;flex-direction:column;align-items:center;
@@ -30,338 +29,175 @@
     }
     .kiosk-header::after{
       content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,var(--gold),transparent);
-      opacity:0.4;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4;
     }
     .kiosk-logo{max-height:110px;max-width:300px;object-fit:contain;margin-bottom:0.75rem;}
-    .kiosk-logo-text{
-      font-family:var(--font-display);font-size:2.8rem;color:var(--gold);
-      letter-spacing:0.18em;margin-bottom:0.25rem;line-height:1;
-    }
+    .kiosk-logo-text{font-family:var(--font-display);font-size:2.8rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:0.25rem;line-height:1;}
     .kiosk-school-name{font-size:0.72rem;color:var(--muted);letter-spacing:0.22em;text-transform:uppercase;}
 
-    /* MODE TOGGLE */
-    .kiosk-mode-bar{
-      width:100%;display:flex;justify-content:center;gap:0;
-      border-bottom:1px solid var(--border);background:var(--surface);
-    }
-    .kiosk-mode-btn{
-      padding:0.65rem 2rem;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;
-      background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-ui);
-      border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;
-    }
+    .kiosk-mode-bar{width:100%;display:flex;justify-content:center;gap:0;border-bottom:1px solid var(--border);background:var(--surface);}
+    .kiosk-mode-btn{padding:0.65rem 2rem;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-ui);border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;}
     .kiosk-mode-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
 
-    /* BODY */
-    .kiosk-body{
-      flex:1;width:100%;max-width:680px;
-      padding:2.5rem 1.5rem;
-      display:flex;flex-direction:column;align-items:center;
-    }
+    .kiosk-body{flex:1;width:100%;padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center;}
 
-    /* CURRENT CLASS BANNER */
-    .kiosk-current-class{
-      width:100%;background:var(--gold-bg);
-      border:1px solid rgba(201,168,76,0.2);
-      padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;
-    }
-    .kiosk-current-class-label{
-      font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;
-      color:var(--muted);margin-bottom:0.2rem;
-    }
+    .kiosk-current-class{width:100%;max-width:680px;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.2);padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;}
+    .kiosk-current-class-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;}
     .kiosk-current-class-name{font-family:var(--font-display);font-size:1.15rem;color:var(--gold);}
 
-    /* SEARCH VIEW */
-    .kiosk-prompt{
-      font-family:var(--font-display);font-size:2.2rem;color:var(--white);
-      margin-bottom:0.4rem;text-align:center;letter-spacing:0.02em;
-    }
+    /* CHECK-IN */
+    .kiosk-checkin-wrap{width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center;}
+    .kiosk-prompt{font-family:var(--font-display);font-size:2.2rem;color:var(--white);margin-bottom:0.4rem;text-align:center;letter-spacing:0.02em;}
     .kiosk-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;text-align:center;letter-spacing:0.08em;}
     .kiosk-search-wrap{width:100%;margin-bottom:1.5rem;}
-    .kiosk-search{
-      width:100%;background:var(--surface);border:2px solid var(--border);
-      color:var(--white);font-family:var(--font-display);font-size:1.6rem;
-      padding:1.1rem 1.5rem;outline:none;transition:border-color 0.2s;
-      text-align:center;letter-spacing:0.04em;
-    }
+    .kiosk-search{width:100%;background:var(--surface);border:2px solid var(--border);color:var(--white);font-family:var(--font-display);font-size:1.6rem;padding:1.1rem 1.5rem;outline:none;transition:border-color 0.2s;text-align:center;letter-spacing:0.04em;}
     .kiosk-search:focus{border-color:var(--gold);}
     .kiosk-search::placeholder{color:var(--muted);font-size:1.1rem;font-family:var(--font-ui);font-style:italic;}
-
-    /* STUDENT CARDS */
     .kiosk-results{width:100%;display:flex;flex-direction:column;gap:0.6rem;}
-    .kiosk-student-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-left:3px solid var(--border);
-      padding:1.1rem 1.35rem;display:flex;align-items:center;gap:1.25rem;
-      cursor:pointer;transition:all 0.18s;
-    }
-    .kiosk-student-card:hover,.kiosk-student-card:active{
-      border-color:var(--gold);border-left-color:var(--gold);
-      background:rgba(201,168,76,0.05);transform:translateX(3px);
-    }
-    .kiosk-avatar{
-      width:58px;height:58px;border-radius:50%;background:var(--gold-bg);
-      border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
-      font-family:var(--font-display);font-size:1.3rem;color:var(--gold);
-      flex-shrink:0;overflow:hidden;
-    }
-    .kiosk-student-name{
-      font-family:var(--font-display);font-size:1.35rem;color:var(--white);
-      margin-bottom:0.15rem;letter-spacing:0.02em;
-    }
+    .kiosk-student-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);padding:1.1rem 1.35rem;display:flex;align-items:center;gap:1.25rem;cursor:pointer;transition:all 0.18s;}
+    .kiosk-student-card:hover,.kiosk-student-card:active{border-color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.05);transform:translateX(3px);}
+    .kiosk-avatar{width:58px;height:58px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
+    .kiosk-student-name{font-family:var(--font-display);font-size:1.35rem;color:var(--white);margin-bottom:0.15rem;letter-spacing:0.02em;}
     .kiosk-student-program{font-size:0.75rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
-
-    /* FAMILY CARD */
-    .kiosk-family-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-left:3px solid rgba(201,168,76,0.4);
-      padding:1rem 1.35rem;width:100%;
-    }
-    .kiosk-family-label{
-      font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;
-      color:var(--gold);margin-bottom:0.75rem;
-      display:flex;align-items:center;gap:0.5rem;
-    }
+    .kiosk-family-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid rgba(201,168,76,0.4);padding:1rem 1.35rem;width:100%;}
+    .kiosk-family-label{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
     .kiosk-family-children{display:flex;flex-direction:column;gap:0.4rem;}
-    .kiosk-child-row{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:0.65rem 0.75rem;background:var(--black);border:1px solid var(--border);
-      cursor:pointer;transition:all 0.15s;
-    }
+    .kiosk-child-row{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--black);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
     .kiosk-child-row:hover{border-color:var(--gold);}
     .kiosk-child-row.selected{border-color:var(--gold);background:rgba(201,168,76,0.06);}
     .kiosk-child-name{font-family:var(--font-display);font-size:1.1rem;color:var(--white);}
     .kiosk-child-prog{font-size:0.68rem;color:var(--muted);margin-top:0.1rem;}
     .kiosk-child-check{font-size:1.3rem;color:var(--muted);transition:color 0.15s;}
     .kiosk-child-row.selected .kiosk-child-check{color:var(--gold);}
-    .btn-family-checkin{
-      width:100%;background:var(--gold);color:var(--black);
-      font-family:'Libre Baskerville',serif;font-size:1rem;letter-spacing:0.14em;
-      text-transform:uppercase;padding:1rem;border:none;cursor:pointer;
-      font-weight:700;margin-top:0.75rem;transition:opacity 0.2s;
-    }
+    .btn-family-checkin{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1rem;letter-spacing:0.14em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;font-weight:700;margin-top:0.75rem;transition:opacity 0.2s;}
     .btn-family-checkin:hover{opacity:0.92;}
-
-    .kiosk-empty{
-      text-align:center;padding:2rem;color:var(--muted);font-style:italic;
-      font-size:0.92rem;border:1px solid var(--border);background:var(--surface);width:100%;
-    }
-
-    /* CHECK-IN VIEW */
-    .kiosk-class-info{
-      width:100%;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.25);
-      padding:0.75rem 1rem;margin-bottom:1.25rem;
-      font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.06em;
-    }
-    .kiosk-selected-card{
-      width:100%;background:var(--surface);border:2px solid var(--gold);
-      padding:1.35rem 1.5rem;display:flex;align-items:center;gap:1.35rem;margin-bottom:1.5rem;
-    }
-    .btn-checkin{
-      width:100%;background:var(--gold);color:var(--black);
-      font-family:'Libre Baskerville',serif;font-size:1.2rem;letter-spacing:0.14em;
-      text-transform:uppercase;padding:1.35rem;border:none;cursor:pointer;
-      font-weight:700;transition:opacity 0.2s,transform 0.15s;
-    }
+    .kiosk-empty{text-align:center;padding:2rem;color:var(--muted);font-style:italic;font-size:0.92rem;border:1px solid var(--border);background:var(--surface);width:100%;}
+    .kiosk-class-info{width:100%;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.25);padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.06em;}
+    .kiosk-selected-card{width:100%;background:var(--surface);border:2px solid var(--gold);padding:1.35rem 1.5rem;display:flex;align-items:center;gap:1.35rem;margin-bottom:1.5rem;}
+    .btn-checkin{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1.2rem;letter-spacing:0.14em;text-transform:uppercase;padding:1.35rem;border:none;cursor:pointer;font-weight:700;transition:opacity 0.2s,transform 0.15s;}
     .btn-checkin:hover{opacity:0.92;}
     .btn-checkin:active{transform:scale(0.98);}
     .btn-checkin:disabled{opacity:0.6;cursor:not-allowed;}
-    .btn-back{
-      background:none;border:1px solid var(--border);color:var(--muted);
-      font-family:var(--font-ui);font-size:0.75rem;letter-spacing:0.12em;
-      text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;
-      margin-top:0.85rem;transition:all 0.2s;
-    }
+    .btn-back{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;margin-top:0.85rem;transition:all 0.2s;}
     .btn-back:hover{border-color:var(--muted);color:var(--white);}
 
-    /* REGISTRATION VIEW */
-    .reg-field{margin-bottom:1.25rem;}
-    .reg-field label{display:block;font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
-    .reg-input{
-      width:100%;background:var(--surface);border:2px solid var(--border);
-      color:var(--white);font-family:var(--font-ui);font-size:1.1rem;
-      padding:0.9rem 1.1rem;outline:none;transition:border-color 0.2s;
-    }
+    /* REGISTER */
+    .reg-layout{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
+    .reg-layout.no-welcome{grid-template-columns:1fr;max-width:520px;}
+    .welcome-panel{display:flex;flex-direction:column;gap:1.5rem;}
+    .welcome-video-wrap{position:relative;width:100%;padding-bottom:56.25%;background:var(--surface);border:1px solid var(--border);}
+    .welcome-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+    .welcome-bio{font-size:0.95rem;color:var(--muted2);line-height:1.7;font-style:italic;padding:1rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);}
+    .welcome-stats{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;}
+    .welcome-stat-chip{flex:1;min-width:80px;text-align:center;padding:1rem 0.75rem;background:var(--surface);border:1px solid var(--border);}
+    .welcome-stat-num{font-family:var(--font-display);font-size:1.8rem;color:var(--gold);line-height:1;margin-bottom:0.25rem;}
+    .welcome-stat-label{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);}
+    .welcome-social-embed{background:var(--surface);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;}
+    .welcome-social-label{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;}
+    .reg-form-panel{}
+    .reg-prompt{font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.3rem;}
+    .reg-sub{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;}
+    .reg-field{margin-bottom:1rem;}
+    .reg-field label{display:block;font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+    .reg-input{width:100%;background:var(--surface);border:2px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:1rem;padding:0.85rem 1rem;outline:none;transition:border-color 0.2s;}
     .reg-input:focus{border-color:var(--gold);}
-    .btn-reg-submit{
-      width:100%;background:var(--gold);color:var(--black);
-      font-family:'Libre Baskerville',serif;font-size:1.1rem;letter-spacing:0.14em;
-      text-transform:uppercase;padding:1.2rem;border:none;cursor:pointer;
-      font-weight:700;margin-top:0.5rem;transition:opacity 0.2s;
-    }
+    .btn-reg-submit{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1.1rem;letter-spacing:0.14em;text-transform:uppercase;padding:1.1rem;border:none;cursor:pointer;font-weight:700;margin-top:0.5rem;transition:opacity 0.2s;}
     .btn-reg-submit:hover{opacity:0.92;}
     .btn-reg-submit:disabled{opacity:0.6;cursor:not-allowed;}
-    .reg-msg{font-size:0.85rem;text-align:center;margin-top:0.75rem;min-height:1.2em;}
+    .reg-msg{font-size:0.82rem;text-align:center;margin-top:0.6rem;min-height:1.2em;}
     .reg-msg.success{color:#7DBD7D;}
     .reg-msg.error{color:#E07070;}
 
     /* CELEBRATION */
-    #kioskCelebration{
-      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);
-      z-index:999;flex-direction:column;align-items:center;justify-content:center;
-      text-align:center;padding:2rem;
-    }
+    #kioskCelebration{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
     #kioskCelebration.active{display:flex;}
-    .celeb-logo-wrap{
-      display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;
-      animation:celebFadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-    }
+    .celeb-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;animation:celebFadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
     .celeb-logo{max-height:100px;max-width:260px;object-fit:contain;margin-bottom:1.25rem;}
-    .celeb-logo-text{
-      font-family:var(--font-display);font-size:2.5rem;color:var(--gold);
-      letter-spacing:0.18em;margin-bottom:1.25rem;line-height:1;
-    }
-    .celeb-check{
-      width:80px;height:80px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 0 56px rgba(201,168,76,0.4);
-      animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
-    }
+    .celeb-logo-text{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:1.25rem;line-height:1;}
+    .celeb-check{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 56px rgba(201,168,76,0.4);animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
     .celeb-check i{font-size:2.2rem;color:var(--black);font-weight:900;}
-    .celeb-name{
-      font-family:var(--font-display);font-size:3.2rem;color:var(--white);
-      margin-bottom:0.4rem;letter-spacing:0.04em;
-      animation:celebFadeUp 0.5s 0.35s both;
-    }
-    .celeb-subtitle{
-      font-size:0.7rem;letter-spacing:0.26em;text-transform:uppercase;
-      color:var(--gold);margin-bottom:0.5rem;
-      animation:celebFadeUp 0.5s 0.45s both;
-    }
-    .celeb-class{
-      font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;
-      animation:celebFadeUp 0.5s 0.5s both;
-    }
-    .celeb-count{
-      font-size:0.78rem;color:var(--muted2);
-      animation:celebFadeUp 0.5s 0.55s both;
-    }
-    .celeb-milestone{
-      margin-top:1.25rem;padding:1rem 1.5rem;
-      border:1px solid rgba(201,168,76,0.3);
-      background:rgba(201,168,76,0.06);
-      max-width:380px;
-      animation:celebFadeUp 0.5s 0.65s both;
-    }
-    .celeb-milestone-num{
-      font-family:var(--font-display);font-size:2rem;color:var(--gold);
-      line-height:1;margin-bottom:0.35rem;
-    }
-    .celeb-milestone-msg{
-      font-size:0.88rem;color:var(--muted2);font-style:italic;line-height:1.5;
-    }
-    .celeb-progress{
-      position:fixed;bottom:0;left:0;height:4px;
-      width:100%;transform-origin:left;
-      animation:progressShrink 3.5s linear forwards;
-    }
-    @keyframes celebFadeUp{
-      from{opacity:0;transform:translateY(18px);}
-      to{opacity:1;transform:translateY(0);}
-    }
-    @keyframes celebPop{
-      from{opacity:0;transform:scale(0);}
-      to{opacity:1;transform:scale(1);}
-    }
-    @keyframes progressShrink{
-      from{transform:scaleX(1);}
-      to{transform:scaleX(0);}
+    .celeb-name{font-family:var(--font-display);font-size:3.2rem;color:var(--white);margin-bottom:0.4rem;letter-spacing:0.04em;animation:celebFadeUp 0.5s 0.35s both;}
+    .celeb-subtitle{font-size:0.7rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;animation:celebFadeUp 0.5s 0.45s both;}
+    .celeb-class{font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;animation:celebFadeUp 0.5s 0.5s both;}
+    .celeb-count{font-size:0.78rem;color:var(--muted2);animation:celebFadeUp 0.5s 0.55s both;}
+    .celeb-milestone{margin-top:1.25rem;padding:1rem 1.5rem;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06);max-width:380px;animation:celebFadeUp 0.5s 0.65s both;}
+    .celeb-milestone-num{font-family:var(--font-display);font-size:2rem;color:var(--gold);line-height:1;margin-bottom:0.35rem;}
+    .celeb-milestone-msg{font-size:0.88rem;color:var(--muted2);font-style:italic;line-height:1.5;}
+    .celeb-progress{position:fixed;bottom:0;left:0;height:4px;width:100%;transform-origin:left;animation:progressShrink 3.5s linear forwards;}
+    @keyframes celebFadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes celebPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
+    @keyframes progressShrink{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+
+    @media(max-width:700px){
+      .reg-layout{grid-template-columns:1fr;}
     }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="kiosk-header">
   <img id="kioskLogoImg" class="kiosk-logo" src="" alt="" style="display:none" />
   <div id="kioskLogoText" class="kiosk-logo-text">NMAO</div>
   <div class="kiosk-school-name" id="kioskSchoolName">Member Check-In</div>
 </div>
 
-<!-- MODE BAR -->
 <div class="kiosk-mode-bar">
-  <button class="kiosk-mode-btn active" id="modeCheckin" onclick="setMode('checkin')">
-    <i class="fa-solid fa-person-walking" style="margin-right:0.4rem"></i>Check In
-  </button>
-  <button class="kiosk-mode-btn" id="modeRegister" onclick="setMode('register')">
-    <i class="fa-solid fa-user-plus" style="margin-right:0.4rem"></i>New Student
-  </button>
+  <button class="kiosk-mode-btn active" id="modeCheckin" onclick="setMode('checkin')"><i class="fa-solid fa-person-walking" style="margin-right:0.4rem"></i>Check In</button>
+  <button class="kiosk-mode-btn" id="modeRegister" onclick="setMode('register')"><i class="fa-solid fa-user-plus" style="margin-right:0.4rem"></i>New Student</button>
 </div>
 
-<!-- BODY -->
 <div class="kiosk-body">
 
   <div id="kioskCurrentClass" class="kiosk-current-class" style="display:none">
-    <div class="kiosk-current-class-label">
-      <i class="fa-solid fa-circle" style="font-size:0.45rem;color:var(--green);margin-right:0.4rem;vertical-align:middle"></i>Now In Session
-    </div>
+    <div class="kiosk-current-class-label"><i class="fa-solid fa-circle" style="font-size:0.45rem;color:var(--green);margin-right:0.4rem;vertical-align:middle"></i>Now In Session</div>
     <div class="kiosk-current-class-name" id="kioskCurrentClassName"></div>
   </div>
 
   <!-- CHECK-IN MODE -->
   <div id="modeCheckinView" style="width:100%;display:flex;flex-direction:column;align-items:center">
-
-    <!-- Search -->
-    <div id="kioskSearchView" style="width:100%;display:flex;flex-direction:column;align-items:center">
+    <div id="kioskSearchView" class="kiosk-checkin-wrap">
       <div class="kiosk-prompt">Welcome</div>
       <div class="kiosk-sub">Type your name to check in</div>
       <div class="kiosk-search-wrap">
-        <input type="text" class="kiosk-search" id="kioskSearch"
-          placeholder="Start typing your name..."
-          oninput="searchStudents()"
-          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <input type="text" class="kiosk-search" id="kioskSearch" placeholder="Start typing your name..." oninput="searchStudents()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
       </div>
       <div class="kiosk-results" id="kioskResults"></div>
     </div>
-
-    <!-- Single Student Check-In -->
-    <div id="kioskCheckinView" style="display:none;width:100%;flex-direction:column;align-items:center">
+    <div id="kioskCheckinView" style="display:none;width:100%;max-width:680px;flex-direction:column;align-items:center">
       <div class="kiosk-class-info" id="kioskCheckinClassInfo"></div>
       <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
       <div style="width:100%">
-        <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()">
-          <i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In
-        </button>
-        <div style="text-align:center">
-          <button class="btn-back" onclick="backToSearch()">
-            <i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back
-          </button>
-        </div>
+        <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()"><i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In</button>
+        <div style="text-align:center"><button class="btn-back" onclick="backToSearch()"><i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back</button></div>
       </div>
     </div>
-
   </div>
 
   <!-- REGISTER MODE -->
-  <div id="modeRegisterView" style="display:none;width:100%">
-    <div class="kiosk-prompt" style="margin-bottom:0.4rem">Welcome!</div>
-    <div class="kiosk-sub" style="margin-bottom:2rem">Tell us about yourself</div>
-    <div class="reg-field"><label>First Name *</label><input type="text" class="reg-input" id="regFirst" placeholder="First name" autocomplete="off" /></div>
-    <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" /></div>
-    <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" /></div>
-    <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" /></div>
-    <div class="reg-field">
-      <label>Program Interest</label>
-      <select class="reg-input" id="regProgram" style="cursor:pointer">
-        <option value="">-- Select a program --</option>
-      </select>
+  <div id="modeRegisterView" style="display:none;width:100%;max-width:1100px">
+    <div id="regLayout" class="reg-layout no-welcome">
+      <div id="welcomePanel" class="welcome-panel" style="display:none"></div>
+      <div class="reg-form-panel">
+        <div class="reg-prompt">Join Us</div>
+        <div class="reg-sub">Fill in your details and we will be in touch!</div>
+        <div class="reg-field"><label>First Name *</label><input type="text" class="reg-input" id="regFirst" placeholder="First name" autocomplete="off" /></div>
+        <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" /></div>
+        <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" /></div>
+        <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" /></div>
+        <div class="reg-field"><label>Program Interest</label><select class="reg-input" id="regProgram" style="cursor:pointer"><option value="">-- Select a program --</option></select></div>
+        <button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit</button>
+        <div class="reg-msg" id="regMsg"></div>
+      </div>
     </div>
-    <button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()">
-      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit
-    </button>
-    <div class="reg-msg" id="regMsg"></div>
   </div>
 
 </div>
 
-<!-- CELEBRATION -->
 <div id="kioskCelebration">
   <div class="celeb-logo-wrap">
     <img id="celebLogoImg" class="celeb-logo" src="" alt="" style="display:none" />
     <div id="celebLogoText" class="celeb-logo-text" style="display:none">NMAO</div>
-    <div class="celeb-check" id="celebCheck" style="background:var(--gold)">
-      <i class="fa-solid fa-check"></i>
-    </div>
+    <div class="celeb-check" id="celebCheck" style="background:var(--gold)"><i class="fa-solid fa-check"></i></div>
   </div>
   <div class="celeb-name" id="celebName"></div>
   <div class="celeb-subtitle" id="celebSubtitle">Checked In</div>
@@ -390,7 +226,7 @@ var familyCheckinQueue=[],familyCheckinIndex=0;
 
 async function init(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
+    var r=await sb.from('schools').select('*').eq('id',SID).single();
     if(r.data){
       schoolData=r.data;
       var d=r.data;
@@ -408,6 +244,7 @@ async function init(){
       }else{
         document.getElementById('celebLogoText').style.display='block';
       }
+      buildWelcomePanel(d);
     }
     await loadStudents();
     await loadFamilies();
@@ -417,8 +254,101 @@ async function init(){
   }catch(e){console.error('Kiosk init error:',e);}
 }
 
+function getYouTubeId(url){
+  if(!url)return null;
+  var match=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  return match?match[1]:null;
+}
+
+function getTikTokId(url){
+  if(!url)return null;
+  var match=url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  return match?match[1]:null;
+}
+
+function buildWelcomePanel(d){
+  var panel=document.getElementById('welcomePanel');
+  var layout=document.getElementById('regLayout');
+  var sections=[];
+  var hasContent=false;
+
+  if(d.kiosk_show_video&&d.kiosk_video_url){
+    var vid=getYouTubeId(d.kiosk_video_url);
+    if(vid){
+      hasContent=true;
+      sections.push('<div>'+
+        '<div class="welcome-social-label"><i class="fa-brands fa-youtube" style="color:#E07070"></i>Highlight Reel</div>'+
+        '<div class="welcome-video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&mute=1&loop=1&playlist='+vid+'&controls=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'+
+      '</div>');
+    }
+  }
+
+  if(d.kiosk_show_bio&&d.kiosk_bio){
+    hasContent=true;
+    sections.push('<div class="welcome-bio"><i class="fa-solid fa-quote-left" style="color:var(--gold);margin-right:0.5rem;font-size:0.85rem"></i>'+d.kiosk_bio+'</div>');
+  }
+
+  if(d.kiosk_show_stats&&d.kiosk_stats&&d.kiosk_stats.length){
+    hasContent=true;
+    var chips=d.kiosk_stats.filter(function(s){return s.num||s.label;}).map(function(s){
+      return '<div class="welcome-stat-chip"><div class="welcome-stat-num">'+s.num+'</div><div class="welcome-stat-label">'+s.label+'</div></div>';
+    }).join('');
+    sections.push('<div class="welcome-stats">'+chips+'</div>');
+  }
+
+  if(d.kiosk_show_instagram&&d.kiosk_instagram_url){
+    hasContent=true;
+    sections.push('<div>'+
+      '<div class="welcome-social-label"><i class="fa-brands fa-instagram" style="color:#C13584"></i>Instagram</div>'+
+      '<div class="welcome-social-embed" id="igEmbed">'+
+        '<blockquote class="instagram-media" data-instgrm-permalink="'+d.kiosk_instagram_url+'" data-instgrm-version="14" style="background:#fff;border:0;border-radius:3px;margin:1px;max-width:540px;min-width:326px;padding:0;width:calc(100% - 2px)">'+
+          '<a href="'+d.kiosk_instagram_url+'">View on Instagram</a>'+
+        '</blockquote>'+
+      '</div>'+
+    '</div>');
+    var igScript=document.createElement('script');igScript.src='//www.instagram.com/embed.js';document.head.appendChild(igScript);
+  }
+
+  if(d.kiosk_show_facebook&&d.kiosk_facebook_url){
+    hasContent=true;
+    sections.push('<div>'+
+      '<div class="welcome-social-label"><i class="fa-brands fa-facebook" style="color:#1877F2"></i>Facebook</div>'+
+      '<div class="welcome-social-embed">'+
+        '<div id="fb-root"></div>'+
+        '<div class="fb-post" data-href="'+d.kiosk_facebook_url+'" data-width="500" data-show-text="true"></div>'+
+      '</div>'+
+    '</div>');
+    var fbScript=document.createElement('script');fbScript.src='https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0';fbScript.crossOrigin='anonymous';document.head.appendChild(fbScript);
+  }
+
+  if(d.kiosk_show_tiktok&&d.kiosk_tiktok_url){
+    var ttId=getTikTokId(d.kiosk_tiktok_url);
+    if(ttId){
+      hasContent=true;
+      sections.push('<div>'+
+        '<div class="welcome-social-label"><i class="fa-brands fa-tiktok"></i>TikTok</div>'+
+        '<div class="welcome-social-embed">'+
+          '<blockquote class="tiktok-embed" cite="'+d.kiosk_tiktok_url+'" data-video-id="'+ttId+'" style="max-width:605px;min-width:325px;">'+
+            '<section><a target="_blank" href="'+d.kiosk_tiktok_url+'">View on TikTok</a></section>'+
+          '</blockquote>'+
+        '</div>'+
+      '</div>');
+      var ttScript=document.createElement('script');ttScript.src='https://www.tiktok.com/embed.js';document.head.appendChild(ttScript);
+    }
+  }
+
+  if(hasContent){
+    panel.innerHTML=sections.join('');
+    panel.style.display='flex';
+    layout.classList.remove('no-welcome');
+  }else{
+    panel.style.display='none';
+    layout.classList.add('no-welcome');
+  }
+}
+
 async function loadStudents(){
-  var r=await sb.from('students').select('*, programs(name,color,belt_system_id)').eq('school_id',SID).eq('status','active').order('last_name');
+  var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
   allStudents=r.data||[];
 }
 
@@ -427,7 +357,12 @@ async function loadFamilies(){
 }
 
 async function loadPrograms(){
-  try{var r=await sb.from('programs').select('id,name').eq('school_id',SID).eq('active',true).order('name');allPrograms=r.data||[];var sel=document.getElementById('regProgram');allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});}catch(e){}
+  try{
+    var r=await sb.from('programs').select('id,name').eq('school_id',SID).eq('active',true).order('name');
+    allPrograms=r.data||[];
+    var sel=document.getElementById('regProgram');
+    allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+  }catch(e){}
 }
 
 async function detectCurrentClass(){
@@ -479,61 +414,43 @@ function searchStudents(){
     var q=document.getElementById('kioskSearch').value.toLowerCase().trim();
     var el=document.getElementById('kioskResults');
     if(!q||q.length<2){el.innerHTML='';return;}
-
     var familyMatches=allFamilies.filter(function(f){return f.name.toLowerCase().includes(q);});
     var studentMatches=allStudents.filter(function(s){
       return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||
         s.first_name.toLowerCase().startsWith(q)||s.last_name.toLowerCase().startsWith(q);
     });
-
     if(!familyMatches.length&&!studentMatches.length){
       el.innerHTML='<div class="kiosk-empty"><i class="fa-solid fa-circle-question" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.3"></i>No students found.<br>Please see the front desk.</div>';
       return;
     }
-
     var html='';
-
     familyMatches.forEach(function(f){
       var children=allStudents.filter(function(s){return s.family_id===f.id;});
       if(!children.length)return;
       html+='<div class="kiosk-family-card">';
       html+='<div class="kiosk-family-label"><i class="fa-solid fa-people-roof"></i>'+f.name+'</div>';
-      html+='<div class="kiosk-family-children" id="family-'+f.id+'">';
+      html+='<div class="kiosk-family-children">';
       children.forEach(function(s){
-        var ini=(s.first_name[0]+s.last_name[0]).toUpperCase();
-        var pc=(s.programs&&s.programs.color)?s.programs.color:'var(--gold)';
         var pn=(s.programs&&s.programs.name)?s.programs.name:'Member';
         html+='<div class="kiosk-child-row" id="childrow-'+s.id+'" onclick="toggleFamilyChild(\''+s.id+'\')">'+
-          '<div>'+
-            '<div class="kiosk-child-name">'+s.first_name+' '+s.last_name+'</div>'+
-            '<div class="kiosk-child-prog">'+pn+'</div>'+
-          '</div>'+
+          '<div><div class="kiosk-child-name">'+s.first_name+' '+s.last_name+'</div><div class="kiosk-child-prog">'+pn+'</div></div>'+
           '<i class="fa-solid fa-circle kiosk-child-check"></i>'+
         '</div>';
       });
       html+='</div>';
-      html+='<button class="btn-family-checkin" onclick="confirmFamilyCheckin(\''+f.id+'\')">'+
-        '<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Check In Selected'+
-      '</button>';
+      html+='<button class="btn-family-checkin" onclick="confirmFamilyCheckin(\''+f.id+'\')"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Check In Selected</button>';
       html+='</div>';
     });
-
     studentMatches.slice(0,6).forEach(function(s){
       var ini=(s.first_name[0]+s.last_name[0]).toUpperCase();
       var pc=(s.programs&&s.programs.color)?s.programs.color:'var(--gold)';
       var pn=(s.programs&&s.programs.name)?s.programs.name:'Member';
-      var avatarHtml=s.photo_url?
-        '<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':
-        '<span style="font-size:1.2rem">'+ini+'</span>';
+      var avatarHtml=s.photo_url?'<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':(ini);
       html+='<div class="kiosk-student-card" onclick="selectStudent(\''+s.id+'\')">'+
         '<div class="kiosk-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div>'+
-        '<div>'+
-          '<div class="kiosk-student-name">'+s.first_name+' '+s.last_name+'</div>'+
-          '<div class="kiosk-student-program">'+pn+'</div>'+
-        '</div>'+
+        '<div><div class="kiosk-student-name">'+s.first_name+' '+s.last_name+'</div><div class="kiosk-student-program">'+pn+'</div></div>'+
       '</div>';
     });
-
     el.innerHTML=html;
     selectedFamilyChildren=[];
   },200);
@@ -555,7 +472,7 @@ function toggleFamilyChild(sid){
 }
 
 async function confirmFamilyCheckin(familyId){
-  if(!selectedFamilyChildren.length){return;}
+  if(!selectedFamilyChildren.length)return;
   var btn=document.querySelector('.btn-family-checkin');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Checking in...';}
   familyCheckinQueue=selectedFamilyChildren.slice();
@@ -564,18 +481,15 @@ async function confirmFamilyCheckin(familyId){
 }
 
 async function processFamilyQueue(){
-  if(familyCheckinIndex>=familyCheckinQueue.length){return;}
+  if(familyCheckinIndex>=familyCheckinQueue.length)return;
   var sid=familyCheckinQueue[familyCheckinIndex];
   var s=allStudents.find(function(x){return x.id===sid;});
   if(!s){familyCheckinIndex++;await processFamilyQueue();return;}
   selectedStudent=s;
   await doCheckinForStudent(s,function(){
     familyCheckinIndex++;
-    if(familyCheckinIndex<familyCheckinQueue.length){
-      setTimeout(async function(){await processFamilyQueue();},3600);
-    }else{
-      setTimeout(function(){resetKiosk();},3600);
-    }
+    if(familyCheckinIndex<familyCheckinQueue.length){setTimeout(async function(){await processFamilyQueue();},3600);}
+    else{setTimeout(function(){resetKiosk();},3600);}
   });
 }
 
@@ -585,15 +499,10 @@ function selectStudent(sid){
   var ini=(selectedStudent.first_name[0]+selectedStudent.last_name[0]).toUpperCase();
   var pc=(selectedStudent.programs&&selectedStudent.programs.color)?selectedStudent.programs.color:'var(--gold)';
   var pn=(selectedStudent.programs&&selectedStudent.programs.name)?selectedStudent.programs.name:'Member';
-  var avatarHtml=selectedStudent.photo_url?
-    '<img src="'+selectedStudent.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':
-    '<span style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)">'+ini+'</span>';
+  var avatarHtml=selectedStudent.photo_url?'<img src="'+selectedStudent.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':('<span style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)">'+ini+'</span>');
   document.getElementById('kioskSelectedCard').innerHTML=
     '<div style="width:68px;height:68px;border-radius:50%;background:var(--gold-bg);border:2px solid '+pc+';display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'+
-    '<div>'+
-      '<div style="font-family:var(--font-display);font-size:1.65rem;color:var(--white);letter-spacing:0.02em">'+selectedStudent.first_name+' '+selectedStudent.last_name+'</div>'+
-      '<div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.2rem">'+pn+'</div>'+
-    '</div>';
+    '<div><div style="font-family:var(--font-display);font-size:1.65rem;color:var(--white);letter-spacing:0.02em">'+selectedStudent.first_name+' '+selectedStudent.last_name+'</div><div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.2rem">'+pn+'</div></div>';
   document.getElementById('kioskCheckinClassInfo').innerHTML=currentClass?
     '<i class="fa-solid fa-person-walking" style="margin-right:0.5rem"></i>Checking into: '+(currentClass.name||currentClass.title||'Class')+' at '+fmtTime(currentClass.start_time):
     '<i class="fa-solid fa-circle-info" style="margin-right:0.5rem"></i>No active class \u2014 recording drop-in attendance';
@@ -604,8 +513,7 @@ function selectStudent(sid){
 async function confirmCheckin(){
   if(!selectedStudent)return;
   var btn=document.getElementById('checkinBtn');
-  btn.disabled=true;
-  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.6rem"></i>Checking in...';
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.6rem"></i>Checking in...';
   await doCheckinForStudent(selectedStudent,function(){setTimeout(resetKiosk,3600);});
 }
 
@@ -629,53 +537,27 @@ async function getStudentAttendanceCount(sid){
 }
 
 async function getStudentBeltColor(student){
-  try{
-    if(!student.current_belt_id)return null;
-    var r=await sb.from('belt_levels').select('color_hex').eq('id',student.current_belt_id).single();
-    return(r.data&&r.data.color_hex)?r.data.color_hex:null;
-  }catch(e){return null;}
+  try{if(!student.current_belt_id)return null;var r=await sb.from('belt_levels').select('color_hex').eq('id',student.current_belt_id).single();return(r.data&&r.data.color_hex)?r.data.color_hex:null;}catch(e){return null;}
 }
 
 function showCelebration(student,classCount,beltColor,callback){
   var accentColor=beltColor||getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
-  var check=document.getElementById('celebCheck');
-  var prog=document.getElementById('celebProgress');
-  check.style.background=accentColor;
-  check.style.boxShadow='0 0 56px '+accentColor+'66';
-  prog.style.background=accentColor;
-
+  var check=document.getElementById('celebCheck');var prog=document.getElementById('celebProgress');
+  check.style.background=accentColor;check.style.boxShadow='0 0 56px '+accentColor+'66';prog.style.background=accentColor;
   document.getElementById('celebName').textContent=student.first_name+' '+student.last_name;
   document.getElementById('celebSubtitle').textContent='Checked In';
-  document.getElementById('celebClass').textContent=currentClass?
-    'Checked in to '+(currentClass.name||currentClass.title||'class'):
-    'Attendance recorded';
-
-  if(classCount&&classCount>0){
-    document.getElementById('celebCount').textContent=classCount+' class'+(classCount===1?'':'es')+' total';
-  }else{
-    document.getElementById('celebCount').textContent='';
-  }
-
+  document.getElementById('celebClass').textContent=currentClass?'Checked in to '+(currentClass.name||currentClass.title||'class'):'Attendance recorded';
+  document.getElementById('celebCount').textContent=classCount&&classCount>0?classCount+' class'+(classCount===1?'':'es')+' total':'';
   var milestoneEl=document.getElementById('celebMilestone');
   if(classCount&&MILESTONES.includes(classCount)){
-    var milestoneMessages=schoolData.milestone_messages||{};
-    var msg=milestoneMessages[classCount]?milestoneMessages[classCount].message:DEFAULT_MESSAGES[classCount];
-    if(msg){
-      document.getElementById('celebMilestoneNum').textContent=classCount+' Classes!';
-      document.getElementById('celebMilestoneMsg').textContent=msg;
-      milestoneEl.style.display='block';
-      milestoneEl.style.borderColor=accentColor+'55';
-    }else{milestoneEl.style.display='none';}
+    var msgs=schoolData.milestone_messages||{};
+    var msg=msgs[classCount]?msgs[classCount].message:DEFAULT_MESSAGES[classCount];
+    if(msg){document.getElementById('celebMilestoneNum').textContent=classCount+' Classes!';document.getElementById('celebMilestoneMsg').textContent=msg;milestoneEl.style.display='block';milestoneEl.style.borderColor=accentColor+'55';}
+    else{milestoneEl.style.display='none';}
   }else{milestoneEl.style.display='none';}
-
-  prog.style.animation='none';
-  prog.offsetHeight;
-  prog.style.animation='progressShrink 3.5s linear forwards';
+  prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');
-  setTimeout(function(){
-    document.getElementById('kioskCelebration').classList.remove('active');
-    if(callback)callback();
-  },3500);
+  setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');if(callback)callback();},3500);
 }
 
 async function submitRegistration(){
@@ -691,9 +573,7 @@ async function submitRegistration(){
   msg.textContent='';msg.className='reg-msg';
   try{
     var payload={school_id:SID,first_name:first,last_name:last,status:'new',source:'kiosk'};
-    if(email)payload.email=email;
-    if(phone)payload.phone=phone;
-    if(progId)payload.program_id=progId;
+    if(email)payload.email=email;if(phone)payload.phone=phone;if(progId)payload.program_id=progId;
     var r=await sb.from('leads').insert(payload);
     if(r.error){msg.textContent='Something went wrong. Please see the front desk.';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';return;}
     showRegistrationSuccess(first);
@@ -702,10 +582,8 @@ async function submitRegistration(){
 
 function showRegistrationSuccess(firstName){
   var goldColor=getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
-  var check=document.getElementById('celebCheck');
-  var prog=document.getElementById('celebProgress');
-  check.style.background=goldColor;
-  prog.style.background=goldColor;
+  var check=document.getElementById('celebCheck');var prog=document.getElementById('celebProgress');
+  check.style.background=goldColor;prog.style.background=goldColor;
   document.getElementById('celebName').textContent=firstName;
   document.getElementById('celebSubtitle').textContent='Welcome to the School!';
   document.getElementById('celebClass').textContent='We will be in touch soon.';
@@ -713,24 +591,14 @@ function showRegistrationSuccess(firstName){
   document.getElementById('celebMilestone').style.display='none';
   prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');
-  setTimeout(function(){
-    document.getElementById('kioskCelebration').classList.remove('active');
-    resetRegistrationForm();
-    setMode('checkin');
-  },3500);
+  setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');resetRegistrationForm();setMode('checkin');},3500);
 }
 
 function resetRegistrationForm(){
-  document.getElementById('regFirst').value='';
-  document.getElementById('regLast').value='';
-  document.getElementById('regEmail').value='';
-  document.getElementById('regPhone').value='';
+  ['regFirst','regLast','regEmail','regPhone'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('regProgram').value='';
-  document.getElementById('regMsg').textContent='';
-  document.getElementById('regMsg').className='reg-msg';
-  var btn=document.getElementById('regSubmitBtn');
-  btn.disabled=false;
-  btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';
+  document.getElementById('regMsg').textContent='';document.getElementById('regMsg').className='reg-msg';
+  var btn=document.getElementById('regSubmitBtn');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';
 }
 
 function backToSearch(){
@@ -741,8 +609,7 @@ function backToSearch(){
 
 function resetKiosk(){
   selectedStudent=null;selectedFamilyChildren=[];familyCheckinQueue=[];familyCheckinIndex=0;
-  document.getElementById('kioskSearch').value='';
-  document.getElementById('kioskResults').innerHTML='';
+  document.getElementById('kioskSearch').value='';document.getElementById('kioskResults').innerHTML='';
   document.getElementById('kioskCheckinView').style.display='none';
   document.getElementById('kioskSearchView').style.display='flex';
   var btn=document.getElementById('checkinBtn');
@@ -751,11 +618,7 @@ function resetKiosk(){
   detectCurrentClass();
 }
 
-function fmtTime(t){
-  if(!t)return'';
-  var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];
-  return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');
-}
+function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
 
 init();
 </script>
