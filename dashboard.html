@@ -2209,7 +2209,29 @@ function closeAddFamily(){document.getElementById('addFamilyModal').classList.re
 async function saveFamily(){var eid=document.getElementById('familyEditId').value;var name=document.getElementById('familyName').value.trim();if(!name){setMsg('familyMsg','Family name required.','error');return;}setMsg('familyMsg','Saving...','');var payload={name:name,email:document.getElementById('familyEmail').value.trim(),phone:document.getElementById('familyPhone').value.trim()};var r;if(eid){r=await sb.from('families').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('families').insert(payload);}if(r.error){setMsg('familyMsg',r.error.message,'error');}else{setMsg('familyMsg',eid?'Updated!':'Family added!','success');await loadFamilies();setTimeout(closeAddFamily,1000);}}
 
 async function loadInstructors(){try{var r=await sb.from('instructors').select('*').eq('school_id',SID).order('last_name');allInstructors=r.data||[];renderInstructors();}catch(e){allInstructors=[];}}
-function renderInstructors(){var tb=document.getElementById('instructorsTableBody');if(!allInstructors.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No instructors yet.</td></tr>';return;}tb.innerHTML=allInstructors.map(function(i){return '<tr><td class="name">'+i.first_name+' '+i.last_name+'</td><td>'+(i.email||'--')+'</td><td>'+(i.active?'<span class="chip chip-active">active</span>':'<span class="chip chip-expired">inactive</span>')+'</td><td><button class="btn-sm" onclick="openEditInstructor(\''+i.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>';}).join('');}
+function renderInstructors(){
+  var tb=document.getElementById('instructorsTableBody');
+  if(!allInstructors.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No instructors yet.</td></tr>';return;}
+  var rows='';
+  allInstructors.forEach(function(instr){
+    var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
+    var classCount=allClasses.filter(function(c){return c.instructor_name===name;}).length;
+    rows+='<tr id="irow-'+instr.id+'">';
+    rows+='<td class="name">'+name+'</td>';
+    rows+='<td>'+(instr.email||'<span style="color:var(--muted)">—</span>')+'</td>';
+    rows+='<td><span style="font-family:var(--font-display);font-size:1.1rem;color:var(--gold)">'+classCount+'</span><span style="font-size:0.72rem;color:var(--muted);margin-left:0.3rem">class'+(classCount!==1?'es':'')+'</span></td>';
+    rows+='<td>'+(instr.active?'<span class="chip chip-active">active</span>':'<span class="chip chip-expired">inactive</span>')+'</td>';
+    rows+='<td style="display:flex;gap:0.35rem;flex-wrap:wrap;padding:0.65rem 1rem">';
+    rows+='<button class="btn-sm gold" id="mlink-'+instr.id+'" onclick="sendInstructorMagicLink(\''+instr.id+'\')" title="Send staff app sign-in link"><i class="fa-solid fa-link"></i> Send Link</button>';
+    rows+='<button class="btn-sm" id="sbtn-'+instr.id+'" onclick="toggleInstructorSchedule(\''+instr.id+'\')"><i class="fa-solid fa-calendar-week"></i> Schedule</button>';
+    rows+='<button class="btn-sm" onclick="openEditInstructor(\''+instr.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button>';
+    rows+='<button class="btn-sm" id="abtn-'+instr.id+'" onclick="toggleInstructorActive(\''+instr.id+'\')" style="border-color:'+(instr.active?'rgba(154,90,90,0.4)':'rgba(90,154,106,0.4)')+';color:'+(instr.active?'#C07070':'#7DBD7D')+'">'+(instr.active?'Deactivate':'Activate')+'</button>';
+    rows+='</td></tr>';
+    rows+='<tr id="sched-'+instr.id+'" style="display:none"><td colspan="5" style="padding:0"><div id="schedbody-'+instr.id+'" style="background:var(--black);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1rem 1.5rem"><div style="color:var(--muted);font-style:italic;font-size:0.82rem">Loading...</div></div></td></tr>';
+  });
+  tb.innerHTML=rows;
+}
+
 function openAddInstructor(){document.getElementById('addInstructorTitle').textContent='Add Instructor';document.getElementById('instrEditId').value='';document.getElementById('instrFirst').value='';document.getElementById('instrLast').value='';document.getElementById('instrEmail').value='';document.getElementById('instrNotes').value='';document.getElementById('instructorMsg').textContent='';document.getElementById('addInstructorModal').classList.add('active');}
 function openEditInstructor(iid){var i=allInstructors.find(function(x){return x.id===iid;});if(!i)return;document.getElementById('addInstructorTitle').textContent='Edit Instructor';document.getElementById('instrEditId').value=i.id;document.getElementById('instrFirst').value=i.first_name||'';document.getElementById('instrLast').value=i.last_name||'';document.getElementById('instrEmail').value=i.email||'';document.getElementById('instrNotes').value=i.notes||'';document.getElementById('instructorMsg').textContent='';document.getElementById('addInstructorModal').classList.add('active');}
 function closeAddInstructor(){document.getElementById('addInstructorModal').classList.remove('active');}
