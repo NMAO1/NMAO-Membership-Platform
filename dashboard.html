@@ -709,6 +709,80 @@
       <div class="content-heading"><h2>Billing</h2><div class="rule-h"></div></div>
       <div class="panel"><div class="panel-body"><div class="stats-grid" style="max-width:500px"><div class="stat-card"><div class="stat-label">Current Plan</div><div class="stat-value" style="font-size:1.5rem" id="billingPlanName">Professional</div><div class="stat-delta" id="billingPlanPrice">$79/month</div></div><div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.5rem;color:#5A9A6A">Active</div></div></div><button class="panel-action" style="margin-top:1.5rem" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Change Plan</button></div></div>
     </div>
+<div class="panel" style="margin-bottom:1.5rem">
+  <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tablet-screen-button" style="margin-right:0.5rem;color:var(--gold)"></i>Kiosk Welcome Screen</span></div>
+  <div class="panel-body">
+    <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Configure what prospective students see when they tap New Student on the kiosk. Each section can be toggled on or off independently.</p>
+
+    <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-youtube" style="color:#E07070;margin-right:0.5rem"></i>Highlight Reel Video</div><div style="font-size:0.75rem;color:var(--muted)">YouTube video shown to prospective students</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowVideo"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="field"><label>YouTube URL</label><input type="text" id="kioskVideoUrl" placeholder="https://youtube.com/watch?v=..." /></div>
+      </div>
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-quote-left" style="color:var(--gold);margin-right:0.5rem"></i>School Bio</div><div style="font-size:0.75rem;color:var(--muted)">A short welcome message or school description</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowBio"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="field"><label>Bio Text</label><textarea id="kioskBio" rows="4" placeholder="Welcome! We are a family-friendly martial arts school dedicated to..."></textarea></div>
+      </div>
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.5rem"></i>Social Proof Stats</div><div style="font-size:0.75rem;color:var(--muted)">Up to 3 quick facts about your school</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowStats"><div class="toggle-slider"></div></label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <div class="form-row">
+            <div class="field"><label>Stat 1 Number</label><input type="text" id="kioskStat1Num" placeholder="e.g. 200+" /></div>
+            <div class="field"><label>Stat 1 Label</label><input type="text" id="kioskStat1Label" placeholder="e.g. Students" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Stat 2 Number</label><input type="text" id="kioskStat2Num" placeholder="e.g. 2008" /></div>
+            <div class="field"><label>Stat 2 Label</label><input type="text" id="kioskStat2Label" placeholder="e.g. Founded" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Stat 3 Number</label><input type="text" id="kioskStat3Num" placeholder="e.g. 5" /></div>
+            <div class="field"><label>Stat 3 Label</label><input type="text" id="kioskStat3Label" placeholder="e.g. Instructors" /></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-instagram" style="color:#C13584;margin-right:0.5rem"></i>Instagram Post</div><div style="font-size:0.75rem;color:var(--muted)">Paste a public Instagram post or reel URL</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowInstagram"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="field"><label>Instagram Post URL</label><input type="text" id="kioskInstagramUrl" placeholder="https://www.instagram.com/p/..." /></div>
+      </div>
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-facebook" style="color:#1877F2;margin-right:0.5rem"></i>Facebook Post</div><div style="font-size:0.75rem;color:var(--muted)">Paste a public Facebook post URL</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowFacebook"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="field"><label>Facebook Post URL</label><input type="text" id="kioskFacebookUrl" placeholder="https://www.facebook.com/..." /></div>
+      </div>
+
+      <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-tiktok" style="color:var(--white);margin-right:0.5rem"></i>TikTok Video</div><div style="font-size:0.75rem;color:var(--muted)">Paste a public TikTok video URL</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="kioskShowTiktok"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="field"><label>TikTok Video URL</label><input type="text" id="kioskTiktokUrl" placeholder="https://www.tiktok.com/@handle/video/..." /></div>
+      </div>
+
+    </div>
+
+    <button class="panel-action" style="margin-top:1.5rem" onclick="saveKioskSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Kiosk Settings</button>
+    <p class="form-msg" id="kioskSettingsMsg"></p>
+  </div>
+</div>
 
   </div>
 </main>
