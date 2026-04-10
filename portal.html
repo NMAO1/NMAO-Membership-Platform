@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -11,140 +12,234 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    :root{--gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);--black:#0A0A0A;--surface:#141414;--border:#2A2520;--white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;--font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;}
+    :root{
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+      --black:#0A0A0A;--surface:#141414;--border:#2A2520;
+      --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
+      --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
+    }
     body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;font-size:15px;}
 
-    /* LOGIN */
-    #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
-    .login-logo-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;}
-    .login-logo-img{max-height:64px;max-width:160px;object-fit:contain;}
-    .login-logo{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;}
-    .login-tagline{font-size:0.78rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3rem;text-align:center;}
-    .login-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:420px;}
-    .login-title{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.5rem;}
-    .login-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;line-height:1.6;}
-    .field{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
-    .field label{font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);}
-    .field input{background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.85rem 1rem;outline:none;transition:border-color 0.2s;}
-    .field input:focus{border-color:var(--gold);}
-    .btn-gold{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;transition:opacity 0.2s;}
-    .btn-gold:hover{opacity:0.9;}
-    .btn-gold:disabled{opacity:0.5;cursor:not-allowed;}
-    .form-msg{font-size:0.82rem;margin-top:0.75rem;text-align:center;min-height:1.1rem;}
-    .form-msg.success{color:var(--green);}
-    .form-msg.error{color:#E07070;}
+```
+/* ── LOGIN ── */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.login-logo-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;}
+.login-logo-img{max-height:64px;max-width:160px;object-fit:contain;}
+.login-logo{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;}
+.login-tagline{font-size:0.78rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3rem;text-align:center;}
+.login-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:420px;}
+.login-title{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.5rem;}
+.login-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;line-height:1.6;}
+.field{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
+.field label{font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);}
+.field input{background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.85rem 1rem;outline:none;transition:border-color 0.2s;}
+.field input:focus{border-color:var(--gold);}
+.btn-gold{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;transition:opacity 0.2s;}
+.btn-gold:hover{opacity:0.9;}
+.btn-gold:disabled{opacity:0.5;cursor:not-allowed;}
+.form-msg{font-size:0.82rem;margin-top:0.75rem;text-align:center;min-height:1.1rem;}
+.form-msg.success{color:var(--green);}
+.form-msg.error{color:#E07070;}
 
-    /* SUCCESS */
-    #successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;}
-    .success-icon{font-size:3rem;color:var(--gold);margin-bottom:1.5rem;}
-    .success-title{font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;}
-    .success-sub{font-size:0.92rem;color:var(--muted);max-width:380px;line-height:1.7;}
+/* ── SUCCESS ── */
+#successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;}
+.success-icon{font-size:3rem;color:var(--gold);margin-bottom:1.5rem;}
+.success-title{font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;}
+.success-sub{font-size:0.92rem;color:var(--muted);max-width:380px;line-height:1.7;}
 
-    /* PORTAL */
-    #portalScreen{display:none;}
-    .portal-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-    .portal-header-left{display:flex;align-items:center;gap:0.85rem;}
-    .portal-header-logo{max-height:40px;max-width:120px;object-fit:contain;}
-    .portal-logo{font-family:var(--font-display);font-size:1.4rem;color:var(--gold);letter-spacing:0.14em;}
-    .portal-school{font-size:0.72rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.1rem;}
-    .portal-signout{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;transition:all 0.2s;}
-    .portal-signout:hover{border-color:var(--gold);color:var(--gold);}
-    .portal-body{max-width:720px;margin:0 auto;padding:2rem 1.5rem;}
+/* ── SHARED PORTAL HEADER ── */
+.portal-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.portal-header-left{display:flex;align-items:center;gap:0.85rem;}
+.portal-header-logo{max-height:40px;max-width:120px;object-fit:contain;}
+.portal-logo{font-family:var(--font-display);font-size:1.4rem;color:var(--gold);letter-spacing:0.14em;}
+.portal-school{font-size:0.72rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.1rem;}
+.portal-signout{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;transition:all 0.2s;}
+.portal-signout:hover{border-color:var(--gold);color:var(--gold);}
+.portal-body{max-width:720px;margin:0 auto;padding:2rem 1.5rem;}
 
-    /* TABS */
-    .portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
-    .portal-tab{flex:1;padding:0.9rem 0.5rem;text-align:center;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
-    .portal-tab.active{color:var(--gold);border-color:var(--gold);}
-    .portal-tab i{margin-right:0.4rem;}
+/* ── SHARED CHIPS / TAGS ── */
+.chip{font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:2px;}
+.chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
+.chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
+.chip-paused{background:rgba(90,130,200,0.12);border:1px solid rgba(90,130,200,0.35);color:#7AAAD4;}
+.prog-tag{font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;border:1px solid;font-family:var(--font-ui);letter-spacing:0.08em;}
+.portal-section{margin-bottom:1.75rem;}
+.section-label{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.5rem;}
+.info-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
+.info-row{display:flex;gap:0.75rem;margin-bottom:0.65rem;font-size:0.88rem;}
+.info-row:last-child{margin-bottom:0;}
+.info-label{color:var(--muted);min-width:100px;flex-shrink:0;font-size:0.72rem;letter-spacing:0.08em;padding-top:0.05rem;}
+.info-value{color:var(--white);}
+.day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
 
-    /* HERO */
-    .profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
-    .hero-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;}
-    .hero-avatar:hover .avatar-overlay{opacity:1;}
-    .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:#fff;}
-    .hero-name{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.4rem;}
-    .hero-tags{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
-    .chip{font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:2px;}
-    .chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
-    .chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
-    .prog-tag{font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;border:1px solid;font-family:var(--font-ui);letter-spacing:0.08em;}
+/* ── STUDENT PORTAL SPECIFIC ── */
+.portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.portal-tab{flex:1;padding:0.9rem 0.5rem;text-align:center;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.portal-tab.active{color:var(--gold);border-color:var(--gold);}
+.portal-tab i{margin-right:0.4rem;}
+.profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
+.hero-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;}
+.hero-avatar:hover .avatar-overlay{opacity:1;}
+.avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:#fff;}
+.hero-name{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.4rem;}
+.hero-tags{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.belt-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
+.belt-bar-bg{height:5px;background:var(--border);border-radius:2px;overflow:hidden;margin:0.35rem 0;}
+.belt-bar-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+.belt-palette{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.85rem;}
+.belt-pip{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.belt-pip-bar{width:26px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,0.12);}
+.belt-pip-label{font-size:0.5rem;color:var(--muted);}
+.belt-pip.current .belt-pip-label{color:var(--gold);}
+.eligible-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.3rem 0.75rem;border-radius:2px;margin-top:0.5rem;}
+.tracker-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
+.tracker-number{font-family:var(--font-display);font-size:3.5rem;color:var(--gold);line-height:1;}
+.milestone-bar{height:5px;background:var(--border);border-radius:2px;margin:0.6rem 0;overflow:hidden;}
+.milestone-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.8s ease;}
+.att-row{display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem;}
+.video-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold-dk);margin-bottom:0.5rem;}
+.class-schedule-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;transition:border-color 0.2s;}
+.class-schedule-card.enrolled{border-left:3px solid var(--gold);}
+.class-time-badge{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);min-width:75px;flex-shrink:0;}
+.class-details{flex:1;}
+.class-name{font-size:0.95rem;color:var(--white);margin-bottom:0.2rem;}
+.class-meta-text{font-size:0.75rem;color:var(--muted);}
+.btn-rsvp{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;}
+.btn-rsvp.enrolled{background:none;border:1px solid var(--gold);color:var(--gold);}
+.btn-rsvp:disabled{opacity:0.5;cursor:not-allowed;}
+.announcement-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.35rem;margin-bottom:0.75rem;}
+.announcement-type{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;}
+.announcement-subject{font-family:var(--font-display);font-size:1.1rem;color:var(--white);margin-bottom:0.5rem;}
+.announcement-body{font-size:0.85rem;color:var(--muted2);line-height:1.6;margin-bottom:0.5rem;}
+.announcement-cta{display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.2rem;text-decoration:none;margin-top:0.5rem;}
+.announcement-date{font-size:0.68rem;color:var(--muted);margin-top:0.5rem;}
 
-    /* SECTIONS */
-    .portal-section{margin-bottom:1.75rem;}
-    .section-label{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.5rem;}
-    .info-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
-    .info-row{display:flex;gap:0.75rem;margin-bottom:0.65rem;font-size:0.88rem;}
-    .info-row:last-child{margin-bottom:0;}
-    .info-label{color:var(--muted);min-width:100px;flex-shrink:0;font-size:0.72rem;letter-spacing:0.08em;padding-top:0.05rem;}
-    .info-value{color:var(--white);}
+/* ── ONBOARDING ── */
+#onboardingScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.onboarding-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:520px;}
+.onboarding-logo-wrap{text-align:center;margin-bottom:2rem;}
+.onboarding-logo-img{max-height:72px;max-width:180px;object-fit:contain;margin-bottom:0.5rem;display:none;}
+.onboarding-logo-text{font-family:var(--font-display);font-size:2rem;color:var(--gold);letter-spacing:0.16em;}
+.onboarding-school{font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;}
+.onboarding-welcome{font-family:var(--font-display);font-size:1.5rem;color:var(--white);margin-bottom:0.4rem;text-align:center;}
+.onboarding-sub{font-size:0.85rem;color:var(--muted);margin-bottom:1.75rem;text-align:center;line-height:1.6;}
+.onboard-step{display:flex;align-items:center;gap:1rem;padding:1rem 1.1rem;background:var(--black);border:1px solid var(--border);margin-bottom:0.5rem;transition:border-color 0.2s;}
+.onboard-step.done{border-left:2px solid var(--green);}
+.onboard-step-icon{font-size:1.2rem;flex-shrink:0;width:24px;text-align:center;}
+.onboard-step-label{flex:1;font-size:0.88rem;color:var(--white);}
+.onboard-step-sub{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;}
+.onboard-step-btn{font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.45rem 0.9rem;border:1px solid var(--gold-dk);background:var(--gold-bg);color:var(--gold);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s;}
+.onboard-step-btn:hover{background:var(--gold);color:var(--black);}
+.onboard-photo-preview{width:52px;height:52px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
+.btn-get-started{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;margin-top:1.25rem;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
+.btn-get-started:hover{opacity:0.9;}
 
-    /* BELT */
-    .belt-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
-    .belt-bar-bg{height:5px;background:var(--border);border-radius:2px;overflow:hidden;margin:0.35rem 0;}
-    .belt-bar-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
-    .belt-palette{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.85rem;}
-    .belt-pip{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
-    .belt-pip-bar{width:26px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,0.12);}
-    .belt-pip-label{font-size:0.5rem;color:var(--muted);}
-    .belt-pip.current .belt-pip-label{color:var(--gold);}
-    .eligible-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.3rem 0.75rem;border-radius:2px;margin-top:0.5rem;}
+/* ── FAMILY PORTAL ── */
+#familyPortalScreen{display:none;}
+.child-switcher-bar{background:var(--black);border-bottom:1px solid var(--border);padding:0.85rem 1.5rem;display:flex;align-items:center;gap:1rem;}
+.child-switcher-label{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.child-switcher-select{background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-display);font-size:1rem;padding:0.5rem 0.85rem;outline:none;cursor:pointer;flex:1;max-width:360px;transition:border-color 0.2s;}
+.child-switcher-select:focus{border-color:var(--gold);}
+.family-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.family-tab{flex:1;padding:0.9rem 0.5rem;text-align:center;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.family-tab.active{color:var(--gold);border-color:var(--gold);}
+.family-tab i{margin-right:0.4rem;}
+.child-hero{display:flex;align-items:center;gap:1.25rem;margin-bottom:2rem;padding:1.35rem;background:var(--surface);border:1px solid var(--border);}
+.child-hero-avatar{width:68px;height:68px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;}
+.child-stat-row{display:flex;gap:1.5rem;margin-top:0.5rem;flex-wrap:wrap;}
+.child-stat{text-align:center;}
+.child-stat-num{font-family:var(--font-display);font-size:1.6rem;color:var(--gold);line-height:1;}
+.child-stat-label{font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);}
+.family-class-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);padding:1.1rem 1.25rem;margin-bottom:0.6rem;transition:border-left-color 0.2s;}
+.family-class-card.has-selection{border-left-color:var(--gold);}
+.family-class-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.85rem;gap:1rem;}
+.family-class-time{font-family:var(--font-display);font-size:1.05rem;color:var(--gold);flex-shrink:0;min-width:72px;}
+.family-class-name{font-size:0.92rem;color:var(--white);margin-bottom:0.15rem;}
+.family-class-meta{font-size:0.72rem;color:var(--muted);}
+.family-class-type{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;border:1px solid;border-radius:2px;font-family:var(--font-ui);flex-shrink:0;}
+.type-checkin{color:#7DBD7D;border-color:rgba(90,154,106,0.4);background:rgba(90,154,106,0.1);}
+.type-reserve{color:#7DAAD4;border-color:rgba(125,170,212,0.4);background:rgba(125,170,212,0.1);}
+.family-children-list{display:flex;flex-direction:column;gap:0.35rem;}
+.family-child-row{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:var(--black);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+.family-child-row:hover{border-color:rgba(201,168,76,0.35);}
+.family-child-row.selected{border-color:var(--gold);background:var(--gold-bg);}
+.family-child-row.already-done{opacity:0.6;cursor:default;}
+.family-child-check{width:20px;height:20px;border:2px solid var(--border);border-radius:3px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--black);transition:all 0.15s;}
+.family-child-row.selected .family-child-check{background:var(--gold);border-color:var(--gold);}
+.family-child-name{flex:1;font-size:0.85rem;color:var(--white);}
+.family-child-prog{font-size:0.68rem;color:var(--muted);margin-left:auto;flex-shrink:0;}
+.family-confirm-bar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:1rem 1.5rem;display:none;align-items:center;justify-content:space-between;gap:1rem;z-index:50;}
+.family-confirm-summary{font-size:0.82rem;color:var(--muted);flex:1;}
+.family-confirm-count{color:var(--gold);font-family:var(--font-display);font-size:1.2rem;}
+.btn-family-confirm{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;flex-shrink:0;}
+.btn-family-confirm:hover{opacity:0.9;}
+.btn-family-confirm:disabled{opacity:0.5;cursor:not-allowed;}
+.mini-belt-bar{display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;}
+.mini-belt-swatch{width:28px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,0.15);}
 
-    /* TRACKER */
-    .tracker-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;}
-    .tracker-number{font-family:var(--font-display);font-size:3.5rem;color:var(--gold);line-height:1;}
-    .milestone-bar{height:5px;background:var(--border);border-radius:2px;margin:0.6rem 0;overflow:hidden;}
-    .milestone-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.8s ease;}
+/* ── INSTRUCTOR PORTAL ── */
+#instructorPortalScreen{display:none;}
+.instructor-greeting{font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.25rem;}
+.instructor-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;}
+.instr-class-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.35rem;margin-bottom:0.5rem;}
+.instr-class-time{font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.2rem;}
+.instr-class-name{font-size:0.92rem;color:var(--white);margin-bottom:0.2rem;}
+.instr-class-meta{font-size:0.72rem;color:var(--muted);}
+.instr-badge{font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);display:inline-block;margin-bottom:0.5rem;}
+.staff-app-link{display:flex;align-items:center;gap:0.85rem;padding:1.1rem 1.35rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin-top:1.5rem;cursor:pointer;text-decoration:none;transition:border-color 0.2s;}
+.staff-app-link:hover{border-color:var(--gold);}
 
-    /* ATTENDANCE */
-    .att-row{display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem;}
+/* ── WAIVER MODAL ── */
+#waiverModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
+#waiverModal.active{display:flex;}
+.waiver-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;}
+.waiver-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.waiver-title{font-family:var(--font-display);font-size:1.1rem;color:var(--white);}
+.waiver-close{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;}
+.waiver-body{padding:1.5rem;overflow-y:auto;flex:1;font-size:0.85rem;color:var(--muted2);line-height:1.7;}
+.waiver-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;flex-shrink:0;}
+.btn-sign-waiver{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;}
 
-    /* VIDEO */
-    .video-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold-dk);margin-bottom:0.5rem;}
+/* ── CONTACT MODAL ── */
+#contactModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
+#contactModal.active{display:flex;}
+.contact-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:440px;padding:2rem;}
+.contact-card-title{font-family:var(--font-display);font-size:1.2rem;color:var(--white);margin-bottom:0.5rem;}
+.contact-card-sub{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;}
+.contact-field{margin-bottom:1rem;}
+.contact-field label{display:block;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+.contact-field input{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.9rem;outline:none;transition:border-color 0.2s;}
+.contact-field input:focus{border-color:var(--gold);}
+.btn-save-contact{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.9rem;border:none;cursor:pointer;margin-top:0.5rem;}
 
-    /* SCHEDULE */
-    .class-schedule-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;transition:border-color 0.2s;}
-    .class-schedule-card.enrolled{border-left:3px solid var(--gold);}
-    .class-time-badge{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);min-width:75px;flex-shrink:0;}
-    .class-details{flex:1;}
-    .class-name{font-size:0.95rem;color:var(--white);margin-bottom:0.2rem;}
-    .class-meta-text{font-size:0.75rem;color:var(--muted);}
-    .btn-rsvp{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;}
-    .btn-rsvp.enrolled{background:none;border:1px solid var(--gold);color:var(--gold);}
-    .btn-rsvp:disabled{opacity:0.5;cursor:not-allowed;}
-    .day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
+/* ── CELEBRATION ── */
+#celebrationOverlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);backdrop-filter:blur(4px);}
+#celebrationOverlay.active{display:flex;}
+.celebration-card{background:var(--surface);border:1px solid var(--gold-dk);padding:2.5rem 2rem;max-width:440px;width:90%;text-align:center;animation:celebIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
+@keyframes celebIn{from{opacity:0;transform:scale(0.7) translateY(40px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.celebration-emoji{font-size:4.5rem;margin-bottom:0.75rem;display:block;animation:bounceIn 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
+@keyframes bounceIn{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
+.celebration-number{font-family:var(--font-display);font-size:4.5rem;color:var(--gold);line-height:1;margin-bottom:0.25rem;}
+.celebration-label{font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;}
+.celebration-message{font-family:var(--font-display);font-size:1.2rem;color:var(--white);line-height:1.5;margin-bottom:1.75rem;font-style:italic;}
+.celebration-dismiss{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.85rem 2.5rem;border:none;cursor:pointer;}
+#confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:10000;}
+.particle{position:fixed;pointer-events:none;z-index:10001;animation:particleFall linear forwards;}
+@keyframes particleFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
+@keyframes particleRise{0%{opacity:0;transform:translateY(0) scale(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(-80vh) scale(1.5);}}
+@keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
+```
 
-    /* ANNOUNCEMENTS */
-    .announcement-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.35rem;margin-bottom:0.75rem;}
-    .announcement-type{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;}
-    .announcement-subject{font-family:var(--font-display);font-size:1.1rem;color:var(--white);margin-bottom:0.5rem;}
-    .announcement-body{font-size:0.85rem;color:var(--muted2);line-height:1.6;margin-bottom:0.5rem;}
-    .announcement-image{width:100%;max-height:200px;object-fit:cover;margin-bottom:0.5rem;border:1px solid var(--border);}
-    .announcement-cta{display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.2rem;text-decoration:none;margin-top:0.5rem;}
-    .announcement-date{font-size:0.68rem;color:var(--muted);margin-top:0.5rem;}
-
-    /* CELEBRATION */
-    #celebrationOverlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);backdrop-filter:blur(4px);}
-    #celebrationOverlay.active{display:flex;}
-    .celebration-card{background:var(--surface);border:1px solid var(--gold-dk);padding:2.5rem 2rem;max-width:440px;width:90%;text-align:center;animation:celebIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
-    @keyframes celebIn{from{opacity:0;transform:scale(0.7) translateY(40px);}to{opacity:1;transform:scale(1) translateY(0);}}
-    .celebration-emoji{font-size:4.5rem;margin-bottom:0.75rem;display:block;animation:bounceIn 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
-    @keyframes bounceIn{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
-    .celebration-number{font-family:var(--font-display);font-size:4.5rem;color:var(--gold);line-height:1;margin-bottom:0.25rem;}
-    .celebration-label{font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;}
-    .celebration-message{font-family:var(--font-display);font-size:1.2rem;color:var(--white);line-height:1.5;margin-bottom:1.75rem;font-style:italic;}
-    .celebration-dismiss{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.85rem 2.5rem;border:none;cursor:pointer;}
-    #confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:10000;}
-    .particle{position:fixed;pointer-events:none;z-index:10001;animation:particleFall linear forwards;}
-    @keyframes particleFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
-    @keyframes particleRise{0%{opacity:0;transform:translateY(0) scale(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(-80vh) scale(1.5);}}
-    @keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
   </style>
 </head>
 <body>
 
 <canvas id="confettiCanvas" style="display:none"></canvas>
 
-<!-- LOGIN -->
+<!-- ════════════════════════════════════════════
+     LOGIN SCREEN (unchanged)
+════════════════════════════════════════════ -->
+
 <div id="loginScreen">
   <div class="login-logo-wrap">
     <img id="loginLogoImg" class="login-logo-img" src="" alt="" style="display:none" />
@@ -160,15 +255,78 @@
   </div>
 </div>
 
-<!-- SUCCESS -->
+<!-- ════════════════════════════════════════════
+     SUCCESS SCREEN (unchanged)
+════════════════════════════════════════════ -->
+
 <div id="successScreen">
   <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
   <div class="success-title">Check your email</div>
   <div class="success-sub">We sent a sign-in link to <strong id="sentEmail"></strong>. Click the link in your email to access your member portal.</div>
 </div>
 
-<!-- PORTAL -->
-<div id="portalScreen">
+<!-- ════════════════════════════════════════════
+     ONBOARDING SCREEN — Item 28
+     First-time login welcome. Sets portal_onboarded = true on dismiss.
+════════════════════════════════════════════ -->
+
+<div id="onboardingScreen">
+  <input type="file" id="onboardPhotoInput" accept="image/*" style="display:none" onchange="handleOnboardPhotoUpload(event)" />
+  <div class="onboarding-card">
+    <div class="onboarding-logo-wrap">
+      <img id="onboardLogoImg" class="onboarding-logo-img" src="" alt="" />
+      <div id="onboardLogoText" class="onboarding-logo-text">NMAO</div>
+      <div class="onboarding-school" id="onboardSchoolName">Member Portal</div>
+    </div>
+    <div class="onboarding-welcome" id="onboardingWelcome">Welcome!</div>
+    <div class="onboarding-sub">Your account is ready. Complete a few quick steps to get the most from your portal.</div>
+
+```
+<!-- Step 1: Photo -->
+<div class="onboard-step" id="onboardStepPhoto">
+  <div class="onboard-photo-preview" id="onboardPhotoPreview">
+    <i class="fa-solid fa-user" style="font-size:1.2rem;color:var(--gold)"></i>
+  </div>
+  <div style="flex:1">
+    <div class="onboard-step-label">Upload a profile photo</div>
+    <div class="onboard-step-sub">Your photo appears on your check-in card</div>
+  </div>
+  <button class="onboard-step-btn" id="onboardPhotoBtnEl" onclick="document.getElementById('onboardPhotoInput').click()">Upload</button>
+</div>
+
+<!-- Step 2: Contact info -->
+<div class="onboard-step" id="onboardStepContact">
+  <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
+  <div style="flex:1">
+    <div class="onboard-step-label">Verify your contact information</div>
+    <div class="onboard-step-sub" id="onboardContactSub">Confirm your phone number is on file</div>
+  </div>
+  <button class="onboard-step-btn" id="onboardContactBtnEl" onclick="openContactModal()">Verify</button>
+</div>
+
+<!-- Step 3: Waiver -->
+<div class="onboard-step" id="onboardStepWaiver">
+  <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
+  <div style="flex:1">
+    <div class="onboard-step-label">Sign the school waiver</div>
+    <div class="onboard-step-sub">Required before your first class</div>
+  </div>
+  <button class="onboard-step-btn" id="onboardWaiverBtnEl" onclick="openWaiverModal()">Review &amp; Sign</button>
+</div>
+
+<button class="btn-get-started" onclick="completeOnboarding()">
+  Get Started <i class="fa-solid fa-arrow-right"></i>
+</button>
+```
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STUDENT PORTAL SCREEN (existing — preserved)
+════════════════════════════════════════════ -->
+
+<div id="portalScreen" style="display:none">
   <div class="portal-header">
     <div class="portal-header-left">
       <img id="portalLogoImg" class="portal-header-logo" src="" alt="" style="display:none" />
@@ -183,95 +341,234 @@
     <div id="portalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading your profile...</div>
     <div id="portalContent" style="display:none">
 
-      <input type="file" id="portalPhotoInput" accept="image/*" style="display:none" onchange="handlePortalPhotoUpload(event)" />
+```
+  <input type="file" id="portalPhotoInput" accept="image/*" style="display:none" onchange="handlePortalPhotoUpload(event)" />
 
-      <!-- Hero -->
-      <div class="profile-hero">
-        <div>
-          <div class="hero-avatar" id="heroAvatar" onclick="document.getElementById('portalPhotoInput').click()">
-            <span id="heroInitials"></span>
-            <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
-          </div>
-          <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:0.3rem;letter-spacing:0.08em">tap to upload</div>
-        </div>
-        <div style="flex:1">
-          <div class="hero-name" id="heroName"></div>
-          <div class="hero-tags">
-            <span class="chip" id="heroStatus"></span>
-            <span class="prog-tag" id="heroProgram"></span>
-            <span id="heroBeltBadge" style="display:none;font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
-          </div>
-        </div>
+  <div class="profile-hero">
+    <div>
+      <div class="hero-avatar" id="heroAvatar" onclick="document.getElementById('portalPhotoInput').click()">
+        <span id="heroInitials"></span>
+        <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
       </div>
-
-      <!-- TABS -->
-      <div class="portal-tabs">
-        <div class="portal-tab active" id="ptab-schedule" onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
-        <div class="portal-tab" id="ptab-updates" onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
-        <div class="portal-tab" id="ptab-profile" onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
-        <div class="portal-tab" id="ptab-progress" onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
-        <div class="portal-tab" id="ptab-attendance" onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
-      </div>
-
-      <!-- SCHEDULE TAB -->
-      <div id="portalTabSchedule">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
-          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>
-          <div id="scheduleList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div></div>
-        </div>
-      </div>
-
-      <!-- UPDATES TAB -->
-      <div id="portalTabUpdates" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
-          <div id="announcementsList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No announcements yet.</div></div>
-        </div>
-      </div>
-
-      <!-- PROFILE TAB -->
-      <div id="portalTabProfile" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
-          <div class="info-card" id="membershipCard"></div>
-        </div>
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
-          <div class="info-card" id="contactCard"></div>
-        </div>
-        <div class="portal-section" id="curriculumSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
-          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
-          <div id="curriculumList"></div>
-        </div>
-      </div>
-
-      <!-- PROGRESS TAB -->
-      <div id="portalTabProgress" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
-          <div class="tracker-card" id="trackerCard"></div>
-        </div>
-        <div class="portal-section" id="beltSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
-          <div class="belt-card" id="beltCard"></div>
-        </div>
-      </div>
-
-      <!-- ATTENDANCE TAB -->
-      <div id="portalTabAttendance" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-calendar-check"></i> Recent Attendance</div>
-          <div id="attendanceSection"></div>
-        </div>
-      </div>
-
+      <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:0.3rem;letter-spacing:0.08em">tap to upload</div>
     </div>
+    <div style="flex:1">
+      <div class="hero-name" id="heroName"></div>
+      <div class="hero-tags">
+        <span class="chip" id="heroStatus"></span>
+        <span class="prog-tag" id="heroProgram"></span>
+        <span id="heroBeltBadge" style="display:none;font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="portal-tabs">
+    <div class="portal-tab active" id="ptab-schedule" onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
+    <div class="portal-tab" id="ptab-updates" onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+    <div class="portal-tab" id="ptab-profile" onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
+    <div class="portal-tab" id="ptab-progress" onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
+    <div class="portal-tab" id="ptab-attendance" onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
+  </div>
+
+  <div id="portalTabSchedule">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
+      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>
+      <div id="scheduleList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div></div>
+    </div>
+  </div>
+
+  <div id="portalTabUpdates" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
+      <div id="announcementsList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No announcements yet.</div></div>
+    </div>
+  </div>
+
+  <div id="portalTabProfile" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
+      <div class="info-card" id="membershipCard"></div>
+    </div>
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
+      <div class="info-card" id="contactCard"></div>
+    </div>
+    <div class="portal-section" id="curriculumSection" style="display:none">
+      <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
+      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
+      <div id="curriculumList"></div>
+    </div>
+  </div>
+
+  <div id="portalTabProgress" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
+      <div class="tracker-card" id="trackerCard"></div>
+    </div>
+    <div class="portal-section" id="beltSection" style="display:none">
+      <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
+      <div class="belt-card" id="beltCard"></div>
+    </div>
+  </div>
+
+  <div id="portalTabAttendance" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-calendar-check"></i> Recent Attendance</div>
+      <div id="attendanceSection"></div>
+    </div>
+  </div>
+
+</div>
+```
+
   </div>
 </div>
 
-<!-- CELEBRATION -->
+<!-- ════════════════════════════════════════════
+     FAMILY PORTAL SCREEN — Items 17 & 18
+     Parent view with child switcher and class reservation.
+
+     Requires this SQL run in Supabase:
+     CREATE TABLE class_reservations (
+       id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+       school_id UUID REFERENCES schools(id),
+       class_id UUID REFERENCES classes(id),
+       student_id UUID REFERENCES students(id),
+       session_date DATE,
+       status TEXT DEFAULT 'reserved',
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     );
+════════════════════════════════════════════ -->
+
+<div id="familyPortalScreen">
+  <div class="portal-header">
+    <div class="portal-header-left">
+      <img id="familyLogoImg" class="portal-header-logo" src="" alt="" style="display:none" />
+      <div>
+        <div class="portal-logo" id="familyLogoText">NMAO</div>
+        <div class="portal-school" id="familySchoolName">Family Portal</div>
+      </div>
+    </div>
+    <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
+  </div>
+
+  <!-- Child Switcher Bar -->
+
+  <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
+    <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
+    <select class="child-switcher-select" id="childSelect" onchange="switchChild()"></select>
+  </div>
+
+  <div id="familyPortalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading family profile...</div>
+
+  <div id="familyPortalContent" style="display:none">
+    <div class="portal-body">
+
+```
+  <!-- Child hero card -->
+  <div class="child-hero" id="familyChildHero"></div>
+
+  <!-- Family Tabs -->
+  <div class="family-tabs">
+    <div class="family-tab active" id="ftab-overview" onclick="switchFamilyTab('overview')"><i class="fa-solid fa-user"></i> Overview</div>
+    <div class="family-tab" id="ftab-schedule" onclick="switchFamilyTab('schedule')"><i class="fa-solid fa-calendar-week"></i> Schedule</div>
+    <div class="family-tab" id="ftab-updates" onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="familyTabOverview">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
+      <div class="tracker-card" id="familyChildTracker"></div>
+    </div>
+    <div class="portal-section" id="familyBeltSection" style="display:none">
+      <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
+      <div class="belt-card" id="familyChildBelt"></div>
+    </div>
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
+      <div class="info-card" id="familyChildMembership"></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE TAB -->
+  <div id="familyTabSchedule" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-calendar-week"></i> Weekly Schedule</div>
+      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Select children for each class. Today's classes will check them in immediately. Future classes will create a reservation.</p>
+      <div id="familyScheduleList"></div>
+      <div style="height:80px"></div><!-- spacer for sticky bar -->
+    </div>
+  </div>
+
+  <!-- UPDATES TAB -->
+  <div id="familyTabUpdates" style="display:none">
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
+      <div id="familyAnnouncementsList"></div>
+    </div>
+  </div>
+
+</div><!-- end portal-body -->
+
+<!-- Sticky confirm bar — shown when selections exist -->
+<div class="family-confirm-bar" id="familyConfirmBar">
+  <div class="family-confirm-summary" id="familyConfirmSummary"></div>
+  <button class="btn-family-confirm" id="familyConfirmBtn" onclick="confirmFamilySelections()">
+    <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
+  </button>
+</div>
+```
+
+  </div><!-- end familyPortalContent -->
+</div>
+
+<!-- ════════════════════════════════════════════
+     INSTRUCTOR PORTAL SCREEN — Item 20
+     Read-only schedule view for instructors.
+     Full staff app is staff.html (Build D).
+════════════════════════════════════════════ -->
+
+<div id="instructorPortalScreen">
+  <div class="portal-header">
+    <div class="portal-header-left">
+      <img id="instrLogoImg" class="portal-header-logo" src="" alt="" style="display:none" />
+      <div>
+        <div class="portal-logo" id="instrLogoText">NMAO</div>
+        <div class="portal-school" id="instrSchoolName">Instructor Portal</div>
+      </div>
+    </div>
+    <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
+  </div>
+  <div class="portal-body">
+    <div class="instructor-greeting" id="instrGreeting">Good morning</div>
+    <div class="instructor-sub" id="instrSubtitle">Here is today's schedule.</div>
+
+```
+<div class="portal-section">
+  <div class="section-label"><i class="fa-solid fa-calendar-day"></i> Today's Classes</div>
+  <div id="instrTodayClasses"><div style="color:var(--muted);font-style:italic"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+</div>
+
+<!-- Link to full staff app -->
+<a href="staff.html" class="staff-app-link">
+  <i class="fa-solid fa-mobile-screen" style="font-size:1.4rem;color:var(--gold);flex-shrink:0"></i>
+  <div>
+    <div style="font-size:0.92rem;color:var(--white);margin-bottom:0.15rem">Open Staff App</div>
+    <div style="font-size:0.72rem;color:var(--muted)">Full attendance, check-in, belt promotion tools</div>
+  </div>
+  <i class="fa-solid fa-arrow-right" style="color:var(--gold);margin-left:auto"></i>
+</a>
+```
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CELEBRATION OVERLAY (unchanged)
+════════════════════════════════════════════ -->
+
 <div id="celebrationOverlay">
   <div class="celebration-card">
     <span class="celebration-emoji" id="celebEmoji">🎊</span>
@@ -282,61 +579,207 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     WAIVER MODAL
+════════════════════════════════════════════ -->
+
+<div id="waiverModal">
+  <div class="waiver-card">
+    <div class="waiver-header">
+      <div class="waiver-title" id="waiverModalTitle">School Waiver</div>
+      <button class="waiver-close" onclick="document.getElementById('waiverModal').classList.remove('active')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="waiver-body" id="waiverModalBody">
+      <p style="color:var(--muted);font-style:italic">Loading waiver...</p>
+    </div>
+    <div class="waiver-footer">
+      <button style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.65rem 1.25rem;cursor:pointer" onclick="document.getElementById('waiverModal').classList.remove('active')">Cancel</button>
+      <button class="btn-sign-waiver" onclick="signWaiver()"><i class="fa-solid fa-signature" style="margin-right:0.4rem"></i>I Agree — Sign Waiver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CONTACT VERIFY MODAL
+════════════════════════════════════════════ -->
+
+<div id="contactModal">
+  <div class="contact-card">
+    <div class="contact-card-title">Verify Contact Info</div>
+    <div class="contact-card-sub">Confirm your details so the school can reach you.</div>
+    <div class="contact-field"><label>Email</label><input type="email" id="contactEmailInput" placeholder="your@email.com" /></div>
+    <div class="contact-field"><label>Phone</label><input type="text" id="contactPhoneInput" placeholder="(555) 555-5555" /></div>
+    <button class="btn-save-contact" onclick="saveContactInfo()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save</button>
+    <p class="form-msg" id="contactMsg"></p>
+    <button onclick="document.getElementById('contactModal').classList.remove('active')" style="width:100%;margin-top:0.5rem;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.6rem;cursor:pointer">Cancel</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+
 <script>
+// ─────────────────────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
 var PORTAL_URL='https://nmao1.github.io/NMAO-Membership-Platform/portal.html';
 var sb=supabase.createClient(SURL,SKEY);
+
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
 var ANIM_EMOJIS={confetti:'🎊',belt:'🥋',stars:'⭐',fire:'🔥',petals:'🌸',lightning:'⚡',trophy:'🏆',bullseye:'🎯'};
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1,000 classes. You have achieved something extraordinary. This mat is yours.'};
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-var currentStudent=null,milestoneSettings={},celebrationTimeout=null,particleInterval=null,enrolledClasses={};
 
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+var currentStudent=null;
+var currentFamily=null;
+var familyChildren=[];
+var selectedChildId=null;
+var milestoneSettings={};
+var enrolledClasses={};
+var familySelections={};  // { [classId_dateStr]: { classId, dateStr, isToday, studentIds: Set } }
+var schoolData={};
+var celebrationTimeout=null;
+var particleInterval=null;
+var familyAllClasses=[];
+var todayAttendance=[];
+var existingReservations={};
+
+// ─────────────────────────────────────────────────────────────
+//  INIT — portal login intelligence
+// ─────────────────────────────────────────────────────────────
 async function init(){
   try{
-    // Load school branding first so login page looks right
     await loadSchoolBranding();
     var hash=window.location.hash;
     if(hash&&hash.includes('access_token')){
       var res=await sb.auth.getSession();
-      if(res.data.session){window.history.replaceState(null,'',window.location.pathname);showPortal(res.data.session.user);return;}
+      if(res.data&&res.data.session){
+        window.history.replaceState(null,'',window.location.pathname);
+        await detectUserTypeAndRoute(res.data.session.user);
+        return;
+      }
     }
     var r=await sb.auth.getSession();
-    if(r.data&&r.data.session){showPortal(r.data.session.user);}
-    else{document.getElementById('loginScreen').style.display='flex';}
-  }catch(e){console.error('Init error:',e);document.getElementById('loginScreen').style.display='flex';}
+    if(r.data&&r.data.session){
+      await detectUserTypeAndRoute(r.data.session.user);
+    }else{
+      document.getElementById('loginScreen').style.display='flex';
+    }
+  }catch(e){
+    console.error('Init error:',e);
+    document.getElementById('loginScreen').style.display='flex';
+  }
 }
 
+// ─────────────────────────────────────────────────────────────
+//  SCHOOL BRANDING
+// ─────────────────────────────────────────────────────────────
 async function loadSchoolBranding(){
   try{
     var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
     if(!r.data)return;
     var d=r.data;
+    schoolData=d;
     if(d.color)document.documentElement.style.setProperty('--gold',d.color);
     if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
     if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
-    if(d.font_family)document.documentElement.style.setProperty('--font-display','\''+d.font_family+'\',serif');
+    if(d.font_family)document.documentElement.style.setProperty('--font-display',"'"+d.font_family+"',serif");
     milestoneSettings=d.milestone_messages||{};
-    var schoolDisplay=d.name||'Member Portal';
-    document.getElementById('loginSchoolName').textContent=schoolDisplay;
-    document.getElementById('portalSchoolName').textContent=schoolDisplay;
-    document.title=schoolDisplay+' — Member Portal';
+    var sn=d.name||'Member Portal';
+    // Set school name in all screens
+    ['loginSchoolName','portalSchoolName','familySchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.textContent=sn;
+    });
+    document.title=sn+' — Member Portal';
     if(d.logo_url){
-      // Login screen
+      // Login
       document.getElementById('loginLogoImg').src=d.logo_url;
       document.getElementById('loginLogoImg').style.display='block';
       document.getElementById('loginLogoText').style.display='none';
-      // Portal header
+      // Portal
       document.getElementById('portalLogoImg').src=d.logo_url;
       document.getElementById('portalLogoImg').style.display='block';
       document.getElementById('portalLogoText').style.display='none';
+      // Family
+      document.getElementById('familyLogoImg').src=d.logo_url;
+      document.getElementById('familyLogoImg').style.display='block';
+      document.getElementById('familyLogoText').style.display='none';
+      // Instructor
+      document.getElementById('instrLogoImg').src=d.logo_url;
+      document.getElementById('instrLogoImg').style.display='block';
+      document.getElementById('instrLogoText').style.display='none';
+      // Onboarding
+      document.getElementById('onboardLogoImg').src=d.logo_url;
+      document.getElementById('onboardLogoImg').style.display='block';
+      document.getElementById('onboardLogoText').style.display='none';
     }
   }catch(e){console.error('loadSchoolBranding error:',e);}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  LOGIN INTELLIGENCE — Item 20
+//  Silent detection: student → family → instructor → error
+// ─────────────────────────────────────────────────────────────
+async function detectUserTypeAndRoute(user){
+  try{
+    // Three parallel queries — first match wins
+    var results=await Promise.all([
+      sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('school_id',SID).eq('email',user.email).maybeSingle(),
+      sb.from('families').select('*').eq('school_id',SID).eq('email',user.email).maybeSingle(),
+      sb.from('instructors').select('*').eq('school_id',SID).eq('email',user.email).eq('active',true).maybeSingle()
+    ]);
+    var studentR=results[0],familyR=results[1],instrR=results[2];
+
+    if(!studentR.error&&studentR.data){
+      // ── STUDENT ──
+      currentStudent=studentR.data;
+      sessionStorage.setItem('nmao_user_type','student');
+      if(!studentR.data.portal_onboarded){
+        showOnboardingScreen(studentR.data);
+      }else{
+        showStudentPortal(studentR.data);
+      }
+    }else if(!familyR.error&&familyR.data){
+      // ── FAMILY ──
+      currentFamily=familyR.data;
+      sessionStorage.setItem('nmao_user_type','family');
+      await showFamilyPortal(familyR.data);
+    }else if(!instrR.error&&instrR.data){
+      // ── INSTRUCTOR ──
+      sessionStorage.setItem('nmao_user_type','instructor');
+      await showInstructorPortal(instrR.data);
+    }else{
+      // ── NO MATCH ──
+      showNoAccountError(user.email);
+    }
+  }catch(e){
+    console.error('detectUserTypeAndRoute error:',e);
+    showNoAccountError(user.email);
+  }
+}
+
+function showNoAccountError(email){
+  hideAllScreens();
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">No account found</div><div style="font-size:0.85rem;color:var(--muted)">No account found for <strong>'+email+'</strong>.<br>Please contact your school to make sure your email is on file.</div></div>';
+}
+
+function hideAllScreens(){
+  var ids=['loginScreen','successScreen','onboardingScreen','portalScreen','familyPortalScreen','instructorPortalScreen'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+}
+
+// ─────────────────────────────────────────────────────────────
+//  MAGIC LINK LOGIN
+// ─────────────────────────────────────────────────────────────
 async function sendMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
   if(!email||!email.includes('@')){setLoginMsg('Please enter a valid email address.','error');return;}
@@ -347,23 +790,142 @@ async function sendMagicLink(){
 }
 function setLoginMsg(text,type){var el=document.getElementById('loginMsg');el.textContent=text;el.className='form-msg '+(type||'');}
 
-async function showPortal(user){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('successScreen').style.display='none';
-  document.getElementById('portalScreen').style.display='block';
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('school_id',SID).eq('email',user.email).single();
-  if(r.error||!r.data){
-    document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">No student record found</div><div style="font-size:0.85rem;color:var(--muted)">No account found for <strong>'+user.email+'</strong>.<br>Please contact your school to make sure your email is on file.</div></div>';
-    return;
+// ─────────────────────────────────────────────────────────────
+//  ONBOARDING — Item 28
+// ─────────────────────────────────────────────────────────────
+function showOnboardingScreen(student){
+  hideAllScreens();
+  document.getElementById('onboardingScreen').style.display='flex';
+  document.getElementById('onboardingWelcome').textContent='Welcome, '+student.first_name+'!';
+  refreshOnboardingSteps(student);
+}
+
+function refreshOnboardingSteps(student){
+  // Step 1: Photo
+  var hasPhoto=!!student.photo_url;
+  var photoStep=document.getElementById('onboardStepPhoto');
+  var photoBtn=document.getElementById('onboardPhotoBtnEl');
+  var photoPreview=document.getElementById('onboardPhotoPreview');
+  if(hasPhoto){
+    photoStep.classList.add('done');
+    photoPreview.innerHTML='<img src="'+student.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+    if(photoBtn){photoBtn.textContent='Change';photoBtn.style.borderColor='var(--green)';photoBtn.style.color='#7DBD7D';}
+  }else{
+    photoStep.classList.remove('done');
+    photoPreview.innerHTML='<i class="fa-solid fa-user" style="font-size:1.2rem;color:var(--gold)"></i>';
+    if(photoBtn){photoBtn.textContent='Upload';photoBtn.style.borderColor='';photoBtn.style.color='';}
   }
-  currentStudent=r.data;
-  document.getElementById('portalLoading').style.display='none';
-  document.getElementById('portalContent').style.display='block';
-  await buildPortal(r.data);
+
+  // Step 2: Contact info
+  var hasContact=!!(student.phone&&student.phone.trim());
+  var contactStep=document.getElementById('onboardStepContact');
+  var contactIcon=contactStep.querySelector('.onboard-step-icon');
+  var contactBtn=document.getElementById('onboardContactBtnEl');
+  var contactSub=document.getElementById('onboardContactSub');
+  if(hasContact){
+    contactStep.classList.add('done');
+    if(contactIcon)contactIcon.innerHTML='<i class="fa-solid fa-circle-check" style="color:#7DBD7D;font-size:1.2rem"></i>';
+    if(contactSub)contactSub.textContent=student.email+(student.phone?' · '+student.phone:'');
+    if(contactBtn){contactBtn.textContent='Edit';contactBtn.style.borderColor='var(--green)';contactBtn.style.color='#7DBD7D';}
+  }else{
+    contactStep.classList.remove('done');
+    if(contactIcon)contactIcon.innerHTML='<i class="fa-regular fa-circle" style="color:var(--muted);font-size:1.2rem"></i>';
+    if(contactSub)contactSub.textContent='Confirm your phone number is on file';
+    if(contactBtn){contactBtn.textContent='Verify';contactBtn.style.borderColor='';contactBtn.style.color='';}
+  }
+
+  // Step 3: Waiver
+  var hasSigned=!!student.waiver_signed;
+  var waiverStep=document.getElementById('onboardStepWaiver');
+  var waiverIcon=waiverStep.querySelector('.onboard-step-icon');
+  var waiverBtn=document.getElementById('onboardWaiverBtnEl');
+  if(hasSigned){
+    waiverStep.classList.add('done');
+    if(waiverIcon)waiverIcon.innerHTML='<i class="fa-solid fa-circle-check" style="color:#7DBD7D;font-size:1.2rem"></i>';
+    if(waiverBtn){waiverBtn.textContent='Signed';waiverBtn.style.borderColor='var(--green)';waiverBtn.style.color='#7DBD7D';}
+  }else{
+    waiverStep.classList.remove('done');
+    if(waiverIcon)waiverIcon.innerHTML='<i class="fa-regular fa-circle" style="color:var(--muted);font-size:1.2rem"></i>';
+    if(waiverBtn){waiverBtn.textContent='Review & Sign';waiverBtn.style.borderColor='';waiverBtn.style.color='';}
+  }
+}
+
+async function handleOnboardPhotoUpload(event){
+  if(!currentStudent)return;
+  var file=event.target.files[0];if(!file)return;
+  var ext=file.name.split('.').pop();var path=currentStudent.id+'.'+ext;
+  var ur=await sb.storage.from('student-photos').upload(path,file,{upsert:true});
+  if(ur.error){alert('Upload failed: '+ur.error.message);return;}
+  var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;
+  await sb.from('students').update({photo_url:pub}).eq('id',currentStudent.id);
+  currentStudent.photo_url=pub;
+  refreshOnboardingSteps(currentStudent);
+}
+
+function openContactModal(){
+  if(!currentStudent)return;
+  document.getElementById('contactEmailInput').value=currentStudent.email||'';
+  document.getElementById('contactPhoneInput').value=currentStudent.phone||'';
+  document.getElementById('contactMsg').textContent='';
+  document.getElementById('contactModal').classList.add('active');
+}
+
+async function saveContactInfo(){
+  if(!currentStudent)return;
+  var email=document.getElementById('contactEmailInput').value.trim();
+  var phone=document.getElementById('contactPhoneInput').value.trim();
+  document.getElementById('contactMsg').textContent='Saving...';
+  document.getElementById('contactMsg').className='form-msg';
+  var r=await sb.from('students').update({email:email,phone:phone}).eq('id',currentStudent.id);
+  if(r.error){document.getElementById('contactMsg').textContent=r.error.message;document.getElementById('contactMsg').className='form-msg error';return;}
+  currentStudent.email=email;currentStudent.phone=phone;
+  document.getElementById('contactModal').classList.remove('active');
+  refreshOnboardingSteps(currentStudent);
+}
+
+async function openWaiverModal(){
+  try{
+    var r=await sb.from('waivers').select('*').eq('school_id',SID).eq('active',true).limit(1);
+    var w=r.data&&r.data.length?r.data[0]:null;
+    document.getElementById('waiverModalTitle').textContent=w?w.title:'School Waiver';
+    document.getElementById('waiverModalBody').innerHTML=w?w.content:'<p style="color:var(--muted);font-style:italic">No waiver content has been configured yet. Click the button below to confirm acceptance.</p>';
+  }catch(e){
+    document.getElementById('waiverModalBody').innerHTML='<p style="color:var(--muted);font-style:italic">Click below to confirm your acceptance of the school waiver.</p>';
+  }
+  document.getElementById('waiverModal').classList.add('active');
+}
+
+async function signWaiver(){
+  if(!currentStudent)return;
+  await sb.from('students').update({waiver_signed:true,waiver_signed_at:new Date().toISOString()}).eq('id',currentStudent.id);
+  currentStudent.waiver_signed=true;
+  document.getElementById('waiverModal').classList.remove('active');
+  refreshOnboardingSteps(currentStudent);
+}
+
+async function completeOnboarding(){
+  if(!currentStudent)return;
+  await sb.from('students').update({portal_onboarded:true}).eq('id',currentStudent.id);
+  hideAllScreens();
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('portalLoading').style.display='block';
+  document.getElementById('portalContent').style.display='none';
+  await buildPortal(currentStudent);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  STUDENT PORTAL (all original functions preserved exactly)
+// ─────────────────────────────────────────────────────────────
+function showStudentPortal(student){
+  hideAllScreens();
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('portalLoading').style.display='block';
+  document.getElementById('portalContent').style.display='none';
+  buildPortal(student);
 }
 
 async function buildPortal(s){
-  var ini=((s.first_name?s.first_name[0]:'')+( s.last_name?s.last_name[0]:'')).toUpperCase();
+  var ini=((s.first_name?s.first_name[0]:'')+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var av=document.getElementById('heroAvatar');
   if(s.photo_url){av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /><div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>';}
   else{document.getElementById('heroInitials').textContent=ini;}
@@ -387,6 +949,8 @@ async function buildPortal(s){
   await buildAttendance(s.id);
   await buildSchedule(s);
   await buildAnnouncements();
+  document.getElementById('portalLoading').style.display='none';
+  document.getElementById('portalContent').style.display='block';
 }
 
 async function buildSchedule(s){
@@ -581,11 +1145,433 @@ function switchPortalTab(tab){
   });
 }
 
-function isLight(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128;}
-function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
+// ─────────────────────────────────────────────────────────────
+//  FAMILY PORTAL — Items 17 & 18
+// ─────────────────────────────────────────────────────────────
+async function showFamilyPortal(family){
+  hideAllScreens();
+  document.getElementById('familyPortalScreen').style.display='block';
+
+  // Load children
+  var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).order('first_name');
+  familyChildren=r.data||[];
+
+  if(!familyChildren.length){
+    document.getElementById('familyPortalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
+    return;
+  }
+
+  // Build switcher
+  var sel=document.getElementById('childSelect');
+  sel.innerHTML=familyChildren.map(function(c){
+    var prog=c.programs?c.programs.name:'Member';
+    return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+'</option>';
+  }).join('');
+  document.getElementById('childSwitcherBar').style.display='flex';
+
+  // Show content
+  document.getElementById('familyPortalLoading').style.display='none';
+  document.getElementById('familyPortalContent').style.display='block';
+
+  // Default to first child
+  selectedChildId=familyChildren[0].id;
+  await loadFamilyChildView(familyChildren[0]);
+  await buildFamilyAnnouncements();
+}
+
+async function switchChild(){
+  var sel=document.getElementById('childSelect');if(!sel)return;
+  selectedChildId=sel.value;
+  var child=familyChildren.find(function(c){return c.id===selectedChildId;});
+  if(child)await loadFamilyChildView(child);
+}
+
+async function loadFamilyChildView(child){
+  // Hero
+  var ini=((child.first_name?child.first_name[0]:'')+(child.last_name?child.last_name[0]:'')).toUpperCase();
+  var prog=child.programs;
+  var pc=prog?prog.color:'#C9A84C';
+  var pn=prog?prog.name:'--';
+  var avatarHtml=child.photo_url?'<img src="'+child.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
+  var mem=child.memberships;
+  var memName=mem?mem.name:'--';
+  var st=child.status||'trial';
+  var statusClass=st==='active'?'chip-active':st==='paused'?'chip-paused':'chip-trial';
+
+  document.getElementById('familyChildHero').innerHTML=[
+    '<div class="child-hero-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div>',
+    '<div style="flex:1">',
+      '<div class="hero-name">'+child.first_name+' '+child.last_name+'</div>',
+      '<div class="hero-tags">',
+        '<span class="chip '+statusClass+'">'+st+'</span>',
+        '<span class="prog-tag" style="border-color:'+pc+';color:'+pc+'">'+pn+'</span>',
+      '</div>',
+      '<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.4rem">',
+        '<i class="fa-solid fa-id-card" style="color:var(--gold);margin-right:0.35rem"></i>'+memName,
+      '</div>',
+    '</div>'
+  ].join('');
+
+  // Tracker
+  var attR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',child.id);
+  var total=attR.count||0;
+  var nm=null;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]>total){nm=MILESTONES[i];break;}}
+  var pm=0;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)pm=MILESTONES[i];}
+  var pct=nm?Math.round(((total-pm)/(nm-pm))*100):100;
+  document.getElementById('familyChildTracker').innerHTML=[
+    '<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem">',
+      '<div class="tracker-number">'+total+'</div>',
+      '<div style="font-size:0.85rem;color:var(--muted)">classes attended</div>',
+    '</div>',
+    '<div class="milestone-bar"><div class="milestone-fill" style="width:'+pct+'%"></div></div>',
+    nm?'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"><i class="fa-solid fa-flag" style="margin-right:0.3rem"></i>'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.75rem;color:var(--gold);margin-top:0.25rem"><i class="fa-solid fa-trophy" style="margin-right:0.3rem"></i>All milestones reached!</div>'
+  ].join('');
+
+  // Belt
+  document.getElementById('familyBeltSection').style.display='none';
+  if(prog&&prog.belt_system==='Belt Progression'&&prog.belt_system_id){
+    var br=await sb.from('belt_levels').select('*').eq('belt_system_id',prog.belt_system_id).order('sort_order');
+    var levels=br.data||[];
+    if(levels.length){
+      var cb=levels.find(function(l){return l.id===child.current_belt_id;})||null;
+      var ci=cb?levels.indexOf(cb):-1;
+      var nb=levels[ci+1]||null;
+      document.getElementById('familyBeltSection').style.display='block';
+      var bHtml='';
+      if(cb){
+        bHtml+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">';
+        bHtml+='<div style="width:40px;height:14px;border-radius:2px;background:'+cb.color_hex+';border:1px solid rgba(255,255,255,0.15)"></div>';
+        bHtml+='<div><div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white)">'+cb.name+'</div>';
+        bHtml+=nb?'<div style="font-size:0.72rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.72rem;color:var(--gold)">Highest rank!</div>';
+        bHtml+='</div></div>';
+      }
+      // Belt sequence
+      bHtml+='<div style="display:flex;flex-wrap:wrap;gap:0.35rem">';
+      levels.forEach(function(b){var isc=cb&&b.id===cb.id;bHtml+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,4)+'</div></div>';});
+      bHtml+='</div>';
+      document.getElementById('familyChildBelt').innerHTML=bHtml;
+    }
+  }
+
+  // Membership card
+  document.getElementById('familyChildMembership').innerHTML=[
+    '<div class="info-row"><div class="info-label">Plan</div><div class="info-value">'+memName+'</div></div>',
+    mem?'<div class="info-row"><div class="info-label">Price</div><div class="info-value" style="color:var(--gold)">$'+parseFloat(mem.price||0).toFixed(2)+(mem.billing_type==='monthly'?'/month':mem.billing_type==='yearly'?'/year':'')+'</div></div>':'',
+    '<div class="info-row"><div class="info-label">Status</div><div class="info-value"><span class="chip '+statusClass+'">'+st+'</span></div></div>',
+    child.start_date?'<div class="info-row"><div class="info-label">Since</div><div class="info-value">'+new Date(child.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':''
+  ].join('');
+
+  // Refresh schedule for new child selection
+  await buildFamilySchedule();
+}
+
+// ─── FAMILY SCHEDULE (Item 18) ───────────────
+
+async function buildFamilySchedule(){
+  var el=document.getElementById('familyScheduleList');
+  el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
+
+  // Load classes
+  var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+  familyAllClasses=r.data||[];
+
+  if(!familyAllClasses.length){
+    el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled yet.</div>';
+    return;
+  }
+
+  var today=new Date().toISOString().split('T')[0];
+  var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+6);
+  var weekEndStr=weekEnd.toISOString().split('T')[0];
+  var childIds=familyChildren.map(function(c){return c.id;});
+
+  // Load today's attendance for all family children
+  var attR=await sb.from('class_attendance').select('student_id,class_sessions(class_id,session_date)').eq('school_id',SID).in('student_id',childIds).gte('noted_at',today+'T00:00:00');
+  todayAttendance=attR.data||[];
+
+  // Load existing reservations (graceful if table doesn't exist)
+  existingReservations={};
+  try{
+    var resR=await sb.from('class_reservations').select('*').eq('school_id',SID).in('student_id',childIds).gte('session_date',today).lte('session_date',weekEndStr);
+    (resR.data||[]).forEach(function(res){
+      var key=res.class_id+'_'+res.session_date+'_'+res.student_id;
+      existingReservations[key]=res.id;
+    });
+  }catch(e){/* table may not exist yet — run the SQL from the comment above */}
+
+  // Reset selections when rebuilding
+  familySelections={};
+  updateFamilyConfirmBar();
+
+  renderFamilySchedule();
+}
+
+function renderFamilySchedule(){
+  var el=document.getElementById('familyScheduleList');
+  var now=new Date();
+  var todayStr=now.toISOString().split('T')[0];
+  var html='';var hasAny=false;
+
+  for(var i=0;i<7;i++){
+    var d=new Date(now);d.setDate(now.getDate()+i);
+    var dateStr=d.toISOString().split('T')[0];
+    var dayName=DAYS[d.getDay()];
+    var isToday=i===0;
+    var dayLabel=i===0?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+
+    var dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    if(!dayClasses.length)continue;
+    hasAny=true;
+
+    html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+dayLabel+'</div>';
+
+    dayClasses.forEach(function(cls){
+      var cn=cls.name||cls.title||'Class';
+      var selKey=cls.id+'_'+dateStr;
+      var currentSel=familySelections[selKey];
+      var hasSelection=currentSel&&currentSel.studentIds&&currentSel.studentIds.size>0;
+      var tags=[cls.style,cls.age_group,cls.level].filter(Boolean).join(' · ');
+
+      html+='<div class="family-class-card'+(hasSelection?' has-selection':'')+'" id="fcc-'+cls.id+'-'+dateStr+'">';
+      html+='<div class="family-class-header">';
+      html+='<div>';
+      html+='<div class="family-class-time">'+fmtTime(cls.start_time)+'</div>';
+      html+='<div class="family-class-name">'+cn+'</div>';
+      if(tags)html+='<div class="family-class-meta">'+tags+'</div>';
+      html+='</div>';
+      html+='<span class="family-class-type '+(isToday?'type-checkin':'type-reserve')+'">'+(isToday?'Check In':'Reserve')+'</span>';
+      html+='</div>';
+
+      // Children list
+      html+='<div class="family-children-list">';
+      familyChildren.forEach(function(child){
+        var childKey=cls.id+'_'+dateStr+'_'+child.id;
+        var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
+        var isDone=false;
+
+        if(isToday){
+          isDone=todayAttendance.some(function(a){
+            return a.student_id===child.id&&a.class_sessions&&a.class_sessions.class_id===cls.id&&a.class_sessions.session_date===dateStr;
+          });
+        }else{
+          isDone=!!existingReservations[childKey];
+        }
+
+        var prog=child.programs;var progName=prog?prog.name:'Member';
+
+        if(isDone){
+          html+='<div class="family-child-row already-done selected">';
+          html+='<div class="family-child-check"><i class="fa-solid fa-check"></i></div>';
+          html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
+          html+='<div class="family-child-prog">'+(isToday?'Checked in':'Reserved')+'</div>';
+          html+='</div>';
+        }else{
+          html+='<div class="family-child-row'+(isSelected?' selected':'')+'" onclick="toggleFamilyChild(\''+cls.id+'\',\''+dateStr+'\',\''+child.id+'\','+isToday+')" id="fcr-'+cls.id+'-'+dateStr+'-'+child.id+'">';
+          html+='<div class="family-child-check">'+(isSelected?'<i class="fa-solid fa-check"></i>':'')+'</div>';
+          html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
+          html+='<div class="family-child-prog">'+progName+'</div>';
+          html+='</div>';
+        }
+      });
+      html+='</div>';
+      html+='</div>';// end family-class-card
+    });
+  }
+
+  if(!hasAny)html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
+  el.innerHTML=html;
+  updateFamilyConfirmBar();
+}
+
+function toggleFamilyChild(classId,dateStr,studentId,isToday){
+  var selKey=classId+'_'+dateStr;
+  if(!familySelections[selKey]){
+    familySelections[selKey]={classId:classId,dateStr:dateStr,isToday:isToday,studentIds:new Set()};
+  }
+  var sel=familySelections[selKey];
+  if(sel.studentIds.has(studentId)){sel.studentIds.delete(studentId);}
+  else{sel.studentIds.add(studentId);}
+  if(sel.studentIds.size===0)delete familySelections[selKey];
+
+  // Update card visual
+  var card=document.getElementById('fcc-'+classId+'-'+dateStr);
+  var hasSel=familySelections[selKey]&&familySelections[selKey].studentIds.size>0;
+  if(card){if(hasSel)card.classList.add('has-selection');else card.classList.remove('has-selection');}
+
+  // Update child row visual
+  var row=document.getElementById('fcr-'+classId+'-'+dateStr+'-'+studentId);
+  if(row){
+    var isSel=familySelections[selKey]&&familySelections[selKey].studentIds.has(studentId);
+    if(isSel){row.classList.add('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='<i class="fa-solid fa-check"></i>';}
+    else{row.classList.remove('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='';}
+  }
+
+  updateFamilyConfirmBar();
+}
+
+function updateFamilyConfirmBar(){
+  var totalSel=0,todayCount=0,reserveCount=0;
+  Object.keys(familySelections).forEach(function(key){
+    var sel=familySelections[key];var cnt=sel.studentIds?sel.studentIds.size:0;
+    totalSel+=cnt;if(sel.isToday)todayCount+=cnt;else reserveCount+=cnt;
+  });
+  var bar=document.getElementById('familyConfirmBar');
+  var summary=document.getElementById('familyConfirmSummary');
+  if(!bar)return;
+  if(totalSel===0){bar.style.display='none';return;}
+  bar.style.display='flex';
+  var parts=[];
+  if(todayCount>0)parts.push(todayCount+' check-in'+(todayCount!==1?'s':''));
+  if(reserveCount>0)parts.push(reserveCount+' reservation'+(reserveCount!==1?'s':''));
+  if(summary)summary.innerHTML='<span class="family-confirm-count">'+totalSel+'</span> selected — '+parts.join(', ');
+}
+
+async function confirmFamilySelections(){
+  var btn=document.getElementById('familyConfirmBtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...';}
+
+  var errors=[];
+
+  for(var key in familySelections){
+    var sel=familySelections[key];
+    var studentIds=Array.from(sel.studentIds);
+
+    if(sel.isToday){
+      // Check in: create class_sessions + class_attendance
+      try{
+        var sr=await sb.from('class_sessions').select('id').eq('class_id',sel.classId).eq('session_date',sel.dateStr).limit(1);
+        var sessionId=null;
+        if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
+        else{var cr=await sb.from('class_sessions').insert({class_id:sel.classId,school_id:SID,session_date:sel.dateStr,status:'scheduled'}).select().single();if(!cr.error)sessionId=cr.data.id;}
+        if(sessionId){
+          var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
+          await sb.from('class_attendance').insert(attInserts);
+        }
+      }catch(e){errors.push('Check-in error: '+e.message);}
+    }else{
+      // Reserve: insert into class_reservations
+      try{
+        var resInserts=studentIds.map(function(sid){return{school_id:SID,class_id:sel.classId,student_id:sid,session_date:sel.dateStr,status:'reserved'};});
+        await sb.from('class_reservations').insert(resInserts);
+      }catch(e){
+        // Table may not exist — see SQL comment at top of family portal section
+        console.warn('class_reservations insert failed. Run the SQL shown in portal.html comments.',e);
+        errors.push('Reservation table not ready. Ask your admin to run the setup SQL.');
+      }
+    }
+  }
+
+  familySelections={};
+
+  if(errors.length){
+    var bar=document.getElementById('familyConfirmBar');
+    var summary=document.getElementById('familyConfirmSummary');
+    if(summary)summary.innerHTML='<span style="color:#E07070"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>'+errors[0]+'</span>';
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm';}
+    setTimeout(function(){if(bar)bar.style.display='none';},4000);
+    return;
+  }
+
+  // Reload to reflect confirmed state
+  await buildFamilySchedule();
+
+  // Show success
+  var bar=document.getElementById('familyConfirmBar');
+  var summary=document.getElementById('familyConfirmSummary');
+  if(summary)summary.innerHTML='<span style="color:#7DBD7D"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>All confirmed!</span>';
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm';}
+  setTimeout(function(){if(bar)bar.style.display='none';},2000);
+}
+
+async function buildFamilyAnnouncements(){
+  try{
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').order('sent_at',{ascending:false}).limit(5);
+    var el=document.getElementById('familyAnnouncementsList');
+    var data=r.data||[];
+    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-bullhorn" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';return;}
+    var typeIcons={announcement:'fa-bullhorn',event:'fa-calendar-star',closing:'fa-door-closed',cancellation:'fa-xmark',custom:'fa-bolt'};
+    el.innerHTML=data.map(function(a){
+      var icon=typeIcons[a.type]||'fa-bullhorn';
+      var dt=a.sent_at?new Date(a.sent_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+      return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+(a.type||'Announcement')+'</div><div class="announcement-subject">'+a.subject+'</div><div class="announcement-body">'+((a.body||'').replace(/\n/g,'<br>')).slice(0,300)+'</div><div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
+    }).join('');
+  }catch(e){document.getElementById('familyAnnouncementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
+}
+
+function switchFamilyTab(tab){
+  var tabs=['overview','schedule','updates'];
+  tabs.forEach(function(t){
+    var panel=document.getElementById('familyTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(panel)panel.style.display=t===tab?'block':'none';
+    var btn=document.getElementById('ftab-'+t);
+    if(btn)btn.classList.toggle('active',t===tab);
+  });
+  // Build schedule lazily when tab is opened
+  if(tab==='schedule')buildFamilySchedule();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INSTRUCTOR PORTAL — Item 20
+// ─────────────────────────────────────────────────────────────
+async function showInstructorPortal(instructor){
+  hideAllScreens();
+  document.getElementById('instructorPortalScreen').style.display='block';
+
+  var instrName=instructor.first_name?(instructor.first_name+' '+(instructor.last_name||'')).trim():(instructor.name||'Instructor');
+  var now=new Date();var hour=now.getHours();
+  var greeting=hour<12?'Good morning':'hour<17'?'Good afternoon':'Good evening';
+  greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+
+  document.getElementById('instrGreeting').textContent=greeting+', '+instrName;
+  document.getElementById('instrSubtitle').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  await buildInstructorTodayClasses();
+}
+
+async function buildInstructorTodayClasses(){
+  var el=document.getElementById('instrTodayClasses');
+  var today=DAYS[new Date().getDay()];
+  var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+  var classes=(r.data||[]).filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
+
+  if(!classes.length){
+    el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2.5rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes scheduled today.</div>';
+    return;
+  }
+
+  el.innerHTML=classes.map(function(c){
+    var cn=c.name||c.title||'Class';
+    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+    return '<div class="instr-class-card">'+
+      '<div class="instr-class-time">'+fmtTime(c.start_time)+(c.end_time?' — '+fmtTime(c.end_time):'')+' <span style="font-size:0.72rem;color:var(--muted)">'+(c.capacity?'Max '+c.capacity:'')+'</span></div>'+
+      '<div class="instr-class-name">'+cn+'</div>'+
+      (tags?'<div class="instr-class-meta">'+tags+'</div>':'')+
+      (c.instructor_name?'<div class="instr-class-meta"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem;color:var(--gold)"></i>'+c.instructor_name+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  UTILITIES
+// ─────────────────────────────────────────────────────────────
+function isLight(hex){
+  if(!hex||hex.length<7)return false;
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return(r*299+g*587+b*114)/1000>128;
+}
+
+function fmtTime(t){
+  if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];
+  return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');
+}
+
 async function portalSignOut(){await sb.auth.signOut();window.location.reload();}
 
+// ─────────────────────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────────────────────
 init();
 </script>
+
 </body>
 </html>
