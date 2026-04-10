@@ -1605,6 +1605,7 @@ async function init(){
       initQuill('bsDescEditor','Describe this belt system...');
     },100);
     await loadSchool();
+    await loadKioskSettings();
     await loadClassFieldSettings();
     await loadTags();
     await loadDiscounts();
@@ -2330,6 +2331,56 @@ document.addEventListener('click',function(e){if(!e.target.closest('#schoolBtn')
 function toggleQuickAdd(){document.getElementById('quickAddMenu').classList.toggle('open');}
 function closeQuickAdd(){document.getElementById('quickAddMenu').classList.remove('open');}
 async function handleSignOut(){await sb.auth.signOut();window.location.href='index.html';}
+async function loadKioskSettings(){
+  try{
+    var r=await sb.from('schools').select('kiosk_video_url,kiosk_bio,kiosk_stats,kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,kiosk_show_video,kiosk_show_bio,kiosk_show_stats,kiosk_show_instagram,kiosk_show_facebook,kiosk_show_tiktok').eq('id',SID).single();
+    if(r.error||!r.data)return;
+    var d=r.data;
+    if(document.getElementById('kioskVideoUrl'))document.getElementById('kioskVideoUrl').value=d.kiosk_video_url||'';
+    if(document.getElementById('kioskBio'))document.getElementById('kioskBio').value=d.kiosk_bio||'';
+    if(document.getElementById('kioskInstagramUrl'))document.getElementById('kioskInstagramUrl').value=d.kiosk_instagram_url||'';
+    if(document.getElementById('kioskFacebookUrl'))document.getElementById('kioskFacebookUrl').value=d.kiosk_facebook_url||'';
+    if(document.getElementById('kioskTiktokUrl'))document.getElementById('kioskTiktokUrl').value=d.kiosk_tiktok_url||'';
+    if(document.getElementById('kioskShowVideo'))document.getElementById('kioskShowVideo').checked=!!d.kiosk_show_video;
+    if(document.getElementById('kioskShowBio'))document.getElementById('kioskShowBio').checked=!!d.kiosk_show_bio;
+    if(document.getElementById('kioskShowStats'))document.getElementById('kioskShowStats').checked=!!d.kiosk_show_stats;
+    if(document.getElementById('kioskShowInstagram'))document.getElementById('kioskShowInstagram').checked=!!d.kiosk_show_instagram;
+    if(document.getElementById('kioskShowFacebook'))document.getElementById('kioskShowFacebook').checked=!!d.kiosk_show_facebook;
+    if(document.getElementById('kioskShowTiktok'))document.getElementById('kioskShowTiktok').checked=!!d.kiosk_show_tiktok;
+    var stats=d.kiosk_stats||[];
+    if(stats[0]){if(document.getElementById('kioskStat1Num'))document.getElementById('kioskStat1Num').value=stats[0].num||'';if(document.getElementById('kioskStat1Label'))document.getElementById('kioskStat1Label').value=stats[0].label||'';}
+    if(stats[1]){if(document.getElementById('kioskStat2Num'))document.getElementById('kioskStat2Num').value=stats[1].num||'';if(document.getElementById('kioskStat2Label'))document.getElementById('kioskStat2Label').value=stats[1].label||'';}
+    if(stats[2]){if(document.getElementById('kioskStat3Num'))document.getElementById('kioskStat3Num').value=stats[2].num||'';if(document.getElementById('kioskStat3Label'))document.getElementById('kioskStat3Label').value=stats[2].label||'';}
+  }catch(e){console.error('loadKioskSettings:',e);}
+}
+
+async function saveKioskSettings(){
+  setMsg('kioskSettingsMsg','Saving...','');
+  var stats=[];
+  var s1n=document.getElementById('kioskStat1Num').value.trim();var s1l=document.getElementById('kioskStat1Label').value.trim();
+  var s2n=document.getElementById('kioskStat2Num').value.trim();var s2l=document.getElementById('kioskStat2Label').value.trim();
+  var s3n=document.getElementById('kioskStat3Num').value.trim();var s3l=document.getElementById('kioskStat3Label').value.trim();
+  if(s1n||s1l)stats.push({num:s1n,label:s1l});
+  if(s2n||s2l)stats.push({num:s2n,label:s2l});
+  if(s3n||s3l)stats.push({num:s3n,label:s3l});
+  var payload={
+    kiosk_video_url:document.getElementById('kioskVideoUrl').value.trim()||null,
+    kiosk_bio:document.getElementById('kioskBio').value.trim()||null,
+    kiosk_stats:stats,
+    kiosk_instagram_url:document.getElementById('kioskInstagramUrl').value.trim()||null,
+    kiosk_facebook_url:document.getElementById('kioskFacebookUrl').value.trim()||null,
+    kiosk_tiktok_url:document.getElementById('kioskTiktokUrl').value.trim()||null,
+    kiosk_show_video:document.getElementById('kioskShowVideo').checked,
+    kiosk_show_bio:document.getElementById('kioskShowBio').checked,
+    kiosk_show_stats:document.getElementById('kioskShowStats').checked,
+    kiosk_show_instagram:document.getElementById('kioskShowInstagram').checked,
+    kiosk_show_facebook:document.getElementById('kioskShowFacebook').checked,
+    kiosk_show_tiktok:document.getElementById('kioskShowTiktok').checked
+  };
+  var r=await sb.from('schools').update(payload).eq('id',SID);
+  if(r.error){setMsg('kioskSettingsMsg',r.error.message,'error');}
+  else{setMsg('kioskSettingsMsg','Kiosk settings saved!','success');setTimeout(function(){document.getElementById('kioskSettingsMsg').textContent='';},3000);}
+}
 
 init();
 setTimeout(function(){initCalView();},500);
