@@ -570,25 +570,6 @@ async function showCelebration(student,classCount,beltColor,callback){
   setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');if(callback)callback();},3500);
 }
 
-  var accentColor=beltColor||getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
-  var check=document.getElementById('celebCheck');var prog=document.getElementById('celebProgress');
-  check.style.background=accentColor;check.style.boxShadow='0 0 56px '+accentColor+'66';prog.style.background=accentColor;
-  document.getElementById('celebName').textContent=student.first_name+' '+student.last_name;
-  document.getElementById('celebSubtitle').textContent='Checked In';
-  document.getElementById('celebClass').textContent=currentClass?'Checked in to '+(currentClass.name||currentClass.title||'class'):'Attendance recorded';
-  document.getElementById('celebCount').textContent=classCount&&classCount>0?classCount+' class'+(classCount===1?'':'es')+' total':'';
-  var milestoneEl=document.getElementById('celebMilestone');
-  if(classCount&&MILESTONES.includes(classCount)){
-    var msgs=schoolData.milestone_messages||{};
-    var msg=msgs[classCount]?msgs[classCount].message:DEFAULT_MESSAGES[classCount];
-    if(msg){document.getElementById('celebMilestoneNum').textContent=classCount+' Classes!';document.getElementById('celebMilestoneMsg').textContent=msg;milestoneEl.style.display='block';milestoneEl.style.borderColor=accentColor+'55';}
-    else{milestoneEl.style.display='none';}
-  }else{milestoneEl.style.display='none';}
-  prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
-  document.getElementById('kioskCelebration').classList.add('active');
-  setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');if(callback)callback();},3500);
-}
-
 async function submitRegistration(){
   var first=document.getElementById('regFirst').value.trim();
   var last=document.getElementById('regLast').value.trim();
