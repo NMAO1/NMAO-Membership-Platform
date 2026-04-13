@@ -70,7 +70,7 @@
 .info-row:last-child{margin-bottom:0;}
 .info-label{color:var(--muted);min-width:100px;flex-shrink:0;font-size:0.72rem;letter-spacing:0.08em;padding-top:0.05rem;}
 .info-value{color:var(--white);}
-.day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
+.day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);} .sched-day-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);padding:0.85rem 1rem;margin-bottom:0.75rem;} .sched-day-btn{background:none;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:0.9rem;flex-shrink:0;} .sched-day-btn:hover{border-color:var(--gold);color:var(--gold);} .sched-day-label{font-family:var(--font-display);font-size:1.15rem;color:var(--white);} .sched-day-sub{font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;} .sched-day-dots{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;} .sched-day-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.2s;} .sched-day-dot.has-class{background:var(--muted);} .sched-day-dot.active{background:var(--gold);transform:scale(1.3);}
 
 /* ── STUDENT PORTAL SPECIFIC ── */
 .portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
@@ -650,7 +650,7 @@ var celebrationTimeout=null;
 var particleInterval=null;
 var familyAllClasses=[];
 var todayAttendance=[];
-var existingReservations={};
+var existingReservations={}; var scheduleByDay={}; var scheduleViewDay=0;
 
 // ─────────────────────────────────────────────────────────────
 //  INIT — portal login intelligence
@@ -961,34 +961,59 @@ async function buildSchedule(s){
   var now=new Date();var todayIdx=now.getDay();
   var enrolled=await sb.from('class_enrollments').select('class_id').eq('student_id',s.id).gte('session_date',now.toISOString().split('T')[0]);
   if(enrolled.data)enrolled.data.forEach(function(e){enrolledClasses[e.class_id]=true;});
-  var byDay={};
+  scheduleByDay={};
   classes.forEach(function(c){
     if(!c.days_of_week)return;
     c.days_of_week.forEach(function(day){
       var dayIdx=DAYS.indexOf(day);if(dayIdx===-1)return;
       var diff=dayIdx-todayIdx;if(diff<0)diff+=7;
-      var label=diff===0?'Today':diff===1?'Tomorrow':DAY_NAMES[dayIdx];
-      if(!byDay[diff])byDay[diff]={label:label,classes:[]};
-      byDay[diff].classes.push(c);
+      if(!scheduleByDay[diff])scheduleByDay[diff]=[];
+      scheduleByDay[diff].push(c);
     });
   });
-  var html='';
-  var sortedDays=Object.keys(byDay).map(Number).sort(function(a,b){return a-b;}).slice(0,7);
-  if(!sortedDays.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes this week.</div>';return;}
-  sortedDays.forEach(function(diff){
-    var group=byDay[diff];
-    html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+group.label+'</div>';
-    group.classes.sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-    group.classes.forEach(function(c){
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  if(!diffs.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes this week.</div>';return;}
+  scheduleViewDay=diffs[0];
+  renderScheduleDay();
+}
+function renderScheduleDay(){
+  var el=document.getElementById('scheduleList');if(!el)return;
+  var now=new Date();
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  var d=new Date(now);d.setDate(now.getDate()+scheduleViewDay);
+  var label=scheduleViewDay===0?'Today':scheduleViewDay===1?'Tomorrow':DAY_NAMES[d.getDay()];
+  var dateLabel=d.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  var currentIdx=diffs.indexOf(scheduleViewDay);
+  var hasPrev=currentIdx>0;var hasNext=currentIdx<diffs.length-1;
+  var html='<div class="sched-day-nav">';
+  html+='<button class="sched-day-btn" onclick="navScheduleDay(-1)"'+(hasPrev?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-left"></i></button>';
+  html+='<div style="flex:1;text-align:center"><div class="sched-day-label">'+label+'</div><div class="sched-day-sub">'+dateLabel+'</div></div>';
+  html+='<button class="sched-day-btn" onclick="navScheduleDay(1)"'+(hasNext?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-right"></i></button>';
+  html+='</div>';
+  html+='<div class="sched-day-dots">';
+  diffs.forEach(function(diff){html+='<div class="sched-day-dot'+(diff===scheduleViewDay?' active':' has-class')+'" onclick="scheduleViewDay='+diff+';renderScheduleDay()" title="'+DAY_NAMES[new Date(now.getFullYear(),now.getMonth(),now.getDate()+diff).getDay()]+'"></div>';});
+  html+='</div>';
+  var dayClasses=(scheduleByDay[scheduleViewDay]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  if(!dayClasses.length){
+    html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes this day.</div>';
+  }else{
+    html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
+    dayClasses.forEach(function(c){
       var isEnrolled=!!enrolledClasses[c.id];
       var cn=c.name||c.title||'Class';var tags=[];
       if(c.style)tags.push(c.style);if(c.level)tags.push(c.level);if(c.age_group)tags.push(c.age_group);
       html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+tags.join(' &bull; ')+(c.capacity?' &bull; Max '+c.capacity:'')+'</div></div>';
       html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'" onclick="toggleRSVP(\''+c.id+'\',this)">'+(isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP')+'</button></div>';
     });
-  });
+  }
   el.innerHTML=html;
 }
+function navScheduleDay(dir){
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  var idx=diffs.indexOf(scheduleViewDay)+dir;
+  if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
+}
+
 
 async function toggleRSVP(classId,btn){
   if(!currentStudent)return;
