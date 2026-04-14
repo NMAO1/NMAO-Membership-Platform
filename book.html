@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a Session</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ============================================================
+       BOOK.HTML — STYLES
+       Public instructor booking page
+       URL: book.html?slug=instructor-slug
+         or book.html?instructor=UUID
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:    #C9A84C;
+      --black:   #0A0A0A;
+      --surface: #141414;
+      --surf2:   #1A1A1A;
+      --border:  #2A2520;
+      --white:   #F5F0E8;
+      --muted:   #7A7060;
+      --muted2:  #9A8F80;
+      --green:   #5A9A6A;
+      --red:     #C07070;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-ui: 'Lato', sans-serif;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    /* ── Header ── */
+    .page-header { text-align: center; margin-bottom: 1.5rem; }
+    .school-logo-img { max-height: 52px; max-width: 150px; object-fit: contain; margin-bottom: 0.35rem; }
+    .page-logo {
+      font-family: var(--font-display);
+      font-size: 1.6rem; color: var(--gold);
+      letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 0.15rem;
+    }
+    .page-tagline { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; }
+
+    /* ── Container ── */
+    .container { width: 100%; max-width: 500px; }
+
+    /* ── Instructor Card ── */
+    .instructor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .instr-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(201,168,76,0.1);
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 1.1rem; color: var(--gold);
+      flex-shrink: 0; overflow: hidden;
+    }
+    .instr-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .instr-name { font-family: var(--font-display); font-size: 1.1rem; color: var(--white); margin-bottom: 0.1rem; }
+    .instr-sub  { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.06em; line-height: 1.55; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-bottom: 1.25rem; }
+    .step-indicator { font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 0.5rem; }
+    .step-indicator strong { color: var(--gold); }
+    .progress-track { display: flex; gap: 3px; }
+    .progress-seg { flex: 1; height: 3px; background: var(--border); border-radius: 2px; transition: background 0.3s; }
+    .progress-seg.done   { background: var(--gold); }
+    .progress-seg.active { background: rgba(201,168,76,0.5); }
+
+    /* ── Card ── */
+    .card { background: var(--surface); border: 1px solid var(--border); overflow: hidden; margin-bottom: 1rem; }
+    .card-header { border-bottom: 1px solid var(--border); padding: 1.1rem 1.25rem; }
+    .card-title  { font-family: var(--font-display); font-size: 1.15rem; color: var(--white); margin-bottom: 0.1rem; }
+    .card-sub    { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; }
+    .card-body   { padding: 1.25rem; }
+
+    /* ── Session Type Options ── */
+    .type-option {
+      background: var(--black);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      padding: 0.9rem 1rem; margin-bottom: 0.4rem;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.15s;
+    }
+    .type-option:hover  { border-color: var(--gold); border-left-color: var(--gold); }
+    .type-option.selected { border-color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.05); }
+    .type-dot  { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.45rem; vertical-align: middle; }
+    .type-name { font-size: 0.92rem; color: var(--white); margin-bottom: 0.15rem; }
+    .type-meta { font-size: 0.7rem; color: var(--muted); }
+    .type-price { font-family: var(--font-display); font-size: 1.15rem; color: var(--gold); margin-left: 1rem; flex-shrink: 0; }
+
+    /* ── Calendar ── */
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; }
+    .cal-nav-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      cursor: pointer; padding: 0.4rem 0.6rem; font-size: 0.75rem;
+      transition: all 0.15s; line-height: 1;
+    }
+    .cal-nav-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+    .cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cal-month { font-family: var(--font-display); font-size: 1rem; color: var(--white); }
+    .cal-grid  { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-dh {
+      text-align: center; font-size: 0.58rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); padding: 0.3rem 0 0.5rem;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; border-radius: 2px; transition: all 0.12s;
+    }
+    .cal-day.empty   { }
+    .cal-day.past    { color: var(--border); }
+    .cal-day.unavail { color: var(--border); opacity: 0.45; }
+    .cal-day.avail   {
+      color: var(--white); cursor: pointer;
+      background: var(--surf2); border: 1px solid var(--border);
+    }
+    .cal-day.avail:hover      { border-color: var(--gold); color: var(--gold); }
+    .cal-day.avail.is-today   { border-color: rgba(201,168,76,0.4); }
+    .cal-day.avail.is-selected { background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 700; }
+    .cal-legend { display: flex; gap: 1.25rem; margin-top: 0.85rem; flex-wrap: wrap; }
+    .cal-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.65rem; color: var(--muted); }
+    .leg-swatch { width: 10px; height: 10px; border-radius: 1px; }
+
+    /* ── Time Slots ── */
+    .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+    .time-slot {
+      background: var(--black); border: 1px solid var(--border);
+      padding: 0.6rem 0.35rem; text-align: center;
+      font-size: 0.8rem; color: var(--white);
+      cursor: pointer; transition: all 0.12s; border-radius: 2px;
+    }
+    .time-slot:hover:not(.booked) { border-color: var(--gold); color: var(--gold); }
+    .time-slot.selected { background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 700; }
+    .time-slot.booked   { opacity: 0.22; cursor: not-allowed; text-decoration: line-through; }
+    .no-slots { text-align: center; padding: 1.5rem; color: var(--muted); font-style: italic; font-size: 0.85rem; }
+
+    /* ── Form ── */
+    .field { margin-bottom: 0.9rem; }
+    .field label { display: block; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .field input, .field textarea {
+      width: 100%; background: var(--black);
+      border: 1px solid var(--border); color: var(--white);
+      font-family: var(--font-ui); font-size: 0.92rem;
+      padding: 0.7rem 0.85rem; outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--gold); }
+    .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    /* ── Booking Summary ── */
+    .summary-box { background: var(--black); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 0.85rem 1rem; }
+    .summary-item { display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-icon  { color: var(--gold); font-size: 0.8rem; width: 14px; flex-shrink: 0; margin-top: 0.15rem; }
+    .summary-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.1rem; }
+    .summary-val   { font-size: 0.88rem; color: var(--white); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: var(--gold); color: var(--black); border: none;
+      padding: 0.9rem; font-family: var(--font-display); font-size: 0.95rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      cursor: pointer; width: 100%; margin-top: 1rem; transition: opacity 0.2s;
+    }
+    .btn-primary:hover    { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-back {
+      background: none; color: var(--muted); border: 1px solid var(--border);
+      padding: 0.7rem; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; width: 100%; margin-top: 0.5rem; transition: all 0.15s;
+      font-family: var(--font-ui);
+    }
+    .btn-back:hover { border-color: var(--muted2); color: var(--white); }
+
+    /* ── Status States ── */
+    .status-wrap { padding: 2rem 1.5rem; text-align: center; }
+    .status-icon  { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .status-title { font-family: var(--font-display); font-size: 1.4rem; color: var(--white); margin-bottom: 0.4rem; }
+    .status-sub   { font-size: 0.85rem; color: var(--muted2); line-height: 1.6; }
+
+    /* ── Loading ── */
+    .loading-wrap { display: flex; flex-direction: column; align-items: center; padding: 3rem; gap: 0.75rem; }
+    .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; }
+
+    /* ── Misc ── */
+    .form-msg { font-size: 0.78rem; margin-top: 0.5rem; min-height: 1rem; }
+    .form-msg.error   { color: var(--red); }
+    .form-msg.success { color: var(--green); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+    .portal-link { display: block; text-align: center; margin-top: 1.25rem; font-size: 0.75rem; color: var(--muted); text-decoration: none; letter-spacing: 0.08em; }
+    .portal-link:hover { color: var(--gold); }
+
+    @media (max-width: 360px) {
+      .time-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-row  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="page-header">
+    <img id="schoolLogoImg" class="school-logo-img" src="" alt="" style="display:none" />
+    <div class="page-logo" id="schoolLogoText">NMAO</div>
+    <div class="page-tagline">Book a Session</div>
+  </div>
+
+  <div class="container">
+
+    <!-- Loading -->
+    <div class="card" id="loadingState">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="card" id="errorState" style="display:none">
+      <div class="status-wrap">
+        <div class="status-icon">⚠️</div>
+        <div class="status-title">Unavailable</div>
+        <div class="status-sub" id="errorMsg">This booking link is unavailable.</div>
+      </div>
+    </div>
+
+    <!-- Instructor Card -->
+    <div class="instructor-card" id="instructorCard" style="display:none">
+      <div class="instr-avatar" id="instrAvatar">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="instr-name" id="instrName">Instructor</div>
+        <div class="instr-sub"  id="instrSub"></div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-wrap" id="progressWrap" style="display:none">
+      <div class="step-indicator">
+        Step <strong id="stepNum">1</strong> of 4 &mdash; <span id="stepTitle">Session Type</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-seg" id="ps1"></div>
+        <div class="progress-seg" id="ps2"></div>
+        <div class="progress-seg" id="ps3"></div>
+        <div class="progress-seg" id="ps4"></div>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Session Type ── -->
+    <div class="card" id="step1" style="display:none">
+      <div class="card-header">
+        <div class="card-title">What type of session?</div>
+        <div class="card-sub">Choose a session to book with this instructor</div>
+      </div>
+      <div class="card-body">
+        <div id="typesList"></div>
+        <p class="form-msg" id="s1Msg"></p>
+        <button class="btn-primary" id="s1Next" onclick="goToStep(2)" disabled>
+          Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Date ── -->
+    <div class="card" id="step2" style="display:none">
+      <div class="card-header">
+        <div class="card-title">Choose a date</div>
+        <div class="card-sub" id="s2Sub">Select an available day</div>
+      </div>
+      <div class="card-body">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" id="calPrevBtn" onclick="shiftCal(-1)">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="cal-month" id="calMonthLabel"></div>
+          <button class="cal-nav-btn" id="calNextBtn" onclick="shiftCal(1)">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-dh">Su</div><div class="cal-dh">Mo</div>
+          <div class="cal-dh">Tu</div><div class="cal-dh">We</div>
+          <div class="cal-dh">Th</div><div class="cal-dh">Fr</div>
+          <div class="cal-dh">Sa</div>
+          <div id="calDays" style="display:contents"></div>
+        </div>
+        <div class="cal-legend">
+          <div class="cal-legend-item"><div class="leg-swatch" style="background:var(--gold)"></div>Selected</div>
+          <div class="cal-legend-item"><div class="leg-swatch" style="background:var(--surf2);border:1px solid var(--border)"></div>Available</div>
+          <div class="cal-legend-item"><div class="leg-swatch" style="background:var(--border)"></div>Unavailable</div>
+        </div>
+        <p class="form-msg" id="s2Msg" style="margin-top:0.75rem"></p>
+        <button class="btn-primary" id="s2Next" onclick="goToStep(3)" disabled>
+          Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
+        </button>
+        <button class="btn-back" onclick="goToStep(1)">
+          <i class="fa-solid fa-arrow-left" style="margin-right:0.3rem"></i> Back
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Time ── -->
+    <div class="card" id="step3" style="display:none">
+      <div class="card-header">
+        <div class="card-title">Choose a time</div>
+        <div class="card-sub" id="s3Sub">Available times for this date</div>
+      </div>
+      <div class="card-body">
+        <div id="slotsContainer">
+          <div class="loading-wrap" style="padding:1.5rem">
+            <div class="spinner"></div>
+          </div>
+        </div>
+        <p class="form-msg" id="s3Msg"></p>
+        <button class="btn-primary" id="s3Next" onclick="goToStep(4)" disabled>
+          Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
+        </button>
+        <button class="btn-back" onclick="goToStep(2)">
+          <i class="fa-solid fa-arrow-left" style="margin-right:0.3rem"></i> Back
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Your Info ── -->
+    <div class="card" id="step4" style="display:none">
+      <div class="card-header">
+        <div class="card-title">Your information</div>
+        <div class="card-sub">Almost done!</div>
+      </div>
+      <div class="card-body">
+        <div id="bookingSummary" style="margin-bottom:1rem"></div>
+        <hr class="divider" />
+        <div class="form-row">
+          <div class="field">
+            <label>First Name <span style="color:var(--red)">*</span></label>
+            <input type="text" id="bookFirst" placeholder="First" autocomplete="given-name" />
+          </div>
+          <div class="field">
+            <label>Last Name <span style="color:var(--red)">*</span></label>
+            <input type="text" id="bookLast" placeholder="Last" autocomplete="family-name" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Email <span style="color:var(--red)">*</span></label>
+          <input type="email" id="bookEmail" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>Phone (optional)</label>
+          <input type="tel" id="bookPhone" placeholder="(555) 555-5555" autocomplete="tel" />
+        </div>
+        <div class="field">
+          <label>Goals or Notes (optional)</label>
+          <textarea id="bookNotes" placeholder="What would you like to focus on?"></textarea>
+        </div>
+        <p class="form-msg" id="s4Msg"></p>
+        <button class="btn-primary" id="bookBtn" onclick="submitBooking()">
+          <i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking
+        </button>
+        <button class="btn-back" onclick="goToStep(3)">
+          <i class="fa-solid fa-arrow-left" style="margin-right:0.3rem"></i> Back
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div class="card" id="successState" style="display:none">
+      <div class="status-wrap" style="border-top:3px solid var(--green)">
+        <div class="status-icon">🥋</div>
+        <div class="status-title">Booking Confirmed!</div>
+        <div class="status-sub" id="successSub">Your session has been booked.</div>
+      </div>
+      <div class="card-body">
+        <div class="summary-box" id="successDetails"></div>
+        <div style="margin-top:1rem;font-size:0.75rem;color:var(--muted);line-height:1.65;text-align:center;font-style:italic">
+          Your instructor will send you a confirmation shortly.
+          If you have any questions, please contact the school directly.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.container -->
+
+  <a href="portal.html" class="portal-link">
+    <i class="fa-solid fa-arrow-right" style="margin-right:0.3rem"></i>
+    Go to My Portal
+  </a>
+
+  <script>
+    // ============================================================
+    // BOOK.HTML — JAVASCRIPT
+    // Public instructor booking page
+    // URL: book.html?slug=instructor-slug
+    //   or book.html?instructor=UUID
+    //
+    // Tables used:
+    //   instructors, instructor_booking_settings, instructor_availability,
+    //   instructor_availability_exceptions, session_types, sessions,
+    //   students, leads, schools
+    //
+    // Note: Requires Supabase RLS policies allowing anon SELECT on
+    //   instructors (where booking_link_enabled=true), session_types,
+    //   instructor_booking_settings, instructor_availability,
+    //   instructor_availability_exceptions, sessions (school_id match);
+    //   and anon INSERT on sessions and leads.
+    // ============================================================
+
+    var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var sb = supabase.createClient(SURL, SKEY);
+
+    // ── State ────────────────────────────────────────────────
+    var instructor      = null;
+    var bookingSettings = [];   // normalized booking setting objects
+    var availability    = [];   // [{dow:0-6, start_time:'HH:MM', end_time:'HH:MM'}]
+    var calExceptions   = {};   // {'YYYY-MM-DD': {is_blocked, start_time, end_time}}
+
+    var selectedSetting = null; // selected normalized setting
+    var selectedDate    = null; // 'YYYY-MM-DD'
+    var selectedTime    = null; // 'HH:MM:SS'
+    var currentStep     = 1;
+    var calOffset       = 0;    // months offset from today
+
+    var MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var DAYS_STR = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    var STEP_NAMES = { 1:'Session Type', 2:'Date', 3:'Time', 4:'Your Info' };
+
+    // ── Init ─────────────────────────────────────────────────
+    window.onload = async function() {
+      var p    = new URLSearchParams(window.location.search);
+      var slug = p.get('slug');
+      var id   = p.get('instructor') || p.get('id');
+      if (!slug && !id) {
+        showError('No booking link found. Please use the direct link provided by your instructor.');
+        return;
+      }
+      await loadPage(slug, id);
+    };
+
+    // ── Load Page ────────────────────────────────────────────
+    async function loadPage(slug, instrId) {
+      try {
+        // 1. Load instructor
+        var q = sb.from('instructors').select('*').eq('booking_link_enabled', true);
+        q = slug ? q.eq('booking_slug', slug) : q.eq('id', instrId);
+        var iRes = await q.maybeSingle();
+
+        if (iRes.error || !iRes.data) {
+          showError('This booking link is no longer active or does not exist. Please contact the school directly.');
+          return;
+        }
+        instructor = iRes.data;
+
+        // 2. Load school branding
+        var sRes = await sb.from('schools')
+          .select('name, logo_url, color, bg_color, border_color, font_family')
+          .eq('id', instructor.school_id)
+          .maybeSingle();
+
+        if (sRes.data) {
+          var s = sRes.data;
+          document.title = 'Book a Session — ' + s.name;
+          document.getElementById('schoolLogoText').textContent = s.name;
+          if (s.logo_url) {
+            document.getElementById('schoolLogoImg').src = s.logo_url;
+            document.getElementById('schoolLogoImg').style.display = 'block';
+            document.getElementById('schoolLogoText').style.display = 'none';
+          }
+          if (s.color)       document.documentElement.style.setProperty('--gold',    s.color);
+          if (s.bg_color)    document.documentElement.style.setProperty('--black',   s.bg_color);
+          if (s.border_color)document.documentElement.style.setProperty('--border',  s.border_color);
+          if (s.font_family) document.documentElement.style.setProperty('--font-display', "'" + s.font_family + "',serif");
+        }
+
+        // 3. Render instructor card
+        renderInstructorCard();
+
+        // 4. Load booking settings → fallback to school session types
+        var rawSettings = [];
+        try {
+          var bsRes = await sb.from('instructor_booking_settings')
+            .select('*, session_types(id, name, color, duration_minutes, price)')
+            .eq('instructor_id', instructor.id);
+          rawSettings = (bsRes.data || []).filter(function(b) { return b.session_types; });
+        } catch(e) {}
+
+        if (!rawSettings.length) {
+          var stRes = await sb.from('session_types')
+            .select('*')
+            .eq('school_id', instructor.school_id)
+            .eq('active', true)
+            .order('name');
+          rawSettings = (stRes.data || []).map(function(st) {
+            return {
+              id: st.id,
+              session_type_id: st.id,
+              duration_minutes: st.duration_minutes,
+              price: st.price,
+              buffer_minutes: 15,
+              max_advance_days: 60,
+              min_advance_hours: 24,
+              session_types: st
+            };
+          });
+        }
+
+        if (!rawSettings.length) {
+          showError('This instructor has no session types available for booking. Please contact the school directly.');
+          return;
+        }
+        bookingSettings = rawSettings.map(normalizeBookingSetting);
+
+        // 5. Load weekly availability → fallback Mon–Fri 9–5
+        try {
+          var avRes = await sb.from('instructor_availability')
+            .select('*')
+            .eq('instructor_id', instructor.id);
+          availability = (avRes.data || []).map(normalizeAvail).filter(function(a) { return a.dow >= 0; });
+        } catch(e) {}
+
+        if (!availability.length) {
+          availability = [1,2,3,4,5].map(function(d) {
+            return { dow: d, start_time: '09:00', end_time: '17:00' };
+          });
+        }
+
+        // 6. Auto-select if only one type
+        if (bookingSettings.length === 1) selectedSetting = bookingSettings[0];
+
+        // 7. Show booking UI
+        showEl('instructorCard');
+        showEl('progressWrap');
+        hideEl('loadingState');
+        goToStep(1);
+
+      } catch(e) {
+        console.error('loadPage:', e);
+        showError('Unable to load this booking page. Please try again or contact the school.');
+      }
+    }
+
+    // ── Normalizers ──────────────────────────────────────────
+    function normalizeBookingSetting(b) {
+      var st = b.session_types || {};
+      return {
+        id:                b.id || st.id,
+        session_type_id:   b.session_type_id || st.id,
+        name:              st.name || 'Session',
+        color:             st.color || '#9060D0',
+        duration_minutes:  parseInt(b.duration_minutes || st.duration_minutes || 60),
+        price:             parseFloat(b.price != null ? b.price : (st.price || 0)),
+        buffer_minutes:    parseInt(b.buffer_minutes  || 15),
+        max_advance_days:  parseInt(b.max_advance_days || 60),
+        min_advance_hours: parseInt(b.min_advance_hours || 24)
+      };
+    }
+
+    function normalizeAvail(a) {
+      var dow = typeof a.day_of_week === 'number'
+        ? a.day_of_week
+        : DAYS_STR.indexOf((a.day_of_week || '').toLowerCase());
+      return {
+        dow:        dow,
+        start_time: (a.start_time || '09:00').substring(0, 5),
+        end_time:   (a.end_time   || '17:00').substring(0, 5)
+      };
+    }
+
+    // ── Instructor Card ──────────────────────────────────────
+    function renderInstructorCard() {
+      if (!instructor) return;
+      var name = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
+      var ini  = ((instructor.first_name || ' ')[0] + (instructor.last_name  || ' ')[0]).toUpperCase();
+      document.getElementById('instrName').textContent = name;
+
+      var parts = [];
+      if (instructor.specialties) parts.push(instructor.specialties);
+      if (instructor.bio) {
+        var bio = instructor.bio;
+        parts.push(bio.length > 90 ? bio.slice(0, 90) + '\u2026' : bio);
+      }
+      document.getElementById('instrSub').textContent = parts.join(' \u00B7 ') || 'Instructor';
+
+      var av = document.getElementById('instrAvatar');
+      if (instructor.photo_url) {
+        av.innerHTML = '<img src="' + instructor.photo_url + '" alt="' + name + '" />';
+      } else {
+        av.textContent = ini;
+      }
+    }
+
+    // ── Step Navigation ──────────────────────────────────────
+    async function goToStep(n) {
+      currentStep = n;
+
+      // Hide all panels
+      ['step1','step2','step3','step4','successState','errorState'].forEach(hideEl);
+      hideEl('loadingState');
+
+      // Update progress
+      document.getElementById('stepNum').textContent   = n;
+      document.getElementById('stepTitle').textContent = STEP_NAMES[n] || '';
+      [1,2,3,4].forEach(function(i) {
+        var seg = document.getElementById('ps' + i);
+        if (!seg) return;
+        seg.className = 'progress-seg' + (i < n ? ' done' : i === n ? ' active' : '');
+      });
+
+      // Show and populate the right step
+      if (n === 1) {
+        showEl('step1');
+        renderTypesList();
+
+      } else if (n === 2) {
+        showEl('step2');
+        if (selectedSetting) {
+          document.getElementById('s2Sub').textContent =
+            'Available days for ' + selectedSetting.name + ' sessions';
+        }
+        await buildCalendar();
+
+      } else if (n === 3) {
+        showEl('step3');
+        document.getElementById('s3Sub').textContent = selectedDate ? formatDate(selectedDate) : '';
+        document.getElementById('s3Next').disabled = !selectedTime;
+        await buildTimeSlots();
+
+      } else if (n === 4) {
+        showEl('step4');
+        renderBookingSummary();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Step 1: Session Types ────────────────────────────────
+    function renderTypesList() {
+      var el = document.getElementById('typesList');
+      if (!bookingSettings.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.5rem 0">No session types available.</div>';
+        return;
+      }
+      el.innerHTML = bookingSettings.map(function(b) {
+        var isSel   = selectedSetting && selectedSetting.id === b.id;
+        var freeTag = b.price <= 0 ? ' \u00B7 Included with membership' : '';
+        return '<div class="type-option' + (isSel ? ' selected' : '') + '" onclick="selectType(\'' + b.id + '\')" id="type-' + b.id + '">' +
+          '<div>' +
+          '<div class="type-name"><span class="type-dot" style="background:' + b.color + '"></span>' + b.name + '</div>' +
+          '<div class="type-meta">' + b.duration_minutes + ' min' + freeTag + '</div>' +
+          '</div>' +
+          (b.price > 0 ? '<div class="type-price">$' + b.price.toFixed(2) + '</div>' : '') +
+          '</div>';
+      }).join('');
+      document.getElementById('s1Next').disabled = !selectedSetting;
+    }
+
+    function selectType(settingId) {
+      selectedSetting = bookingSettings.find(function(b) { return b.id === settingId; }) || null;
+      selectedDate = null;
+      selectedTime = null;
+      document.querySelectorAll('.type-option').forEach(function(el) { el.classList.remove('selected'); });
+      var sel = document.getElementById('type-' + settingId);
+      if (sel) sel.classList.add('selected');
+      document.getElementById('s1Next').disabled = !selectedSetting;
+    }
+
+    // ── Step 2: Calendar ─────────────────────────────────────
+    async function buildCalendar() {
+      var now  = new Date();
+      var base = new Date(now.getFullYear(), now.getMonth() + calOffset, 1);
+      var yr   = base.getFullYear();
+      var mo   = base.getMonth();
+
+      document.getElementById('calMonthLabel').textContent = MONTHS[mo] + ' ' + yr;
+
+      var maxDays = selectedSetting ? selectedSetting.max_advance_days : 60;
+      var maxDate = new Date(now); maxDate.setDate(maxDate.getDate() + maxDays);
+
+      document.getElementById('calPrevBtn').disabled = (calOffset <= 0);
+      document.getElementById('calNextBtn').disabled = (new Date(yr, mo + 1, 1) > maxDate);
+
+      // Load exceptions for this month
+      var monthStart = new Date(yr, mo, 1).toISOString().split('T')[0];
+      var monthEnd   = new Date(yr, mo + 1, 0).toISOString().split('T')[0];
+      calExceptions  = {};
+      try {
+        var exRes = await sb.from('instructor_availability_exceptions')
+          .select('exception_date, is_blocked, start_time, end_time')
+          .eq('instructor_id', instructor.id)
+          .gte('exception_date', monthStart)
+          .lte('exception_date', monthEnd);
+        (exRes.data || []).forEach(function(ex) { calExceptions[ex.exception_date] = ex; });
+      } catch(e) {}
+
+      // Build availability day-of-week set
+      var availDows = {};
+      availability.forEach(function(a) { availDows[a.dow] = true; });
+
+      var minHours    = selectedSetting ? selectedSetting.min_advance_hours : 24;
+      var daysInMonth = new Date(yr, mo + 1, 0).getDate();
+      var firstDow    = new Date(yr, mo, 1).getDay();
+      var todayStr    = now.toISOString().split('T')[0];
+      var html        = '';
+
+      // Empty leading cells
+      for (var i = 0; i < firstDow; i++) html += '<div class="cal-day empty"></div>';
+
+      for (var d = 1; d <= daysInMonth; d++) {
+        var cellDate = new Date(yr, mo, d);
+        var dateStr  = cellDate.toISOString().split('T')[0];
+        var dow      = cellDate.getDay();
+
+        var isPast    = dateStr < todayStr;
+        // For today: check if any slot would still be reachable (rough check via end of day)
+        var endOfDay  = new Date(yr, mo, d, 23, 59, 0);
+        var tooSoon   = !isPast && ((endOfDay.getTime() - now.getTime()) / 3600000) < minHours;
+        var tooFar    = cellDate > maxDate;
+        var hasAvail  = !!availDows[dow];
+        var ex        = calExceptions[dateStr];
+        var isBlocked = ex && ex.is_blocked;
+        var isToday   = dateStr === todayStr;
+
+        var isAvail = hasAvail && !isPast && !tooSoon && !tooFar && !isBlocked;
+
+        var cls = 'cal-day';
+        if (!isAvail) {
+          cls += isPast || !hasAvail ? ' past' : ' unavail';
+        } else {
+          cls += ' avail';
+          if (isToday)              cls += ' is-today';
+          if (dateStr === selectedDate) cls += ' is-selected';
+        }
+
+        html += '<div class="' + cls + '"' + (isAvail ? ' onclick="selectDate(\'' + dateStr + '\')"' : '') + '>' + d + '</div>';
+      }
+
+      document.getElementById('calDays').innerHTML = html;
+    }
+
+    function shiftCal(dir) {
+      calOffset += dir;
+      buildCalendar();
+    }
+
+    function selectDate(dateStr) {
+      selectedDate = dateStr;
+      selectedTime = null;
+      document.getElementById('s2Next').disabled = false;
+      buildCalendar(); // refresh to show selection highlight
+    }
+
+    // ── Step 3: Time Slots ───────────────────────────────────
+    async function buildTimeSlots() {
+      if (!selectedDate || !selectedSetting) {
+        document.getElementById('slotsContainer').innerHTML =
+          '<div class="no-slots">Please go back and select a date.</div>';
+        return;
+      }
+
+      document.getElementById('slotsContainer').innerHTML =
+        '<div class="loading-wrap" style="padding:1.5rem"><div class="spinner"></div></div>';
+
+      var dateObj = new Date(selectedDate + 'T00:00:00');
+      var dow     = dateObj.getDay();
+
+      // Find availability for this day (check exception override first)
+      var dayAvail = null;
+      var ex = calExceptions[selectedDate];
+
+      if (ex) {
+        if (ex.is_blocked) {
+          document.getElementById('slotsContainer').innerHTML =
+            '<div class="no-slots">No availability on this day. Please go back and select a different date.</div>';
+          return;
+        }
+        // Exception may override times
+        if (ex.start_time && ex.end_time) {
+          dayAvail = { start_time: ex.start_time.substring(0,5), end_time: ex.end_time.substring(0,5) };
+        }
+      }
+
+      if (!dayAvail) {
+        // Check if we have the exception loaded (might have navigated away and back)
+        // Re-query just for safety
+        try {
+          var exRes = await sb.from('instructor_availability_exceptions')
+            .select('is_blocked, start_time, end_time')
+            .eq('instructor_id', instructor.id)
+            .eq('exception_date', selectedDate)
+            .maybeSingle();
+          if (exRes.data) {
+            if (exRes.data.is_blocked) {
+              document.getElementById('slotsContainer').innerHTML =
+                '<div class="no-slots">No availability on this day. Please select a different date.</div>';
+              return;
+            }
+            if (exRes.data.start_time && exRes.data.end_time) {
+              dayAvail = { start_time: exRes.data.start_time.substring(0,5), end_time: exRes.data.end_time.substring(0,5) };
+            }
+          }
+        } catch(e) {}
+      }
+
+      if (!dayAvail) {
+        // Use standard weekly availability
+        availability.forEach(function(a) {
+          if (a.dow === dow) dayAvail = a;
+        });
+      }
+
+      if (!dayAvail) {
+        document.getElementById('slotsContainer').innerHTML =
+          '<div class="no-slots">No availability on this day. Please go back and choose a different date.</div>';
+        return;
+      }
+
+      // Load existing sessions on this date for conflict check
+      var dayBookings = [];
+      try {
+        var instrName = instructor.first_name + ' ' + instructor.last_name;
+        var sessRes = await sb.from('sessions')
+          .select('start_time, duration_minutes')
+          .eq('school_id', instructor.school_id)
+          .eq('instructor_name', instrName)
+          .eq('session_date', selectedDate)
+          .in('status', ['scheduled']);
+        dayBookings = sessRes.data || [];
+      } catch(e) {}
+
+      var duration = selectedSetting.duration_minutes;
+      var buffer   = selectedSetting.buffer_minutes;
+      var minHours = selectedSetting.min_advance_hours;
+
+      var slots = generateSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate);
+
+      if (!slots.length) {
+        document.getElementById('slotsContainer').innerHTML =
+          '<div class="no-slots">No available times on this day. Please go back and select a different date.</div>';
+        return;
+      }
+
+      var html = '<div class="time-grid">';
+      slots.forEach(function(slot) {
+        var isSel = slot.time === selectedTime;
+        var cls   = 'time-slot' + (slot.booked ? ' booked' : '') + (isSel ? ' selected' : '');
+        var click = slot.booked ? '' : 'onclick="selectTimeSlot(\'' + slot.time + '\')"';
+        html += '<div class="' + cls + '" data-time="' + slot.time + '" ' + click + '>' + fmtTime(slot.time) + '</div>';
+      });
+      html += '</div>';
+      document.getElementById('slotsContainer').innerHTML = html;
+    }
+
+    function generateSlots(startTime, endTime, duration, buffer, existingBookings, minAdvanceHours, dateStr) {
+      var slots     = [];
+      var start     = timeToMins(startTime);
+      var end       = timeToMins(endTime);
+      var increment = duration + (buffer || 0);
+      var now       = new Date();
+
+      for (var t = start; t + duration <= end; t += increment) {
+        var timeStr      = minsToTime(t);
+        var slotDateTime = new Date(dateStr + 'T' + timeStr);
+        var hoursUntil   = (slotDateTime.getTime() - now.getTime()) / 3600000;
+
+        if (hoursUntil < minAdvanceHours) continue; // too soon
+
+        // Conflict check
+        var conflict = existingBookings.some(function(b) {
+          if (!b.start_time) return false;
+          var bStart = timeToMins(b.start_time);
+          var bEnd   = bStart + (parseInt(b.duration_minutes) || 60);
+          var sEnd   = t + duration;
+          return t < bEnd && sEnd > bStart;
+        });
+
+        slots.push({ time: timeStr, booked: conflict });
+      }
+      return slots;
+    }
+
+    function selectTimeSlot(timeStr) {
+      selectedTime = timeStr;
+      document.getElementById('s3Next').disabled = false;
+      // Update visuals
+      document.querySelectorAll('.time-slot').forEach(function(el) {
+        el.classList.toggle('selected', el.getAttribute('data-time') === timeStr);
+      });
+    }
+
+    // ── Step 4: Summary + Submit ─────────────────────────────
+    function renderBookingSummary() {
+      if (!selectedSetting || !selectedDate || !selectedTime) return;
+      var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
+      var duration  = selectedSetting.duration_minutes;
+      var price     = selectedSetting.price;
+
+      document.getElementById('bookingSummary').innerHTML =
+        '<div class="summary-box">' +
+        mkSummaryItem('fa-dumbbell',        'Session',    selectedSetting.name) +
+        mkSummaryItem('fa-calendar',        'Date',       formatDate(selectedDate)) +
+        mkSummaryItem('fa-clock',           'Time',       fmtTime(selectedTime) + ' \u00B7 ' + duration + ' min') +
+        mkSummaryItem('fa-chalkboard-user', 'Instructor', instrName) +
+        (price > 0 ? mkSummaryItem('fa-credit-card', 'Price', '$' + price.toFixed(2)) : '') +
+        '</div>';
+    }
+
+    function mkSummaryItem(icon, label, value) {
+      return '<div class="summary-item">' +
+        '<i class="fa-solid ' + icon + ' summary-icon"></i>' +
+        '<div><div class="summary-label">' + label + '</div>' +
+        '<div class="summary-val">' + (value || '\u2014') + '</div></div>' +
+        '</div>';
+    }
+
+    async function submitBooking() {
+      var first = document.getElementById('bookFirst').value.trim();
+      var last  = document.getElementById('bookLast').value.trim();
+      var email = document.getElementById('bookEmail').value.trim();
+      var phone = document.getElementById('bookPhone').value.trim();
+      var notes = document.getElementById('bookNotes').value.trim();
+
+      if (!first || !last || !email) {
+        setMsg('s4Msg', 'Please fill in your first name, last name, and email.', 'error');
+        return;
+      }
+      if (!validateEmail(email)) {
+        setMsg('s4Msg', 'Please enter a valid email address.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('bookBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Booking...';
+      setMsg('s4Msg', '', '');
+
+      try {
+        // Look up existing student by email
+        var studentId = null;
+        try {
+          var stuRes = await sb.from('students')
+            .select('id')
+            .eq('school_id', instructor.school_id)
+            .eq('email', email.toLowerCase())
+            .limit(1);
+          if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
+        } catch(e) {}
+
+        var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
+        var sessionNotes = notes || null;
+
+        // If no existing student, embed contact info in notes
+        if (!studentId) {
+          var contactLine = 'Booking contact: ' + first + ' ' + last + ' <' + email + '>' + (phone ? ', ' + phone : '');
+          sessionNotes = notes ? contactLine + '\n' + notes : contactLine;
+        }
+
+        // Create session record
+        var sessPayload = {
+          school_id:           instructor.school_id,
+          student_id:          studentId,
+          instructor_name:     instrName,
+          session_type_id:     selectedSetting.session_type_id,
+          session_date:        selectedDate,
+          start_time:          selectedTime,
+          duration_minutes:    selectedSetting.duration_minutes,
+          status:              'scheduled',
+          confirmation_status: 'pending',
+          price:               selectedSetting.price,
+          notes:               sessionNotes
+        };
+
+        var sessRes = await sb.from('sessions').insert(sessPayload).select().maybeSingle();
+        if (sessRes.error) throw new Error(sessRes.error.message);
+
+        // If no existing student, create a lead
+        if (!studentId) {
+          try {
+            await sb.from('leads').insert({
+              school_id:  instructor.school_id,
+              first_name: first,
+              last_name:  last,
+              email:      email.toLowerCase(),
+              phone:      phone || null,
+              source:     'instructor_booking',
+              status:     'trial',
+              notes:      'Booked session with ' + instrName + ' on ' + formatDate(selectedDate) + ' at ' + fmtTime(selectedTime)
+            });
+          } catch(e) {}
+        }
+
+        showSuccess(first, selectedSetting.name);
+
+      } catch(e) {
+        setMsg('s4Msg', 'Booking failed: ' + e.message + '. Please try again or contact the school.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
+      }
+    }
+
+    function showSuccess(firstName, typeName) {
+      var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
+
+      document.getElementById('successSub').textContent =
+        'Hi ' + firstName + '! Your ' + typeName + ' with ' + instrName +
+        ' is booked for ' + formatDate(selectedDate) + ' at ' + fmtTime(selectedTime) + '.';
+
+      document.getElementById('successDetails').innerHTML =
+        mkSummaryItem('fa-calendar',        'Date',       formatDate(selectedDate)) +
+        mkSummaryItem('fa-clock',           'Time',       fmtTime(selectedTime) + ' \u00B7 ' + selectedSetting.duration_minutes + ' min') +
+        mkSummaryItem('fa-chalkboard-user', 'Instructor', instrName) +
+        mkSummaryItem('fa-dumbbell',        'Session',    typeName);
+
+      hideEl('progressWrap');
+      hideEl('instructorCard');
+      ['step1','step2','step3','step4'].forEach(hideEl);
+      showEl('successState');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Helpers ──────────────────────────────────────────────
+    function showEl(id) { var el = document.getElementById(id); if (el) el.style.display = 'block'; }
+    function hideEl(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+    function showError(msg) {
+      document.getElementById('errorMsg').textContent = msg;
+      hideEl('loadingState');
+      hideEl('instructorCard');
+      hideEl('progressWrap');
+      showEl('errorState');
+    }
+
+    function timeToMins(t) {
+      if (!t) return 0;
+      var p = t.split(':');
+      return parseInt(p[0]) * 60 + parseInt(p[1]);
+    }
+
+    function minsToTime(mins) {
+      var h = Math.floor(mins / 60);
+      var m = mins % 60;
+      return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':00';
+    }
+
+    function fmtTime(t) {
+      if (!t) return '\u2014';
+      var p  = t.split(':');
+      var h  = parseInt(p[0]);
+      var m  = p[1];
+      return (h > 12 ? h - 12 : (h || 12)) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '\u2014';
+      return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+      });
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function setMsg(id, text, type) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text || '';
+      el.className = 'form-msg' + (type ? ' ' + type : '');
+    }
+  </script>
+</body>
+</html>
