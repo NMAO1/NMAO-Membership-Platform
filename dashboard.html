@@ -1351,10 +1351,11 @@
       <input type="hidden" id="classEditId" value="" />
       <div class="field"><label>Class Title</label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
       <div class="field"><label>Description</label><div id="classDescEditor"></div></div>
-      <div class="form-row">
-        <div class="field"><label id="classStyleLabel">Style</label><select id="classStyle"></select></div>
-        <div class="field"><label id="classAgeLabel">Age Group</label><select id="classAge"></select></div>
-      </div>
+<div class="field"><label>Program</label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
+<div class="form-row">
+  <div class="field"><label id="classStyleLabel">Style</label><select id="classStyle"></select></div>
+  <div class="field"><label id="classAgeLabel">Age Group</label><select id="classAge"></select></div>
+</div>
       <div class="form-row">
       <div class="field"><label id="classLevelLabel">Level</label><select id="classLevel"></select></div>
         <div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div>
@@ -2602,6 +2603,7 @@ async function loadClasses(){
 }
 function openAddClass(){
   populateInstructorDropdown();
+  populateClassProgramDropdown();
   document.getElementById('addClassTitle').textContent='Add New Class';
   document.getElementById('classEditId').value='';
   document.getElementById('classTitle').value='';
@@ -2610,14 +2612,22 @@ function openAddClass(){
   document.getElementById('classEnd').value='';
   document.getElementById('classShowInstructor').checked=true;
   document.getElementById('classInstructor').value='';
+  document.getElementById('classProgram').value='';
   document.getElementById('classMsg').textContent='';
   document.querySelectorAll('.day-btn').forEach(function(b){b.classList.remove('selected');});
   setTimeout(function(){if(quillEditors['classDescEditor'])quillEditors['classDescEditor'].setText('');},50);
   document.getElementById('addClassModal').classList.add('active');
 }
+function populateClassProgramDropdown(){
+  var sel=document.getElementById('classProgram'); if(!sel) return;
+  sel.innerHTML='<option value="">-- No Program --</option>';
+  allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+}
+
 function openEditClass(cid){
   var c=allClasses.find(function(x){return x.id===cid;}); if(!c) return;
   populateInstructorDropdown();
+  populateClassProgramDropdown();
   document.getElementById('addClassTitle').textContent='Edit Class';
   document.getElementById('classEditId').value=c.id;
   document.getElementById('classTitle').value=c.name||c.title||'';
@@ -2626,6 +2636,7 @@ function openEditClass(cid){
   document.getElementById('classEnd').value=c.end_time||'';
   document.getElementById('classShowInstructor').checked=c.show_instructor_on_app!==false;
   document.getElementById('classInstructor').value=c.instructor_name||'';
+  document.getElementById('classProgram').value=c.program_id||'';
   document.getElementById('classMsg').textContent='';
   document.querySelectorAll('.day-btn').forEach(function(b){b.classList.toggle('selected',c.days_of_week&&c.days_of_week.includes(b.dataset.day));});
   setTimeout(function(){if(quillEditors['classDescEditor'])setQuillContent('classDescEditor',c.description||'');populateClassDropdowns();setTimeout(function(){if(c.style)document.getElementById('classStyle').value=c.style;if(c.age_group)document.getElementById('classAge').value=c.age_group;if(c.level)document.getElementById('classLevel').value=c.level;},50);},50);
@@ -2648,7 +2659,7 @@ async function saveClass(){
   var days=[]; document.querySelectorAll('.day-btn.selected').forEach(function(b){days.push(b.dataset.day);});
   if(!title||!start||!end||!days.length){setMsg('classMsg','Fill in title, times, and select days.','error');return;}
   setMsg('classMsg','Saving...','');
-  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked};
+  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,program_id:document.getElementById('classProgram').value||null};
   var r; if(eid){r=await sb.from('classes').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('classes').insert(payload);}
   if(r.error){setMsg('classMsg',r.error.message,'error');}else{setMsg('classMsg','Class saved!','success');await loadClasses();buildTodaySchedule();buildWeekGrid();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
 }
