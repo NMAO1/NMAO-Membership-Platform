@@ -21,31 +21,18 @@
     body{background:var(--black);color:var(--white);font-family:var(--font-ui);
       min-height:100vh;display:flex;flex-direction:column;align-items:center;
       user-select:none;overflow-x:hidden;}
-
-    .kiosk-header{
-      width:100%;padding:2rem 2rem 1.5rem;
-      display:flex;flex-direction:column;align-items:center;
-      background:var(--surface);position:relative;
-    }
-    .kiosk-header::after{
-      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4;
-    }
+    .kiosk-header{width:100%;padding:2rem 2rem 1.5rem;display:flex;flex-direction:column;align-items:center;background:var(--surface);position:relative;}
+    .kiosk-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4;}
     .kiosk-logo{max-height:110px;max-width:300px;object-fit:contain;margin-bottom:0.75rem;}
     .kiosk-logo-text{font-family:var(--font-display);font-size:2.8rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:0.25rem;line-height:1;}
     .kiosk-school-name{font-size:0.72rem;color:var(--muted);letter-spacing:0.22em;text-transform:uppercase;}
-
     .kiosk-mode-bar{width:100%;display:flex;justify-content:center;gap:0;border-bottom:1px solid var(--border);background:var(--surface);}
     .kiosk-mode-btn{padding:0.65rem 2rem;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-ui);border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;}
     .kiosk-mode-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
-
     .kiosk-body{flex:1;width:100%;padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center;}
-
     .kiosk-current-class{width:100%;max-width:680px;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.2);padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;}
     .kiosk-current-class-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;}
     .kiosk-current-class-name{font-family:var(--font-display);font-size:1.15rem;color:var(--gold);}
-
-    /* CHECK-IN */
     .kiosk-checkin-wrap{width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center;}
     .kiosk-prompt{font-family:var(--font-display);font-size:2.2rem;color:var(--white);margin-bottom:0.4rem;text-align:center;letter-spacing:0.02em;}
     .kiosk-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;text-align:center;letter-spacing:0.08em;}
@@ -80,9 +67,9 @@
     .btn-checkin:disabled{opacity:0.6;cursor:not-allowed;}
     .btn-back{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;margin-top:0.85rem;transition:all 0.2s;}
     .btn-back:hover{border-color:var(--muted);color:var(--white);}
-#kioskDenialCard.active{display:block!important;animation:slideDown 0.3s ease;}
-@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-
+    /* §CSS: DENIAL_CARD */
+    #kioskDenialCard.active{display:block!important;animation:slideDown 0.3s ease;}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
     /* REGISTER */
     .reg-layout{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
     .reg-layout.no-welcome{grid-template-columns:1fr;max-width:520px;}
@@ -109,7 +96,6 @@
     .reg-msg{font-size:0.82rem;text-align:center;margin-top:0.6rem;min-height:1.2em;}
     .reg-msg.success{color:#7DBD7D;}
     .reg-msg.error{color:#E07070;}
-
     /* CELEBRATION */
     #kioskCelebration{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
     #kioskCelebration.active{display:flex;}
@@ -129,10 +115,7 @@
     @keyframes celebFadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
     @keyframes celebPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
     @keyframes progressShrink{from{transform:scaleX(1);}to{transform:scaleX(0);}}
-
-    @media(max-width:700px){
-      .reg-layout{grid-template-columns:1fr;}
-    }
+    @media(max-width:700px){.reg-layout{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -155,7 +138,7 @@
     <div class="kiosk-current-class-name" id="kioskCurrentClassName"></div>
   </div>
 
-  <!-- CHECK-IN MODE -->
+  <!-- §SECTION: CHECK-IN MODE -->
   <div id="modeCheckinView" style="width:100%;display:flex;flex-direction:column;align-items:center">
     <div id="kioskSearchView" class="kiosk-checkin-wrap">
       <div class="kiosk-prompt">Welcome</div>
@@ -170,14 +153,17 @@
       <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
       <div style="width:100%">
         <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()"><i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In</button>
-        <div style="text-align:center"><button class="btn-back" onclick="backToSearch()"><i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back</button></div>    
-        <div id="kioskDenialCard" style="display:none;position:fixed;top:2rem;left:50%;transform:translateX(-50%);background:#1A0A0A;border:2px solid #E07070;padding:1.25rem 2rem;max-width:480px;width:90%;text-align:center;z-index:999;border-radius:4px;"><i class="fa-solid fa-circle-xmark" style="color:#E07070;font-size:1.5rem;margin-bottom:0.5rem;display:block"></i><div id="kioskDenialMsg" style="color:#F5F0E8;font-size:0.95rem;line-height:1.5"></div></div>
-
+        <div style="text-align:center"><button class="btn-back" onclick="backToSearch()"><i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back</button></div>
+        <!-- §SECTION: DENIAL_CARD -->
+        <div id="kioskDenialCard" style="display:none;position:fixed;top:2rem;left:50%;transform:translateX(-50%);background:#1A0A0A;border:2px solid #E07070;padding:1.25rem 2rem;max-width:480px;width:90%;text-align:center;z-index:999;border-radius:4px;">
+          <i class="fa-solid fa-circle-xmark" style="color:#E07070;font-size:1.5rem;margin-bottom:0.5rem;display:block"></i>
+          <div id="kioskDenialMsg" style="color:#F5F0E8;font-size:0.95rem;line-height:1.5"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- REGISTER MODE -->
+  <!-- §SECTION: REGISTER MODE -->
   <div id="modeRegisterView" style="display:none;width:100%;max-width:1100px">
     <div id="regLayout" class="reg-layout no-welcome">
       <div id="welcomePanel" class="welcome-panel" style="display:none"></div>
@@ -197,6 +183,7 @@
 
 </div>
 
+<!-- §SECTION: CELEBRATION -->
 <div id="kioskCelebration">
   <div class="celeb-logo-wrap">
     <img id="celebLogoImg" class="celeb-logo" src="" alt="" style="display:none" />
@@ -215,6 +202,9 @@
 </div>
 
 <script>
+// ─────────────────────────────────────────────────────────────
+//  §JS: CONSTANTS
+// ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
@@ -223,11 +213,17 @@ var sb=supabase.createClient(SURL,SKEY);
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1000 classes. You have achieved something extraordinary.'};
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: STATE
+// ─────────────────────────────────────────────────────────────
 var allStudents=[],allFamilies=[],allPrograms=[],currentClass=null,currentSessionId=null;
 var selectedStudent=null,selectedFamilyChildren=[],searchTimer=null;
 var schoolData={},currentMode='checkin';
 var familyCheckinQueue=[],familyCheckinIndex=0;
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: INIT
+// ─────────────────────────────────────────────────────────────
 async function init(){
   try{
     var r=await sb.from('schools').select('*').eq('id',SID).single();
@@ -258,6 +254,9 @@ async function init(){
   }catch(e){console.error('Kiosk init error:',e);}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: WELCOME_PANEL
+// ─────────────────────────────────────────────────────────────
 function getYouTubeId(url){
   if(!url)return null;
   var match=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
@@ -275,84 +274,49 @@ function buildWelcomePanel(d){
   var layout=document.getElementById('regLayout');
   var sections=[];
   var hasContent=false;
-
   if(d.kiosk_show_video&&d.kiosk_video_url){
     var vid=getYouTubeId(d.kiosk_video_url);
     if(vid){
       hasContent=true;
-      sections.push('<div>'+
-        '<div class="welcome-social-label"><i class="fa-brands fa-youtube" style="color:#E07070"></i>Highlight Reel</div>'+
-        '<div class="welcome-video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&mute=1&loop=1&playlist='+vid+'&controls=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'+
-      '</div>');
+      sections.push('<div><div class="welcome-social-label"><i class="fa-brands fa-youtube" style="color:#E07070"></i>Highlight Reel</div><div class="welcome-video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&mute=1&loop=1&playlist='+vid+'&controls=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div></div>');
     }
   }
-
   if(d.kiosk_show_bio&&d.kiosk_bio){
     hasContent=true;
     sections.push('<div class="welcome-bio"><i class="fa-solid fa-quote-left" style="color:var(--gold);margin-right:0.5rem;font-size:0.85rem"></i>'+d.kiosk_bio+'</div>');
   }
-
   if(d.kiosk_show_stats&&d.kiosk_stats&&d.kiosk_stats.length){
     hasContent=true;
-    var chips=d.kiosk_stats.filter(function(s){return s.num||s.label;}).map(function(s){
-      return '<div class="welcome-stat-chip"><div class="welcome-stat-num">'+s.num+'</div><div class="welcome-stat-label">'+s.label+'</div></div>';
-    }).join('');
+    var chips=d.kiosk_stats.filter(function(s){return s.num||s.label;}).map(function(s){return '<div class="welcome-stat-chip"><div class="welcome-stat-num">'+s.num+'</div><div class="welcome-stat-label">'+s.label+'</div></div>';}).join('');
     sections.push('<div class="welcome-stats">'+chips+'</div>');
   }
-
   if(d.kiosk_show_instagram&&d.kiosk_instagram_url){
     hasContent=true;
-    sections.push('<div>'+
-      '<div class="welcome-social-label"><i class="fa-brands fa-instagram" style="color:#C13584"></i>Instagram</div>'+
-      '<div class="welcome-social-embed" id="igEmbed">'+
-        '<blockquote class="instagram-media" data-instgrm-permalink="'+d.kiosk_instagram_url+'" data-instgrm-version="14" style="background:#fff;border:0;border-radius:3px;margin:1px;max-width:540px;min-width:326px;padding:0;width:calc(100% - 2px)">'+
-          '<a href="'+d.kiosk_instagram_url+'">View on Instagram</a>'+
-        '</blockquote>'+
-      '</div>'+
-    '</div>');
+    sections.push('<div><div class="welcome-social-label"><i class="fa-brands fa-instagram" style="color:#C13584"></i>Instagram</div><div class="welcome-social-embed" id="igEmbed"><blockquote class="instagram-media" data-instgrm-permalink="'+d.kiosk_instagram_url+'" data-instgrm-version="14" style="background:#fff;border:0;border-radius:3px;margin:1px;max-width:540px;min-width:326px;padding:0;width:calc(100% - 2px)"><a href="'+d.kiosk_instagram_url+'">View on Instagram</a></blockquote></div></div>');
     var igScript=document.createElement('script');igScript.src='//www.instagram.com/embed.js';document.head.appendChild(igScript);
   }
-
   if(d.kiosk_show_facebook&&d.kiosk_facebook_url){
     hasContent=true;
-    sections.push('<div>'+
-      '<div class="welcome-social-label"><i class="fa-brands fa-facebook" style="color:#1877F2"></i>Facebook</div>'+
-      '<div class="welcome-social-embed">'+
-        '<div id="fb-root"></div>'+
-        '<div class="fb-post" data-href="'+d.kiosk_facebook_url+'" data-width="500" data-show-text="true"></div>'+
-      '</div>'+
-    '</div>');
+    sections.push('<div><div class="welcome-social-label"><i class="fa-brands fa-facebook" style="color:#1877F2"></i>Facebook</div><div class="welcome-social-embed"><div id="fb-root"></div><div class="fb-post" data-href="'+d.kiosk_facebook_url+'" data-width="500" data-show-text="true"></div></div></div>');
     var fbScript=document.createElement('script');fbScript.src='https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0';fbScript.crossOrigin='anonymous';document.head.appendChild(fbScript);
   }
-
   if(d.kiosk_show_tiktok&&d.kiosk_tiktok_url){
     var ttId=getTikTokId(d.kiosk_tiktok_url);
     if(ttId){
       hasContent=true;
-      sections.push('<div>'+
-        '<div class="welcome-social-label"><i class="fa-brands fa-tiktok"></i>TikTok</div>'+
-        '<div class="welcome-social-embed">'+
-          '<blockquote class="tiktok-embed" cite="'+d.kiosk_tiktok_url+'" data-video-id="'+ttId+'" style="max-width:605px;min-width:325px;">'+
-            '<section><a target="_blank" href="'+d.kiosk_tiktok_url+'">View on TikTok</a></section>'+
-          '</blockquote>'+
-        '</div>'+
-      '</div>');
+      sections.push('<div><div class="welcome-social-label"><i class="fa-brands fa-tiktok"></i>TikTok</div><div class="welcome-social-embed"><blockquote class="tiktok-embed" cite="'+d.kiosk_tiktok_url+'" data-video-id="'+ttId+'" style="max-width:605px;min-width:325px;"><section><a target="_blank" href="'+d.kiosk_tiktok_url+'">View on TikTok</a></section></blockquote></div></div>');
       var ttScript=document.createElement('script');ttScript.src='https://www.tiktok.com/embed.js';document.head.appendChild(ttScript);
     }
   }
-
-  if(hasContent){
-    panel.innerHTML=sections.join('');
-    panel.style.display='flex';
-    layout.classList.remove('no-welcome');
-  }else{
-    panel.style.display='none';
-    layout.classList.add('no-welcome');
-  }
+  if(hasContent){panel.innerHTML=sections.join('');panel.style.display='flex';layout.classList.remove('no-welcome');}
+  else{panel.style.display='none';layout.classList.add('no-welcome');}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: LOAD_DATA
+// ─────────────────────────────────────────────────────────────
 async function loadStudents(){
-var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
+  var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
   allStudents=r.data||[];
 }
 
@@ -369,6 +333,9 @@ async function loadPrograms(){
   }catch(e){}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: CLASS_DETECTION
+// ─────────────────────────────────────────────────────────────
 async function detectCurrentClass(){
   var now=new Date();
   var timeStr=now.toTimeString().slice(0,5);
@@ -390,6 +357,7 @@ async function detectCurrentClass(){
     document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' \u00b7 '+fmtTime(currentClass.start_time);
     await getOrCreateSession();
   }else{
+    currentClass=null;
     document.getElementById('kioskCurrentClass').style.display='none';
   }
 }
@@ -402,6 +370,9 @@ async function getOrCreateSession(){
   else{var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: MODE
+// ─────────────────────────────────────────────────────────────
 function setMode(mode){
   currentMode=mode;
   document.getElementById('modeCheckin').classList.toggle('active',mode==='checkin');
@@ -412,6 +383,9 @@ function setMode(mode){
   else document.getElementById('regFirst').focus();
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: SEARCH
+// ─────────────────────────────────────────────────────────────
 function searchStudents(){
   clearTimeout(searchTimer);
   searchTimer=setTimeout(function(){
@@ -460,6 +434,9 @@ function searchStudents(){
   },200);
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: FAMILY_CHECKIN
+// ─────────────────────────────────────────────────────────────
 function toggleFamilyChild(sid){
   var row=document.getElementById('childrow-'+sid);
   var icon=row?row.querySelector('.kiosk-child-check'):null;
@@ -497,6 +474,9 @@ async function processFamilyQueue(){
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: STUDENT_SELECTION
+// ─────────────────────────────────────────────────────────────
 function selectStudent(sid){
   selectedStudent=allStudents.find(function(s){return s.id===sid;});
   if(!selectedStudent)return;
@@ -521,48 +501,53 @@ async function confirmCheckin(){
   await doCheckinForStudent(selectedStudent,function(){setTimeout(resetKiosk,3600);});
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: CHECKIN_VALIDATION
+//  Checks: class window, program match, weekly limit, duplicate
+// ─────────────────────────────────────────────────────────────
 async function doCheckinForStudent(student,callback){
   try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
 
     // §KIOSK: CLASS_WINDOW_CHECK
-    // Only allow check-in if a class matching student's program is within -60/+30 min
+    // Block if no class is active within the detection window
     if(currentClass){
       var prog=student.programs&&student.programs.name?student.programs.name.toLowerCase():'';
       var classStyle=(currentClass.style||'').toLowerCase();
       var className=(currentClass.name||currentClass.title||'').toLowerCase();
       var programMatch=!prog||(classStyle.includes(prog)||className.includes(prog)||prog.includes(classStyle));
       if(!programMatch){
-        showKioskDenial('This class does not match your program ('+( student.programs&&student.programs.name||'Unknown')+').');
+        showKioskDenial('This class does not match your program ('+(student.programs&&student.programs.name||'Unknown')+').');
         if(callback)callback();return;
       }
     }else{
-      // No active class in window — block check-in
       showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and closes 30 minutes after it starts.');
       if(callback)callback();return;
     }
 
     // §KIOSK: WEEKLY_LIMIT_CHECK
-    // Check rolling 7-day limit for per_week memberships
-var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',student.membership_id).single();
-var mem=memR.data||null;
-    if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
-      var limit=parseInt(mem.class_limit_count)||0;
-      if(limit>0){
-        var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
-        var sevenDaysAgoStr=sevenDaysAgo.toISOString().split('T')[0];
-        var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',sevenDaysAgoStr+'T00:00:00');
-        var weekCount=countR.count||0;
-        if(weekCount>=limit){
-          showKioskDenial('Weekly limit reached — '+weekCount+' of '+limit+' classes used this week.');
-          if(callback)callback();return;
+    // Rolling 7-day limit for per_week memberships
+    if(student.membership_id){
+      var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',student.membership_id).single();
+      var mem=memR.data||null;
+      if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
+        var limit=parseInt(mem.class_limit_count)||0;
+        if(limit>0){
+          var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+          var sevenDaysAgoStr=sevenDaysAgo.toISOString().split('T')[0];
+          var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',sevenDaysAgoStr+'T00:00:00');
+          var weekCount=countR.count||0;
+          if(weekCount>=limit){
+            showKioskDenial('Weekly limit reached — '+weekCount+' of '+limit+' classes used this week.');
+            if(callback)callback();return;
+          }
         }
       }
     }
 
     // §KIOSK: DUPLICATE_CHECK
-    // Block if already checked in to this session today
+    // Block if already checked into this session
     if(sid){
       var dupR=await sb.from('class_attendance').select('id').eq('student_id',student.id).eq('session_id',sid).limit(1);
       if(dupR.data&&dupR.data.length){
@@ -571,9 +556,10 @@ var mem=memR.data||null;
       }
     }
 
+    // §KIOSK: RECORD_ATTENDANCE
     if(!sid){
       if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
-      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;sid=currentSessionId;}
+      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error){currentSessionId=cr.data.id;sid=currentSessionId;}}
     }
     if(sid){await sb.from('class_attendance').insert({session_id:sid,student_id:student.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});}
     var totalCount=await getStudentAttendanceCount(student.id);
@@ -582,29 +568,23 @@ var mem=memR.data||null;
   }catch(e){console.error('Check-in error:',e);showCelebration(student,null,null,callback);}
 }
 
-async function showKioskDenial(message){
+// ─────────────────────────────────────────────────────────────
+//  §JS: DENIAL_CARD
+// ─────────────────────────────────────────────────────────────
+function showKioskDenial(message){
   var el=document.getElementById('kioskDenialMsg');
   var card=document.getElementById('kioskDenialCard');
-  if(!el||!card){
-    // Fallback if denial UI not yet added to HTML
-    alert(message);return;
-  }
+  if(!el||!card){alert(message);return;}
   el.textContent=message;
   card.classList.add('active');
+  var btn=document.getElementById('checkinBtn');
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In';}
   setTimeout(function(){card.classList.remove('active');},4000);
 }
 
-    if(!sid){
-      if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
-      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)sid=cr.data.id;}
-    }
-    if(sid){await sb.from('class_attendance').insert({session_id:sid,student_id:student.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});}
-    var totalCount=await getStudentAttendanceCount(student.id);
-    var beltColor=await getStudentBeltColor(student);
-    showCelebration(student,totalCount,beltColor,callback);
-  }catch(e){console.error('Check-in error:',e);showCelebration(student,null,null,callback);}
-}
-
+// ─────────────────────────────────────────────────────────────
+//  §JS: ATTENDANCE_COUNT
+// ─────────────────────────────────────────────────────────────
 async function getStudentAttendanceCount(sid){
   try{var r=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',sid).eq('school_id',SID);return r.count||0;}catch(e){return 0;}
 }
@@ -613,6 +593,9 @@ async function getStudentBeltColor(student){
   try{if(!student.current_belt_id)return null;var r=await sb.from('belt_levels').select('color_hex').eq('id',student.current_belt_id).single();return(r.data&&r.data.color_hex)?r.data.color_hex:null;}catch(e){return null;}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: CELEBRATION
+// ─────────────────────────────────────────────────────────────
 async function showCelebration(student,classCount,beltColor,callback){
   var accentColor=beltColor||getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
   var check=document.getElementById('celebCheck');var prog=document.getElementById('celebProgress');
@@ -643,6 +626,9 @@ async function showCelebration(student,classCount,beltColor,callback){
   setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');if(callback)callback();},3500);
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: REGISTRATION
+// ─────────────────────────────────────────────────────────────
 async function submitRegistration(){
   var first=document.getElementById('regFirst').value.trim();
   var last=document.getElementById('regLast').value.trim();
@@ -684,6 +670,9 @@ function resetRegistrationForm(){
   var btn=document.getElementById('regSubmitBtn');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: NAVIGATION
+// ─────────────────────────────────────────────────────────────
 function backToSearch(){
   selectedStudent=null;
   document.getElementById('kioskCheckinView').style.display='none';
@@ -701,8 +690,14 @@ function resetKiosk(){
   detectCurrentClass();
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: UTILITIES
+// ─────────────────────────────────────────────────────────────
 function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: BOOT
+// ─────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
