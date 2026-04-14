@@ -352,7 +352,7 @@ function buildWelcomePanel(d){
 }
 
 async function loadStudents(){
-var r=await sb.from('students').select('*, programs(name,color), memberships(name,class_limit_type,class_limit_count)').eq('school_id',SID).eq('status','active').order('last_name');
+var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
   allStudents=r.data||[];
 }
 
@@ -545,7 +545,8 @@ async function doCheckinForStudent(student,callback){
 
     // §KIOSK: WEEKLY_LIMIT_CHECK
     // Check rolling 7-day limit for per_week memberships
-    var mem=student.memberships;
+var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',student.membership_id).single();
+var mem=memR.data||null;
     if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
       var limit=parseInt(mem.class_limit_count)||0;
       if(limit>0){
