@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session Confirmation — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ============================================================
+       CONFIRM.HTML — STYLES
+       Public session confirmation page
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --black: #0A0A0A;
+      --surface: #141414;
+      --surface2: #1A1A1A;
+      --border: #2A2520;
+      --white: #F5F0E8;
+      --muted: #7A7060;
+      --muted2: #9A8F80;
+      --green: #5A9A6A;
+      --red: #C07070;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-ui: 'Lato', sans-serif;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Logo / Header ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .page-logo {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--gold);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+    .page-tagline {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .card-header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--white);
+    }
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    /* ── Session Details ── */
+    .session-detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .session-detail-row:last-child {
+      border-bottom: none;
+    }
+    .session-detail-icon {
+      color: var(--gold);
+      font-size: 0.85rem;
+      width: 16px;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .session-detail-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+    .session-detail-value {
+      font-size: 0.92rem;
+      color: var(--white);
+    }
+
+    /* ── Pack Balance ── */
+    .pack-balance-box {
+      background: var(--black);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pack-balance-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .pack-balance-value {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .pack-balance-sub {
+      font-size: 0.72rem;
+      color: var(--muted2);
+      margin-top: 0.15rem;
+    }
+    .pack-balance-low {
+      border-left-color: var(--red);
+    }
+    .pack-balance-low .pack-balance-value {
+      color: var(--red);
+    }
+
+    /* ── Action Buttons ── */
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .btn-confirm {
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      padding: 1rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      width: 100%;
+    }
+    .btn-confirm:hover { opacity: 0.88; }
+    .btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-cancel {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.85rem;
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-cancel:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+    .btn-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-buy {
+      background: none;
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      padding: 0.85rem;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-buy:hover { background: rgba(201,168,76,0.08); }
+
+    /* ── Status States ── */
+    .status-banner {
+      padding: 1.25rem;
+      text-align: center;
+      border-top: 3px solid var(--gold);
+    }
+    .status-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .status-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: var(--white);
+      margin-bottom: 0.4rem;
+    }
+    .status-sub {
+      font-size: 0.85rem;
+      color: var(--muted2);
+      line-height: 1.6;
+    }
+    .status-banner.confirmed { border-top-color: var(--green); }
+    .status-banner.cancelled { border-top-color: var(--red); }
+    .status-banner.error { border-top-color: var(--red); }
+
+    /* ── No Pack Section ── */
+    .no-pack-message {
+      background: rgba(192, 112, 112, 0.08);
+      border: 1px solid rgba(192, 112, 112, 0.3);
+      border-left: 3px solid var(--red);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .no-pack-title {
+      font-size: 0.88rem;
+      color: var(--red);
+      margin-bottom: 0.3rem;
+      font-weight: 700;
+    }
+    .no-pack-sub {
+      font-size: 0.78rem;
+      color: var(--muted2);
+      line-height: 1.5;
+    }
+
+    /* ── Pack Options ── */
+    .pack-options-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.65rem;
+    }
+    .pack-option {
+      background: var(--black);
+      border: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .pack-option:hover { border-color: var(--gold); }
+    .pack-option.selected {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+    }
+    .pack-option-name {
+      font-size: 0.92rem;
+      color: var(--white);
+      margin-bottom: 0.15rem;
+    }
+    .pack-option-detail {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .pack-option-price {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--gold);
+    }
+
+    /* ── Post Confirm Upsell ── */
+    .upsell-box {
+      background: var(--black);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+    }
+    .upsell-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+    }
+    .upsell-text {
+      font-size: 0.85rem;
+      color: var(--muted2);
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* ── Cancel Confirm Dialog ── */
+    .cancel-confirm-box {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .cancel-confirm-box.active { display: block; }
+    .cancel-confirm-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--white);
+      margin-bottom: 0.4rem;
+    }
+    .cancel-confirm-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .cancel-confirm-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-confirm-cancel {
+      flex: 1;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      padding: 0.75rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .btn-keep {
+      flex: 1;
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    /* ── Late Cancel Warning ── */
+    .late-cancel-warning {
+      background: rgba(192, 112, 112, 0.08);
+      border: 1px solid rgba(192, 112, 112, 0.25);
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--red);
+      line-height: 1.5;
+      display: none;
+    }
+    .late-cancel-warning.active { display: block; }
+
+    /* ── Loading ── */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      gap: 1rem;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 0.82rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Portal Link ── */
+    .portal-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+    }
+    .portal-link:hover { color: var(--gold); }
+
+    /* ── Utility ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.25rem 0;
+    }
+    .form-msg {
+      font-size: 0.78rem;
+      margin-top: 0.5rem;
+      min-height: 1rem;
+    }
+    .form-msg.error { color: var(--red); }
+    .form-msg.success { color: var(--green); }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE HEADER ==================== -->
+  <div class="page-header">
+    <div class="page-logo" id="schoolLogoText">NMAO</div>
+    <div class="page-tagline">Session Confirmation</div>
+  </div>
+
+  <!-- ==================== MAIN CARD ==================== -->
+  <div class="card" id="mainCard">
+
+    <!-- Loading state -->
+    <div class="loading-wrap" id="loadingState">
+      <div class="spinner"></div>
+      <div class="loading-text">Loading your session...</div>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" style="display:none">
+      <div class="status-banner error">
+        <div class="status-icon">⚠️</div>
+        <div class="status-title">Link Expired</div>
+        <div class="status-sub" id="errorMsg">
+          This confirmation link is invalid or has expired.
+          Please contact your school for assistance.
+        </div>
+      </div>
+    </div>
+
+    <!-- Main confirmation state -->
+    <div id="confirmState" style="display:none">
+      <div class="card-header">
+        <div class="card-title" id="sessionTypeName">Session</div>
+        <div class="card-subtitle" id="sessionStudentName"></div>
+      </div>
+      <div class="card-body">
+
+        <!-- Session details -->
+        <div id="sessionDetails"></div>
+
+        <hr class="divider" />
+
+        <!-- Pack balance (shown when pack exists) -->
+        <div id="packBalanceSection" style="display:none"></div>
+
+        <!-- No pack section (shown when no pack) -->
+        <div id="noPackSection" style="display:none">
+          <div class="no-pack-message">
+            <div class="no-pack-title">
+              <i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>
+              No Sessions Remaining
+            </div>
+            <div class="no-pack-sub" id="noPackMessage">
+              You don't have any sessions remaining for this type.
+              Purchase a pack below to confirm your session.
+            </div>
+          </div>
+
+          <!-- Available packs to buy -->
+          <div id="availablePacksSection" style="display:none">
+            <div class="pack-options-label">Available Packs</div>
+            <div id="packOptionsList"></div>
+            <div class="action-row">
+              <button class="btn-buy" id="buyPackBtn" onclick="buyPack()" disabled>
+                <i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>
+                Purchase Selected Pack
+              </button>
+            </div>
+            <p class="form-msg" id="buyMsg"></p>
+          </div>
+        </div>
+
+        <!-- Late cancel warning -->
+        <div class="late-cancel-warning" id="lateCancelWarning">
+          <i class="fa-solid fa-clock" style="margin-right:0.5rem"></i>
+          <strong>Late Cancellation Notice:</strong> Cancelling now may result
+          in a session deduction or fee per your school's policy.
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-row" id="actionButtons">
+          <button class="btn-confirm" id="confirmBtn" onclick="confirmSession()">
+            <i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>
+            Confirm Session
+          </button>
+          <button class="btn-cancel" id="cancelBtn" onclick="showCancelDialog()">
+            Cancel Session
+          </button>
+        </div>
+
+        <!-- Cancel confirm dialog -->
+        <div class="cancel-confirm-box" id="cancelConfirmBox">
+          <div class="cancel-confirm-title">Are you sure?</div>
+          <div class="cancel-confirm-sub" id="cancelConfirmSub">
+            This will cancel your session and notify your instructor.
+          </div>
+          <div class="cancel-confirm-row">
+            <button class="btn-keep" onclick="hideCancelDialog()">Keep Session</button>
+            <button class="btn-confirm-cancel" onclick="cancelSession()">Yes, Cancel</button>
+          </div>
+        </div>
+
+        <p class="form-msg" id="actionMsg"></p>
+      </div>
+    </div>
+
+    <!-- Already confirmed state -->
+    <div id="alreadyConfirmedState" style="display:none">
+      <div class="status-banner confirmed">
+        <div class="status-icon">✅</div>
+        <div class="status-title">Already Confirmed</div>
+        <div class="status-sub">
+          You've already confirmed this session. See you on the mat!
+        </div>
+      </div>
+      <div class="card-body" id="alreadyConfirmedDetails"></div>
+    </div>
+
+    <!-- Confirmed state (after action) -->
+    <div id="confirmedState" style="display:none">
+      <div class="status-banner confirmed">
+        <div class="status-icon">🥋</div>
+        <div class="status-title" id="confirmedTitle">You're Confirmed!</div>
+        <div class="status-sub" id="confirmedSub"></div>
+      </div>
+      <div class="card-body">
+        <!-- Post confirm pack balance -->
+        <div id="postConfirmPack" style="display:none"></div>
+        <!-- Upsell if low -->
+        <div id="postConfirmUpsell" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Cancelled state (after action) -->
+    <div id="cancelledState" style="display:none">
+      <div class="status-banner cancelled">
+        <div class="status-icon">❌</div>
+        <div class="status-title">Session Cancelled</div>
+        <div class="status-sub" id="cancelledSub">
+          Your session has been cancelled and your instructor has been notified.
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="lateCancelNote" style="display:none;padding:0.85rem;background:rgba(192,112,112,0.08);border:1px solid rgba(192,112,112,0.25);font-size:0.82rem;color:var(--red);line-height:1.5"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Portal link -->
+  <a href="portal.html" class="portal-link">
+    <i class="fa-solid fa-arrow-right" style="margin-right:0.3rem"></i>
+    Go to My Portal
+  </a>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+  <script>
+    // ============================================================
+    // CONFIRM.HTML — JAVASCRIPT
+    // Public session confirmation page
+    // Called via: confirm.html?token=UUID
+    // Edge function: confirm-session
+    // ============================================================
+
+    var SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var CONFIRM_URL = SUPABASE_URL + '/functions/v1/confirm-session';
+    var CHECKOUT_URL = SUPABASE_URL + '/functions/v1/stripe-create-checkout';
+    var PORTAL_URL = 'portal.html';
+
+    var token = null;
+    var sessionData = null;
+    var packInfo = null;
+    var availablePacks = [];
+    var selectedPackId = null;
+    var isLateCancelWindow = false;
+
+    // ── Init ──────────────────────────────────────────────────
+
+    window.onload = function() {
+      var params = new URLSearchParams(window.location.search);
+      token = params.get('token');
+
+      if (!token) {
+        showError('No confirmation token found in this link. Please use the link from your SMS.');
+        return;
+      }
+
+      // Check if returning from Stripe (pack purchased)
+      var stripeStatus = params.get('stripe');
+      if (stripeStatus === 'success') {
+        var purchasedPackId = params.get('pack_id');
+        loadSession(true, purchasedPackId);
+      } else if (stripeStatus === 'cancel') {
+        loadSession(false, null, 'Pack purchase cancelled. You can try again below.');
+      } else {
+        loadSession();
+      }
+    };
+
+    // ── Load Session ──────────────────────────────────────────
+
+    async function loadSession(justPurchased, purchasedPackId, warningMsg) {
+      showState('loading');
+
+      try {
+        var res = await callConfirmFunction({ token: token, action: 'lookup' });
+
+        if (res.error) {
+          showError(res.error);
+          return;
+        }
+
+        if (res.status === 'already_confirmed') {
+          sessionData = res.session;
+          showAlreadyConfirmed(res.session);
+          return;
+        }
+
+        sessionData = res.session;
+        packInfo = res.pack_info || [];
+        availablePacks = res.available_packs || [];
+
+        // Load school name
+        if (res.school_name) {
+          document.getElementById('schoolLogoText').textContent = res.school_name;
+        }
+
+        // Check if already cancelled
+        if (res.confirmation_status === 'cancelled') {
+          showState('cancelled');
+          document.getElementById('cancelledSub').textContent =
+            'This session was previously cancelled.';
+          return;
+        }
+
+        // Check late cancel window
+        isLateCancelWindow = checkLateCancelWindow(res.session);
+
+        renderConfirmState(res, justPurchased, purchasedPackId, warningMsg);
+
+      } catch (e) {
+        showError('Unable to load session. Please try again or contact your school.');
+        console.error(e);
+      }
+    }
+
+    // ── Render Confirm State ──────────────────────────────────
+
+    function renderConfirmState(res, justPurchased, purchasedPackId, warningMsg) {
+      var session = res.session;
+      var student = res.student;
+
+      // Header
+      document.getElementById('sessionTypeName').textContent =
+        session.session_type || 'Session';
+      document.getElementById('sessionStudentName').textContent =
+        student ? 'Hi ' + student.first_name + '!' : '';
+
+      // Session details
+      var detailsHtml = '';
+      if (session.session_date) {
+        detailsHtml += detailRow('fa-calendar', 'Date', formatDate(session.session_date));
+      }
+      if (session.start_time) {
+        detailsHtml += detailRow('fa-clock', 'Time', formatTime(session.start_time));
+      }
+      if (session.duration_minutes) {
+        detailsHtml += detailRow('fa-hourglass-half', 'Duration', session.duration_minutes + ' minutes');
+      }
+      if (session.instructor_name) {
+        detailsHtml += detailRow('fa-chalkboard-user', 'Instructor', session.instructor_name);
+      }
+      if (session.notes) {
+        detailsHtml += detailRow('fa-note-sticky', 'Notes', session.notes);
+      }
+      document.getElementById('sessionDetails').innerHTML = detailsHtml;
+
+      // Pack balance
+      var hasPack = packInfo && packInfo.length > 0;
+      var totalRemaining = hasPack
+        ? packInfo.reduce(function(sum, p) { return sum + p.sessions_remaining; }, 0)
+        : 0;
+
+      if (hasPack || justPurchased) {
+        var remaining = totalRemaining;
+        var isLow = remaining <= 2;
+        var expiryDate = packInfo && packInfo.length > 0 && packInfo[0].expires_at
+          ? new Date(packInfo[0].expires_at).toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric'
+            })
+          : null;
+
+        document.getElementById('packBalanceSection').innerHTML =
+          '<div class="pack-balance-box' + (isLow ? ' pack-balance-low' : '') + '">' +
+          '<div>' +
+          '<div class="pack-balance-label">Sessions Remaining</div>' +
+          '<div class="pack-balance-value">' + remaining + '</div>' +
+          '<div class="pack-balance-sub">' + (session.session_type || 'Session') +
+          (expiryDate ? ' · Expires ' + expiryDate : '') + '</div>' +
+          '</div>' +
+          '<div style="font-size:1.5rem;color:' + (isLow ? 'var(--red)' : 'var(--gold)') + '">' +
+          (isLow ? '⚠️' : '✅') +
+          '</div>' +
+          '</div>';
+
+        document.getElementById('packBalanceSection').style.display = 'block';
+        document.getElementById('noPackSection').style.display = 'none';
+        document.getElementById('confirmBtn').disabled = false;
+
+        if (warningMsg) {
+          setMsg('actionMsg', warningMsg, 'error');
+        }
+
+      } else {
+        // No pack
+        document.getElementById('packBalanceSection').style.display = 'none';
+        document.getElementById('noPackSection').style.display = 'block';
+        document.getElementById('confirmBtn').disabled = true;
+
+        var typeName = session.session_type || 'session';
+        document.getElementById('noPackMessage').textContent =
+          'You don\'t have any ' + typeName + ' sessions remaining. ' +
+          'Purchase a pack below to confirm your session.';
+
+        // Show available packs
+        if (availablePacks.length > 0) {
+          renderPackOptions();
+          document.getElementById('availablePacksSection').style.display = 'block';
+        } else {
+          document.getElementById('availablePacksSection').style.display = 'none';
+          document.getElementById('noPackMessage').textContent +=
+            ' Please contact your school to purchase sessions.';
+        }
+      }
+
+      // Late cancel warning
+      if (isLateCancelWindow) {
+        document.getElementById('lateCancelWarning').classList.add('active');
+        document.getElementById('cancelConfirmSub').textContent =
+          'This session is within the late cancellation window. ' +
+          'Cancelling may result in a session deduction or fee per your school\'s policy.';
+      }
+
+      showState('confirm');
+    }
+
+    // ── Pack Options ──────────────────────────────────────────
+
+    function renderPackOptions() {
+      var html = availablePacks.map(function(pack) {
+        var expiry = pack.expiry_days ? pack.expiry_days + ' day expiry' : 'No expiry';
+        return '<div class="pack-option" id="pack-' + pack.id + '" onclick="selectPack(\'' + pack.id + '\')">' +
+          '<div>' +
+          '<div class="pack-option-name">' + pack.name + '</div>' +
+          '<div class="pack-option-detail">' + pack.quantity + ' session' +
+          (pack.quantity !== 1 ? 's' : '') + ' · ' + expiry + '</div>' +
+          '</div>' +
+          '<div class="pack-option-price">$' + parseFloat(pack.price).toFixed(2) + '</div>' +
+          '</div>';
+      }).join('');
+
+      document.getElementById('packOptionsList').innerHTML = html;
+    }
+
+    function selectPack(packId) {
+      selectedPackId = packId;
+      document.querySelectorAll('.pack-option').forEach(function(el) {
+        el.classList.remove('selected');
+      });
+      var el = document.getElementById('pack-' + packId);
+      if (el) el.classList.add('selected');
+      document.getElementById('buyPackBtn').disabled = false;
+    }
+
+    // ── Buy Pack → Stripe ─────────────────────────────────────
+
+    async function buyPack() {
+      if (!selectedPackId) return;
+      var btn = document.getElementById('buyPackBtn');
+      btn.disabled = true;
+      btn.textContent = 'Redirecting to checkout...';
+      setMsg('buyMsg', '', '');
+
+      try {
+        var pack = availablePacks.find(function(p) { return p.id === selectedPackId; });
+        if (!pack) throw new Error('Pack not found');
+
+        // Build return URL with token so we come back here after payment
+        var returnUrl = window.location.origin + window.location.pathname +
+          '?token=' + token + '&stripe=success&pack_id=' + selectedPackId;
+        var cancelUrl = window.location.origin + window.location.pathname +
+          '?token=' + token + '&stripe=cancel';
+
+        var res = await fetch(CHECKOUT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + ANON_KEY,
+          },
+          body: JSON.stringify({
+            type: 'session_pack',
+            session_pack_id: pack.id,
+            name: pack.name,
+            price: pack.price,
+            quantity: 1,
+            success_url: returnUrl,
+            cancel_url: cancelUrl,
+            metadata: {
+              token: token,
+              pack_id: pack.id,
+            }
+          }),
+        });
+
+        var data = await res.json();
+
+        if (data.error) {
+          setMsg('buyMsg', data.error, 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Purchase Selected Pack';
+          return;
+        }
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL returned');
+        }
+
+      } catch (e) {
+        setMsg('buyMsg', 'Checkout error: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Purchase Selected Pack';
+      }
+    }
+
+    // ── Confirm Session ───────────────────────────────────────
+
+    async function confirmSession() {
+      var btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Confirming...';
+      setMsg('actionMsg', '', '');
+
+      try {
+        var res = await callConfirmFunction({ token: token, action: 'confirm' });
+
+        if (res.error) {
+          setMsg('actionMsg', res.error, 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Confirm Session';
+          return;
+        }
+
+        if (res.status === 'no_pack') {
+          // Refresh to show pack purchase options
+          await loadSession();
+          return;
+        }
+
+        // Success — show confirmed state
+        showConfirmedState(res);
+
+      } catch (e) {
+        setMsg('actionMsg', 'Error: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Confirm Session';
+      }
+    }
+
+    function showConfirmedState(res) {
+      var session = sessionData;
+
+      document.getElementById('confirmedTitle').textContent =
+        res.message || "You're Confirmed!";
+      document.getElementById('confirmedSub').textContent =
+        session ? formatDate(session.session_date) +
+        (session.start_time ? ' at ' + formatTime(session.start_time) : '') : '';
+
+      // Post confirm pack balance
+      if (res.sessions_remaining !== undefined && res.sessions_remaining !== null) {
+        var remaining = res.sessions_remaining;
+        var isLow = remaining <= 2;
+        document.getElementById('postConfirmPack').innerHTML =
+          '<div class="pack-balance-box' + (isLow ? ' pack-balance-low' : '') + '" style="margin-top:0">' +
+          '<div>' +
+          '<div class="pack-balance-label">Sessions Remaining After This</div>' +
+          '<div class="pack-balance-value">' + remaining + '</div>' +
+          '<div class="pack-balance-sub">' + (session ? session.session_type || '' : '') + '</div>' +
+          '</div>' +
+          '<div style="font-size:1.5rem">' + (isLow ? '⚠️' : '✅') + '</div>' +
+          '</div>';
+        document.getElementById('postConfirmPack').style.display = 'block';
+
+        // Upsell if low
+        if (res.pack_warning && availablePacks.length > 0) {
+          document.getElementById('postConfirmUpsell').innerHTML =
+            '<div class="upsell-box">' +
+            '<div class="upsell-label">Running Low</div>' +
+            '<div class="upsell-text">You only have ' + remaining + ' session' +
+            (remaining !== 1 ? 's' : '') + ' left. Top up now to keep your momentum going.</div>' +
+            '<button class="btn-buy" onclick="goToPortal()">Buy More Sessions</button>' +
+            '</div>';
+          document.getElementById('postConfirmUpsell').style.display = 'block';
+        }
+      }
+
+      showState('confirmed');
+    }
+
+    // ── Cancel Session ────────────────────────────────────────
+
+    function showCancelDialog() {
+      document.getElementById('cancelConfirmBox').classList.add('active');
+      document.getElementById('actionButtons').style.opacity = '0.4';
+      document.getElementById('actionButtons').style.pointerEvents = 'none';
+    }
+
+    function hideCancelDialog() {
+      document.getElementById('cancelConfirmBox').classList.remove('active');
+      document.getElementById('actionButtons').style.opacity = '1';
+      document.getElementById('actionButtons').style.pointerEvents = 'auto';
+    }
+
+    async function cancelSession() {
+      var btn = document.querySelector('.btn-confirm-cancel');
+      btn.disabled = true;
+      btn.textContent = 'Cancelling...';
+      setMsg('actionMsg', '', '');
+
+      try {
+        var res = await callConfirmFunction({ token: token, action: 'cancel' });
+
+        if (res.error) {
+          hideCancelDialog();
+          setMsg('actionMsg', res.error, 'error');
+          btn.disabled = false;
+          btn.textContent = 'Yes, Cancel';
+          return;
+        }
+
+        // Show cancelled state
+        document.getElementById('cancelledSub').textContent =
+          res.message || 'Your session has been cancelled and your instructor has been notified.';
+
+        if (res.late_cancel && res.message) {
+          var noteEl = document.getElementById('lateCancelNote');
+          noteEl.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.5rem"></i>' +
+            res.message;
+          noteEl.style.display = 'block';
+        }
+
+        showState('cancelled');
+
+      } catch (e) {
+        hideCancelDialog();
+        setMsg('actionMsg', 'Error: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Yes, Cancel';
+      }
+    }
+
+    // ── Already Confirmed ─────────────────────────────────────
+
+    function showAlreadyConfirmed(session) {
+      var detailsHtml = '';
+      if (session) {
+        if (session.session_date) {
+          detailsHtml += detailRow('fa-calendar', 'Date', formatDate(session.session_date));
+        }
+        if (session.start_time) {
+          detailsHtml += detailRow('fa-clock', 'Time', formatTime(session.start_time));
+        }
+        if (session.instructor_name) {
+          detailsHtml += detailRow('fa-chalkboard-user', 'Instructor', session.instructor_name);
+        }
+      }
+      document.getElementById('alreadyConfirmedDetails').innerHTML = detailsHtml;
+      showState('alreadyConfirmed');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+
+    async function callConfirmFunction(payload) {
+      var res = await fetch(CONFIRM_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + ANON_KEY,
+        },
+        body: JSON.stringify(payload),
+      });
+      return res.json();
+    }
+
+    function showState(state) {
+      var states = ['loading', 'error', 'confirm', 'confirmed', 'cancelled', 'alreadyConfirmed'];
+      states.forEach(function(s) {
+        var el = document.getElementById(s + 'State');
+        if (el) el.style.display = s === state ? 'block' : 'none';
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('errorMsg').textContent = msg;
+      showState('error');
+    }
+
+    function checkLateCancelWindow(session) {
+      if (!session || !session.session_date || !session.start_time) return false;
+      var sessionDateTime = new Date(session.session_date + 'T' + session.start_time);
+      var hoursUntil = (sessionDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+      return hoursUntil < 24; // default 24hr window — matches school setting
+    }
+
+    function detailRow(icon, label, value) {
+      return '<div class="session-detail-row">' +
+        '<i class="fa-solid ' + icon + ' session-detail-icon"></i>' +
+        '<div>' +
+        '<div class="session-detail-label">' + label + '</div>' +
+        '<div class="session-detail-value">' + (value || '—') + '</div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+      });
+    }
+
+    function formatTime(t) {
+      if (!t) return '—';
+      var parts = t.split(':');
+      var h = parseInt(parts[0]);
+      var m = parts[1];
+      return (h > 12 ? h - 12 : h || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+    }
+
+    function setMsg(id, text, type) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text || '';
+      el.className = 'form-msg ' + (type || '');
+    }
+
+    function goToPortal() {
+      window.location.href = PORTAL_URL;
+    }
+  </script>
+</body>
+</html>
