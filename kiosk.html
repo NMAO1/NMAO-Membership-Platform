@@ -352,7 +352,7 @@ function buildWelcomePanel(d){
 }
 
 async function loadStudents(){
-  var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
+var r=await sb.from('students').select('*, programs(name,color), memberships(name,class_limit_type,class_limit_count)').eq('school_id',SID).eq('status','active').order('last_name');
   allStudents=r.data||[];
 }
 
