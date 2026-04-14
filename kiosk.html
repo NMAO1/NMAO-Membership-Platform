@@ -80,6 +80,8 @@
     .btn-checkin:disabled{opacity:0.6;cursor:not-allowed;}
     .btn-back{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.65rem 1.5rem;cursor:pointer;margin-top:0.85rem;transition:all 0.2s;}
     .btn-back:hover{border-color:var(--muted);color:var(--white);}
+#kioskDenialCard.active{display:block!important;animation:slideDown 0.3s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
     /* REGISTER */
     .reg-layout{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
@@ -168,7 +170,9 @@
       <div class="kiosk-selected-card" id="kioskSelectedCard"></div>
       <div style="width:100%">
         <button class="btn-checkin" id="checkinBtn" onclick="confirmCheckin()"><i class="fa-solid fa-circle-check" style="margin-right:0.6rem"></i>Check In</button>
-        <div style="text-align:center"><button class="btn-back" onclick="backToSearch()"><i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back</button></div>
+        <div style="text-align:center"><button class="btn-back" onclick="backToSearch()"><i class="fa-solid fa-arrow-left" style="margin-right:0.4rem"></i>Back</button></div>    
+        <div id="kioskDenialCard" style="display:none;position:fixed;top:2rem;left:50%;transform:translateX(-50%);background:#1A0A0A;border:2px solid #E07070;padding:1.25rem 2rem;max-width:480px;width:90%;text-align:center;z-index:999;border-radius:4px;"><i class="fa-solid fa-circle-xmark" style="color:#E07070;font-size:1.5rem;margin-bottom:0.5rem;display:block"></i><div id="kioskDenialMsg" style="color:#F5F0E8;font-size:0.95rem;line-height:1.5"></div></div>
+
       </div>
     </div>
   </div>
@@ -521,6 +525,74 @@ async function doCheckinForStudent(student,callback){
   try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
+
+    // §KIOSK: CLASS_WINDOW_CHECK
+    // Only allow check-in if a class matching student's program is within -60/+30 min
+    if(currentClass){
+      var prog=student.programs&&student.programs.name?student.programs.name.toLowerCase():'';
+      var classStyle=(currentClass.style||'').toLowerCase();
+      var className=(currentClass.name||currentClass.title||'').toLowerCase();
+      var programMatch=!prog||(classStyle.includes(prog)||className.includes(prog)||prog.includes(classStyle));
+      if(!programMatch){
+        showKioskDenial('This class does not match your program ('+( student.programs&&student.programs.name||'Unknown')+').');
+        if(callback)callback();return;
+      }
+    }else{
+      // No active class in window — block check-in
+      showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and closes 30 minutes after it starts.');
+      if(callback)callback();return;
+    }
+
+    // §KIOSK: WEEKLY_LIMIT_CHECK
+    // Check rolling 7-day limit for per_week memberships
+    var mem=student.memberships;
+    if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
+      var limit=parseInt(mem.class_limit_count)||0;
+      if(limit>0){
+        var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+        var sevenDaysAgoStr=sevenDaysAgo.toISOString().split('T')[0];
+        var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',sevenDaysAgoStr+'T00:00:00');
+        var weekCount=countR.count||0;
+        if(weekCount>=limit){
+          showKioskDenial('Weekly limit reached — '+weekCount+' of '+limit+' classes used this week.');
+          if(callback)callback();return;
+        }
+      }
+    }
+
+    // §KIOSK: DUPLICATE_CHECK
+    // Block if already checked in to this session today
+    if(sid){
+      var dupR=await sb.from('class_attendance').select('id').eq('student_id',student.id).eq('session_id',sid).limit(1);
+      if(dupR.data&&dupR.data.length){
+        showKioskDenial('Already checked in to this class today!');
+        if(callback)callback();return;
+      }
+    }
+
+    if(!sid){
+      if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
+      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;sid=currentSessionId;}
+    }
+    if(sid){await sb.from('class_attendance').insert({session_id:sid,student_id:student.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});}
+    var totalCount=await getStudentAttendanceCount(student.id);
+    var beltColor=await getStudentBeltColor(student);
+    showCelebration(student,totalCount,beltColor,callback);
+  }catch(e){console.error('Check-in error:',e);showCelebration(student,null,null,callback);}
+}
+
+async function showKioskDenial(message){
+  var el=document.getElementById('kioskDenialMsg');
+  var card=document.getElementById('kioskDenialCard');
+  if(!el||!card){
+    // Fallback if denial UI not yet added to HTML
+    alert(message);return;
+  }
+  el.textContent=message;
+  card.classList.add('active');
+  setTimeout(function(){card.classList.remove('active');},4000);
+}
+
     if(!sid){
       if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
       if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)sid=cr.data.id;}
