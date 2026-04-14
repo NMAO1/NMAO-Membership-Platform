@@ -4020,16 +4020,12 @@ function copyBookingLink(){
   var slug=currentInstructorProfile.booking_slug;
   if(!slug){alert('Please save a slug first.');return;}
   var url=window.location.origin+'/NMAO-Membership-Platform/book.html?slug='+slug;
-  // Try clipboard API first, fall back to creating a temporary input
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(function(){
-      alert('Booking link copied!\n\n'+url);
-    }).catch(function(){
-      copyViaInput(url);
-    });
-  }else{
-    copyViaInput(url);
-  }
+  var inp=document.createElement('input');
+  inp.value=url;inp.style.position='fixed';inp.style.opacity='0';
+  document.body.appendChild(inp);inp.focus();inp.select();
+  document.execCommand('copy');
+  document.body.removeChild(inp);
+  showToast('Booking link copied!');
 }
 
 function copyViaInput(text){
@@ -4042,6 +4038,19 @@ function copyViaInput(text){
 }
 
 function sendInstructorMagicLinkFromProfile(){ if(currentInstructorProfile) sendInstructorMagicLink(currentInstructorProfile.id); }
+function showToast(message){
+  var toast=document.getElementById('dashToast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='dashToast';
+    toast.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1A1A1A;border:1px solid var(--gold);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;letter-spacing:0.1em;padding:0.75rem 1.5rem;z-index:9999;border-radius:2px;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent=message;
+  toast.style.opacity='1';
+  clearTimeout(toast._timer);
+  toast._timer=setTimeout(function(){toast.style.opacity='0';},2500);
+}
 
 // ─────────────────────────────── §PROGRAMS ───────────────────────────────
 
