@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -11,17 +10,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    :root{
-      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
-      --black:#0A0A0A;--surface:#141414;--border:#2A2520;
-      --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
-      --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
-    }
-    body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;font-size:15px;}
 
-```
-/* ── LOGIN ── */
+/* ══════════════════════════════════════════
+   §CSS: RESET_AND_VARS
+══════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+  --black:#0A0A0A;--surface:#141414;--border:#2A2520;
+  --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
+  --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
+}
+body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;font-size:15px;}
+
+/* ══════════════════════════════════════════
+   §CSS: LOGIN
+══════════════════════════════════════════ */
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .login-logo-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;}
 .login-logo-img{max-height:64px;max-width:160px;object-fit:contain;}
@@ -41,13 +45,17 @@
 .form-msg.success{color:var(--green);}
 .form-msg.error{color:#E07070;}
 
-/* ── SUCCESS ── */
+/* ══════════════════════════════════════════
+   §CSS: SUCCESS
+══════════════════════════════════════════ */
 #successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;}
 .success-icon{font-size:3rem;color:var(--gold);margin-bottom:1.5rem;}
 .success-title{font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;}
 .success-sub{font-size:0.92rem;color:var(--muted);max-width:380px;line-height:1.7;}
 
-/* ── SHARED PORTAL HEADER ── */
+/* ══════════════════════════════════════════
+   §CSS: PORTAL_HEADER
+══════════════════════════════════════════ */
 .portal-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .portal-header-left{display:flex;align-items:center;gap:0.85rem;}
 .portal-header-logo{max-height:40px;max-width:120px;object-fit:contain;}
@@ -57,7 +65,9 @@
 .portal-signout:hover{border-color:var(--gold);color:var(--gold);}
 .portal-body{max-width:720px;margin:0 auto;padding:2rem 1.5rem;}
 
-/* ── SHARED CHIPS / TAGS ── */
+/* ══════════════════════════════════════════
+   §CSS: CHIPS_AND_SHARED
+══════════════════════════════════════════ */
 .chip{font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:2px;}
 .chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
 .chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
@@ -70,11 +80,25 @@
 .info-row:last-child{margin-bottom:0;}
 .info-label{color:var(--muted);min-width:100px;flex-shrink:0;font-size:0.72rem;letter-spacing:0.08em;padding-top:0.05rem;}
 .info-value{color:var(--white);}
-.day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);} .sched-day-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);padding:0.85rem 1rem;margin-bottom:0.75rem;} .sched-day-btn{background:none;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:0.9rem;flex-shrink:0;} .sched-day-btn:hover{border-color:var(--gold);color:var(--gold);} .sched-day-label{font-family:var(--font-display);font-size:1.15rem;color:var(--white);} .sched-day-sub{font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;} .sched-day-dots{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;} .sched-day-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.2s;} .sched-day-dot.has-class{background:var(--muted);} .sched-day-dot.active{background:var(--gold);transform:scale(1.3);}
+.day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
+.sched-day-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);padding:0.85rem 1rem;margin-bottom:0.75rem;}
+.sched-day-btn{background:none;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:0.9rem;flex-shrink:0;}
+.sched-day-btn:hover{border-color:var(--gold);color:var(--gold);}
+.sched-day-label{font-family:var(--font-display);font-size:1.15rem;color:var(--white);}
+.sched-day-sub{font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+.sched-day-dots{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;}
+.sched-day-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.2s;}
+.sched-day-dot.has-class{background:var(--muted);}
+.sched-day-dot.active{background:var(--gold);transform:scale(1.3);}
 
-/* ── STUDENT PORTAL SPECIFIC ── */
-.portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
-.portal-tab{flex:1;padding:0.9rem 0.5rem;text-align:center;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+/* ══════════════════════════════════════════
+   §CSS: STUDENT_PORTAL
+   NOTE: portal-tabs now scrolls horizontally
+   to support 8 tabs without cramping.
+══════════════════════════════════════════ */
+.portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.portal-tabs::-webkit-scrollbar{display:none;}
+.portal-tab{flex-shrink:0;padding:0.9rem 0.75rem;text-align:center;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap;}
 .portal-tab.active{color:var(--gold);border-color:var(--gold);}
 .portal-tab i{margin-right:0.4rem;}
 .profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
@@ -114,7 +138,9 @@
 .announcement-cta{display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.2rem;text-decoration:none;margin-top:0.5rem;}
 .announcement-date{font-size:0.68rem;color:var(--muted);margin-top:0.5rem;}
 
-/* ── ONBOARDING ── */
+/* ══════════════════════════════════════════
+   §CSS: ONBOARDING
+══════════════════════════════════════════ */
 #onboardingScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .onboarding-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:520px;}
 .onboarding-logo-wrap{text-align:center;margin-bottom:2rem;}
@@ -134,7 +160,9 @@
 .btn-get-started{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;margin-top:1.25rem;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
 .btn-get-started:hover{opacity:0.9;}
 
-/* ── FAMILY PORTAL ── */
+/* ══════════════════════════════════════════
+   §CSS: FAMILY_PORTAL
+══════════════════════════════════════════ */
 #familyPortalScreen{display:none;}
 .child-switcher-bar{background:var(--black);border-bottom:1px solid var(--border);padding:0.85rem 1.5rem;display:flex;align-items:center;gap:1rem;}
 .child-switcher-label{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
@@ -177,7 +205,9 @@
 .mini-belt-bar{display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;}
 .mini-belt-swatch{width:28px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,0.15);}
 
-/* ── INSTRUCTOR PORTAL ── */
+/* ══════════════════════════════════════════
+   §CSS: INSTRUCTOR_PORTAL
+══════════════════════════════════════════ */
 #instructorPortalScreen{display:none;}
 .instructor-greeting{font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.25rem;}
 .instructor-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;}
@@ -189,7 +219,9 @@
 .staff-app-link{display:flex;align-items:center;gap:0.85rem;padding:1.1rem 1.35rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin-top:1.5rem;cursor:pointer;text-decoration:none;transition:border-color 0.2s;}
 .staff-app-link:hover{border-color:var(--gold);}
 
-/* ── WAIVER MODAL ── */
+/* ══════════════════════════════════════════
+   §CSS: WAIVER_MODAL
+══════════════════════════════════════════ */
 #waiverModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
 #waiverModal.active{display:flex;}
 .waiver-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;}
@@ -200,7 +232,9 @@
 .waiver-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;flex-shrink:0;}
 .btn-sign-waiver{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;}
 
-/* ── CONTACT MODAL ── */
+/* ══════════════════════════════════════════
+   §CSS: CONTACT_MODAL
+══════════════════════════════════════════ */
 #contactModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
 #contactModal.active{display:flex;}
 .contact-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:440px;padding:2rem;}
@@ -212,7 +246,9 @@
 .contact-field input:focus{border-color:var(--gold);}
 .btn-save-contact{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.9rem;border:none;cursor:pointer;margin-top:0.5rem;}
 
-/* ── CELEBRATION ── */
+/* ══════════════════════════════════════════
+   §CSS: CELEBRATION
+══════════════════════════════════════════ */
 #celebrationOverlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);backdrop-filter:blur(4px);}
 #celebrationOverlay.active{display:flex;}
 .celebration-card{background:var(--surface);border:1px solid var(--gold-dk);padding:2.5rem 2rem;max-width:440px;width:90%;text-align:center;animation:celebIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
@@ -228,7 +264,76 @@
 @keyframes particleFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
 @keyframes particleRise{0%{opacity:0;transform:translateY(0) scale(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(-80vh) scale(1.5);}}
 @keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
-```
+
+/* ══════════════════════════════════════════
+   §CSS: SESSIONS_TAB [NEW]
+   Search: §CSS: SESSIONS_TAB
+══════════════════════════════════════════ */
+.session-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;}
+.session-card.upcoming{border-left:3px solid var(--gold);}
+.session-card.past{border-left:3px solid var(--border);opacity:0.75;}
+.session-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:0.5rem;}
+.session-date-badge{font-family:var(--font-display);font-size:1.05rem;color:var(--gold);}
+.session-type-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:0.4rem;vertical-align:middle;flex-shrink:0;}
+.session-status-badge{font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:2px;font-family:var(--font-ui);}
+.session-status-scheduled{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);}
+.session-status-completed{background:rgba(90,154,106,0.12);border:1px solid rgba(90,154,106,0.35);color:#7DBD7D;}
+.session-status-cancelled{background:rgba(200,80,80,0.1);border:1px solid rgba(200,80,80,0.3);color:#E07070;}
+.session-meta-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem;color:var(--muted2);margin-top:0.35rem;}
+.session-notes{font-size:0.78rem;color:var(--muted2);margin-top:0.5rem;font-style:italic;border-top:1px solid var(--border);padding-top:0.45rem;}
+
+/* ══════════════════════════════════════════
+   §CSS: PACKS_TAB [NEW]
+   Search: §CSS: PACKS_TAB
+══════════════════════════════════════════ */
+.pack-balance-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.35rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:1.35rem;}
+.pack-count-big{font-family:var(--font-display);font-size:3rem;color:var(--gold);line-height:1;flex-shrink:0;}
+.pack-balance-info{flex:1;}
+.pack-balance-name{font-size:0.92rem;color:var(--white);margin-bottom:0.25rem;}
+.pack-balance-meta{font-size:0.72rem;color:var(--muted);}
+.pack-buy-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;}
+.pack-buy-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.pack-buy-info{flex:1;}
+.pack-buy-name{font-size:0.92rem;color:var(--white);margin-bottom:0.2rem;}
+.pack-buy-meta{font-size:0.72rem;color:var(--muted);}
+.pack-buy-price{font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;margin-right:0.5rem;}
+.btn-buy-pack{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;}
+.btn-buy-pack:disabled{opacity:0.5;cursor:not-allowed;}
+.pack-confirm-row{display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);align-items:center;justify-content:space-between;gap:0.75rem;}
+.pack-confirm-row.visible{display:flex;}
+.pack-confirm-text{font-size:0.82rem;color:var(--muted2);flex:1;}
+.btn-confirm-buy{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.1rem;border:none;cursor:pointer;transition:opacity 0.2s;}
+.btn-confirm-buy:hover{opacity:0.9;}
+.btn-cancel-buy{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 0.85rem;cursor:pointer;}
+
+/* ══════════════════════════════════════════
+   §CSS: BOOK_TAB [NEW]
+   Search: §CSS: BOOK_TAB
+══════════════════════════════════════════ */
+.instructor-book-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;margin-bottom:0.75rem;}
+.instructor-book-inner{display:flex;gap:1.25rem;align-items:flex-start;}
+.instructor-book-avatar{width:58px;height:58px;border-radius:50%;border:2px solid var(--border);background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
+.instructor-book-name{font-family:var(--font-display);font-size:1.05rem;color:var(--white);margin-bottom:0.25rem;}
+.instructor-book-bio{font-size:0.82rem;color:var(--muted2);line-height:1.5;margin:0.4rem 0 0.6rem;}
+.specialty-tag{font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.5rem;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.3);color:var(--gold);margin-right:0.3rem;margin-bottom:0.3rem;display:inline-block;border-radius:2px;}
+.btn-book-now{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.65rem 1.4rem;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.45rem;margin-top:0.85rem;transition:opacity 0.2s;}
+.btn-book-now:hover{opacity:0.9;}
+
+/* ══════════════════════════════════════════
+   §CSS: REFERRAL_SECTION [NEW]
+   Search: §CSS: REFERRAL_SECTION
+══════════════════════════════════════════ */
+.referral-code-box{font-family:'Libre Baskerville',serif;font-size:1.6rem;color:var(--gold);letter-spacing:0.25em;text-align:center;padding:1rem;background:var(--gold-bg);border:1px dashed rgba(201,168,76,0.45);margin:0.75rem 0;cursor:pointer;user-select:all;transition:background 0.2s;}
+.referral-code-box:hover{background:rgba(201,168,76,0.14);}
+.referral-copy-hint{font-size:0.68rem;color:var(--muted);text-align:center;margin-top:-0.3rem;margin-bottom:0.85rem;letter-spacing:0.1em;}
+.referral-stats-row{display:flex;gap:0.75rem;margin-top:0.5rem;}
+.referral-stat{text-align:center;flex:1;padding:0.85rem;background:var(--black);border:1px solid var(--border);}
+.referral-stat-num{font-family:var(--font-display);font-size:1.8rem;color:var(--gold);line-height:1;margin-bottom:0.2rem;}
+.referral-stat-label{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);}
+.referral-reward-banner{display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);margin-top:0.75rem;}
+.referral-reward-icon{color:var(--gold);font-size:1.1rem;flex-shrink:0;}
+.referral-reward-text{font-size:0.82rem;color:var(--muted2);line-height:1.5;}
+.referral-reward-value{color:var(--gold);font-weight:700;}
 
   </style>
 </head>
@@ -237,9 +342,8 @@
 <canvas id="confettiCanvas" style="display:none"></canvas>
 
 <!-- ════════════════════════════════════════════
-     LOGIN SCREEN (unchanged)
+     §SECTION: LOGIN_SCREEN
 ════════════════════════════════════════════ -->
-
 <div id="loginScreen">
   <div class="login-logo-wrap">
     <img id="loginLogoImg" class="login-logo-img" src="" alt="" style="display:none" />
@@ -256,9 +360,8 @@
 </div>
 
 <!-- ════════════════════════════════════════════
-     SUCCESS SCREEN (unchanged)
+     §SECTION: SUCCESS_SCREEN
 ════════════════════════════════════════════ -->
-
 <div id="successScreen">
   <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
   <div class="success-title">Check your email</div>
@@ -266,10 +369,8 @@
 </div>
 
 <!-- ════════════════════════════════════════════
-     ONBOARDING SCREEN — Item 28
-     First-time login welcome. Sets portal_onboarded = true on dismiss.
+     §SECTION: ONBOARDING_SCREEN
 ════════════════════════════════════════════ -->
-
 <div id="onboardingScreen">
   <input type="file" id="onboardPhotoInput" accept="image/*" style="display:none" onchange="handleOnboardPhotoUpload(event)" />
   <div class="onboarding-card">
@@ -281,51 +382,47 @@
     <div class="onboarding-welcome" id="onboardingWelcome">Welcome!</div>
     <div class="onboarding-sub">Your account is ready. Complete a few quick steps to get the most from your portal.</div>
 
-```
-<!-- Step 1: Photo -->
-<div class="onboard-step" id="onboardStepPhoto">
-  <div class="onboard-photo-preview" id="onboardPhotoPreview">
-    <i class="fa-solid fa-user" style="font-size:1.2rem;color:var(--gold)"></i>
-  </div>
-  <div style="flex:1">
-    <div class="onboard-step-label">Upload a profile photo</div>
-    <div class="onboard-step-sub">Your photo appears on your check-in card</div>
-  </div>
-  <button class="onboard-step-btn" id="onboardPhotoBtnEl" onclick="document.getElementById('onboardPhotoInput').click()">Upload</button>
-</div>
+    <!-- Step 1: Photo -->
+    <div class="onboard-step" id="onboardStepPhoto">
+      <div class="onboard-photo-preview" id="onboardPhotoPreview">
+        <i class="fa-solid fa-user" style="font-size:1.2rem;color:var(--gold)"></i>
+      </div>
+      <div style="flex:1">
+        <div class="onboard-step-label">Upload a profile photo</div>
+        <div class="onboard-step-sub">Your photo appears on your check-in card</div>
+      </div>
+      <button class="onboard-step-btn" id="onboardPhotoBtnEl" onclick="document.getElementById('onboardPhotoInput').click()">Upload</button>
+    </div>
 
-<!-- Step 2: Contact info -->
-<div class="onboard-step" id="onboardStepContact">
-  <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
-  <div style="flex:1">
-    <div class="onboard-step-label">Verify your contact information</div>
-    <div class="onboard-step-sub" id="onboardContactSub">Confirm your phone number is on file</div>
-  </div>
-  <button class="onboard-step-btn" id="onboardContactBtnEl" onclick="openContactModal()">Verify</button>
-</div>
+    <!-- Step 2: Contact info -->
+    <div class="onboard-step" id="onboardStepContact">
+      <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
+      <div style="flex:1">
+        <div class="onboard-step-label">Verify your contact information</div>
+        <div class="onboard-step-sub" id="onboardContactSub">Confirm your phone number is on file</div>
+      </div>
+      <button class="onboard-step-btn" id="onboardContactBtnEl" onclick="openContactModal()">Verify</button>
+    </div>
 
-<!-- Step 3: Waiver -->
-<div class="onboard-step" id="onboardStepWaiver">
-  <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
-  <div style="flex:1">
-    <div class="onboard-step-label">Sign the school waiver</div>
-    <div class="onboard-step-sub">Required before your first class</div>
-  </div>
-  <button class="onboard-step-btn" id="onboardWaiverBtnEl" onclick="openWaiverModal()">Review &amp; Sign</button>
-</div>
+    <!-- Step 3: Waiver -->
+    <div class="onboard-step" id="onboardStepWaiver">
+      <div class="onboard-step-icon"><i class="fa-regular fa-circle" style="color:var(--muted)"></i></div>
+      <div style="flex:1">
+        <div class="onboard-step-label">Sign the school waiver</div>
+        <div class="onboard-step-sub">Required before your first class</div>
+      </div>
+      <button class="onboard-step-btn" id="onboardWaiverBtnEl" onclick="openWaiverModal()">Review &amp; Sign</button>
+    </div>
 
-<button class="btn-get-started" onclick="completeOnboarding()">
-  Get Started <i class="fa-solid fa-arrow-right"></i>
-</button>
-```
-
+    <button class="btn-get-started" onclick="completeOnboarding()">
+      Get Started <i class="fa-solid fa-arrow-right"></i>
+    </button>
   </div>
 </div>
 
 <!-- ════════════════════════════════════════════
-     STUDENT PORTAL SCREEN (existing — preserved)
+     §SECTION: STUDENT_PORTAL
 ════════════════════════════════════════════ -->
-
 <div id="portalScreen" style="display:none">
   <div class="portal-header">
     <div class="portal-header-left">
@@ -341,95 +438,169 @@
     <div id="portalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading your profile...</div>
     <div id="portalContent" style="display:none">
 
-```
-  <input type="file" id="portalPhotoInput" accept="image/*" style="display:none" onchange="handlePortalPhotoUpload(event)" />
+      <input type="file" id="portalPhotoInput" accept="image/*" style="display:none" onchange="handlePortalPhotoUpload(event)" />
 
-  <div class="profile-hero">
-    <div>
-      <div class="hero-avatar" id="heroAvatar" onclick="document.getElementById('portalPhotoInput').click()">
-        <span id="heroInitials"></span>
-        <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+      <!-- Hero -->
+      <div class="profile-hero">
+        <div>
+          <div class="hero-avatar" id="heroAvatar" onclick="document.getElementById('portalPhotoInput').click()">
+            <span id="heroInitials"></span>
+            <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+          </div>
+          <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:0.3rem;letter-spacing:0.08em">tap to upload</div>
+        </div>
+        <div style="flex:1">
+          <div class="hero-name" id="heroName"></div>
+          <div class="hero-tags">
+            <span class="chip" id="heroStatus"></span>
+            <span class="prog-tag" id="heroProgram"></span>
+            <span id="heroBeltBadge" style="display:none;font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
+          </div>
+        </div>
       </div>
-      <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:0.3rem;letter-spacing:0.08em">tap to upload</div>
-    </div>
-    <div style="flex:1">
-      <div class="hero-name" id="heroName"></div>
-      <div class="hero-tags">
-        <span class="chip" id="heroStatus"></span>
-        <span class="prog-tag" id="heroProgram"></span>
-        <span id="heroBeltBadge" style="display:none;font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span>
+
+      <!-- ════════════════════════════════════
+           §SECTION: STUDENT_TABS
+           Tab order: Schedule · Updates · Profile
+           Progress · Attendance · Sessions · Packs · Book
+      ════════════════════════════════════ -->
+      <div class="portal-tabs">
+        <div class="portal-tab active" id="ptab-schedule"    onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
+        <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+        <div class="portal-tab"        id="ptab-profile"     onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
+        <div class="portal-tab"        id="ptab-progress"    onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
+        <div class="portal-tab"        id="ptab-attendance"  onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
+        <div class="portal-tab"        id="ptab-sessions"    onclick="switchPortalTab('sessions')"><i class="fa-solid fa-person-chalkboard"></i> Sessions</div>
+        <div class="portal-tab"        id="ptab-packs"       onclick="switchPortalTab('packs')"><i class="fa-solid fa-layer-group"></i> Packs</div>
+        <div class="portal-tab"        id="ptab-book"        onclick="switchPortalTab('book')"><i class="fa-solid fa-calendar-plus"></i> Book</div>
       </div>
-    </div>
-  </div>
 
-  <div class="portal-tabs">
-    <div class="portal-tab active" id="ptab-schedule" onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
-    <div class="portal-tab" id="ptab-updates" onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
-    <div class="portal-tab" id="ptab-profile" onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
-    <div class="portal-tab" id="ptab-progress" onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
-    <div class="portal-tab" id="ptab-attendance" onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_SCHEDULE
+      ════════════════════════════════════ -->
+      <div id="portalTabSchedule">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>
+          <div id="scheduleList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div></div>
+        </div>
+      </div>
 
-  <div id="portalTabSchedule">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
-      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>
-      <div id="scheduleList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div></div>
-    </div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_UPDATES
+      ════════════════════════════════════ -->
+      <div id="portalTabUpdates" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
+          <div id="announcementsList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No announcements yet.</div></div>
+        </div>
+      </div>
 
-  <div id="portalTabUpdates" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
-      <div id="announcementsList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No announcements yet.</div></div>
-    </div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_PROFILE
+           Contains: Membership · Contact · Curriculum
+           · Referral [NEW — search §SECTION: REFERRAL]
+      ════════════════════════════════════ -->
+      <div id="portalTabProfile" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
+          <div class="info-card" id="membershipCard"></div>
+        </div>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
+          <div class="info-card" id="contactCard"></div>
+        </div>
+        <div class="portal-section" id="curriculumSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
+          <div id="curriculumList"></div>
+        </div>
+        <!-- §SECTION: REFERRAL [NEW] -->
+        <div class="portal-section" id="referralSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-user-plus"></i> Refer a Friend</div>
+          <div class="info-card" id="referralCard">
+            <div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div>
+          </div>
+        </div>
+      </div>
 
-  <div id="portalTabProfile" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
-      <div class="info-card" id="membershipCard"></div>
-    </div>
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
-      <div class="info-card" id="contactCard"></div>
-    </div>
-    <div class="portal-section" id="curriculumSection" style="display:none">
-      <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
-      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
-      <div id="curriculumList"></div>
-    </div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_PROGRESS
+      ════════════════════════════════════ -->
+      <div id="portalTabProgress" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
+          <div class="tracker-card" id="trackerCard"></div>
+        </div>
+        <div class="portal-section" id="beltSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
+          <div class="belt-card" id="beltCard"></div>
+        </div>
+      </div>
 
-  <div id="portalTabProgress" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
-      <div class="tracker-card" id="trackerCard"></div>
-    </div>
-    <div class="portal-section" id="beltSection" style="display:none">
-      <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
-      <div class="belt-card" id="beltCard"></div>
-    </div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_ATTENDANCE
+      ════════════════════════════════════ -->
+      <div id="portalTabAttendance" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-check"></i> Recent Attendance</div>
+          <div id="attendanceSection"></div>
+        </div>
+      </div>
 
-  <div id="portalTabAttendance" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-calendar-check"></i> Recent Attendance</div>
-      <div id="attendanceSection"></div>
-    </div>
-  </div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_SESSIONS [NEW]
+           Tables: sessions + session_types
+           Search: §SECTION: TAB_SESSIONS
+      ════════════════════════════════════ -->
+      <div id="portalTabSessions" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-star"></i> Upcoming Private Sessions</div>
+          <div id="sessionsUpcomingList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-clock-rotate-left"></i> Past Sessions</div>
+          <div id="sessionsPastList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+      </div>
 
-</div>
-```
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_PACKS [NEW]
+           Tables: student_session_packs · session_packs · payments
+           Search: §SECTION: TAB_PACKS
+      ════════════════════════════════════ -->
+      <div id="portalTabPacks" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-layer-group"></i> Your Active Packs</div>
+          <div id="packsBalanceList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-bag-shopping"></i> Buy a Pack</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap Purchase to add sessions to your account.</p>
+          <div id="packsBuyList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+      </div>
 
-  </div>
-</div>
+      <!-- ════════════════════════════════════
+           §SECTION: TAB_BOOK [NEW]
+           Table: instructors (booking_link_enabled=true)
+           Search: §SECTION: TAB_BOOK
+      ════════════════════════════════════ -->
+      <div id="portalTabBook" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-plus"></i> Book a Private Session</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Select an instructor to view their availability and book.</p>
+          <div id="bookInstructorList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+      </div>
+
+    </div><!-- end portalContent -->
+  </div><!-- end portal-body -->
+</div><!-- end portalScreen -->
 
 <!-- ════════════════════════════════════════════
-     FAMILY PORTAL SCREEN — Items 17 & 18
-     Parent view with child switcher and class reservation.
-
-     Requires this SQL run in Supabase:
+     §SECTION: FAMILY_PORTAL
+     Requires class_reservations table — see SQL comment below.
      CREATE TABLE class_reservations (
        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
        school_id UUID REFERENCES schools(id),
@@ -440,7 +611,6 @@
        created_at TIMESTAMPTZ DEFAULT NOW()
      );
 ════════════════════════════════════════════ -->
-
 <div id="familyPortalScreen">
   <div class="portal-header">
     <div class="portal-header-left">
@@ -453,8 +623,6 @@
     <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
   </div>
 
-  <!-- Child Switcher Bar -->
-
   <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
     <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
     <select class="child-switcher-select" id="childSelect" onchange="switchChild()"></select>
@@ -464,72 +632,58 @@
 
   <div id="familyPortalContent" style="display:none">
     <div class="portal-body">
+      <div class="child-hero" id="familyChildHero"></div>
 
-```
-  <!-- Child hero card -->
-  <div class="child-hero" id="familyChildHero"></div>
+      <div class="family-tabs">
+        <div class="family-tab active" id="ftab-overview"  onclick="switchFamilyTab('overview')"><i class="fa-solid fa-user"></i> Overview</div>
+        <div class="family-tab"        id="ftab-schedule"  onclick="switchFamilyTab('schedule')"><i class="fa-solid fa-calendar-week"></i> Schedule</div>
+        <div class="family-tab"        id="ftab-updates"   onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+      </div>
 
-  <!-- Family Tabs -->
-  <div class="family-tabs">
-    <div class="family-tab active" id="ftab-overview" onclick="switchFamilyTab('overview')"><i class="fa-solid fa-user"></i> Overview</div>
-    <div class="family-tab" id="ftab-schedule" onclick="switchFamilyTab('schedule')"><i class="fa-solid fa-calendar-week"></i> Schedule</div>
-    <div class="family-tab" id="ftab-updates" onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
-  </div>
+      <div id="familyTabOverview">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
+          <div class="tracker-card" id="familyChildTracker"></div>
+        </div>
+        <div class="portal-section" id="familyBeltSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
+          <div class="belt-card" id="familyChildBelt"></div>
+        </div>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
+          <div class="info-card" id="familyChildMembership"></div>
+        </div>
+      </div>
 
-  <!-- OVERVIEW TAB -->
-  <div id="familyTabOverview">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
-      <div class="tracker-card" id="familyChildTracker"></div>
+      <div id="familyTabSchedule" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-week"></i> Weekly Schedule</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Select children for each class. Today's classes will check them in immediately. Future classes will create a reservation.</p>
+          <div id="familyScheduleList"></div>
+          <div style="height:80px"></div>
+        </div>
+      </div>
+
+      <div id="familyTabUpdates" style="display:none">
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
+          <div id="familyAnnouncementsList"></div>
+        </div>
+      </div>
+    </div><!-- end portal-body -->
+
+    <div class="family-confirm-bar" id="familyConfirmBar">
+      <div class="family-confirm-summary" id="familyConfirmSummary"></div>
+      <button class="btn-family-confirm" id="familyConfirmBtn" onclick="confirmFamilySelections()">
+        <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
+      </button>
     </div>
-    <div class="portal-section" id="familyBeltSection" style="display:none">
-      <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
-      <div class="belt-card" id="familyChildBelt"></div>
-    </div>
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
-      <div class="info-card" id="familyChildMembership"></div>
-    </div>
-  </div>
-
-  <!-- SCHEDULE TAB -->
-  <div id="familyTabSchedule" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-calendar-week"></i> Weekly Schedule</div>
-      <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Select children for each class. Today's classes will check them in immediately. Future classes will create a reservation.</p>
-      <div id="familyScheduleList"></div>
-      <div style="height:80px"></div><!-- spacer for sticky bar -->
-    </div>
-  </div>
-
-  <!-- UPDATES TAB -->
-  <div id="familyTabUpdates" style="display:none">
-    <div class="portal-section">
-      <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
-      <div id="familyAnnouncementsList"></div>
-    </div>
-  </div>
-
-</div><!-- end portal-body -->
-
-<!-- Sticky confirm bar — shown when selections exist -->
-<div class="family-confirm-bar" id="familyConfirmBar">
-  <div class="family-confirm-summary" id="familyConfirmSummary"></div>
-  <button class="btn-family-confirm" id="familyConfirmBtn" onclick="confirmFamilySelections()">
-    <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
-  </button>
-</div>
-```
-
   </div><!-- end familyPortalContent -->
 </div>
 
 <!-- ════════════════════════════════════════════
-     INSTRUCTOR PORTAL SCREEN — Item 20
-     Read-only schedule view for instructors.
-     Full staff app is staff.html (Build D).
+     §SECTION: INSTRUCTOR_PORTAL
 ════════════════════════════════════════════ -->
-
 <div id="instructorPortalScreen">
   <div class="portal-header">
     <div class="portal-header-left">
@@ -544,31 +698,24 @@
   <div class="portal-body">
     <div class="instructor-greeting" id="instrGreeting">Good morning</div>
     <div class="instructor-sub" id="instrSubtitle">Here is today's schedule.</div>
-
-```
-<div class="portal-section">
-  <div class="section-label"><i class="fa-solid fa-calendar-day"></i> Today's Classes</div>
-  <div id="instrTodayClasses"><div style="color:var(--muted);font-style:italic"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
-</div>
-
-<!-- Link to full staff app -->
-<a href="staff.html" class="staff-app-link">
-  <i class="fa-solid fa-mobile-screen" style="font-size:1.4rem;color:var(--gold);flex-shrink:0"></i>
-  <div>
-    <div style="font-size:0.92rem;color:var(--white);margin-bottom:0.15rem">Open Staff App</div>
-    <div style="font-size:0.72rem;color:var(--muted)">Full attendance, check-in, belt promotion tools</div>
-  </div>
-  <i class="fa-solid fa-arrow-right" style="color:var(--gold);margin-left:auto"></i>
-</a>
-```
-
+    <div class="portal-section">
+      <div class="section-label"><i class="fa-solid fa-calendar-day"></i> Today's Classes</div>
+      <div id="instrTodayClasses"><div style="color:var(--muted);font-style:italic"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+    </div>
+    <a href="staff.html" class="staff-app-link">
+      <i class="fa-solid fa-mobile-screen" style="font-size:1.4rem;color:var(--gold);flex-shrink:0"></i>
+      <div>
+        <div style="font-size:0.92rem;color:var(--white);margin-bottom:0.15rem">Open Staff App</div>
+        <div style="font-size:0.72rem;color:var(--muted)">Full attendance, check-in, belt promotion tools</div>
+      </div>
+      <i class="fa-solid fa-arrow-right" style="color:var(--gold);margin-left:auto"></i>
+    </a>
   </div>
 </div>
 
 <!-- ════════════════════════════════════════════
-     CELEBRATION OVERLAY (unchanged)
+     §SECTION: CELEBRATION_OVERLAY
 ════════════════════════════════════════════ -->
-
 <div id="celebrationOverlay">
   <div class="celebration-card">
     <span class="celebration-emoji" id="celebEmoji">🎊</span>
@@ -580,9 +727,8 @@
 </div>
 
 <!-- ════════════════════════════════════════════
-     WAIVER MODAL
+     §SECTION: WAIVER_MODAL
 ════════════════════════════════════════════ -->
-
 <div id="waiverModal">
   <div class="waiver-card">
     <div class="waiver-header">
@@ -600,9 +746,8 @@
 </div>
 
 <!-- ════════════════════════════════════════════
-     CONTACT VERIFY MODAL
+     §SECTION: CONTACT_MODAL
 ════════════════════════════════════════════ -->
-
 <div id="contactModal">
   <div class="contact-card">
     <div class="contact-card-title">Verify Contact Info</div>
@@ -614,14 +759,9 @@
     <button onclick="document.getElementById('contactModal').classList.remove('active')" style="width:100%;margin-top:0.5rem;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.6rem;cursor:pointer">Cancel</button>
   </div>
 </div>
-
-<!-- ════════════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════════════ -->
-
 <script>
 // ─────────────────────────────────────────────────────────────
-//  CONSTANTS
+//  §JS: CONSTANTS
 // ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
@@ -636,7 +776,7 @@ var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 // ─────────────────────────────────────────────────────────────
-//  STATE
+//  §JS: STATE
 // ─────────────────────────────────────────────────────────────
 var currentStudent=null;
 var currentFamily=null;
@@ -644,16 +784,22 @@ var familyChildren=[];
 var selectedChildId=null;
 var milestoneSettings={};
 var enrolledClasses={};
-var familySelections={};  // { [classId_dateStr]: { classId, dateStr, isToday, studentIds: Set } }
+var familySelections={};
 var schoolData={};
 var celebrationTimeout=null;
 var particleInterval=null;
 var familyAllClasses=[];
 var todayAttendance=[];
-var existingReservations={}; var scheduleByDay={}; var scheduleViewDay=0;
+var existingReservations={};
+var scheduleByDay={};
+var scheduleViewDay=0;
+// lazy-load flags for new tabs — reset in buildPortal
+var sessionsLoaded=false;
+var packsLoaded=false;
+var bookLoaded=false;
 
 // ─────────────────────────────────────────────────────────────
-//  INIT — portal login intelligence
+//  §JS: INIT
 // ─────────────────────────────────────────────────────────────
 async function init(){
   try{
@@ -680,11 +826,12 @@ async function init(){
 }
 
 // ─────────────────────────────────────────────────────────────
-//  SCHOOL BRANDING
+//  §JS: SCHOOL_BRANDING
+//  Also fetches referral fields for §JS: REFERRAL_SECTION
 // ─────────────────────────────────────────────────────────────
 async function loadSchoolBranding(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
+    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages,referral_reward_type,referral_reward_value,referral_reward_trigger').eq('id',SID).single();
     if(!r.data)return;
     var d=r.data;
     schoolData=d;
@@ -694,29 +841,23 @@ async function loadSchoolBranding(){
     if(d.font_family)document.documentElement.style.setProperty('--font-display',"'"+d.font_family+"',serif");
     milestoneSettings=d.milestone_messages||{};
     var sn=d.name||'Member Portal';
-    // Set school name in all screens
     ['loginSchoolName','portalSchoolName','familySchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.textContent=sn;
     });
     document.title=sn+' — Member Portal';
     if(d.logo_url){
-      // Login
       document.getElementById('loginLogoImg').src=d.logo_url;
       document.getElementById('loginLogoImg').style.display='block';
       document.getElementById('loginLogoText').style.display='none';
-      // Portal
       document.getElementById('portalLogoImg').src=d.logo_url;
       document.getElementById('portalLogoImg').style.display='block';
       document.getElementById('portalLogoText').style.display='none';
-      // Family
       document.getElementById('familyLogoImg').src=d.logo_url;
       document.getElementById('familyLogoImg').style.display='block';
       document.getElementById('familyLogoText').style.display='none';
-      // Instructor
       document.getElementById('instrLogoImg').src=d.logo_url;
       document.getElementById('instrLogoImg').style.display='block';
       document.getElementById('instrLogoText').style.display='none';
-      // Onboarding
       document.getElementById('onboardLogoImg').src=d.logo_url;
       document.getElementById('onboardLogoImg').style.display='block';
       document.getElementById('onboardLogoText').style.display='none';
@@ -725,39 +866,29 @@ async function loadSchoolBranding(){
 }
 
 // ─────────────────────────────────────────────────────────────
-//  LOGIN INTELLIGENCE — Item 20
-//  Silent detection: student → family → instructor → error
+//  §JS: LOGIN_ROUTING
 // ─────────────────────────────────────────────────────────────
 async function detectUserTypeAndRoute(user){
   try{
-    // Three parallel queries — first match wins
     var results=await Promise.all([
       sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('school_id',SID).eq('email',user.email).maybeSingle(),
       sb.from('families').select('*').eq('school_id',SID).eq('email',user.email).maybeSingle(),
       sb.from('instructors').select('*').eq('school_id',SID).eq('email',user.email).eq('active',true).maybeSingle()
     ]);
     var studentR=results[0],familyR=results[1],instrR=results[2];
-
     if(!studentR.error&&studentR.data){
-      // ── STUDENT ──
       currentStudent=studentR.data;
       sessionStorage.setItem('nmao_user_type','student');
-      if(!studentR.data.portal_onboarded){
-        showOnboardingScreen(studentR.data);
-      }else{
-        showStudentPortal(studentR.data);
-      }
+      if(!studentR.data.portal_onboarded){showOnboardingScreen(studentR.data);}
+      else{showStudentPortal(studentR.data);}
     }else if(!familyR.error&&familyR.data){
-      // ── FAMILY ──
       currentFamily=familyR.data;
       sessionStorage.setItem('nmao_user_type','family');
       await showFamilyPortal(familyR.data);
     }else if(!instrR.error&&instrR.data){
-      // ── INSTRUCTOR ──
       sessionStorage.setItem('nmao_user_type','instructor');
       await showInstructorPortal(instrR.data);
     }else{
-      // ── NO MATCH ──
       showNoAccountError(user.email);
     }
   }catch(e){
@@ -773,12 +904,11 @@ function showNoAccountError(email){
 }
 
 function hideAllScreens(){
-  var ids=['loginScreen','successScreen','onboardingScreen','portalScreen','familyPortalScreen','instructorPortalScreen'];
-  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+  ['loginScreen','successScreen','onboardingScreen','portalScreen','familyPortalScreen','instructorPortalScreen'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
 }
 
 // ─────────────────────────────────────────────────────────────
-//  MAGIC LINK LOGIN
+//  §JS: MAGIC_LINK
 // ─────────────────────────────────────────────────────────────
 async function sendMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
@@ -791,7 +921,7 @@ async function sendMagicLink(){
 function setLoginMsg(text,type){var el=document.getElementById('loginMsg');el.textContent=text;el.className='form-msg '+(type||'');}
 
 // ─────────────────────────────────────────────────────────────
-//  ONBOARDING — Item 28
+//  §JS: ONBOARDING
 // ─────────────────────────────────────────────────────────────
 function showOnboardingScreen(student){
   hideAllScreens();
@@ -801,7 +931,6 @@ function showOnboardingScreen(student){
 }
 
 function refreshOnboardingSteps(student){
-  // Step 1: Photo
   var hasPhoto=!!student.photo_url;
   var photoStep=document.getElementById('onboardStepPhoto');
   var photoBtn=document.getElementById('onboardPhotoBtnEl');
@@ -815,8 +944,6 @@ function refreshOnboardingSteps(student){
     photoPreview.innerHTML='<i class="fa-solid fa-user" style="font-size:1.2rem;color:var(--gold)"></i>';
     if(photoBtn){photoBtn.textContent='Upload';photoBtn.style.borderColor='';photoBtn.style.color='';}
   }
-
-  // Step 2: Contact info
   var hasContact=!!(student.phone&&student.phone.trim());
   var contactStep=document.getElementById('onboardStepContact');
   var contactIcon=contactStep.querySelector('.onboard-step-icon');
@@ -833,8 +960,6 @@ function refreshOnboardingSteps(student){
     if(contactSub)contactSub.textContent='Confirm your phone number is on file';
     if(contactBtn){contactBtn.textContent='Verify';contactBtn.style.borderColor='';contactBtn.style.color='';}
   }
-
-  // Step 3: Waiver
   var hasSigned=!!student.waiver_signed;
   var waiverStep=document.getElementById('onboardStepWaiver');
   var waiverIcon=waiverStep.querySelector('.onboard-step-icon');
@@ -888,7 +1013,7 @@ async function openWaiverModal(){
     var r=await sb.from('waivers').select('*').eq('school_id',SID).eq('active',true).limit(1);
     var w=r.data&&r.data.length?r.data[0]:null;
     document.getElementById('waiverModalTitle').textContent=w?w.title:'School Waiver';
-    document.getElementById('waiverModalBody').innerHTML=w?w.content:'<p style="color:var(--muted);font-style:italic">No waiver content has been configured yet. Click the button below to confirm acceptance.</p>';
+    document.getElementById('waiverModalBody').innerHTML=w?w.content:'<p style="color:var(--muted);font-style:italic">No waiver content configured. Click below to confirm acceptance.</p>';
   }catch(e){
     document.getElementById('waiverModalBody').innerHTML='<p style="color:var(--muted);font-style:italic">Click below to confirm your acceptance of the school waiver.</p>';
   }
@@ -914,7 +1039,7 @@ async function completeOnboarding(){
 }
 
 // ─────────────────────────────────────────────────────────────
-//  STUDENT PORTAL (all original functions preserved exactly)
+//  §JS: STUDENT_PORTAL
 // ─────────────────────────────────────────────────────────────
 function showStudentPortal(student){
   hideAllScreens();
@@ -925,6 +1050,9 @@ function showStudentPortal(student){
 }
 
 async function buildPortal(s){
+  // Reset lazy-load flags each time portal builds
+  sessionsLoaded=false;packsLoaded=false;bookLoaded=false;
+
   var ini=((s.first_name?s.first_name[0]:'')+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var av=document.getElementById('heroAvatar');
   if(s.photo_url){av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /><div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>';}
@@ -949,10 +1077,14 @@ async function buildPortal(s){
   await buildAttendance(s.id);
   await buildSchedule(s);
   await buildAnnouncements();
+  await buildReferral(s);  // §JS: REFERRAL_SECTION — always loads with profile
   document.getElementById('portalLoading').style.display='none';
   document.getElementById('portalContent').style.display='block';
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: SCHEDULE
+// ─────────────────────────────────────────────────────────────
 async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
@@ -976,6 +1108,7 @@ async function buildSchedule(s){
   scheduleViewDay=diffs[0];
   renderScheduleDay();
 }
+
 function renderScheduleDay(){
   var el=document.getElementById('scheduleList');if(!el)return;
   var now=new Date();
@@ -1008,13 +1141,16 @@ function renderScheduleDay(){
   }
   el.innerHTML=html;
 }
+
 function navScheduleDay(dir){
   var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
   var idx=diffs.indexOf(scheduleViewDay)+dir;
   if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
 }
 
-
+// ─────────────────────────────────────────────────────────────
+//  §JS: RSVP
+// ─────────────────────────────────────────────────────────────
 async function toggleRSVP(classId,btn){
   if(!currentStudent)return;
   var isEnrolled=!!enrolledClasses[classId];
@@ -1034,6 +1170,9 @@ async function toggleRSVP(classId,btn){
   btn.disabled=false;
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: ANNOUNCEMENTS
+// ─────────────────────────────────────────────────────────────
 async function buildAnnouncements(){
   try{
     var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').order('sent_at',{ascending:false}).limit(10);
@@ -1052,6 +1191,9 @@ async function buildAnnouncements(){
   }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: BELT_SECTION
+// ─────────────────────────────────────────────────────────────
 async function buildBeltSection(s,levels){
   document.getElementById('beltSection').style.display='block';
   var cb=null;for(var i=0;i<levels.length;i++){if(levels[i].id===s.current_belt_id){cb=levels[i];break;}}
@@ -1094,6 +1236,9 @@ async function getClassesSincePromotion(s){
   var r=await q;return r.count||0;
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: TRACKER
+// ─────────────────────────────────────────────────────────────
 async function buildTracker(s){
   var r=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',s.id);
   var total=r.count||0;
@@ -1104,6 +1249,9 @@ async function buildTracker(s){
   checkMilestones(total,s.id);
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: MILESTONES_CELEBRATION
+// ─────────────────────────────────────────────────────────────
 function checkMilestones(total,studentId){
   var storageKey='nmao_celebrated_'+studentId;var celebrated={};
   try{var stored=localStorage.getItem(storageKey);if(stored)celebrated=JSON.parse(stored);}catch(e){}
@@ -1140,6 +1288,9 @@ function launchConfetti(){var canvas=document.getElementById('confettiCanvas');c
 function launchParticles(emojis,count,duration,mode){var launched=0;particleInterval=setInterval(function(){if(launched>=count){clearInterval(particleInterval);particleInterval=null;return;}var el=document.createElement('div');el.className='particle';el.textContent=emojis[Math.floor(Math.random()*emojis.length)];el.style.fontSize=(1.2+Math.random()*1.5)+'rem';var dur=(1.5+Math.random()*2.5)+'s';if(mode==='fall'){el.style.left=Math.random()*100+'vw';el.style.top='-5vh';el.style.animationName='particleFall';el.style.animationDuration=dur;}else if(mode==='rise'){el.style.left=Math.random()*100+'vw';el.style.bottom='0';el.style.animationName='particleRise';el.style.animationDuration=dur;}else if(mode==='burst'){el.style.left='50vw';el.style.top='50vh';var angle=Math.random()*360;var dist=20+Math.random()*40;el.style.setProperty('--tx',Math.cos(angle*Math.PI/180)*dist+'vw');el.style.setProperty('--ty',Math.sin(angle*Math.PI/180)*dist+'vh');el.style.animationName='particleBurst';el.style.animationDuration=dur;}el.style.animationFillMode='forwards';document.body.appendChild(el);setTimeout(function(){el.remove();},parseFloat(dur)*1000+100);launched++;},duration/count);}
 function launchLightning(){var canvas=document.getElementById('confettiCanvas');canvas.style.display='block';canvas.width=window.innerWidth;canvas.height=window.innerHeight;var ctx=canvas.getContext('2d');var frame=0;function draw(){if(frame>60){canvas.style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);return;}ctx.clearRect(0,0,canvas.width,canvas.height);if(frame%8<3){ctx.shadowBlur=20;ctx.shadowColor='var(--gold)';ctx.strokeStyle='rgba(201,168,76,'+(0.8-frame/80)+')';ctx.lineWidth=2+Math.random()*3;ctx.beginPath();var x=Math.random()*canvas.width;ctx.moveTo(x,0);for(var i=0;i<8;i++){x+=(Math.random()-0.5)*80;ctx.lineTo(x,canvas.height*(i+1)/8);}ctx.stroke();ctx.shadowBlur=0;}frame++;requestAnimationFrame(draw);}draw();}
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: ATTENDANCE
+// ─────────────────────────────────────────────────────────────
 async function handlePortalPhotoUpload(event){
   if(!currentStudent)return;
   var file=event.target.files[0];if(!file)return;
@@ -1160,45 +1311,370 @@ async function buildAttendance(sid){
   el.innerHTML=data.map(function(a){var sess=a.class_sessions;var cls=sess&&sess.classes;var cn=cls?(cls.name||cls.title||'Class'):'Class';var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'--');var tm=(sess&&sess.start_time)?fmtTime(sess.start_time):'';return '<div class="att-row"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-person-walking" style="color:var(--gold);margin-right:0.5rem"></i>'+cn+'</div><div style="font-size:0.75rem;color:var(--muted)">'+dt+(tm?' &bull; '+tm:'')+'</div></div>';}).join('');
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: SWITCH_TAB
+//  Updated to include all 8 tabs + lazy-load new ones on first open
+// ─────────────────────────────────────────────────────────────
 function switchPortalTab(tab){
-  var tabs=['schedule','updates','profile','progress','attendance'];
+  var tabs=['schedule','updates','profile','progress','attendance','sessions','packs','book'];
   tabs.forEach(function(t){
-    var panel=document.getElementById('portalTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    var key=t.charAt(0).toUpperCase()+t.slice(1);
+    var panel=document.getElementById('portalTab'+key);
     if(panel)panel.style.display=t===tab?'block':'none';
     var btn=document.getElementById('ptab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
+  // Lazy-load new tabs on first visit
+  if(tab==='sessions'&&!sessionsLoaded){sessionsLoaded=true;buildSessions(currentStudent);}
+  if(tab==='packs'&&!packsLoaded){packsLoaded=true;buildPacks(currentStudent);}
+  if(tab==='book'&&!bookLoaded){bookLoaded=true;buildBook();}
 }
 
 // ─────────────────────────────────────────────────────────────
-//  FAMILY PORTAL — Items 17 & 18
+//  §JS: SESSIONS_TAB [NEW]
+//  Tables: sessions (joined with session_types)
+//  Search: §JS: SESSIONS_TAB
+// ─────────────────────────────────────────────────────────────
+async function buildSessions(s){
+  var upEl=document.getElementById('sessionsUpcomingList');
+  var pastEl=document.getElementById('sessionsPastList');
+  var today=new Date().toISOString().split('T')[0];
+
+  try{
+    var r=await sb.from('sessions')
+      .select('*, session_types(name,color,duration_minutes,price)')
+      .eq('school_id',SID)
+      .eq('student_id',s.id)
+      .order('session_date',{ascending:false})
+      .order('start_time',{ascending:false});
+
+    var all=r.data||[];
+    var upcoming=all.filter(function(x){return x.session_date>=today&&x.status!=='cancelled';}).reverse();
+    var past=all.filter(function(x){return x.session_date<today||x.status==='completed'||x.status==='cancelled';});
+
+    upEl.innerHTML=upcoming.length?upcoming.map(function(x){return buildSessionCard(x,true);}).join(''):emptyState('fa-calendar-star','No upcoming private sessions.');
+    pastEl.innerHTML=past.length?past.slice(0,15).map(function(x){return buildSessionCard(x,false);}).join(''):emptyState('fa-clock-rotate-left','No past sessions yet.');
+  }catch(e){
+    upEl.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load sessions.</div>';
+    pastEl.innerHTML='';
+    console.error('buildSessions error:',e);
+  }
+}
+
+function buildSessionCard(x,isUpcoming){
+  var st=x.session_types||{};
+  var typeColor=st.color||'var(--gold)';
+  var typeName=st.name||'Private Session';
+  var statusKey=(x.status||'scheduled').toLowerCase();
+  var statusClass='session-status-'+(statusKey==='completed'?'completed':statusKey==='cancelled'?'cancelled':'scheduled');
+  var statusLabel=statusKey.charAt(0).toUpperCase()+statusKey.slice(1);
+  var dateStr=x.session_date?new Date(x.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'--';
+  var timeStr=x.start_time?fmtTime(x.start_time):'';
+  var dur=x.duration_minutes||st.duration_minutes||null;
+  var price=x.price!=null?x.price:(st.price!=null?st.price:null);
+  var meta=[];
+  if(timeStr)meta.push('<i class="fa-solid fa-clock" style="margin-right:0.3rem;opacity:0.6"></i>'+timeStr);
+  if(dur)meta.push('<i class="fa-solid fa-stopwatch" style="margin-right:0.3rem;opacity:0.6"></i>'+dur+' min');
+  if(x.instructor_name)meta.push('<i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem;opacity:0.6"></i>'+x.instructor_name);
+  if(price!=null)meta.push('<i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem;opacity:0.6"></i>$'+parseFloat(price).toFixed(2));
+  var html='<div class="session-card '+(isUpcoming?'upcoming':'past')+'">';
+  html+='<div class="session-card-header">';
+  html+='<div><div class="session-date-badge">'+dateStr+'</div>';
+  html+='<div style="font-size:0.8rem;color:var(--muted2);margin-top:0.25rem"><span class="session-type-dot" style="background:'+typeColor+'"></span>'+typeName+'</div></div>';
+  html+='<span class="session-status-badge '+statusClass+'">'+statusLabel+'</span>';
+  html+='</div>';
+  if(meta.length)html+='<div class="session-meta-row">'+meta.join('')+'</div>';
+  if(x.notes)html+='<div class="session-notes"><i class="fa-solid fa-note-sticky" style="margin-right:0.35rem;opacity:0.5"></i>'+x.notes+'</div>';
+  html+='</div>';
+  return html;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: PACKS_TAB [NEW]
+//  Tables: student_session_packs · session_packs · payments
+//  Search: §JS: PACKS_TAB
+// ─────────────────────────────────────────────────────────────
+async function buildPacks(s){
+  var balEl=document.getElementById('packsBalanceList');
+  var buyEl=document.getElementById('packsBuyList');
+
+  try{
+    // Active balances
+    var balR=await sb.from('student_session_packs')
+      .select('*, session_packs(name,quantity,price)')
+      .eq('student_id',s.id)
+      .eq('status','active')
+      .gt('sessions_remaining',0)
+      .order('expires_at',{ascending:true});
+
+    var balances=balR.data||[];
+    if(balances.length){
+      balEl.innerHTML=balances.map(function(b){
+        var pk=b.session_packs||{};
+        var expStr=b.expires_at?new Date(b.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No expiry';
+        var orig=b.sessions_original||pk.quantity||'?';
+        return '<div class="pack-balance-card">'+
+          '<div class="pack-count-big">'+b.sessions_remaining+'</div>'+
+          '<div class="pack-balance-info">'+
+            '<div class="pack-balance-name">'+(pk.name||'Session Pack')+'</div>'+
+            '<div class="pack-balance-meta">'+
+              b.sessions_remaining+' of '+orig+' sessions remaining &bull; Expires '+expStr+
+            '</div>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }else{
+      balEl.innerHTML=emptyState('fa-layer-group','No active session packs. Purchase one below.');
+    }
+
+    // Available to buy
+    var pkR=await sb.from('session_packs')
+      .select('*')
+      .eq('school_id',SID)
+      .eq('active',true)
+      .eq('show_in_portal',true)
+      .order('price',{ascending:true});
+
+    var available=pkR.data||[];
+    if(available.length){
+      buyEl.innerHTML=available.map(function(pk){
+        var expNote=pk.expiry_days?pk.expiry_days+' day expiry':'No expiry';
+        return '<div class="pack-buy-card" id="pkcard-'+pk.id+'">'+
+          '<div class="pack-buy-row">'+
+            '<div class="pack-buy-info">'+
+              '<div class="pack-buy-name">'+pk.name+'</div>'+
+              '<div class="pack-buy-meta">'+pk.quantity+' sessions &bull; '+expNote+'</div>'+
+            '</div>'+
+            '<div class="pack-buy-price">$'+parseFloat(pk.price||0).toFixed(2)+'</div>'+
+            '<button class="btn-buy-pack" id="pkbtn-'+pk.id+'" onclick="showPackConfirm(\''+pk.id+'\',\''+pk.name.replace(/'/g,"\\'")+'\',$'+parseFloat(pk.price||0).toFixed(2)+')">Purchase</button>'+
+          '</div>'+
+          '<div class="pack-confirm-row" id="pkconfirm-'+pk.id+'">'+
+            '<div class="pack-confirm-text"><i class="fa-solid fa-circle-info" style="margin-right:0.35rem;color:var(--gold)"></i>Confirm purchase of <strong>'+pk.name+'</strong> for <strong>$'+parseFloat(pk.price||0).toFixed(2)+'</strong>?</div>'+
+            '<button class="btn-cancel-buy" onclick="hidePackConfirm(\''+pk.id+'\')">Cancel</button>'+
+            '<button class="btn-confirm-buy" onclick="executePurchasePack(\''+pk.id+'\')"><i class="fa-solid fa-check" style="margin-right:0.3rem"></i>Confirm</button>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }else{
+      buyEl.innerHTML=emptyState('fa-bag-shopping','No session packs available for purchase right now.');
+    }
+  }catch(e){
+    balEl.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load packs.</div>';
+    buyEl.innerHTML='';
+    console.error('buildPacks error:',e);
+  }
+}
+
+function showPackConfirm(packId,name,price){
+  // Hide any other open confirmations first
+  document.querySelectorAll('.pack-confirm-row.visible').forEach(function(el){
+    el.classList.remove('visible');
+    var pid=el.id.replace('pkconfirm-','');
+    var btn=document.getElementById('pkbtn-'+pid);
+    if(btn){btn.style.display='';}
+  });
+  var row=document.getElementById('pkconfirm-'+packId);
+  var btn=document.getElementById('pkbtn-'+packId);
+  if(row){row.classList.add('visible');}
+  if(btn){btn.style.display='none';}
+}
+
+function hidePackConfirm(packId){
+  var row=document.getElementById('pkconfirm-'+packId);
+  var btn=document.getElementById('pkbtn-'+packId);
+  if(row){row.classList.remove('visible');}
+  if(btn){btn.style.display='';}
+}
+
+async function executePurchasePack(packId){
+  if(!currentStudent)return;
+  var confirmRow=document.getElementById('pkconfirm-'+packId);
+  if(confirmRow){confirmRow.innerHTML='<div style="font-size:0.82rem;color:var(--muted)"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...</div>';}
+
+  try{
+    var pkR=await sb.from('session_packs').select('*').eq('id',packId).single();
+    if(pkR.error||!pkR.data){throw new Error('Pack not found');}
+    var pack=pkR.data;
+
+    // Calculate expiry
+    var expiresAt=null;
+    if(pack.expiry_days){
+      var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);
+      expiresAt=exp.toISOString();
+    }
+
+    // Insert payment record
+    await sb.from('payments').insert({
+      school_id:SID,
+      student_id:currentStudent.id,
+      amount:pack.price,
+      type:'session_pack',
+      status:'paid',
+      description:'Session Pack: '+pack.name
+    });
+
+    // Credit student pack balance
+    await sb.from('student_session_packs').insert({
+      student_id:currentStudent.id,
+      session_pack_id:packId,
+      sessions_remaining:pack.quantity,
+      sessions_original:pack.quantity,
+      expires_at:expiresAt,
+      status:'active'
+    });
+
+    // Reload packs to reflect new balance
+    await buildPacks(currentStudent);
+  }catch(e){
+    if(confirmRow){
+      confirmRow.innerHTML='<div style="color:#E07070;font-size:0.82rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Purchase failed: '+e.message+'</div>';
+      setTimeout(function(){buildPacks(currentStudent);},3000);
+    }
+    console.error('executePurchasePack error:',e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: BOOK_TAB [NEW]
+//  Table: instructors (booking_link_enabled=true, active=true)
+//  Links to: book.html?slug=SLUG or book.html?instructor=UUID
+//  Search: §JS: BOOK_TAB
+// ─────────────────────────────────────────────────────────────
+async function buildBook(){
+  var el=document.getElementById('bookInstructorList');
+  try{
+    var r=await sb.from('instructors')
+      .select('id,first_name,last_name,bio,specialties,photo_url,booking_slug')
+      .eq('school_id',SID)
+      .eq('booking_link_enabled',true)
+      .eq('active',true)
+      .order('first_name');
+
+    var instructors=r.data||[];
+    if(!instructors.length){
+      el.innerHTML=emptyState('fa-calendar-plus','No instructors are accepting bookings right now.');
+      return;
+    }
+
+    el.innerHTML=instructors.map(function(instr){
+      var fullName=(instr.first_name+' '+(instr.last_name||'')).trim();
+      var ini=((instr.first_name?instr.first_name[0]:'')+(instr.last_name?instr.last_name[0]:'')).toUpperCase();
+      var avatarHtml=instr.photo_url?'<img src="'+instr.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
+      var bookHref='book.html?'+(instr.booking_slug?'slug='+encodeURIComponent(instr.booking_slug):'instructor='+instr.id);
+      var specs=[];
+      if(instr.specialties){
+        if(Array.isArray(instr.specialties))specs=instr.specialties;
+        else if(typeof instr.specialties==='string')specs=instr.specialties.split(',').map(function(x){return x.trim();}).filter(Boolean);
+      }
+      var specsHtml=specs.length?'<div style="margin-top:0.5rem">'+specs.map(function(sp){return '<span class="specialty-tag">'+sp+'</span>';}).join('')+'</div>':'';
+      var bioHtml=instr.bio?'<div class="instructor-book-bio">'+instr.bio.slice(0,180)+(instr.bio.length>180?'…':'')+'</div>':'';
+      return '<div class="instructor-book-card">'+
+        '<div class="instructor-book-inner">'+
+          '<div class="instructor-book-avatar">'+avatarHtml+'</div>'+
+          '<div style="flex:1">'+
+            '<div class="instructor-book-name">'+fullName+'</div>'+
+            bioHtml+
+            specsHtml+
+            '<a href="'+bookHref+'" class="btn-book-now"><i class="fa-solid fa-calendar-plus"></i>Book with '+instr.first_name+'</a>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){
+    el.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load instructors.</div>';
+    console.error('buildBook error:',e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: REFERRAL_SECTION [NEW]
+//  Code = last 8 chars of student.id (uppercase)
+//  Count from students where referred_by = student.id
+//  Reward info from schoolData (loaded in §JS: SCHOOL_BRANDING)
+//  Search: §JS: REFERRAL_SECTION
+// ─────────────────────────────────────────────────────────────
+async function buildReferral(s){
+  var sec=document.getElementById('referralSection');
+  var card=document.getElementById('referralCard');
+  if(!sec||!card)return;
+
+  try{
+    var code=s.id.slice(-8).toUpperCase();
+
+    // Count referrals made by this student
+    var refR=await sb.from('students').select('*',{count:'exact',head:true}).eq('school_id',SID).eq('referred_by',s.id);
+    var refCount=refR.count||0;
+
+    // Reward info from schoolData
+    var rewardType=schoolData.referral_reward_type||'';
+    var rewardValue=schoolData.referral_reward_value||'';
+    var rewardTrigger=schoolData.referral_reward_trigger||'';
+    var hasReward=!!(rewardType&&rewardValue);
+    var rewardDesc='';
+    if(hasReward){
+      if(rewardType==='credit')rewardDesc='$'+rewardValue+' account credit';
+      else if(rewardType==='free_month')rewardDesc='1 free month';
+      else if(rewardType==='discount')rewardDesc=rewardValue+'% off your next month';
+      else rewardDesc=rewardValue+' ('+rewardType+')';
+    }
+
+    var html='';
+    html+='<div style="font-size:0.82rem;color:var(--muted2);margin-bottom:0.25rem">Share your referral code with friends:</div>';
+    html+='<div class="referral-code-box" onclick="copyReferralCode(\''+code+'\',this)">'+code+'</div>';
+    html+='<div class="referral-copy-hint"><i class="fa-regular fa-copy" style="margin-right:0.3rem"></i>Tap to copy</div>';
+    html+='<div class="referral-stats-row">';
+    html+='<div class="referral-stat"><div class="referral-stat-num">'+refCount+'</div><div class="referral-stat-label">Friends Referred</div></div>';
+    if(hasReward){
+      html+='<div class="referral-stat"><div class="referral-stat-num" style="font-size:1rem;padding-top:0.3rem">'+rewardDesc+'</div><div class="referral-stat-label">Your Reward</div></div>';
+    }
+    html+='</div>';
+    if(hasReward){
+      var triggerNote=rewardTrigger?'Reward unlocks when your referral '+rewardTrigger+'.':'Reward applied automatically when your referral signs up.';
+      html+='<div class="referral-reward-banner"><div class="referral-reward-icon"><i class="fa-solid fa-gift"></i></div><div class="referral-reward-text">'+triggerNote+'</div></div>';
+    }
+
+    card.innerHTML=html;
+    sec.style.display='block';
+  }catch(e){
+    card.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Referral info unavailable.</div>';
+    sec.style.display='block';
+    console.error('buildReferral error:',e);
+  }
+}
+
+function copyReferralCode(code,el){
+  navigator.clipboard.writeText(code).then(function(){
+    var orig=el.textContent;
+    el.textContent='Copied!';
+    el.style.color='#7DBD7D';
+    setTimeout(function(){el.textContent=orig;el.style.color='';},2000);
+  }).catch(function(){
+    // Fallback for older browsers
+    var ta=document.createElement('textarea');
+    ta.value=code;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    el.textContent='Copied!';el.style.color='#7DBD7D';
+    setTimeout(function(){el.textContent=code;el.style.color='';},2000);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: FAMILY_PORTAL
 // ─────────────────────────────────────────────────────────────
 async function showFamilyPortal(family){
   hideAllScreens();
   document.getElementById('familyPortalScreen').style.display='block';
-
-  // Load children
   var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).order('first_name');
   familyChildren=r.data||[];
-
   if(!familyChildren.length){
     document.getElementById('familyPortalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
     return;
   }
-
-  // Build switcher
   var sel=document.getElementById('childSelect');
-  sel.innerHTML=familyChildren.map(function(c){
-    var prog=c.programs?c.programs.name:'Member';
-    return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+'</option>';
-  }).join('');
+  sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+'</option>';}).join('');
   document.getElementById('childSwitcherBar').style.display='flex';
-
-  // Show content
   document.getElementById('familyPortalLoading').style.display='none';
   document.getElementById('familyPortalContent').style.display='block';
-
-  // Default to first child
   selectedChildId=familyChildren[0].id;
   await loadFamilyChildView(familyChildren[0]);
   await buildFamilyAnnouncements();
@@ -1207,19 +1683,16 @@ async function showFamilyPortal(family){
 async function switchChild(){
   var sel=document.getElementById('childSelect');if(!sel)return;
   selectedChildId=sel.value;
-  var child=familyChildren.find(function(c){return c.id===selectedChildId;});
+  var child=​​​​​​​​​​​​​​​​
+familyChildren.find(function(c){return c.id===selectedChildId;});
   if(child)await loadFamilyChildView(child);
 }
 
 async function loadFamilyChildView(child){
-  // Hero
   var ini=((child.first_name?child.first_name[0]:'')+(child.last_name?child.last_name[0]:'')).toUpperCase();
-  var prog=child.programs;
-  var pc=prog?prog.color:'#C9A84C';
-  var pn=prog?prog.name:'--';
+  var prog=child.programs;var pc=prog?prog.color:'#C9A84C';var pn=prog?prog.name:'--';
   var avatarHtml=child.photo_url?'<img src="'+child.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
-  var mem=child.memberships;
-  var memName=mem?mem.name:'--';
+  var mem=child.memberships;var memName=mem?mem.name:'--';
   var st=child.status||'trial';
   var statusClass=st==='active'?'chip-active':st==='paused'?'chip-paused':'chip-trial';
 
@@ -1237,7 +1710,6 @@ async function loadFamilyChildView(child){
     '</div>'
   ].join('');
 
-  // Tracker
   var attR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',child.id);
   var total=attR.count||0;
   var nm=null;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]>total){nm=MILESTONES[i];break;}}
@@ -1252,15 +1724,13 @@ async function loadFamilyChildView(child){
     nm?'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"><i class="fa-solid fa-flag" style="margin-right:0.3rem"></i>'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.75rem;color:var(--gold);margin-top:0.25rem"><i class="fa-solid fa-trophy" style="margin-right:0.3rem"></i>All milestones reached!</div>'
   ].join('');
 
-  // Belt
   document.getElementById('familyBeltSection').style.display='none';
   if(prog&&prog.belt_system==='Belt Progression'&&prog.belt_system_id){
     var br=await sb.from('belt_levels').select('*').eq('belt_system_id',prog.belt_system_id).order('sort_order');
     var levels=br.data||[];
     if(levels.length){
       var cb=levels.find(function(l){return l.id===child.current_belt_id;})||null;
-      var ci=cb?levels.indexOf(cb):-1;
-      var nb=levels[ci+1]||null;
+      var ci=cb?levels.indexOf(cb):-1;var nb=levels[ci+1]||null;
       document.getElementById('familyBeltSection').style.display='block';
       var bHtml='';
       if(cb){
@@ -1270,7 +1740,6 @@ async function loadFamilyChildView(child){
         bHtml+=nb?'<div style="font-size:0.72rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.72rem;color:var(--gold)">Highest rank!</div>';
         bHtml+='</div></div>';
       }
-      // Belt sequence
       bHtml+='<div style="display:flex;flex-wrap:wrap;gap:0.35rem">';
       levels.forEach(function(b){var isc=cb&&b.id===cb.id;bHtml+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,4)+'</div></div>';});
       bHtml+='</div>';
@@ -1278,7 +1747,6 @@ async function loadFamilyChildView(child){
     }
   }
 
-  // Membership card
   document.getElementById('familyChildMembership').innerHTML=[
     '<div class="info-row"><div class="info-label">Plan</div><div class="info-value">'+memName+'</div></div>',
     mem?'<div class="info-row"><div class="info-label">Price</div><div class="info-value" style="color:var(--gold)">$'+parseFloat(mem.price||0).toFixed(2)+(mem.billing_type==='monthly'?'/month':mem.billing_type==='yearly'?'/year':'')+'</div></div>':'',
@@ -1286,35 +1754,24 @@ async function loadFamilyChildView(child){
     child.start_date?'<div class="info-row"><div class="info-label">Since</div><div class="info-value">'+new Date(child.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':''
   ].join('');
 
-  // Refresh schedule for new child selection
   await buildFamilySchedule();
 }
 
-// ─── FAMILY SCHEDULE (Item 18) ───────────────
-
+// ─────────────────────────────────────────────────────────────
+//  §JS: FAMILY_SCHEDULE
+// ─────────────────────────────────────────────────────────────
 async function buildFamilySchedule(){
   var el=document.getElementById('familyScheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
-
-  // Load classes
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
   familyAllClasses=r.data||[];
-
-  if(!familyAllClasses.length){
-    el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled yet.</div>';
-    return;
-  }
-
+  if(!familyAllClasses.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled yet.</div>';return;}
   var today=new Date().toISOString().split('T')[0];
   var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+6);
   var weekEndStr=weekEnd.toISOString().split('T')[0];
   var childIds=familyChildren.map(function(c){return c.id;});
-
-  // Load today's attendance for all family children
   var attR=await sb.from('class_attendance').select('student_id,class_sessions(class_id,session_date)').eq('school_id',SID).in('student_id',childIds).gte('noted_at',today+'T00:00:00');
   todayAttendance=attR.data||[];
-
-  // Load existing reservations (graceful if table doesn't exist)
   existingReservations={};
   try{
     var resR=await sb.from('class_reservations').select('*').eq('school_id',SID).in('student_id',childIds).gte('session_date',today).lte('session_date',weekEndStr);
@@ -1322,68 +1779,50 @@ async function buildFamilySchedule(){
       var key=res.class_id+'_'+res.session_date+'_'+res.student_id;
       existingReservations[key]=res.id;
     });
-  }catch(e){/* table may not exist yet — run the SQL from the comment above */}
-
-  // Reset selections when rebuilding
+  }catch(e){/* class_reservations table not yet created — see SQL comment in §SECTION: FAMILY_PORTAL */}
   familySelections={};
   updateFamilyConfirmBar();
-
   renderFamilySchedule();
 }
 
 function renderFamilySchedule(){
   var el=document.getElementById('familyScheduleList');
-  var now=new Date();
-  var todayStr=now.toISOString().split('T')[0];
+  var now=new Date();var todayStr=now.toISOString().split('T')[0];
   var html='';var hasAny=false;
-
   for(var i=0;i<7;i++){
     var d=new Date(now);d.setDate(now.getDate()+i);
     var dateStr=d.toISOString().split('T')[0];
-    var dayName=DAYS[d.getDay()];
-    var isToday=i===0;
+    var dayName=DAYS[d.getDay()];var isToday=i===0;
     var dayLabel=i===0?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
-
     var dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
     if(!dayClasses.length)continue;
     hasAny=true;
-
     html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+dayLabel+'</div>';
-
     dayClasses.forEach(function(cls){
       var cn=cls.name||cls.title||'Class';
       var selKey=cls.id+'_'+dateStr;
       var currentSel=familySelections[selKey];
       var hasSelection=currentSel&&currentSel.studentIds&&currentSel.studentIds.size>0;
       var tags=[cls.style,cls.age_group,cls.level].filter(Boolean).join(' · ');
-
       html+='<div class="family-class-card'+(hasSelection?' has-selection':'')+'" id="fcc-'+cls.id+'-'+dateStr+'">';
       html+='<div class="family-class-header">';
-      html+='<div>';
-      html+='<div class="family-class-time">'+fmtTime(cls.start_time)+'</div>';
+      html+='<div><div class="family-class-time">'+fmtTime(cls.start_time)+'</div>';
       html+='<div class="family-class-name">'+cn+'</div>';
       if(tags)html+='<div class="family-class-meta">'+tags+'</div>';
       html+='</div>';
       html+='<span class="family-class-type '+(isToday?'type-checkin':'type-reserve')+'">'+(isToday?'Check In':'Reserve')+'</span>';
       html+='</div>';
-
-      // Children list
       html+='<div class="family-children-list">';
       familyChildren.forEach(function(child){
         var childKey=cls.id+'_'+dateStr+'_'+child.id;
         var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
         var isDone=false;
-
         if(isToday){
-          isDone=todayAttendance.some(function(a){
-            return a.student_id===child.id&&a.class_sessions&&a.class_sessions.class_id===cls.id&&a.class_sessions.session_date===dateStr;
-          });
+          isDone=todayAttendance.some(function(a){return a.student_id===child.id&&a.class_sessions&&a.class_sessions.class_id===cls.id&&a.class_sessions.session_date===dateStr;});
         }else{
           isDone=!!existingReservations[childKey];
         }
-
-        var prog=child.programs;var progName=prog?prog.name:'Member';
-
+        var progName=child.programs?child.programs.name:'Member';
         if(isDone){
           html+='<div class="family-child-row already-done selected">';
           html+='<div class="family-child-check"><i class="fa-solid fa-check"></i></div>';
@@ -1398,11 +1837,9 @@ function renderFamilySchedule(){
           html+='</div>';
         }
       });
-      html+='</div>';
-      html+='</div>';// end family-class-card
+      html+='</div></div>';
     });
   }
-
   if(!hasAny)html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
   el.innerHTML=html;
   updateFamilyConfirmBar();
@@ -1410,27 +1847,19 @@ function renderFamilySchedule(){
 
 function toggleFamilyChild(classId,dateStr,studentId,isToday){
   var selKey=classId+'_'+dateStr;
-  if(!familySelections[selKey]){
-    familySelections[selKey]={classId:classId,dateStr:dateStr,isToday:isToday,studentIds:new Set()};
-  }
+  if(!familySelections[selKey]){familySelections[selKey]={classId:classId,dateStr:dateStr,isToday:isToday,studentIds:new Set()};}
   var sel=familySelections[selKey];
-  if(sel.studentIds.has(studentId)){sel.studentIds.delete(studentId);}
-  else{sel.studentIds.add(studentId);}
+  if(sel.studentIds.has(studentId)){sel.studentIds.delete(studentId);}else{sel.studentIds.add(studentId);}
   if(sel.studentIds.size===0)delete familySelections[selKey];
-
-  // Update card visual
   var card=document.getElementById('fcc-'+classId+'-'+dateStr);
   var hasSel=familySelections[selKey]&&familySelections[selKey].studentIds.size>0;
   if(card){if(hasSel)card.classList.add('has-selection');else card.classList.remove('has-selection');}
-
-  // Update child row visual
   var row=document.getElementById('fcr-'+classId+'-'+dateStr+'-'+studentId);
   if(row){
     var isSel=familySelections[selKey]&&familySelections[selKey].studentIds.has(studentId);
     if(isSel){row.classList.add('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='<i class="fa-solid fa-check"></i>';}
     else{row.classList.remove('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='';}
   }
-
   updateFamilyConfirmBar();
 }
 
@@ -1454,15 +1883,11 @@ function updateFamilyConfirmBar(){
 async function confirmFamilySelections(){
   var btn=document.getElementById('familyConfirmBtn');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...';}
-
   var errors=[];
-
   for(var key in familySelections){
     var sel=familySelections[key];
     var studentIds=Array.from(sel.studentIds);
-
     if(sel.isToday){
-      // Check in: create class_sessions + class_attendance
       try{
         var sr=await sb.from('class_sessions').select('id').eq('class_id',sel.classId).eq('session_date',sel.dateStr).limit(1);
         var sessionId=null;
@@ -1474,20 +1899,16 @@ async function confirmFamilySelections(){
         }
       }catch(e){errors.push('Check-in error: '+e.message);}
     }else{
-      // Reserve: insert into class_reservations
       try{
         var resInserts=studentIds.map(function(sid){return{school_id:SID,class_id:sel.classId,student_id:sid,session_date:sel.dateStr,status:'reserved'};});
         await sb.from('class_reservations').insert(resInserts);
       }catch(e){
-        // Table may not exist — see SQL comment at top of family portal section
-        console.warn('class_reservations insert failed. Run the SQL shown in portal.html comments.',e);
+        console.warn('class_reservations insert failed. Run the SQL in §SECTION: FAMILY_PORTAL comments.',e);
         errors.push('Reservation table not ready. Ask your admin to run the setup SQL.');
       }
     }
   }
-
   familySelections={};
-
   if(errors.length){
     var bar=document.getElementById('familyConfirmBar');
     var summary=document.getElementById('familyConfirmSummary');
@@ -1496,11 +1917,7 @@ async function confirmFamilySelections(){
     setTimeout(function(){if(bar)bar.style.display='none';},4000);
     return;
   }
-
-  // Reload to reflect confirmed state
   await buildFamilySchedule();
-
-  // Show success
   var bar=document.getElementById('familyConfirmBar');
   var summary=document.getElementById('familyConfirmSummary');
   if(summary)summary.innerHTML='<span style="color:#7DBD7D"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>All confirmed!</span>';
@@ -1513,7 +1930,7 @@ async function buildFamilyAnnouncements(){
     var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').order('sent_at',{ascending:false}).limit(5);
     var el=document.getElementById('familyAnnouncementsList');
     var data=r.data||[];
-    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-bullhorn" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';return;}
+    if(!data.length){el.innerHTML=emptyState('fa-bullhorn','No announcements yet.');return;}
     var typeIcons={announcement:'fa-bullhorn',event:'fa-calendar-star',closing:'fa-door-closed',cancellation:'fa-xmark',custom:'fa-bolt'};
     el.innerHTML=data.map(function(a){
       var icon=typeIcons[a.type]||'fa-bullhorn';
@@ -1531,25 +1948,20 @@ function switchFamilyTab(tab){
     var btn=document.getElementById('ftab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
-  // Build schedule lazily when tab is opened
   if(tab==='schedule')buildFamilySchedule();
 }
 
 // ─────────────────────────────────────────────────────────────
-//  INSTRUCTOR PORTAL — Item 20
+//  §JS: INSTRUCTOR_PORTAL
 // ─────────────────────────────────────────────────────────────
 async function showInstructorPortal(instructor){
   hideAllScreens();
   document.getElementById('instructorPortalScreen').style.display='block';
-
   var instrName=instructor.first_name?(instructor.first_name+' '+(instructor.last_name||'')).trim():(instructor.name||'Instructor');
   var now=new Date();var hour=now.getHours();
-  var greeting=hour<12?'Good morning':'hour<17'?'Good afternoon':'Good evening';
-  greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
-
+  var greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   document.getElementById('instrGreeting').textContent=greeting+', '+instrName;
   document.getElementById('instrSubtitle').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-
   await buildInstructorTodayClasses();
 }
 
@@ -1558,12 +1970,10 @@ async function buildInstructorTodayClasses(){
   var today=DAYS[new Date().getDay()];
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
   var classes=(r.data||[]).filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
-
   if(!classes.length){
-    el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2.5rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes scheduled today.</div>';
+    el.innerHTML=emptyState('fa-calendar-xmark','No classes scheduled today.');
     return;
   }
-
   el.innerHTML=classes.map(function(c){
     var cn=c.name||c.title||'Class';
     var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
@@ -1577,8 +1987,12 @@ async function buildInstructorTodayClasses(){
 }
 
 // ─────────────────────────────────────────────────────────────
-//  UTILITIES
+//  §JS: UTILITIES
 // ─────────────────────────────────────────────────────────────
+function emptyState(icon,msg){
+  return '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid '+icon+'" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>'+msg+'</div>';
+}
+
 function isLight(hex){
   if(!hex||hex.length<7)return false;
   var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
@@ -1593,7 +2007,7 @@ function fmtTime(t){
 async function portalSignOut(){await sb.auth.signOut();window.location.reload();}
 
 // ─────────────────────────────────────────────────────────────
-//  BOOT
+//  §JS: BOOT
 // ─────────────────────────────────────────────────────────────
 init();
 </script>
