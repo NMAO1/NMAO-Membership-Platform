@@ -1683,10 +1683,10 @@ async function showFamilyPortal(family){
 async function switchChild(){
   var sel=document.getElementById('childSelect');if(!sel)return;
   selectedChildId=sel.value;
-  var child=​​​​​​​​​​​​​​​​
-familyChildren.find(function(c){return c.id===selectedChildId;});
+  var child=familyChildren.find(function(c){return c.id===selectedChildId;});
   if(child)await loadFamilyChildView(child);
 }
+
 
 async function loadFamilyChildView(child){
   var ini=((child.first_name?child.first_name[0]:'')+(child.last_name?child.last_name[0]:'')).toUpperCase();
