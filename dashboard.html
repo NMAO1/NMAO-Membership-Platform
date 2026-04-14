@@ -546,16 +546,6 @@
         <div id="setupStepsList"></div>
       </div>
       <div class="home-stats" id="homeStats"></div>
-      <!-- Revenue Goal Widget -->
-      <div class="revenue-goal-widget" id="revenueGoalWidget" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem">
-          <div class="goal-label"><i class="fa-solid fa-bullseye" style="margin-right:0.4rem"></i>Monthly Revenue Goal</div>
-          <div style="font-size:0.68rem;color:var(--muted)" id="goalPctLabel"></div>
-        </div>
-        <div class="goal-amount" id="goalCurrentAmt">$0</div>
-        <div class="goal-bar-track"><div class="goal-bar-fill" id="goalBarFill" style="width:0%"></div></div>
-        <div class="goal-pct" id="goalSubLabel"></div>
-      </div>
       <div class="content-heading"><h2>Revenue</h2><div class="rule-h"></div></div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
         <div class="rev-card" onclick="openRevenueBreakdown('today')"><div class="rev-amount" id="revToday">$0</div><div class="rev-label">Today</div></div>
@@ -2074,7 +2064,6 @@ async function init() {
     buildSetupChecklist();
     buildInstructorComparison();
     loadRevenue();
-    loadRevenueGoal();
     await loadStripeConnectStatus();
     hideLoading();
   } catch(e) {
@@ -2123,8 +2112,7 @@ async function loadSchool() {
     if (d.late_cancel_fee)     document.getElementById('lateCancelFee').value     = d.late_cancel_fee;
     if (d.session_pack_low_threshold) document.getElementById('packLowThreshold').value = d.session_pack_low_threshold;
     if (d.late_cancel_action === 'charge') document.getElementById('lateCancelFeeField').style.display = 'block';
-    // Revenue goal widget
-    if (d.revenue_goal && d.revenue_goal > 0) updateRevenueGoalWidget(d.revenue_goal);
+
     try {
       var wr = await sb.from('waivers').select('*').eq('school_id',SID).eq('active',true).limit(1);
       if (wr.data && wr.data.length) {
@@ -2762,7 +2750,7 @@ async function loadRevenue(){
     document.getElementById('revToday').textContent='$'+sum(rt.data).toFixed(2);
     document.getElementById('revYesterday').textContent='$'+sum(ry.data).toFixed(2);
     document.getElementById('revMonth').textContent='$'+sum(rm.data).toFixed(2);
-    updateRevenueGoalWidget(0);
+    
   }catch(e){document.getElementById('revToday').textContent='$0.00';document.getElementById('revYesterday').textContent='$0.00';document.getElementById('revMonth').textContent='$0.00';}
 }
 async function openRevenueBreakdown(period){
