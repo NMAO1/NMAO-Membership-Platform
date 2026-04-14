@@ -1064,8 +1064,18 @@ async function buildPortal(s){
 async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
-  var classes=r.data||[];
-  if(!classes.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled yet.</div>';return;}
+  var allFetched=r.data||[];
+  var studentProgIds=[];
+  if(s.program_id) studentProgIds.push(s.program_id);
+  try{
+    var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',s.membership_id);
+    if(mpR.data) mpR.data.forEach(function(x){if(studentProgIds.indexOf(x.program_id)===-1)studentProgIds.push(x.program_id);});
+  }catch(e){}
+  var classes=allFetched.filter(function(c){
+    return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1;
+  });
+  if(!classes.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled for your program yet.</div>';return;}
+
   var now=new Date();var todayIdx=now.getDay();
   var enrolled=await sb.from('class_enrollments').select('class_id').eq('student_id',s.id).gte('session_date',now.toISOString().split('T')[0]);
   if(enrolled.data)enrolled.data.forEach(function(e){enrolledClasses[e.class_id]=true;});
