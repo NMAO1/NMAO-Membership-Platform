@@ -2181,11 +2181,23 @@ async function saveReferralSettings() {
   var r=await sb.from('schools').update({referral_reward_type:document.getElementById('referralRewardType').value,referral_reward_value:parseFloat(document.getElementById('referralRewardValue').value)||0,referral_reward_trigger:document.getElementById('referralRewardTrigger').value}).eq('id',SID);
   if(r.error){setMsg('referralSettingsMsg',r.error.message,'error');}else{setMsg('referralSettingsMsg','Saved!','success');setTimeout(function(){document.getElementById('referralSettingsMsg').textContent='';},3000);}
 }
-async function saveSessionSettings() {
+async function saveSessionSettings(){
   setMsg('sessSettingsMsg','Saving...','');
-  var r=await sb.from('schools').update({no_show_hours:parseInt(document.getElementById('noShowHours').value)||1,no_show_policy:document.getElementById('noShowAction').value,grace_period_count:parseInt(document.getElementById('noShowGrace').value)||0,late_cancel_hours:parseInt(document.getElementById('lateCancelHours').value)||24,late_cancel_action:document.getElementById('lateCancelAction').value,late_cancel_fee:parseFloat(document.getElementById('lateCancelFee').value)||0,session_pack_low_threshold:parseInt(document.getElementById('packLowThreshold').value)||2}).eq('id',SID);
-  if(r.error){setMsg('sessSettingsMsg',r.error.message,'error');}else{setMsg('sessSettingsMsg','Session settings saved!','success');setTimeout(function(){document.getElementById('sessSettingsMsg').textContent='';},3000);}
+  var r=await sb.from('session_settings').upsert({
+    school_id:SID,
+    no_show_window_hours:parseInt(document.getElementById('noShowHours').value)||2,
+    no_show_action:document.getElementById('noShowAction').value||'No Action',
+    grace_period_count:parseInt(document.getElementById('noShowGrace').value)||0,
+    late_cancel_hours:parseInt(document.getElementById('lateCancelHours').value)||24,
+    late_cancel_action:document.getElementById('lateCancelAction').value||'No Action',
+    late_cancel_fee:parseFloat(document.getElementById('lateCancelFee').value)||0,
+    low_pack_threshold:parseInt(document.getElementById('packLowThreshold').value)||2,
+    updated_at:new Date().toISOString()
+  },{onConflict:'school_id'});
+  if(r.error){setMsg('sessSettingsMsg',r.error.message,'error');}
+  else{setMsg('sessSettingsMsg','Session settings saved!','success');setTimeout(function(){document.getElementById('sessSettingsMsg').textContent='';},3000);}
 }
+
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
 function updatePlanBadge(plan) {
   var labels={starter:'Starter',professional:'Professional',elite:'Elite'};
