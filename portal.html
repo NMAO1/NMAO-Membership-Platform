@@ -319,22 +319,6 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-book-now{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.65rem 1.4rem;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.45rem;margin-top:0.85rem;transition:opacity 0.2s;}
 .btn-book-now:hover{opacity:0.9;}
 
-/* ══════════════════════════════════════════
-   §CSS: REFERRAL_SECTION [NEW]
-   Search: §CSS: REFERRAL_SECTION
-══════════════════════════════════════════ */
-.referral-code-box{font-family:'Libre Baskerville',serif;font-size:1.6rem;color:var(--gold);letter-spacing:0.25em;text-align:center;padding:1rem;background:var(--gold-bg);border:1px dashed rgba(201,168,76,0.45);margin:0.75rem 0;cursor:pointer;user-select:all;transition:background 0.2s;}
-.referral-code-box:hover{background:rgba(201,168,76,0.14);}
-.referral-copy-hint{font-size:0.68rem;color:var(--muted);text-align:center;margin-top:-0.3rem;margin-bottom:0.85rem;letter-spacing:0.1em;}
-.referral-stats-row{display:flex;gap:0.75rem;margin-top:0.5rem;}
-.referral-stat{text-align:center;flex:1;padding:0.85rem;background:var(--black);border:1px solid var(--border);}
-.referral-stat-num{font-family:var(--font-display);font-size:1.8rem;color:var(--gold);line-height:1;margin-bottom:0.2rem;}
-.referral-stat-label{font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);}
-.referral-reward-banner{display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);margin-top:0.75rem;}
-.referral-reward-icon{color:var(--gold);font-size:1.1rem;flex-shrink:0;}
-.referral-reward-text{font-size:0.82rem;color:var(--muted2);line-height:1.5;}
-.referral-reward-value{color:var(--gold);font-weight:700;}
-
   </style>
 </head>
 <body>
@@ -515,14 +499,6 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
           <div id="curriculumList"></div>
         </div>
-        <!-- §SECTION: REFERRAL [NEW] -->
-        <div class="portal-section" id="referralSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-user-plus"></i> Refer a Friend</div>
-          <div class="info-card" id="referralCard">
-            <div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div>
-          </div>
-        </div>
-      </div>
 
       <!-- ════════════════════════════════════
            §SECTION: TAB_PROGRESS
@@ -827,11 +803,10 @@ async function init(){
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: SCHOOL_BRANDING
-//  Also fetches referral fields for §JS: REFERRAL_SECTION
 // ─────────────────────────────────────────────────────────────
 async function loadSchoolBranding(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages,referral_reward_type,referral_reward_value,referral_reward_trigger').eq('id',SID).single();
+    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
     if(!r.data)return;
     var d=r.data;
     schoolData=d;
@@ -1077,7 +1052,7 @@ async function buildPortal(s){
   await buildAttendance(s.id);
   await buildSchedule(s);
   await buildAnnouncements();
-  await buildReferral(s);  // §JS: REFERRAL_SECTION — always loads with profile
+
   document.getElementById('portalLoading').style.display='none';
   document.getElementById('portalContent').style.display='block';
 }
@@ -1584,78 +1559,6 @@ async function buildBook(){
     el.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load instructors.</div>';
     console.error('buildBook error:',e);
   }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  §JS: REFERRAL_SECTION [NEW]
-//  Code = last 8 chars of student.id (uppercase)
-//  Count from students where referred_by = student.id
-//  Reward info from schoolData (loaded in §JS: SCHOOL_BRANDING)
-//  Search: §JS: REFERRAL_SECTION
-// ─────────────────────────────────────────────────────────────
-async function buildReferral(s){
-  var sec=document.getElementById('referralSection');
-  var card=document.getElementById('referralCard');
-  if(!sec||!card)return;
-
-  try{
-    var code=s.id.slice(-8).toUpperCase();
-
-    // Count referrals made by this student
-    var refR=await sb.from('students').select('*',{count:'exact',head:true}).eq('school_id',SID).eq('referred_by',s.id);
-    var refCount=refR.count||0;
-
-    // Reward info from schoolData
-    var rewardType=schoolData.referral_reward_type||'';
-    var rewardValue=schoolData.referral_reward_value||'';
-    var rewardTrigger=schoolData.referral_reward_trigger||'';
-    var hasReward=!!(rewardType&&rewardValue);
-    var rewardDesc='';
-    if(hasReward){
-      if(rewardType==='credit')rewardDesc='$'+rewardValue+' account credit';
-      else if(rewardType==='free_month')rewardDesc='1 free month';
-      else if(rewardType==='discount')rewardDesc=rewardValue+'% off your next month';
-      else rewardDesc=rewardValue+' ('+rewardType+')';
-    }
-
-    var html='';
-    html+='<div style="font-size:0.82rem;color:var(--muted2);margin-bottom:0.25rem">Share your referral code with friends:</div>';
-    html+='<div class="referral-code-box" onclick="copyReferralCode(\''+code+'\',this)">'+code+'</div>';
-    html+='<div class="referral-copy-hint"><i class="fa-regular fa-copy" style="margin-right:0.3rem"></i>Tap to copy</div>';
-    html+='<div class="referral-stats-row">';
-    html+='<div class="referral-stat"><div class="referral-stat-num">'+refCount+'</div><div class="referral-stat-label">Friends Referred</div></div>';
-    if(hasReward){
-      html+='<div class="referral-stat"><div class="referral-stat-num" style="font-size:1rem;padding-top:0.3rem">'+rewardDesc+'</div><div class="referral-stat-label">Your Reward</div></div>';
-    }
-    html+='</div>';
-    if(hasReward){
-      var triggerNote=rewardTrigger?'Reward unlocks when your referral '+rewardTrigger+'.':'Reward applied automatically when your referral signs up.';
-      html+='<div class="referral-reward-banner"><div class="referral-reward-icon"><i class="fa-solid fa-gift"></i></div><div class="referral-reward-text">'+triggerNote+'</div></div>';
-    }
-
-    card.innerHTML=html;
-    sec.style.display='block';
-  }catch(e){
-    card.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Referral info unavailable.</div>';
-    sec.style.display='block';
-    console.error('buildReferral error:',e);
-  }
-}
-
-function copyReferralCode(code,el){
-  navigator.clipboard.writeText(code).then(function(){
-    var orig=el.textContent;
-    el.textContent='Copied!';
-    el.style.color='#7DBD7D';
-    setTimeout(function(){el.textContent=orig;el.style.color='';},2000);
-  }).catch(function(){
-    // Fallback for older browsers
-    var ta=document.createElement('textarea');
-    ta.value=code;ta.style.position='fixed';ta.style.opacity='0';
-    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    el.textContent='Copied!';el.style.color='#7DBD7D';
-    setTimeout(function(){el.textContent=code;el.style.color='';},2000);
-  });
 }
 
 // ─────────────────────────────────────────────────────────────
