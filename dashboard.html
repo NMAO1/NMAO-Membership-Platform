@@ -4013,13 +4013,13 @@ async function saveInstructorSlug(){
 function updateBookingLinkPreview(slug){
   var prev=document.getElementById('instrBookingLinkPreview');
   if(!prev) return;
-  prev.textContent=slug?window.location.origin+'/book.html?slug='+slug:'Enter a slug above';
+window.location.origin+'/NMAO-Membership-Platform/book.html?slug='+slug:'Enter a slug ab
 }
 function copyBookingLink(){
   if(!currentInstructorProfile) return;
   var slug=currentInstructorProfile.booking_slug;
   if(!slug){alert('Please save a slug first.');return;}
-  var url=window.location.origin+'/book.html?slug='+slug;
+var url=window.location.origin+'/NMAO-Membership-Platform/book.html?slug='+slug;
   navigator.clipboard.writeText(url).then(function(){alert('Booking link copied!');}).catch(function(){prompt('Copy this link:',url);});
 }
 function sendInstructorMagicLinkFromProfile(){ if(currentInstructorProfile) sendInstructorMagicLink(currentInstructorProfile.id); }
