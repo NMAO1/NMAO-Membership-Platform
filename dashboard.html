@@ -4521,7 +4521,7 @@ async function sendCommunication(){
 
 // Alerts
 var ALERT_TYPES=['announcement','warning','event','promotion'];
-function selectAlertType(type){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.type===type);}); }
+function selectAlertType(type,btn){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.remove('selected');}); if(btn)btn.classList.add('selected'); }
 async function loadAlertHistory(){
   try{
     var r=await sb.from('school_announcements').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
