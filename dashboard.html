@@ -789,15 +789,7 @@
             <div class="field"><label>Audience</label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
             <div class="field" id="commTagField" style="display:none"><label>Select Tag</label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
             <div class="field"><label>Message</label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
-<div class="field" style="margin-bottom:0.75rem">
-  <label style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.5rem">Send Via</label>
-  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-    <button class="alert-type-btn selected" id="channel-email" onclick="selectChannel('email',this)"><i class="fa-solid fa-envelope"></i> Email</button>
-    <button class="alert-type-btn" id="channel-sms" onclick="selectChannel('sms',this)"><i class="fa-solid fa-comment-sms"></i> SMS</button>
-    <button class="alert-type-btn" id="channel-both" onclick="selectChannel('both',this)"><i class="fa-solid fa-bullhorn"></i> Both</button>
-  </div>
-</div>
-<button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+            <button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
           <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span></div><div class="panel-body">
@@ -1336,9 +1328,8 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title" id="attendanceModalTitle">Class Attendance</span><button class="modal-close" onclick="closeAttendance()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div><div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white)" id="attendanceDate"></div></div>
-        <div style="text-align:center"><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Enrolled</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--muted2)" id="attendanceEnrolled">—</div></div>
         <div style="text-align:right"><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)" id="attendanceCount">0</div></div>
       </div>
       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
@@ -1993,10 +1984,9 @@ var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSe
 var rosterAttendance        = {};
 var milestoneSettings       = {}, calWeekOffset = 0, calMonthOffset = 0, calView = 'week';
 var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
-var automationSettings        = {}, selectedAlertType = 'announcement', selectedChannel = 'email', currentPlan = 'professional';
+var automationSettings      = {}, selectedAlertType = 'announcement', currentPlan = 'professional';
 var quillEditors            = {};
 var posCart                 = [], posSelectedStudentId = null, posSelectedStudentName = null;
-var todayEnrollCounts = {};
 var currentReportType       = null, currentReportDef = null, reportData = [];
 var selectedBadgeStyle      = '';
 var classFieldSettings      = [];
@@ -2066,7 +2056,6 @@ async function init() {
     await loadAutomations();
     await loadAlertHistory();
     await loadSmsInbox();
-    await loadTodayEnrollCounts();
     buildTodaySchedule();
     buildWeekGrid();
     buildHomeStats();
@@ -2427,11 +2416,6 @@ async function dismissSetupBanner(){
 
 // ─────────────────────────────── §CALENDAR ───────────────────────────────
 
-  async function loadTodayEnrollCounts(){
-  var today=new Date().toISOString().split('T')[0];
-  todayEnrollCounts=await fetchEnrollmentCounts(today,today);
-}
-  
 function setCalView(view){
   calView=view; try{localStorage.setItem('nmao_cal_view',view);}catch(e){}
   document.getElementById('calViewWeek').classList.toggle('active',view==='week');
@@ -2596,10 +2580,7 @@ function classCardHTML(c){
   var dn=c.name||c.title||'Untitled'; var st=dn.replace(/'/g,'');
   var instr=c.instructor_name?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem"></i>'+c.instructor_name+'</div>':'';
   var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'');
-  var cnt=todayEnrollCounts[c.id+'_'+new Date().toISOString().split('T')[0]]||0;
-  var badge=rsvpBadge(cnt,c.capacity);
-  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+badge+'</div>'+instr+'<div class="class-tags">'+tags+'</div></div>
-
+  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
 }
 function buildWeekGrid(){
   var now=new Date(); var cur=now.getDay(); var ws=new Date(now); ws.setDate(now.getDate()-cur); var html='';
@@ -2694,10 +2675,6 @@ async function openAttendance(classId,ct){
   document.getElementById('attendanceModalTitle').textContent=ct+' - Attendance';
   document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   document.getElementById('attendanceCount').textContent='0';
-  var _cls=allClasses.find(function(c){return c.id===classId;});
-var _enrolled=todayEnrollCounts[classId+'_'+new Date().toISOString().split('T')[0]]||0;
-var _enrolledEl=document.getElementById('attendanceEnrolled');
-if(_enrolledEl)_enrolledEl.textContent=(_cls&&_cls.capacity)?_enrolled+'/'+_cls.capacity:(_enrolled||'—');
   document.getElementById('attendanceMsg').textContent='';
   document.getElementById('attendanceList').innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</div>';
   document.getElementById('attendanceModal').classList.add('active');
@@ -4533,7 +4510,7 @@ async function sendCommunication(){
     });
     if(r.ok){
       setMsg('commMsg','Sent to '+emailRecipients.length+' recipient'+(emailRecipients.length!==1?'s':'')+'!','success');
-      await sb.from('communications').insert({school_id:SID,type:selectedChannel,subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
+      await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
       setTimeout(function(){document.getElementById('commMsg').textContent='';},4000);
     }else{
       var err=await r.json(); setMsg('commMsg',err.error||'Send failed.','error');
@@ -4545,11 +4522,6 @@ async function sendCommunication(){
 // Alerts
 var ALERT_TYPES=['announcement','warning','event','promotion'];
 function selectAlertType(type,btn){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.remove('selected');}); if(btn)btn.classList.add('selected'); }
-function selectChannel(channel,btn){
-  selectedChannel=channel;
-  document.querySelectorAll('#channel-email,#channel-sms,#channel-both').forEach(function(b){b.classList.remove('selected');});
-  if(btn)btn.classList.add('selected');
-}
 async function loadAlertHistory(){
   try{
     var r=await sb.from('school_announcements').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
