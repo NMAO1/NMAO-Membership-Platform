@@ -4487,8 +4487,7 @@ async function saveAutomation(key){
 
 // Broadcast
 function toggleTagAudience(){ var v=document.getElementById('commAudience').value; document.getElementById('commTagField').style.display=v==='tag'?'block':'none'; }
-async function sendBroadcast(){
-  var channel=document.getElementById('commChannel').value;
+async function sendCommunication(){
   var audience=document.getElementById('commAudience').value;
   var tagId=document.getElementById('commTag').value;
   var subject=document.getElementById('commSubject').value.trim();
@@ -4507,11 +4506,11 @@ async function sendBroadcast(){
     var r=await fetch(SURL+'/functions/v1/send-broadcast',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({school_id:SID,channel:channel,subject:subject,body:body,recipients:emailRecipients.map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name};})})
+      body:JSON.stringify({school_id:SID,subject:subject,body:body,recipients:emailRecipients.map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name};})})
     });
     if(r.ok){
       setMsg('commMsg','Sent to '+emailRecipients.length+' recipient'+(emailRecipients.length!==1?'s':'')+'!','success');
-      await sb.from('broadcast_history').insert({school_id:SID,channel:channel,subject:subject||null,body:body,recipient_count:emailRecipients.length,sent_at:new Date().toISOString()});
+      await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
       setTimeout(function(){document.getElementById('commMsg').textContent='';},4000);
     }else{
       var err=await r.json(); setMsg('commMsg',err.error||'Send failed.','error');
@@ -4519,47 +4518,47 @@ async function sendBroadcast(){
   }catch(e){setMsg('commMsg',e.message,'error');}
 }
 
+
 // Alerts
 var ALERT_TYPES=['announcement','warning','event','promotion'];
 function selectAlertType(type){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.type===type);}); }
 async function loadAlertHistory(){
   try{
-    var r=await sb.from('school_alerts').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
-    var el=document.getElementById('alertHistoryList'); if(!el) return;
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
+    var el=document.getElementById('alertHistory'); if(!el) return;
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No alerts sent yet.</div>';return;}
-    el.innerHTML=data.map(function(a){var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem"><div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:var(--white)">'+a.title+'</div><div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div></div><div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div></div>';}).join('');
+    el.innerHTML=data.map(function(a){var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem"><div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:var(--white)">'+a.subject+'</div><div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div></div><div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div></div>';}).join('');
   }catch(e){}
 }
 async function sendAlert(){
-  var title=document.getElementById('alertTitle').value.trim();
+  var subject=document.getElementById('alertSubject').value.trim();
   var body=getQuillContent('alertBodyEditor');
   var audience=document.getElementById('alertAudience').value;
-  var tagId=document.getElementById('alertTag').value;
-  if(!title||!body){setMsg('alertMsg','Title and body required.','error');return;}
+  if(!subject||!body){setMsg('alertMsg','Subject and body required.','error');return;}
   setMsg('alertMsg','Sending...','');
-  var r=await sb.from('school_alerts').insert({school_id:SID,type:selectedAlertType,title:title,body:body,audience:audience,tag_id:tagId||null});
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString()});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
-  else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertTitle').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
+  else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
 
 // SMS Inbox
 async function loadSmsInbox(){
   var el=document.getElementById('smsInboxList'); if(!el) return;
   try{
-    var r=await sb.from('sms_messages').select('*, students(first_name,last_name)').eq('school_id',SID).order('created_at',{ascending:false}).limit(50);
+    var r=await sb.from('sms_inbox').select('*, students(first_name,last_name)').eq('school_id',SID).order('created_at',{ascending:false}).limit(50);
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1.5rem;text-align:center">No SMS messages yet.</div>';return;}
     // Group by student/sender
     var threads={};
     data.forEach(function(msg){
-      var key=msg.student_id||msg.from_number||'unknown';
+      var key=msg.student_id||msg.from_phone||'unknown';
       if(!threads[key]){threads[key]={msgs:[],student:msg.students,lastMsg:msg};}
       threads[key].msgs.push(msg);
     });
     el.innerHTML=Object.keys(threads).map(function(key){
       var thread=threads[key]; var last=thread.lastMsg;
-      var s=thread.student; var name=s?s.first_name+' '+s.last_name:(last.from_number||'Unknown');
+      var s=thread.student; var name=s?s.first_name+' '+s.last_name:(last.from_phone||'Unknown');
       var dt=new Date(last.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
       var unread=thread.msgs.filter(function(m){return m.direction==='inbound'&&!m.read;}).length;
       return '<div class="sms-thread-row" onclick="openSmsThread(\''+key+'\',\''+name.replace(/'/g,"\\'")+'\')">' +
@@ -4586,14 +4585,14 @@ async function openSmsThread(studentOrPhone,name){
 async function loadSmsThread(key){
   var el=document.getElementById('smsThreadMessages');
   try{
-    var q=sb.from('sms_messages').select('*').eq('school_id',SID).order('created_at');
+    var q=sb.from('sms_inbox').select('*').eq('school_id',SID).order('created_at');
     var student=allStudents.find(function(s){return s.id===key;});
-    if(student){q=q.eq('student_id',key);}else{q=q.eq('from_number',key);}
+    if(student){q=q.eq('student_id',key);}else{q=q.eq('from_phone',key);}
     var r=await q;
     var data=r.data||[];
     // Mark inbound as read
     var unreadIds=data.filter(function(m){return m.direction==='inbound'&&!m.read;}).map(function(m){return m.id;});
-    if(unreadIds.length) await sb.from('sms_messages').update({read:true}).in('id',unreadIds);
+    if(unreadIds.length) await sb.from('sms_inbox').update({read:true}).in('id',unreadIds);
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem">No messages.</div>';return;}
     el.innerHTML=data.map(function(m){
       var isOut=m.direction==='outbound';
