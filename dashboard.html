@@ -1336,8 +1336,9 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title" id="attendanceModalTitle">Class Attendance</span><button class="modal-close" onclick="closeAttendance()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div><div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white)" id="attendanceDate"></div></div>
+        <div style="text-align:center"><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Enrolled</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--muted2)" id="attendanceEnrolled">—</div></div>
         <div style="text-align:right"><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)" id="attendanceCount">0</div></div>
       </div>
       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
@@ -1995,6 +1996,7 @@ var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
 var automationSettings        = {}, selectedAlertType = 'announcement', selectedChannel = 'email', currentPlan = 'professional';
 var quillEditors            = {};
 var posCart                 = [], posSelectedStudentId = null, posSelectedStudentName = null;
+var todayEnrollCounts = {};
 var currentReportType       = null, currentReportDef = null, reportData = [];
 var selectedBadgeStyle      = '';
 var classFieldSettings      = [];
@@ -2064,6 +2066,7 @@ async function init() {
     await loadAutomations();
     await loadAlertHistory();
     await loadSmsInbox();
+    await loadTodayEnrollCounts();
     buildTodaySchedule();
     buildWeekGrid();
     buildHomeStats();
@@ -2424,6 +2427,11 @@ async function dismissSetupBanner(){
 
 // ─────────────────────────────── §CALENDAR ───────────────────────────────
 
+  async function loadTodayEnrollCounts(){
+  var today=new Date().toISOString().split('T')[0];
+  todayEnrollCounts=await fetchEnrollmentCounts(today,today);
+}
+  
 function setCalView(view){
   calView=view; try{localStorage.setItem('nmao_cal_view',view);}catch(e){}
   document.getElementById('calViewWeek').classList.toggle('active',view==='week');
@@ -2588,7 +2596,10 @@ function classCardHTML(c){
   var dn=c.name||c.title||'Untitled'; var st=dn.replace(/'/g,'');
   var instr=c.instructor_name?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem"></i>'+c.instructor_name+'</div>':'';
   var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'');
-  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
+  var cnt=todayEnrollCounts[c.id+'_'+new Date().toISOString().split('T')[0]]||0;
+  var badge=rsvpBadge(cnt,c.capacity);
+  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+badge+'</div>'+instr+'<div class="class-tags">'+tags+'</div></div>
+
 }
 function buildWeekGrid(){
   var now=new Date(); var cur=now.getDay(); var ws=new Date(now); ws.setDate(now.getDate()-cur); var html='';
@@ -2683,6 +2694,10 @@ async function openAttendance(classId,ct){
   document.getElementById('attendanceModalTitle').textContent=ct+' - Attendance';
   document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   document.getElementById('attendanceCount').textContent='0';
+  var _cls=allClasses.find(function(c){return c.id===classId;});
+var _enrolled=todayEnrollCounts[classId+'_'+new Date().toISOString().split('T')[0]]||0;
+var _enrolledEl=document.getElementById('attendanceEnrolled');
+if(_enrolledEl)_enrolledEl.textContent=(_cls&&_cls.capacity)?_enrolled+'/'+_cls.capacity:(_enrolled||'—');
   document.getElementById('attendanceMsg').textContent='';
   document.getElementById('attendanceList').innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</div>';
   document.getElementById('attendanceModal').classList.add('active');
