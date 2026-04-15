@@ -789,7 +789,15 @@
             <div class="field"><label>Audience</label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
             <div class="field" id="commTagField" style="display:none"><label>Select Tag</label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
             <div class="field"><label>Message</label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
-            <button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+<div class="field" style="margin-bottom:0.75rem">
+  <label style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.5rem">Send Via</label>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <button class="alert-type-btn selected" id="channel-email" onclick="selectChannel('email',this)"><i class="fa-solid fa-envelope"></i> Email</button>
+    <button class="alert-type-btn" id="channel-sms" onclick="selectChannel('sms',this)"><i class="fa-solid fa-comment-sms"></i> SMS</button>
+    <button class="alert-type-btn" id="channel-both" onclick="selectChannel('both',this)"><i class="fa-solid fa-bullhorn"></i> Both</button>
+  </div>
+</div>
+<button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
           <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span></div><div class="panel-body">
@@ -1984,7 +1992,7 @@ var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSe
 var rosterAttendance        = {};
 var milestoneSettings       = {}, calWeekOffset = 0, calMonthOffset = 0, calView = 'week';
 var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
-var automationSettings      = {}, selectedAlertType = 'announcement', currentPlan = 'professional';
+var automationSettings        = {}, selectedAlertType = 'announcement', selectedChannel = 'email', currentPlan = 'professional';
 var quillEditors            = {};
 var posCart                 = [], posSelectedStudentId = null, posSelectedStudentName = null;
 var currentReportType       = null, currentReportDef = null, reportData = [];
@@ -4510,7 +4518,7 @@ async function sendCommunication(){
     });
     if(r.ok){
       setMsg('commMsg','Sent to '+emailRecipients.length+' recipient'+(emailRecipients.length!==1?'s':'')+'!','success');
-      await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
+      await sb.from('communications').insert({school_id:SID,type:selectedChannel,subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
       setTimeout(function(){document.getElementById('commMsg').textContent='';},4000);
     }else{
       var err=await r.json(); setMsg('commMsg',err.error||'Send failed.','error');
@@ -4522,6 +4530,11 @@ async function sendCommunication(){
 // Alerts
 var ALERT_TYPES=['announcement','warning','event','promotion'];
 function selectAlertType(type,btn){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.remove('selected');}); if(btn)btn.classList.add('selected'); }
+function selectChannel(channel,btn){
+  selectedChannel=channel;
+  document.querySelectorAll('#channel-email,#channel-sms,#channel-both').forEach(function(b){b.classList.remove('selected');});
+  if(btn)btn.classList.add('selected');
+}
 async function loadAlertHistory(){
   try{
     var r=await sb.from('school_announcements').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
