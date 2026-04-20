@@ -408,7 +408,13 @@
         <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Present <span id="classRosterCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.2rem;margin-left:0.3rem">0</span></div>
         <button class="panel-action" style="font-size:0.72rem" onclick="markAllPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
       </div>
-      <div id="classRosterList" style="display:flex;flex-direction:column;gap:0.4rem;max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
+  <button class="btn-sm" id="rosterTabChecked" onclick="switchRosterTab('checked')">Checked In</button>
+  <button class="btn-sm" id="rosterTabEligible" onclick="switchRosterTab('eligible')">Eligible</button>
+  <button class="btn-sm" id="rosterTabAll" onclick="switchRosterTab('all')" style="border-color:var(--gold);color:var(--gold)">All</button>
+</div>
+<div id="classRosterList" style="display:flex;flex-direction:column;gap:0.4rem;max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+
       <p class="form-msg" id="classRosterMsg" style="margin-top:0.75rem"></p>
     </div>
   </div>
@@ -1986,6 +1992,8 @@ var currentAttendanceClassId= null, currentSessionId = null, attendanceRecords =
 var currentAttTab           = 'eligible';
 var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSessionId = null;
 var rosterAttendance        = {};
+var currentRosterTab = 'all';
+var currentRosterStudents = [];
 var milestoneSettings       = {}, calWeekOffset = 0, calMonthOffset = 0, calView = 'week';
 var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
 var automationSettings      = {}, selectedAlertType = 'announcement', currentPlan = 'professional';
@@ -2559,9 +2567,8 @@ async function openClassRosterFromCal(classId,dateStr){
   if(currentRosterSessionId){var ar=await sb.from('class_attendance').select('*').eq('session_id',currentRosterSessionId);if(ar.data)ar.data.forEach(function(x){rosterAttendance[x.student_id]=x.id;});}
   var studR=await sb.from('students').select('*').eq('school_id',SID).in('status',['active','trial']).order('last_name');
   var students=studR.data||[];
-  document.getElementById('classRosterCount').textContent=Object.keys(rosterAttendance).length;
-  if(!students.length){document.getElementById('classRosterList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No active students.</div>';return;}
-  document.getElementById('classRosterList').innerHTML=students.map(function(s){var present=!!rosterAttendance[s.id];return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid '+(present?'rgba(201,168,76,0.3)':'var(--border)')+';border-left:2px solid '+(present?'var(--gold)':'var(--border)')+';margin-bottom:0.25rem" id="rrow-'+s.id+'"><div style="font-size:0.88rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div><button onclick="toggleRosterAttendance(\''+s.id+'\')" id="rbtn-'+s.id+'" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:'+(present?'var(--gold)':'var(--muted)')+'"><i class="fa-solid '+(present?'fa-circle-check':'fa-circle')+'"></i></button></div>';}).join('');
+  currentRosterStudents = students;
+  switchRosterTab('all');
 }
 async function toggleRosterAttendance(sid){
   var btn=document.getElementById('rbtn-'+sid); var row=document.getElementById('rrow-'+sid);
@@ -2587,6 +2594,37 @@ async function markAllPresent(){
   for(var i=0;i<rows.length;i++){var sid=rows[i].id.replace('rrow-','');if(!rosterAttendance[sid])await toggleRosterAttendance(sid);}
   setMsg('classRosterMsg','All students marked present!','success');
   setTimeout(function(){document.getElementById('classRosterMsg').textContent='';},2000);
+}
+  function switchRosterTab(tab) {
+  currentRosterTab = tab;
+  var tabs = ['checked','eligible','all'];
+  tabs.forEach(function(t) {
+    var btn = document.getElementById('rosterTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) {
+      btn.style.borderColor = t === tab ? 'var(--gold)' : 'var(--border)';
+      btn.style.color       = t === tab ? 'var(--gold)' : 'var(--muted)';
+    }
+  });
+  var list = document.getElementById('classRosterList');
+  var students = currentRosterStudents;
+  var filtered;
+  if (tab === 'checked')       filtered = students.filter(function(s){ return !!rosterAttendance[s.id]; });
+  else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id]; });
+  else                         filtered = students;
+  if (!filtered.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">' +
+      (tab === 'checked' ? 'No one checked in yet.' : tab === 'eligible' ? 'All students checked in!' : 'No active students.') + '</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(s) {
+    var present = !!rosterAttendance[s.id];
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
+      '<div style="font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>' +
+      '<button onclick="toggleRosterAttendance(\'' + s.id + '\')" id="rbtn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:' + (present ? 'var(--gold)' : 'var(--muted)') + '">' +
+        '<i class="fa-solid ' + (present ? 'fa-circle-check' : 'fa-circle') + '"></i>' +
+      '</button>' +
+    '</div>';
+  }).join('');
 }
 function closeClassRoster(){ document.getElementById('classRosterModal').classList.remove('active'); currentRosterClassId=null; currentRosterSessionId=null; rosterAttendance={}; }
 
