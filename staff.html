@@ -749,55 +749,37 @@ async function buildTodayTab(){
   var greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   document.getElementById('todayGreeting').textContent=greet+', '+instrName;
   document.getElementById('todayDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-
   var today=DAYS[now.getDay()];
   var todayStr=now.toISOString().split('T')[0];
-
-  // Today's classes
   var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
   document.getElementById('qsClasses').textContent=todayClasses.length;
-
-  // Enrolled count total
   var totalExpected=0;
   todayClasses.forEach(function(c){totalExpected+=c.enrolled_count||0;});
   document.getElementById('qsExpected').textContent=totalExpected||'—';
-
-  // Total checked in today
-  var attR=await sb.from('class_attendance').select('student_id',{count:'exact',head:false}).eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
+  var attR=await sb.from('class_attendance').select('student_id,session_id').eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
   var checkedInToday=(attR.data||[]).length;
   document.getElementById('qsCheckedIn').textContent=checkedInToday||0;
-
-  // Membership alerts — students who checked in with inactive/expired memberships
   await loadMembershipAlerts(attR.data||[]);
-
-  // Render class list
   var el=document.getElementById('todayClassList');
   if(!todayClasses.length){
     el.innerHTML='<div class="no-classes"><i class="fa-regular fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-style:italic;color:var(--muted)">No classes scheduled today.</div></div>';
     return;
   }
-
-  // Load today's sessions to get attendance counts
   var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
   var sessMap={};(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;});
-
+  var attCountMap={};
+  var sessIdToClassId={};
+  Object.keys(sessMap).forEach(function(cid){sessIdToClassId[sessMap[cid]]=cid;});
+  (attR.data||[]).forEach(function(a){if(a.session_id&&sessIdToClassId[a.session_id]){var cid=sessIdToClassId[a.session_id];attCountMap[cid]=(attCountMap[cid]||0)+1;}});
   el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
     var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
     var hasSess=!!sessMap[c.id];
-    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">' +
-      '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>' +
-      '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
-      '<div class="class-row-meta">'+
-        (hasSess?'<span style="font-size:0.62rem;color:#7DBD7D;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-circle" style="font-size:0.45rem;margin-right:0.3rem"></i>Active</span>':'<span style="font-size:0.62rem;color:var(--muted)">Not started</span>')+
-        '<i class="fa-solid fa-chevron-right class-chevron"></i>'+
-      '</div>'+
-    '</div>';
+    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">'+'<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+'<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+'<div class="class-row-meta"><span style="font-family:var(--font-display);font-size:1.1rem;color:var(--gold);line-height:1">'+(attCountMap[c.id]||0)+'<span style="color:var(--muted);font-size:0.72rem">/'+(c.enrolled_count||0)+'</span></span>'+(hasSess?'<span style="font-size:0.55rem;color:#7DBD7D">Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+'</div>';
   }).join('');
-
-  // Update profile stats
   document.getElementById('psTodayClasses').textContent=todayClasses.length;
 }
+
 
 async function loadMembershipAlerts(todayAtt){
   if(!todayAtt.length)return;
