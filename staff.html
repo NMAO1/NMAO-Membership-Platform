@@ -793,8 +793,6 @@ var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',S
   });
 
   el.innerHTML=todayClasses.map(function(c){
-
-  el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
     var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
     var hasSess=!!sessMap[c.id];
