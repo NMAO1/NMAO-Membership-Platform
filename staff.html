@@ -763,7 +763,7 @@ async function buildTodayTab(){
   document.getElementById('qsExpected').textContent=totalExpected||'—';
 
   // Total checked in today
-  var attR=await sb.from('class_attendance').select('student_id,session_id').eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
+  var attR=await sb.from('class_attendance').select('student_id',{count:'exact',head:false}).eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
   var checkedInToday=(attR.data||[]).length;
   document.getElementById('qsCheckedIn').textContent=checkedInToday||0;
 
@@ -778,19 +778,8 @@ async function buildTodayTab(){
   }
 
   // Load today's sessions to get attendance counts
-var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
+  var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
   var sessMap={};(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;});
-
-  // Build per-class live attendance count
-  var attCountMap={};
-  var sessIdToClassId={};
-  Object.keys(sessMap).forEach(function(cid){sessIdToClassId[sessMap[cid]]=cid;});
-  (attR.data||[]).forEach(function(a){
-    if(a.session_id&&sessIdToClassId[a.session_id]){
-      var cid=sessIdToClassId[a.session_id];
-      attCountMap[cid]=(attCountMap[cid]||0)+1;
-    }
-  });
 
   el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
@@ -800,10 +789,10 @@ var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',S
       '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>' +
       '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
       '<div class="class-row-meta">'+
-        '<span style="font-family:var(--font-display);font-size:1.1rem;color:var(--gold);line-height:1">'+(attCountMap[c.id]||0)+'<span style="color:var(--muted);font-size:0.72rem">/'+(c.enrolled_count||0)+'</span></span>'+
-        (hasSess?'<span style="font-size:0.55rem;color:#7DBD7D;letter-spacing:0.08em;text-transform:uppercase"><i class="fa-solid fa-circle" style="font-size:0.4rem;margin-right:0.25rem"></i>Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+
+        (hasSess?'<span style="font-size:0.62rem;color:#7DBD7D;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-circle" style="font-size:0.45rem;margin-right:0.3rem"></i>Active</span>':'<span style="font-size:0.62rem;color:var(--muted)">Not started</span>')+
         '<i class="fa-solid fa-chevron-right class-chevron"></i>'+
       '</div>'+
+    '</div>';
   }).join('');
 
   // Update profile stats
@@ -866,13 +855,10 @@ function buildClassesTab(){
     html+='<div class="day-block"><div class="day-label">'+dayLabel+'</div>';
     dayClasses.forEach(function(c){
       var cn=c.name||c.title||'Class';var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
-    html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">' +
+      html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">' +
         '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+
         '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
-        '<div class="class-row-meta">'+
-          '<span style="font-family:var(--font-display);font-size:1.1rem;color:var(--gold)">'+(c.enrolled_count||0)+'<span style="color:var(--muted);font-size:0.72rem"> enrolled</span></span>'+
-          '<i class="fa-solid fa-chevron-right class-chevron"></i>'+
-        '</div>'+
+        '<div class="class-row-meta"><i class="fa-solid fa-chevron-right class-chevron"></i></div>'+
       '</div>';
     });
     html+='</div>';
