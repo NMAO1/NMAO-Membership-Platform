@@ -4891,8 +4891,9 @@ async function runReport(){
     if(def.filters){
       def.filters.forEach(function(f){
         var el=document.getElementById('rf-'+f.key); if(!el||!el.value) return;
-        if(f.key==='date_from') q=q.gte('created_at',el.value+'T00:00:00');
-        else if(f.key==='date_to') q=q.lte('created_at',el.value+'T23:59:59');
+        var df=def.dateField||'created_at';
+        if(f.key==='date_from') q=q.gte(df,el.value+'T00:00:00');
+        else if(f.key==='date_to') q=q.lte(df,el.value+'T23:59:59');
         else q=q.eq(f.key,el.value);
       });
     }
