@@ -2362,7 +2362,7 @@ function navigate(page,el){
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
   if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
-  if(page==='analytics')   { buildInstructorComparison(); }
+  if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='communications') { loadSmsInbox(); }
 }
@@ -4716,32 +4716,39 @@ function buildAnalytics(){
 
 async function loadRevenueChart(){
   try{
-    var now=new Date(); var labels=[]; var values=[];
+    var now=new Date(); var labels=[]; var values=[]; var total=0;
     for(var i=5;i>=0;i--){
       var d=new Date(now.getFullYear(),now.getMonth()-i,1);
       labels.push(MONTHS[d.getMonth()].slice(0,3));
-      var start=d.toISOString().split('T')[0];
+      var start=new Date(d.getFullYear(),d.getMonth(),1).toISOString().split('T')[0];
       var end=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0];
       var r=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',start+'T00:00:00').lte('created_at',end+'T23:59:59').eq('status','paid');
-      values.push((r.data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0));
+      var sum=(r.data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
+      values.push(sum); total+=sum;
     }
-    renderRevenueChart(labels,values);
-  }catch(e){}
+    var max=Math.max.apply(null,values)||1;
+    var chartEl=document.getElementById('revTrendChart');
+    var labelsEl=document.getElementById('revTrendLabels');
+    var totalEl=document.getElementById('revTrendTotal');
+    if(!chartEl) return;
+    totalEl.textContent='$'+total.toFixed(2)+' total';
+    chartEl.innerHTML=values.map(function(v,i){
+      var pct=Math.round((v/max)*100);
+      var isCurrentMonth=i===5;
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0.3rem">'+
+        '<div style="font-size:0.65rem;color:var(--muted)">$'+v.toFixed(0)+'</div>'+
+        '<div style="width:100%;background:'+(isCurrentMonth?'var(--gold)':'rgba(201,168,76,0.35)')+';border-radius:2px 2px 0 0;height:'+pct+'%;min-height:'+(v>0?'4px':'0')+'px;transition:height 0.6s ease"></div>'+
+      '</div>';
+    }).join('');
+    labelsEl.innerHTML=labels.map(function(l,i){
+      return '<div style="flex:1;text-align:center;font-size:0.68rem;color:'+(i===5?'var(--gold)':'var(--muted)')+'">'+l+'</div>';
+    }).join('');
+  }catch(e){
+    var chartEl=document.getElementById('revTrendChart');
+    if(chartEl) chartEl.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">Revenue data unavailable.</div>';
+  }
 }
-function renderRevenueChart(labels,values){
-  var el=document.getElementById('revenueChartBars'); if(!el) return;
-  var max=Math.max.apply(null,values)||1;
-  el.innerHTML=values.map(function(v,i){
-    var pct=Math.round((v/max)*100);
-    return '<div class="chart-bar-col">'+
-      '<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;margin-bottom:0.3rem">'+
-        '<div class="chart-bar-fill" style="height:'+pct+'%;min-height:2px;width:100%;background:var(--gold);border-radius:2px 2px 0 0"></div>'+
-      '</div>'+
-      '<div class="chart-bar-label">'+labels[i]+'</div>'+
-      '<div class="chart-bar-value">$'+v.toFixed(0)+'</div>'+
-    '</div>';
-  }).join('');
-}
+
 
 async function buildInstructorComparison(){
   var el=document.getElementById('instructorComparisonList'); if(!el) return;
