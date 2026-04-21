@@ -706,20 +706,38 @@ async function sendStaffLink(){
 function setLoginMsg(t,c){var el=document.getElementById('loginMsg');el.textContent=t;el.className='login-msg '+(c||'');}
 
 async function startStaffApp(user){
-  // Verify instructor record
-  var r=await sb.from('instructors').select('*').eq('school_id',SID).eq('email',user.email).eq('active',true).maybeSingle();
+  // Verify instructor record — match on email (initial auth)
+  var r=await sb.from('instructors')
+    .select('*')
+    .eq('school_id',SID)
+    .eq('email',user.email)
+    .eq('active',true)
+    .maybeSingle();
+
   if(r.error||!r.data){
     document.getElementById('loginScreen').style.display='flex';
     setLoginMsg('No instructor account found for '+user.email,'er');
     return;
   }
+
   currentInstructor=r.data;
+
+  // Self-healing: stamp auth_user_id if not already set
+  // After this runs once, all future RLS checks use UUID directly
+  if(!r.data.auth_user_id){
+    await sb.from('instructors')
+      .update({auth_user_id:user.id})
+      .eq('id',r.data.id);
+    currentInstructor.auth_user_id=user.id;
+  }
+
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('staffApp').style.display='flex';
   await loadCoreData();
   buildTodayTab();
   buildProfileTab();
 }
+
 
 // ─────────────────────────────────────────────────────────────
 //  CORE DATA — loaded once, used everywhere
