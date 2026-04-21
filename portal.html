@@ -1064,185 +1064,166 @@ async function buildPortal(s){
 // ─────────────────────────────────────────────────────────────
 async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
-  var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
-  var allFetched=r.data||[];
-  var studentProgIds=[];
-  if(s.program_id) studentProgIds.push(s.program_id);
+  el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
   try{
-    var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',s.membership_id);
-    if(mpR.data) mpR.data.forEach(function(x){if(studentProgIds.indexOf(x.program_id)===-1)studentProgIds.push(x.program_id);});
-}catch(e){}
-  var classes=allFetched.filter(function(c){
-    return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1;
-  });
-  if(!classes.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled for your program yet.</div>';return;}
+    var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+    var allFetched=r.data||[];
+    if(r.error) throw new Error(r.error.message);
 
-  var now=new Date();var todayIdx=now.getDay();
-  var enrolled=await sb.from('class_enrollments').select('class_id').eq('student_id',s.id).gte('session_date',now.toISOString().split('T')[0]);
-  if(enrolled.data)enrolled.data.forEach(function(e){enrolledClasses[e.class_id]=true;});
-  scheduleByDay={};
-  classes.forEach(function(c){
-    if(!c.days_of_week)return;
-    c.days_of_week.forEach(function(day){
-      var dayIdx=DAYS.indexOf(day);if(dayIdx===-1)return;
-      var diff=dayIdx-todayIdx;if(diff<0)diff+=7;
-      if(!scheduleByDay[diff])scheduleByDay[diff]=[];
-      scheduleByDay[diff].push(c);
-    });
-  });
-  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
-  if(!diffs.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes this week.</div>';return;}
-  scheduleViewDay=diffs[0];
-  renderScheduleDay();
-}
-
-function renderScheduleDay(){
-  var el=document.getElementById('scheduleList');if(!el)return;
-  var now=new Date();
-  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
-  var d=new Date(now);d.setDate(now.getDate()+scheduleViewDay);
-  var label=scheduleViewDay===0?'Today':scheduleViewDay===1?'Tomorrow':DAY_NAMES[d.getDay()];
-  var dateLabel=d.toLocaleDateString('en-US',{month:'long',day:'numeric'});
-  var currentIdx=diffs.indexOf(scheduleViewDay);
-  var hasPrev=currentIdx>0;var hasNext=currentIdx<diffs.length-1;
-  var html='<div class="sched-day-nav">';
-  html+='<button class="sched-day-btn" onclick="navScheduleDay(-1)"'+(hasPrev?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-left"></i></button>';
-  html+='<div style="flex:1;text-align:center"><div class="sched-day-label">'+label+'</div><div class="sched-day-sub">'+dateLabel+'</div></div>';
-  html+='<button class="sched-day-btn" onclick="navScheduleDay(1)"'+(hasNext?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-right"></i></button>';
-  html+='</div>';
-  html+='<div class="sched-day-dots">';
-  diffs.forEach(function(diff){html+='<div class="sched-day-dot'+(diff===scheduleViewDay?' active':' has-class')+'" onclick="scheduleViewDay='+diff+';renderScheduleDay()" title="'+DAY_NAMES[new Date(now.getFullYear(),now.getMonth(),now.getDate()+diff).getDay()]+'"></div>';});
-  html+='</div>';
-  var dayClasses=(scheduleByDay[scheduleViewDay]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-  if(!dayClasses.length){
-    html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes this day.</div>';
-  }else{
-    html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
-    dayClasses.forEach(function(c){
-      var isEnrolled=!!enrolledClasses[c.id];
-      var cn=c.name||c.title||'Class';var tags=[];
-      if(c.style)tags.push(c.style);if(c.level)tags.push(c.level);if(c.age_group)tags.push(c.age_group);
-      html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+tags.join(' &bull; ')+(c.capacity?' &bull; Max '+c.capacity:'')+'</div></div>';
-      html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'" onclick="toggleRSVP(\''+c.id+'\',this)">'+(isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP')+'</button></div>';
-    });
-  }
-  el.innerHTML=html;
-}
-
-function navScheduleDay(dir){
-  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
-  var idx=diffs.indexOf(scheduleViewDay)+dir;
-  if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
-}
-
-// ─────────────────────────────────────────────────────────────
-//  §JS: RSVP
-// ─────────────────────────────────────────────────────────────
-async function toggleRSVP(classId,btn){
-  if(!currentStudent) return;
-  var isEnrolled=!!enrolledClasses[classId];
-  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';
-  var today=new Date().toISOString().split('T')[0];
-  try{
-    if(isEnrolled){
-      await sb.from('class_enrollments').delete()
-        .eq('student_id',currentStudent.id)
-        .eq('class_id',classId)
-        .eq('session_date',today);
-      delete enrolledClasses[classId];
-      btn.innerHTML='RSVP';
-      btn.classList.remove('enrolled');
-      btn.closest('.class-schedule-card').classList.remove('enrolled');
-    }else{
-      var ins=await sb.from('class_enrollments').insert({
-        school_id:SID,
-        class_id:classId,
-        student_id:currentStudent.id,
-        session_date:today,
-        status:'enrolled'
+    // Collect all program IDs this student can access
+    var studentProgIds=[];
+    if(s.program_id) studentProgIds.push(s.program_id);
+    try{
+      var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',s.membership_id);
+      if(mpR.data) mpR.data.forEach(function(x){
+        if(studentProgIds.indexOf(x.program_id)===-1) studentProgIds.push(x.program_id);
       });
-      if(ins.error) throw new Error(ins.error.message);
-      enrolledClasses[classId]=true;
-      btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
-      btn.classList.add('enrolled');
-      btn.closest('.class-schedule-card').classList.add('enrolled');
+    }catch(mpErr){
+      // Non-fatal — student still sees classes with no program restriction
+      console.warn('membership_programs lookup failed:',mpErr);
     }
+
+    // Filter classes: show if no program restriction, or matches student's programs
+    var classes=allFetched.filter(function(c){
+      return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1;
+    });
+
+    if(!classes.length){
+      el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled for your program yet.</div>';
+      return;
+    }
+
+    var now=new Date();
+    var todayIdx=now.getDay();
+
+    // Build scheduleByDay keyed by day-offset from today (0 = today)
+    scheduleByDay={};
+    classes.forEach(function(c){
+      if(!c.days_of_week) return;
+      c.days_of_week.forEach(function(day){
+        var dayIdx=DAYS.indexOf(day); if(dayIdx===-1) return;
+        var diff=dayIdx-todayIdx; if(diff<0) diff+=7;
+        if(!scheduleByDay[diff]) scheduleByDay[diff]=[];
+        scheduleByDay[diff].push(c);
+      });
+    });
+
+    var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+    if(!diffs.length){
+      el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes this week.</div>';
+      return;
+    }
+
+    // Fetch this student's enrollments for the next 7 days
+    // Compound key: classId_YYYY-MM-DD — one entry per class per date
+    enrolledClasses={};
+    var weekEnd=new Date(now); weekEnd.setDate(now.getDate()+7);
+    var enrolled=await sb.from('class_enrollments')
+      .select('class_id,session_date')
+      .eq('student_id',s.id)
+      .eq('school_id',SID)
+      .eq('status','enrolled')
+      .gte('session_date',now.toISOString().split('T')[0])
+      .lte('session_date',weekEnd.toISOString().split('T')[0]);
+    if(enrolled.error) console.warn('Enrollment fetch error:',enrolled.error);
+    if(enrolled.data) enrolled.data.forEach(function(e){
+      enrolledClasses[e.class_id+'_'+e.session_date]=true;
+    });
+
+    scheduleViewDay=diffs[0];
+    renderScheduleDay();
+
   }catch(e){
-    console.error('RSVP error:',e);
-    btn.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>Error';
-    btn.style.background='#E07070';
-    setTimeout(function(){
-      btn.innerHTML=isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP';
-      btn.style.background='';
-    },2000);
+    console.error('buildSchedule error:',e);
+    el.innerHTML='<div style="color:#E07070;font-size:0.85rem;padding:1rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.5rem"></i>Could not load schedule: '+e.message+'</div>';
   }
-  btn.disabled=false;
 }
 
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: AUTO_CHECK_IN (client-side fallback)
+//  Server-side: pg_cron job fires every 15 min (see Project Bible)
+//  This fires on portal load as a belt-and-suspenders backup
+// ─────────────────────────────────────────────────────────────
 async function processAutoCheckIn(){
   if(!currentStudent) return;
   try{
     var now=new Date();
     var todayStr=now.toISOString().split('T')[0];
     var nowMins=now.getHours()*60+now.getMinutes();
-    // Find classes that started within last 90 minutes
-    var cr=await sb.from('class_enrollments').select('class_id,classes(name,start_time,end_time,instructor_name)').eq('student_id',currentStudent.id).eq('school_id',SID).eq('session_date',todayStr).eq('status','enrolled');
+
+    // Get today's enrolled classes for this student
+    var cr=await sb.from('class_enrollments')
+      .select('class_id,classes(name,start_time,end_time)')
+      .eq('student_id',currentStudent.id)
+      .eq('school_id',SID)
+      .eq('session_date',todayStr)
+      .eq('status','enrolled');
+
     if(!cr.data||!cr.data.length) return;
+
     for(var i=0;i<cr.data.length;i++){
-      var enr=cr.data[i]; var cls=enr.classes; if(!cls||!cls.start_time) continue;
-      var parts=cls.start_time.split(':'); var startMins=parseInt(parts[0])*60+parseInt(parts[1]);
+      var enr=cr.data[i];
+      var cls=enr.classes;
+      if(!cls||!cls.start_time) continue;
+
+      // Only auto-check-in if class started within the last 90 minutes
+      var parts=cls.start_time.split(':');
+      var startMins=parseInt(parts[0])*60+parseInt(parts[1]);
       var diff=nowMins-startMins;
-      if(diff<0||diff>90) continue; // Class hasn't started or started too long ago
-      // Check if already checked in
-      var sr=await sb.from('class_sessions').select('id').eq('class_id',enr.class_id).eq('session_date',todayStr).limit(1);
+      if(diff<0||diff>90) continue;
+
+      // Get or create class_session — always filter by school_id
+      var sr=await sb.from('class_sessions')
+        .select('id')
+        .eq('class_id',enr.class_id)
+        .eq('school_id',SID)
+        .eq('session_date',todayStr)
+        .limit(1);
+
       var sessionId=null;
-      if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
-      else{var nr=await sb.from('class_sessions').insert({class_id:enr.class_id,school_id:SID,session_date:todayStr,status:'scheduled'}).select().single();if(!nr.error)sessionId=nr.data.id;}
+      if(sr.data&&sr.data.length){
+        sessionId=sr.data[0].id;
+      }else{
+        var nr=await sb.from('class_sessions')
+          .insert({class_id:enr.class_id,school_id:SID,session_date:todayStr,status:'in_progress'})
+          .select().single();
+        if(!nr.error) sessionId=nr.data.id;
+      }
       if(!sessionId) continue;
-      var ar=await sb.from('class_attendance').select('id').eq('session_id',sessionId).eq('student_id',currentStudent.id).limit(1);
+
+      // Check if already checked in — filter by school_id
+      var ar=await sb.from('class_attendance')
+        .select('id')
+        .eq('session_id',sessionId)
+        .eq('student_id',currentStudent.id)
+        .eq('school_id',SID)
+        .limit(1);
       if(ar.data&&ar.data.length) continue; // Already checked in
-      // Auto check in
-      await sb.from('class_attendance').insert({session_id:sessionId,student_id:currentStudent.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});
-      // Apply membership deduction
-      await applyMembershipDeduction(currentStudent.id,todayStr);
+
+      // Insert attendance — deduction handled by DB trigger
+      var ins=await sb.from('class_attendance').insert({
+        session_id:sessionId,
+        student_id:currentStudent.id,
+        school_id:SID,
+        status:'present',
+        noted_at:new Date().toISOString()
+      });
+      if(ins.error){console.error('Auto check-in insert error:',ins.error);continue;}
+
       // Mark enrollment as attended
-      await sb.from('class_enrollments').update({status:'attended'}).eq('student_id',currentStudent.id).eq('class_id',enr.class_id).eq('session_date',todayStr);
+      await sb.from('class_enrollments')
+        .update({status:'attended'})
+        .eq('student_id',currentStudent.id)
+        .eq('class_id',enr.class_id)
+        .eq('session_date',todayStr)
+        .eq('school_id',SID);
+
+      console.log('Auto checked in:',cls.name);
     }
-  }catch(e){console.error('Auto check-in error:',e);}
+  }catch(e){console.error('processAutoCheckIn error:',e);}
 }
 
-async function applyMembershipDeduction(studentId,dateStr){
-  try{
-    var sr=await sb.from('students').select('membership_id,memberships(class_limit_type,class_limit_count)').eq('id',studentId).single();
-    if(!sr.data||!sr.data.memberships) return;
-    var mem=sr.data.memberships;
-    var limitType=mem.class_limit_type;
-    if(limitType==='unlimited') return; // No deduction needed
-    if(limitType==='per_week'){
-      // Check weekly count
-      var weekAgo=new Date(); weekAgo.setDate(weekAgo.getDate()-7);
-      var wr=await sb.from('class_attendance').select('id',{count:'exact',head:true}).eq('student_id',studentId).eq('school_id',SID).gte('noted_at',weekAgo.toISOString());
-      if((wr.count||0)>=(mem.class_limit_count||0)) return; // At limit — attendance already inserted, just log
-      return; // Under limit — no pack deduction needed
-    }
-    if(limitType==='per_month'){
-      var monthStart=new Date(); monthStart=new Date(monthStart.getFullYear(),monthStart.getMonth(),1);
-      var mr=await sb.from('class_attendance').select('id',{count:'exact',head:true}).eq('student_id',studentId).eq('school_id',SID).gte('noted_at',monthStart.toISOString());
-      if((mr.count||0)>=(mem.class_limit_count||0)) return;
-      return;
-    }
-    if(limitType==='class_pack'){
-      // FIFO deduct from oldest active pack
-      var pr=await sb.from('student_session_packs').select('*').eq('student_id',studentId).eq('school_id',SID).eq('status','active').gt('sessions_remaining',0).order('created_at',{ascending:true}).limit(1);
-      if(!pr.data||!pr.data.length) return;
-      var pack=pr.data[0];
-      var newRemaining=pack.sessions_remaining-1;
-      var newStatus=newRemaining<=0?'exhausted':'active';
-      await sb.from('student_session_packs').update({sessions_remaining:newRemaining,status:newStatus}).eq('id',pack.id);
-    }
-  }catch(e){console.error('Membership deduction error:',e);}
-}
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: ANNOUNCEMENTS
