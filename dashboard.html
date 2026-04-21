@@ -4760,80 +4760,179 @@ async function buildInstructorComparison(){
 
 // Reports
 var REPORT_DEFS = [
-  { key:'members',      title:'Members Report',         desc:'Full student roster with membership and program details.',
-    table:'students',   join:null,
+  { key:'students', title:'Students Report', desc:'Full roster with program, membership and status.',
+    table:'students', join:'programs(name),memberships(name)', dateField:'created_at',
     columns:[
-      {key:'first_name',label:'First Name'},{key:'last_name',label:'Last Name'},
-      {key:'email',label:'Email'},{key:'phone',label:'Phone'},
-      {key:'status',label:'Status'},{key:'start_date',label:'Start Date'},
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'email',label:'Email'},
+      {key:'phone',label:'Phone'},
+      {key:'status',label:'Status'},
+      {key:'program_name',label:'Program',compute:function(r){return r.programs?r.programs.name:'--';}},
+      {key:'membership_name',label:'Membership',compute:function(r){return r.memberships?r.memberships.name:'--';}},
+      {key:'start_date',label:'Start Date'},
       {key:'date_of_birth',label:'Date of Birth'}
     ],
     filters:[
       {key:'status',label:'Status',type:'select',options:['active','trial','paused','expired']}
     ]
   },
-  { key:'attendance',   title:'Attendance Report',      desc:'Class attendance records with student and class detail.',
-    table:'class_attendance', join:'class_sessions(session_date,classes(name,title)),students(first_name,last_name)',
+  { key:'attendance', title:'Attendance Report', desc:'Class attendance records with student and class detail.',
+    table:'class_attendance', join:'class_sessions(session_date,classes(name,title)),students(first_name,last_name)', dateField:'noted_at',
     columns:[
-      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'';}},
-      {key:'class_name', label:'Class',   compute:function(r){var cs=r.class_sessions;var cl=cs&&cs.classes;return cl?(cl.name||cl.title||''):'--';}},
-      {key:'session_date',label:'Date',   compute:function(r){var cs=r.class_sessions;return cs?cs.session_date:'--';}},
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
+      {key:'class_name',label:'Class',compute:function(r){var cs=r.class_sessions;var cl=cs&&cs.classes;return cl?(cl.name||cl.title||'--'):'--';}},
+      {key:'session_date',label:'Date',compute:function(r){var cs=r.class_sessions;return cs?cs.session_date:'--';}},
       {key:'status',label:'Status'}
     ],
     filters:[
       {key:'date_from',label:'Date From',type:'date'},
-      {key:'date_to',  label:'Date To',  type:'date'}
+      {key:'date_to',label:'Date To',type:'date'}
     ]
   },
-  { key:'revenue',      title:'Revenue Report',         desc:'All payment transactions with amounts and types.',
-    table:'payments',   join:'students(first_name,last_name)',
+  { key:'sessions', title:'Sessions Report', desc:'Private session history by instructor and student.',
+    table:'sessions', join:'session_types(name),students(first_name,last_name)', dateField:'created_at',
     columns:[
-      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'Walk-in';}},
-      {key:'amount',    label:'Amount',   compute:function(r){return '$'+parseFloat(r.amount||0).toFixed(2);}},
-      {key:'type',      label:'Type'},
-      {key:'status',    label:'Status'},
-      {key:'created_at',label:'Date',     compute:function(r){return new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}}
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
+      {key:'type_name',label:'Type',compute:function(r){return r.session_types?r.session_types.name:'--';}},
+      {key:'session_date',label:'Date'},
+      {key:'instructor_name',label:'Instructor'},
+      {key:'status',label:'Status'},
+      {key:'price',label:'Price',compute:function(r){return r.price?'$'+parseFloat(r.price).toFixed(2):'--';}}
     ],
     filters:[
       {key:'date_from',label:'Date From',type:'date'},
-      {key:'date_to',  label:'Date To',  type:'date'},
-      {key:'type',     label:'Type',     type:'select',options:['membership','retail_sale','session','session_pack','belt_test','other']}
+      {key:'date_to',label:'Date To',type:'date'},
+      {key:'status',label:'Status',type:'select',options:['scheduled','completed','cancelled']}
     ]
   },
-  { key:'leads',        title:'Leads Report',           desc:'All leads with source, status and program interest.',
-    table:'leads',      join:null,
+  { key:'memberships', title:'Memberships Report', desc:'Active membership plans and student counts.',
+    table:'students', join:'memberships(name,price,billing_type),programs(name)', dateField:'created_at',
     columns:[
-      {key:'first_name',label:'First Name'},{key:'last_name',label:'Last Name'},
-      {key:'email',label:'Email'},{key:'phone',label:'Phone'},
-      {key:'source',label:'Source'},{key:'status',label:'Status'},
-      {key:'created_at',label:'Created',compute:function(r){return new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}}
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'membership_name',label:'Plan',compute:function(r){return r.memberships?r.memberships.name:'--';}},
+      {key:'membership_price',label:'Price',compute:function(r){var m=r.memberships;return m?'$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':''):'--';}},
+      {key:'program_name',label:'Program',compute:function(r){return r.programs?r.programs.name:'--';}},
+      {key:'status',label:'Status'},
+      {key:'start_date',label:'Start Date'}
     ],
-    filters:[{key:'status',label:'Status',type:'select',options:['new','contacted','trial','converted']}]
+    filters:[
+      {key:'status',label:'Status',type:'select',options:['active','trial','paused','expired']}
+    ]
   },
-  { key:'belt_tests',   title:'Belt Test Report',       desc:'Belt test results and fee status per student.',
-    table:'belt_test_students', join:'students(first_name,last_name),belt_tests(name,test_date)',
+  { key:'payments', title:'Payments Report', desc:'Full transaction ledger filtered by date and type.',
+    table:'payments', join:'students(first_name,last_name)', dateField:'created_at',
     columns:[
-      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'';}},
-      {key:'test_name',   label:'Test',   compute:function(r){var t=r.belt_tests;return t?t.name:'';}},
-      {key:'test_date',   label:'Date',   compute:function(r){var t=r.belt_tests;return t?t.test_date:'';}},
-      {key:'status',label:'Status'},{key:'result',label:'Result'},
-      {key:'fee_paid',label:'Fee Paid',compute:function(r){return r.fee_paid?'Yes':'No';}}
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'Walk-in';}},
+      {key:'amount',label:'Amount',compute:function(r){return '$'+parseFloat(r.amount||0).toFixed(2);}},
+      {key:'type',label:'Type'},
+      {key:'status',label:'Status'},
+      {key:'description',label:'Description'},
+      {key:'date',label:'Date',compute:function(r){return r.created_at?new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--';}}
+    ],
+    filters:[
+      {key:'date_from',label:'Date From',type:'date'},
+      {key:'date_to',label:'Date To',type:'date'},
+      {key:'type',label:'Type',type:'select',options:['membership','retail_sale','session','session_pack','belt_test','other']}
+    ]
+  },
+  { key:'belt_promotions', title:'Belt Promotions Report', desc:'Full promotion history by student and rank.',
+    table:'belt_promotions', join:'students(first_name,last_name)', dateField:'promoted_at',
+    columns:[
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
+      {key:'belt_from',label:'From'},
+      {key:'belt_to',label:'To'},
+      {key:'promotion_date',label:'Date'},
+      {key:'promoted_by',label:'Promoted By'},
+      {key:'fee_charged',label:'Fee',compute:function(r){return r.fee_charged?'$'+parseFloat(r.fee_charged).toFixed(2):'--';}},
+      {key:'fee_paid',label:'Paid',compute:function(r){return r.fee_paid?'Yes':'No';}}
+    ],
+    filters:[
+      {key:'date_from',label:'Date From',type:'date'},
+      {key:'date_to',label:'Date To',type:'date'}
+    ]
+  },
+  { key:'leads', title:'Leads Report', desc:'Pipeline data with source, status and conversion.',
+    table:'leads', join:'programs(name)', dateField:'created_at',
+    columns:[
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'email',label:'Email'},
+      {key:'phone',label:'Phone'},
+      {key:'program_name',label:'Program',compute:function(r){return r.programs?r.programs.name:'--';}},
+      {key:'source',label:'Source'},
+      {key:'status',label:'Status'},
+      {key:'created_at',label:'Created',compute:function(r){return r.created_at?new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--';}}
+    ],
+    filters:[
+      {key:'status',label:'Status',type:'select',options:['new','contacted','trial','converted']}
+    ]
+  },
+  { key:'expiring', title:'Expiring Soon', desc:'Students whose memberships expire within 30 days.',
+    table:'students', join:'memberships(name),programs(name)', dateField:'created_at',
+    customQuery:async function(sb,SID){
+      var now=new Date(); var in30=new Date(); in30.setDate(now.getDate()+30);
+      var r=await sb.from('students').select('*,memberships(name),programs(name)').eq('school_id',SID).eq('status','active').gte('membership_end_date',now.toISOString().split('T')[0]).lte('membership_end_date',in30.toISOString().split('T')[0]).order('membership_end_date');
+      return r;
+    },
+    actionable:true,
+    columns:[
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'email',label:'Email'},
+      {key:'phone',label:'Phone'},
+      {key:'membership_name',label:'Plan',compute:function(r){return r.memberships?r.memberships.name:'--';}},
+      {key:'membership_end_date',label:'Expires'},
+      {key:'days_left',label:'Days Left',compute:function(r){if(!r.membership_end_date)return '--';var diff=Math.ceil((new Date(r.membership_end_date)-new Date())/(1000*60*60*24));return diff+' days';}}
     ],
     filters:[]
   },
-  { key:'session_packs',title:'Session Packs Report',   desc:'Student pack balances, usage and expiry.',
-    table:'student_session_packs', join:'students(first_name,last_name),session_packs(name,quantity)',
+  { key:'birthdays', title:'Birthdays', desc:'Students with birthdays in the next 30 days.',
+    table:'students', join:null, dateField:'created_at',
+    customQuery:async function(sb,SID){
+      var r=await sb.from('students').select('*').eq('school_id',SID).not('date_of_birth','is',null).order('last_name');
+      return r;
+    },
+    customFilter:function(data){
+      var now=new Date(); var results=[];
+      data.forEach(function(s){
+        if(!s.date_of_birth) return;
+        var dob=new Date(s.date_of_birth+'T00:00:00');
+        var bday=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());
+        if(bday<now) bday.setFullYear(now.getFullYear()+1);
+        var diff=Math.ceil((bday-now)/(1000*60*60*24));
+        if(diff<=30) results.push(Object.assign({},s,{days_until:diff,birthday_date:bday.toLocaleDateString('en-US',{month:'short',day:'numeric'})}));
+      });
+      return results.sort(function(a,b){return a.days_until-b.days_until;});
+    },
+    actionable:true,
     columns:[
-      {key:'student_name',   label:'Student',  compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'';}},
-      {key:'pack_name',      label:'Pack',     compute:function(r){var p=r.session_packs;return p?p.name:'';}},
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'email',label:'Email'},
+      {key:'phone',label:'Phone'},
+      {key:'birthday_date',label:'Birthday'},
+      {key:'days_until',label:'Days Away'}
+    ],
+    filters:[]
+  },
+  { key:'session_packs', title:'Pack Balances', desc:'Student session pack usage and remaining balance.',
+    table:'student_session_packs', join:'students(first_name,last_name),session_packs(name,quantity)', dateField:'created_at',
+    columns:[
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
+      {key:'pack_name',label:'Pack',compute:function(r){return r.session_packs?r.session_packs.name:'--';}},
       {key:'sessions_remaining',label:'Remaining'},
-      {key:'sessions_original',  label:'Original'},
+      {key:'sessions_original',label:'Original'},
       {key:'status',label:'Status'},
       {key:'expires_at',label:'Expires',compute:function(r){return r.expires_at?new Date(r.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No expiry';}}
     ],
-    filters:[{key:'status',label:'Status',type:'select',options:['active','expired','exhausted']}]
+    filters:[
+      {key:'status',label:'Status',type:'select',options:['active','expired','exhausted']}
+    ]
   }
 ];
+
 
 function renderReportCards(){
   var el=document.getElementById('reportCards'); if(!el) return;
@@ -4886,7 +4985,22 @@ async function runReport(){
   var def=currentReportDef;
   try{
     var selectStr='*'+(def.join?','+def.join:'');
+    if(def.customQuery){
+      var r=await def.customQuery(sb,SID);
+      if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
+      reportData=def.customFilter?def.customFilter(r.data||[]):(r.data||[]);
+      document.getElementById('reportResultCount').textContent=reportData.length;
+      var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
+      var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
+      var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
+      thead.innerHTML='<tr>'+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
+      tbody.innerHTML=reportData.map(function(row){return '<tr>'+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]!==undefined?row[col.key]:'--');return '<td style="font-size:0.82rem">'+val+'</td>';}).join('')+'</tr>';}).join('');
+      document.getElementById('reportResultsSection').style.display='block';
+      document.getElementById('reportMsg').textContent='';
+      return;
+    }
     var q=sb.from(def.table).select(selectStr).eq('school_id',SID);
+
     // Apply date filters
     if(def.filters){
       def.filters.forEach(function(f){
