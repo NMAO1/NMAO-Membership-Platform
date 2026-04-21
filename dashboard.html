@@ -895,8 +895,19 @@
       <div class="content-heading"><h2>Instructor Comparison</h2><div class="rule-h"></div></div>
 
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-body" id="instrCompareList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div></div></div>
+      <!-- Lead Funnel Widget -->
+      <div class="content-heading"><h2>Lead Pipeline</h2><div class="rule-h"></div></div>
+      <div class="panel" style="margin-bottom:1.5rem">
+        <div class="panel-body">
+          <div id="leadFunnelWidget" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+            <div style="color:var(--muted);font-style:italic;font-size:0.85rem;grid-column:1/-1">Loading...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Reports -->
       <div class="content-heading"><h2>Reports</h2><div class="rule-h"></div></div>
+
       <div class="report-type-grid">
         <div class="report-type-card" onclick="openReport('students')"><div class="report-type-icon"><i class="fa-solid fa-users"></i></div><div class="report-type-name">Students</div><div class="report-type-desc">Full roster with contact info</div></div>
         <div class="report-type-card" onclick="openReport('attendance')"><div class="report-type-icon" style="color:#7DAAD4"><i class="fa-solid fa-clipboard-list"></i></div><div class="report-type-name">Attendance</div><div class="report-type-desc">Class check-ins</div></div>
@@ -2362,7 +2373,7 @@ function navigate(page,el){
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
   if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
-  if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); }
+  if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='communications') { loadSmsInbox(); }
 }
@@ -5041,6 +5052,35 @@ var REPORT_DEFS = [
   }
 ];
 
+
+async function buildLeadFunnel(){
+  var el=document.getElementById('leadFunnelWidget'); if(!el) return;
+  try{
+    var r=await sb.from('leads').select('status').eq('school_id',SID);
+    var data=r.data||[]; var total=data.length;
+    if(!total){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;grid-column:1/-1">No leads yet.</div>';return;}
+    var contacted=data.filter(function(l){return ['contacted','trial','converted'].includes(l.status);}).length;
+    var trial=data.filter(function(l){return ['trial','converted'].includes(l.status);}).length;
+    var converted=data.filter(function(l){return l.status==='converted';}).length;
+    var pct=function(n){return total?Math.round((n/total)*100):0;};
+    var stages=[
+      {label:'New Leads',count:total,pct:100,color:'#C9A84C'},
+      {label:'Contacted',count:contacted,pct:pct(contacted),color:'#7DAAD4'},
+      {label:'Trial',count:trial,pct:pct(trial),color:'#9060D0'},
+      {label:'Converted',count:converted,pct:pct(converted),color:'#5A9A6A'}
+    ];
+    el.innerHTML=stages.map(function(s){
+      return '<div style="background:var(--black);border:1px solid var(--border);border-top:3px solid '+s.color+';padding:1.25rem;text-align:center">'+
+        '<div style="font-family:var(--font-display);font-size:2rem;color:'+s.color+';line-height:1;margin-bottom:0.25rem">'+s.count+'</div>'+
+        '<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">'+s.label+'</div>'+
+        '<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">'+
+          '<div style="height:100%;width:'+s.pct+'%;background:'+s.color+';border-radius:2px;transition:width 0.8s ease"></div>'+
+        '</div>'+
+        '<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.3rem">'+s.pct+'%</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;grid-column:1/-1">Funnel unavailable.</div>';}
+}
 
 
 function renderReportCards(){
