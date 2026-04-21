@@ -4621,6 +4621,46 @@ async function loadAlertHistory(){
     el.innerHTML=data.map(function(a){var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem"><div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:var(--white)">'+a.subject+'</div><div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div></div><div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div></div>';}).join('');
   }catch(e){}
 }
+  async function saveAutomations(){
+  setMsg('automationsMsg','Saving all...','');
+  var saved=0;
+  for(var i=0;i<AUTOMATION_TRIGGERS.length;i++){
+    var key=AUTOMATION_TRIGGERS[i].key;
+    var enabledEl=document.getElementById('auto-enabled-'+key);
+    if(!enabledEl) continue;
+    await saveAutomation(key);
+    saved++;
+  }
+  setMsg('automationsMsg','All automations saved!','success');
+  setTimeout(function(){document.getElementById('automationsMsg').textContent='';},3000);
+}
+
+function useTemplate(type){
+  var templates={
+    checkin:{subject:'We Miss You!',body:'<p>Hi there,</p><p>We noticed you haven\'t been in class recently. Your progress matters to us and we\'d love to see you back on the mat.</p><p>Come train with us this week — we\'re here for you.</p>'},
+    birthday:{subject:'Happy Birthday from '+( document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school')+'!',body:'<p>Wishing you a wonderful birthday! 🎂</p><p>We are grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>'},
+    promotion:{subject:'Congratulations on Your Promotion!',body:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are incredibly proud of your progress and look forward to continuing this journey with you.</p>'},
+    renewal:{subject:'Your Membership is Expiring Soon',body:'<p>Hi,</p><p>Your membership is expiring soon. We\'d love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew your membership and keep your momentum going.</p>'},
+    belttest:{subject:'Belt Test Invitation',body:'<p>You have been invited to participate in an upcoming belt test!</p><p>This is a recognition of your hard work and dedication. Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>'}
+  };
+  var t=templates[type]; if(!t) return;
+  document.getElementById('commSubject').value=t.subject;
+  setQuillContent('commBodyEditor',t.body);
+  setMsg('commMsg','Template loaded — review and send!','success');
+  setTimeout(function(){document.getElementById('commMsg').textContent='';},3000);
+}
+
+async function saveAlertDraft(){
+  var subject=document.getElementById('alertSubject').value.trim();
+  var body=getQuillContent('alertBodyEditor');
+  var audience=document.getElementById('alertAudience').value;
+  if(!subject&&!body){setMsg('alertMsg','Nothing to save.','error');return;}
+  setMsg('alertMsg','Saving draft...','');
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject||'(no subject)',body:body,audience:audience,status:'draft',sent_at:null});
+  if(r.error){setMsg('alertMsg',r.error.message,'error');}
+  else{setMsg('alertMsg','Draft saved!','success');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
+}
+
 async function sendAlert(){
   var subject=document.getElementById('alertSubject').value.trim();
   var body=getQuillContent('alertBodyEditor');
