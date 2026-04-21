@@ -1052,7 +1052,8 @@ async function buildPortal(s){
   await buildTracker(s);
   await buildAttendance(s.id);
   await buildAnnouncements();
-      processAutoCheckIn();
+  await buildSchedule(s);
+  processAutoCheckIn();
 
   document.getElementById('portalLoading').style.display='none';
   document.getElementById('portalContent').style.display='block';
