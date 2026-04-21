@@ -1143,28 +1143,42 @@ async function toggleRSVP(classId,btn){
   var isEnrolled=!!enrolledClasses[classId];
   btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';
   var today=new Date().toISOString().split('T')[0];
-  if(isEnrolled){
-    await sb.from('class_enrollments').delete().eq('student_id',currentStudent.id).eq('class_id',classId);
-    delete enrolledClasses[classId];
-    // Decrement enrolled_count
-    await sb.from('classes').update({enrolled_count:Math.max(0,(await sb.from('classes').select('enrolled_count').eq('id',classId).single()).data.enrolled_count-1)}).eq('id',classId);
-    btn.innerHTML='RSVP'; btn.classList.remove('enrolled');
-    btn.closest('.class-schedule-card').classList.remove('enrolled');
-  }else{
-    var ins=await sb.from('class_enrollments').insert({school_id:SID,class_id:classId,student_id:currentStudent.id,session_date:today,status:'enrolled'});
-    if(!ins.error){
+  try{
+    if(isEnrolled){
+      await sb.from('class_enrollments').delete()
+        .eq('student_id',currentStudent.id)
+        .eq('class_id',classId)
+        .eq('session_date',today);
+      delete enrolledClasses[classId];
+      btn.innerHTML='RSVP';
+      btn.classList.remove('enrolled');
+      btn.closest('.class-schedule-card').classList.remove('enrolled');
+    }else{
+      var ins=await sb.from('class_enrollments').insert({
+        school_id:SID,
+        class_id:classId,
+        student_id:currentStudent.id,
+        session_date:today,
+        status:'enrolled'
+      });
+      if(ins.error) throw new Error(ins.error.message);
       enrolledClasses[classId]=true;
-      // Increment enrolled_count
-      var cr=await sb.from('classes').select('enrolled_count').eq('id',classId).single();
-      var newCount=(cr.data?parseInt(cr.data.enrolled_count||0):0)+1;
-      await sb.from('classes').update({enrolled_count:newCount}).eq('id',classId);
       btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
       btn.classList.add('enrolled');
       btn.closest('.class-schedule-card').classList.add('enrolled');
     }
+  }catch(e){
+    console.error('RSVP error:',e);
+    btn.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>Error';
+    btn.style.background='#E07070';
+    setTimeout(function(){
+      btn.innerHTML=isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP';
+      btn.style.background='';
+    },2000);
   }
   btn.disabled=false;
 }
+
 
 async function processAutoCheckIn(){
   if(!currentStudent) return;
