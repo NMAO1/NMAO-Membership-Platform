@@ -643,7 +643,8 @@ var classSessionId=null;   // current class session being viewed
 var currentClassData=null; // class data for the active view
 var checkedInIds=new Set();// student IDs checked into current session
 var cvActiveTab='all';
-var promoteData=null;      // { student, fromLevel, toLevel }
+var promoteData=null;
+var eligibleStudentIds=new Set(); // populated async by buildEligibleList()   // { student, fromLevel, toLevel }
 var membershipAlerts=[];   // students with inactive memberships who checked in today
 
 // ─────────────────────────────────────────────────────────────
@@ -908,7 +909,7 @@ async function openClassView(classId,dateStr){
   // Render all three tabs
   renderCvAllStudents('');
   renderCvCheckedIn();
-  renderCvEligible();
+  buildEligibleList(); // async — populates eligibleStudentIds then ren
 }
 
 function closeClassView(){
@@ -952,17 +953,10 @@ function renderCvCheckedIn(){
 
 // ── Eligible for Promotion ──
 function renderCvEligible(){
-  var eligible=allStudents.filter(isEligible);
-  document.getElementById('cvBadgeEligible').textContent=eligible.length;
   var el=document.getElementById('cvEligibleList');
-  if(!eligible.length){
-    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No students currently eligible for promotion.</div></div>';
-    return;
-  }
-var html='<div style="padding:0.75rem;background:rgba(201,168,76,0.08);border-bottom:1px solid var(--border)"><div style="font-size:0.82rem;color:var(--gold);font-weight:700;margin-bottom:0.2rem"><i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Belt Promotion Eligible</div><div style="font-size:0.75rem;color:var(--muted);line-height:1.5">These students have met the class requirements for their next belt rank. Tap Promote to record the promotion.</div></div>';
-  html+=eligible.map(function(s){return renderEligibleRow(s);}).join('');
-  el.innerHTML=html;
+  el.innerHTML='<div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Checking eligibility...</div>';
 }
+
 
 function renderStudentRow(s,showCheckin){
   var ini=(s.first_name[0]+(s.last_name?s.last_name[0]:'')).toUpperCase();
@@ -996,7 +990,7 @@ function renderStudentRow(s,showCheckin){
   '</div>';
 }
 
-function renderEligibleRow(s){
+function renderEligibleRow(s,nextTest,nominatedIds,attCountMap){
   var ini=(s.first_name[0]+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var beltLevel=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
   var idx=beltLevel?allBeltLevels.indexOf(beltLevel):-1;
@@ -1005,6 +999,20 @@ function renderEligibleRow(s){
   var toName=nextLevel?nextLevel.name:'—';
   var fromColor=beltLevel?beltLevel.color_hex:'#888';
   var toColor=nextLevel?nextLevel.color_hex:'#888';
+  var attCount=attCountMap[s.id]||0;
+  var required=nextLevel?(nextLevel.classes_required||0):0;
+  var isNominated=nominatedIds&&nominatedIds.has(s.id);
+
+  var actionHtml='';
+  if(!nextTest){
+    // No test scheduled — button disabled
+    actionHtml='<button disabled style="height:40px;padding:0 0.85rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;cursor:not-allowed;opacity:0.5">No Test</button>';
+  }else if(isNominated){
+    actionHtml='<button disabled style="height:40px;padding:0 0.85rem;background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-check" style="margin-right:0.3rem"></i>Nominated</button>';
+  }else{
+    actionHtml='<button onclick="nominateForTest(\''+s.id+'\')" style="height:40px;padding:0 0.85rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s" id="nomBtn-'+s.id+'">Nominate</button>';
+  }
+
   return '<div class="student-row" id="erow-'+s.id+'">'+
     '<div class="student-avatar">'+
       (s.photo_url?'<img src="'+s.photo_url+'" alt="'+ini+'" />':ini)+
@@ -1012,17 +1020,192 @@ function renderEligibleRow(s){
     '<div class="student-info">'+
       '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
       '<div class="student-meta">'+
-        '<span style="display:flex;align-items:center;gap:0.3rem">'+
+        '<span style="display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap">'+
           '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+fromColor+'"></span>'+
           '<i class="fa-solid fa-arrow-right" style="font-size:0.65rem;color:var(--muted)"></i>'+
           '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+toColor+'"></span>'+
-          '<span style="font-size:0.75rem;color:var(--muted2)">'+fromName+' → '+toName+'</span>'+
+          '<span style="font-size:0.72rem;color:var(--muted2)">'+fromName+' → '+toName+'</span>'+
+          (required>0?'<span style="font-size:0.68rem;color:var(--gold)">'+attCount+'/'+required+' classes</span>':'')+''+
         '</span>'+
       '</div>'+
     '</div>'+
-    '<div class="student-action"><button class="btn-promote" onclick="openPromoteModal(\''+s.id+'\')">Promote</button></div>'+
+    '<div class="student-action">'+actionHtml+'</div>'+
   '</div>';
 }
+
+  // ─────────────────────────────────────────────────────────────
+//  BUILD ELIGIBLE LIST (async — attendance-based eligibility)
+// ─────────────────────────────────────────────────────────────
+async function buildEligibleList(){
+  var el=document.getElementById('cvEligibleList');
+  el.innerHTML='<div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Checking eligibility...</div>';
+  try{
+    // 1. Find candidates — students who have a next belt level
+    var candidates=allStudents.filter(function(s){
+      var bl=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+      var idx=bl?allBeltLevels.indexOf(bl):-1;
+      return allBeltLevels[idx+1]!=null;
+    });
+
+    if(!candidates.length){
+      eligibleStudentIds=new Set();
+      document.getElementById('cvBadgeEligible').textContent='0';
+      el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No students have a next belt level assigned.</div></div>';
+      return;
+    }
+
+    var studentIds=candidates.map(function(s){return s.id;});
+
+    // 2. Get last promotion date per student (batch)
+    var promR=await sb.from('belt_promotions')
+      .select('student_id,promoted_at')
+      .eq('school_id',SID)
+      .in('student_id',studentIds)
+      .order('promoted_at',{ascending:false});
+
+    var lastPromMap={};
+    (promR.data||[]).forEach(function(p){
+      if(!lastPromMap[p.student_id]) lastPromMap[p.student_id]=p.promoted_at;
+    });
+
+    // 3. Get attendance for all candidates since their earliest start (batch)
+    var earliest=null;
+    candidates.forEach(function(s){
+      var since=lastPromMap[s.id]||(s.start_date?s.start_date+'T00:00:00':null)||'2020-01-01T00:00:00';
+      if(!earliest||since<earliest) earliest=since;
+    });
+
+    var attR=await sb.from('class_attendance')
+      .select('student_id,noted_at')
+      .eq('school_id',SID)
+      .in('student_id',studentIds)
+      .gte('noted_at',earliest);
+
+    // 4. Count attendance per student since their last promotion
+    var attCountMap={};
+    (attR.data||[]).forEach(function(a){
+      var since=lastPromMap[a.student_id]||(allStudents.find(function(s){return s.id===a.student_id;})||{}).start_date+'T00:00:00'||'2020-01-01';
+      if(a.noted_at>=since){
+        attCountMap[a.student_id]=(attCountMap[a.student_id]||0)+1;
+      }
+    });
+
+    // 5. Filter to truly eligible students
+    var eligible=candidates.filter(function(s){
+      var bl=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+      var idx=bl?allBeltLevels.indexOf(bl):-1;
+      var nextLevel=allBeltLevels[idx+1];
+      var required=nextLevel?(nextLevel.classes_required||0):0;
+      var count=attCountMap[s.id]||0;
+      return required===0||count>=required;
+    });
+
+    // Update global eligible set (used by isEligible() in All tab)
+    eligibleStudentIds=new Set(eligible.map(function(s){return s.id;}));
+    document.getElementById('cvBadgeEligible').textContent=eligible.length;
+
+    // 6. Get next upcoming belt test
+    var testR=await sb.from('belt_tests')
+      .select('id,name,test_date')
+      .eq('school_id',SID)
+      .gte('test_date',new Date().toISOString().split('T')[0])
+      .order('test_date')
+      .limit(1);
+    var nextTest=(testR.data&&testR.data.length)?testR.data[0]:null;
+
+    // 7. Get existing nominations for this test
+    var nominatedIds=new Set();
+    if(nextTest){
+      var nomR=await sb.from('belt_test_students')
+        .select('student_id')
+        .eq('belt_test_id',nextTest.id);
+      (nomR.data||[]).forEach(function(n){nominatedIds.add(n.student_id);});
+    }
+
+    // 8. Render
+    if(!eligible.length){
+      el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No students have met the class requirements for promotion yet.</div></div>';
+      // Refresh All tab to update Belt Ready badges
+      renderCvAllStudents(document.getElementById('cvSearch').value);
+      return;
+    }
+
+    var html='<div style="padding:0.85rem 1rem;border-bottom:1px solid var(--border)">';
+    if(!nextTest){
+      html+='<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">'+
+        '<i class="fa-solid fa-calendar-xmark" style="color:var(--muted)"></i>'+
+        '<span style="font-size:0.82rem;color:var(--muted)">No belt test scheduled. Create one in the dashboard to nominate students.</span>'+
+      '</div>';
+    }else{
+      html+='<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">'+
+        '<i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i>'+
+        '<span style="font-size:0.82rem;color:var(--white)">'+nextTest.name+'</span>'+
+      '</div>'+
+      '<div style="font-size:0.72rem;color:var(--muted)">'+
+        new Date(nextTest.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+
+        ' · Tap Nominate to add students to this test'+
+      '</div>';
+    }
+    html+='</div>';
+    html+=eligible.map(function(s){
+      return renderEligibleRow(s,nextTest,nominatedIds,attCountMap);
+    }).join('');
+    el.innerHTML=html;
+
+    // Refresh All tab so Belt Ready badges reflect new eligibility
+    renderCvAllStudents(document.getElementById('cvSearch').value);
+
+  }catch(e){
+    console.error('buildEligibleList error:',e);
+    el.innerHTML='<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><div class="empty-state-text">Could not load eligibility data.</div></div>';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  NOMINATE FOR BELT TEST
+// ─────────────────────────────────────────────────────────────
+async function nominateForTest(studentId){
+  var btn=document.getElementById('nomBtn-'+studentId);
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin"></i>';}
+
+  try{
+    // Get next upcoming belt test
+    var testR=await sb.from('belt_tests')
+      .select('id,name')
+      .eq('school_id',SID)
+      .gte('test_date',new Date().toISOString().split('T')[0])
+      .order('test_date')
+      .limit(1)
+      .single();
+
+    if(testR.error||!testR.data){
+      showToast('No belt test scheduled','warn');
+      if(btn){btn.disabled=false;btn.innerHTML='Nominate';}
+      return;
+    }
+
+    var ins=await sb.from('belt_test_students').insert({
+      belt_test_id:testR.data.id,
+      student_id:studentId
+    });
+
+    if(ins.error) throw new Error(ins.error.message);
+
+    // Update button to Nominated
+    if(btn){
+      btn.outerHTML='<button disabled style="height:40px;padding:0 0.85rem;background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-check" style="margin-right:0.3rem"></i>Nominated</button>';
+    }
+
+    var student=allStudents.find(function(s){return s.id===studentId;});
+    showToast((student?student.first_name:'Student')+' nominated for '+testR.data.name,'ok');
+
+  }catch(e){
+    console.error('nominateForTest error:',e);
+    showToast('Error: '+e.message,'err');
+    if(btn){btn.disabled=false;btn.innerHTML='Nominate';}
+  }
+}
+
 
 function filterStudents(q){renderCvAllStudents(q);}
 
@@ -1115,7 +1298,8 @@ async function toggleCheckin(studentId,event){
 //  BELT PROMOTION
 // ─────────────────────────────────────────────────────────────
 function isEligible(s){
-  return s.status!=='cancelled'&&s.skills_completed>=s.skills_total&&s.current_belt!=='black';
+  // Sync check against pre-computed set from buildEligibleList()
+  return eligibleStudentIds.has(s.id);
 }
 
 function openPromoteModal(studentId){
