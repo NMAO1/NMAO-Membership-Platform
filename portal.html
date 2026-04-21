@@ -1182,6 +1182,54 @@ function navScheduleDay(dir){
   var idx=diffs.indexOf(scheduleViewDay)+dir;
   if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
 }
+// ─────────────────────────────────────────────────────────────
+//  §JS: RSVP
+// ─────────────────────────────────────────────────────────────
+async function toggleRSVP(classId,sessionDate,btn){
+  if(!currentStudent) return;
+  var enrollKey=classId+'_'+sessionDate;
+  var isEnrolled=!!enrolledClasses[enrollKey];
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';
+  try{
+    if(isEnrolled){
+      var del=await sb.from('class_enrollments').delete()
+        .eq('student_id',currentStudent.id)
+        .eq('class_id',classId)
+        .eq('session_date',sessionDate)
+        .eq('school_id',SID);
+      if(del.error) throw new Error(del.error.message);
+      delete enrolledClasses[enrollKey];
+      btn.innerHTML='RSVP';
+      btn.classList.remove('enrolled');
+      btn.closest('.class-schedule-card').classList.remove('enrolled');
+    }else{
+      var ins=await sb.from('class_enrollments').insert({
+        school_id:SID,
+        class_id:classId,
+        student_id:currentStudent.id,
+        session_date:sessionDate,
+        status:'enrolled'
+      });
+      if(ins.error) throw new Error(ins.error.message);
+      enrolledClasses[enrollKey]=true;
+      btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
+      btn.classList.add('enrolled');
+      btn.closest('.class-schedule-card').classList.add('enrolled');
+    }
+  }catch(e){
+    console.error('RSVP error:',e);
+    btn.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>Error';
+    btn.style.background='#E07070';
+    setTimeout(function(){
+      btn.innerHTML=enrolledClasses[enrollKey]?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP';
+      btn.style.background='';
+      btn.disabled=false;
+    },2000);
+    return;
+  }
+  btn.disabled=false;
+}
 
   
 // ─────────────────────────────────────────────────────────────
