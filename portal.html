@@ -1139,7 +1139,51 @@ async function buildSchedule(s){
   }
 }
 
+function renderScheduleDay(){
+  var el=document.getElementById('scheduleList'); if(!el)return;
+  var now=new Date();
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  var viewDate=new Date(now); viewDate.setDate(now.getDate()+scheduleViewDay);
+  var viewDateStr=viewDate.toISOString().split('T')[0];
+  var label=scheduleViewDay===0?'Today':scheduleViewDay===1?'Tomorrow':DAY_NAMES[viewDate.getDay()];
+  var dateLabel=viewDate.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  var currentIdx=diffs.indexOf(scheduleViewDay);
+  var hasPrev=currentIdx>0; var hasNext=currentIdx<diffs.length-1;
+  var html='<div class="sched-day-nav">';
+  html+='<button class="sched-day-btn" onclick="navScheduleDay(-1)"'+(hasPrev?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-left"></i></button>';
+  html+='<div style="flex:1;text-align:center"><div class="sched-day-label">'+label+'</div><div class="sched-day-sub">'+dateLabel+'</div></div>';
+  html+='<button class="sched-day-btn" onclick="navScheduleDay(1)"'+(hasNext?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-right"></i></button>';
+  html+='</div>';
+  html+='<div class="sched-day-dots">';
+  diffs.forEach(function(diff){
+    var dotDate=new Date(now); dotDate.setDate(now.getDate()+diff);
+    html+='<div class="sched-day-dot'+(diff===scheduleViewDay?' active':' has-class')+'" onclick="scheduleViewDay='+diff+';renderScheduleDay()" title="'+DAY_NAMES[dotDate.getDay()]+'"></div>';
+  });
+  html+='</div>';
+  var dayClasses=(scheduleByDay[scheduleViewDay]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  if(!dayClasses.length){
+    html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes this day.</div>';
+  }else{
+    html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
+    dayClasses.forEach(function(c){
+      var enrollKey=c.id+'_'+viewDateStr;
+      var isEnrolled=!!enrolledClasses[enrollKey];
+      var cn=c.name||c.title||'Class';
+      var tags=[]; if(c.style)tags.push(c.style); if(c.level)tags.push(c.level); if(c.age_group)tags.push(c.age_group);
+      html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+tags.join(' &bull; ')+(c.capacity?' &bull; Max '+c.capacity:'')+'</div></div>';
+      html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'" onclick="toggleRSVP(\''+c.id+'\',\''+viewDateStr+'\',this)">'+(isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP')+'</button></div>';
+    });
+  }
+  el.innerHTML=html;
+}
 
+function navScheduleDay(dir){
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  var idx=diffs.indexOf(scheduleViewDay)+dir;
+  if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
+}
+
+  
 // ─────────────────────────────────────────────────────────────
 //  §JS: AUTO_CHECK_IN (client-side fallback)
 //  Server-side: pg_cron job fires every 15 min (see Project Bible)
