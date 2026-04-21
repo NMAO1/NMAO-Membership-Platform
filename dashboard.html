@@ -543,6 +543,17 @@
           <div style="font-size:0.85rem;color:var(--muted)" id="homeDateSub"></div>
         </div>
       </div>
+            <!-- Membership Alert Banner -->
+      <div id="membershipAlertBanner" style="display:none;margin-bottom:1.5rem">
+        <div style="background:var(--surface);border:1px solid rgba(224,112,112,0.3);border-left:4px solid #E07070;padding:1rem 1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">
+            <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:#E07070"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Membership Alerts</div>
+            <button onclick="dismissMembershipBanner()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem" id="membershipAlertStats"></div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap" id="membershipAlertActions"></div>
+        </div>
+      </div>
       <div class="setup-banner" id="setupBanner">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
           <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold)"><i class="fa-solid fa-rocket" style="margin-right:0.4rem"></i>Getting Started</div>
@@ -2100,6 +2111,7 @@ async function init() {
     buildTodaySchedule();
     buildWeekGrid();
     buildHomeStats();
+    buildMembershipAlertBanner();
     buildCalendar();
     buildBirthdays();
     buildRetentionAlerts();
@@ -2812,6 +2824,52 @@ async function toggleAttendance(sid,sn){
 }
 
 // Home stats
+  async function buildMembershipAlertBanner(){
+  try{
+    var dismissed=sessionStorage.getItem('nmao_membership_banner_dismissed');
+    if(dismissed) return;
+    var now=new Date(); var in30=new Date(); in30.setDate(now.getDate()+30);
+    var nowStr=now.toISOString().split('T')[0]; var in30Str=in30.toISOString().split('T')[0];
+    var expiring=allStudents.filter(function(s){
+      if(s.status!=='active'||!s.membership_end_date) return false;
+      return s.membership_end_date>=nowStr&&s.membership_end_date<=in30Str;
+    });
+    var expired=allStudents.filter(function(s){
+      if(!s.membership_end_date) return false;
+      return s.membership_end_date<nowStr&&s.status==='active';
+    });
+    var paused=allStudents.filter(function(s){ return s.status==='paused'; });
+    if(!expiring.length&&!expired.length&&!paused.length) return;
+    var statsHtml='';
+    if(expiring.length) statsHtml+='<div style="display:flex;align-items:center;gap:0.5rem"><div style="font-family:var(--font-display);font-size:1.6rem;color:#E2A84C;line-height:1">'+expiring.length+'</div><div style="font-size:0.72rem;color:var(--muted2)">expiring<br>within 30 days</div></div>';
+    if(expired.length)  statsHtml+='<div style="display:flex;align-items:center;gap:0.5rem"><div style="font-family:var(--font-display);font-size:1.6rem;color:#E07070;line-height:1">'+expired.length+'</div><div style="font-size:0.72rem;color:var(--muted2)">expired<br>memberships</div></div>';
+    if(paused.length)   statsHtml+='<div style="display:flex;align-items:center;gap:0.5rem"><div style="font-family:var(--font-display);font-size:1.6rem;color:#7AAAD4;line-height:1">'+paused.length+'</div><div style="font-size:0.72rem;color:var(--muted2)">paused<br>members</div></div>';
+    var actionsHtml='';
+    if(expiring.length) actionsHtml+='<button class="btn-sm" style="border-color:#E2A84C;color:#E2A84C" onclick="viewMembershipAlert(\'expiring\')"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>View Expiring</button>';
+    if(expired.length)  actionsHtml+='<button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="viewMembershipAlert(\'expired\')"><i class="fa-solid fa-circle-xmark" style="margin-right:0.3rem"></i>View Expired</button>';
+    if(paused.length)   actionsHtml+='<button class="btn-sm" style="border-color:#7AAAD4;color:#7AAAD4" onclick="viewMembershipAlert(\'paused\')"><i class="fa-solid fa-pause-circle" style="margin-right:0.3rem"></i>View Paused</button>';
+    actionsHtml+='<button class="btn-sm" onclick="openReport(\'expiring\')" style="margin-left:auto"><i class="fa-solid fa-file-export" style="margin-right:0.3rem"></i>Export Report</button>';
+    document.getElementById('membershipAlertStats').innerHTML=statsHtml;
+    document.getElementById('membershipAlertActions').innerHTML=actionsHtml;
+    document.getElementById('membershipAlertBanner').style.display='block';
+  }catch(e){}
+}
+function dismissMembershipBanner(){
+  document.getElementById('membershipAlertBanner').style.display='none';
+  try{sessionStorage.setItem('nmao_membership_banner_dismissed','1');}catch(e){}
+}
+function viewMembershipAlert(status){
+  navigate('members',document.getElementById('nav-members'));
+  setTimeout(function(){
+    var sf=document.getElementById('statusFilter');
+    if(sf){
+      if(status==='expiring') sf.value='active';
+      else sf.value=status;
+      filterMembers();
+    }
+  },300);
+}
+
 function buildHomeStats(){
   var active=allStudents.filter(function(s){return s.status==='active';}).length;
   var trial=allStudents.filter(function(s){return s.status==='trial';}).length;
