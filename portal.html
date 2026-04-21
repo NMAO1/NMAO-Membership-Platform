@@ -1051,8 +1051,8 @@ async function buildPortal(s){
   }
   await buildTracker(s);
   await buildAttendance(s.id);
-  await buildSchedule(s);
   await buildAnnouncements();
+      processAutoCheckIn();
 
   document.getElementById('portalLoading').style.display='none';
   document.getElementById('portalContent').style.display='block';
@@ -1138,22 +1138,95 @@ function navScheduleDay(dir){
 //  §JS: RSVP
 // ─────────────────────────────────────────────────────────────
 async function toggleRSVP(classId,btn){
-  if(!currentStudent)return;
+  if(!currentStudent) return;
   var isEnrolled=!!enrolledClasses[classId];
-  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';
   var today=new Date().toISOString().split('T')[0];
   if(isEnrolled){
     await sb.from('class_enrollments').delete().eq('student_id',currentStudent.id).eq('class_id',classId);
     delete enrolledClasses[classId];
-    btn.innerHTML='RSVP';btn.classList.remove('enrolled');
+    // Decrement enrolled_count
+    await sb.from('classes').update({enrolled_count:Math.max(0,(await sb.from('classes').select('enrolled_count').eq('id',classId).single()).data.enrolled_count-1)}).eq('id',classId);
+    btn.innerHTML='RSVP'; btn.classList.remove('enrolled');
     btn.closest('.class-schedule-card').classList.remove('enrolled');
   }else{
-    await sb.from('class_enrollments').insert({school_id:SID,class_id:classId,student_id:currentStudent.id,session_date:today,status:'enrolled'});
-    enrolledClasses[classId]=true;
-    btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';btn.classList.add('enrolled');
-    btn.closest('.class-schedule-card').classList.add('enrolled');
+    var ins=await sb.from('class_enrollments').insert({school_id:SID,class_id:classId,student_id:currentStudent.id,session_date:today,status:'enrolled'});
+    if(!ins.error){
+      enrolledClasses[classId]=true;
+      // Increment enrolled_count
+      var cr=await sb.from('classes').select('enrolled_count').eq('id',classId).single();
+      var newCount=(cr.data?parseInt(cr.data.enrolled_count||0):0)+1;
+      await sb.from('classes').update({enrolled_count:newCount}).eq('id',classId);
+      btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
+      btn.classList.add('enrolled');
+      btn.closest('.class-schedule-card').classList.add('enrolled');
+    }
   }
   btn.disabled=false;
+}
+
+async function processAutoCheckIn(){
+  if(!currentStudent) return;
+  try{
+    var now=new Date();
+    var todayStr=now.toISOString().split('T')[0];
+    var nowMins=now.getHours()*60+now.getMinutes();
+    // Find classes that started within last 90 minutes
+    var cr=await sb.from('class_enrollments').select('class_id,classes(name,start_time,end_time,instructor_name)').eq('student_id',currentStudent.id).eq('school_id',SID).eq('session_date',todayStr).eq('status','enrolled');
+    if(!cr.data||!cr.data.length) return;
+    for(var i=0;i<cr.data.length;i++){
+      var enr=cr.data[i]; var cls=enr.classes; if(!cls||!cls.start_time) continue;
+      var parts=cls.start_time.split(':'); var startMins=parseInt(parts[0])*60+parseInt(parts[1]);
+      var diff=nowMins-startMins;
+      if(diff<0||diff>90) continue; // Class hasn't started or started too long ago
+      // Check if already checked in
+      var sr=await sb.from('class_sessions').select('id').eq('class_id',enr.class_id).eq('session_date',todayStr).limit(1);
+      var sessionId=null;
+      if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
+      else{var nr=await sb.from('class_sessions').insert({class_id:enr.class_id,school_id:SID,session_date:todayStr,status:'scheduled'}).select().single();if(!nr.error)sessionId=nr.data.id;}
+      if(!sessionId) continue;
+      var ar=await sb.from('class_attendance').select('id').eq('session_id',sessionId).eq('student_id',currentStudent.id).limit(1);
+      if(ar.data&&ar.data.length) continue; // Already checked in
+      // Auto check in
+      await sb.from('class_attendance').insert({session_id:sessionId,student_id:currentStudent.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});
+      // Apply membership deduction
+      await applyMembershipDeduction(currentStudent.id,todayStr);
+      // Mark enrollment as attended
+      await sb.from('class_enrollments').update({status:'attended'}).eq('student_id',currentStudent.id).eq('class_id',enr.class_id).eq('session_date',todayStr);
+    }
+  }catch(e){console.error('Auto check-in error:',e);}
+}
+
+async function applyMembershipDeduction(studentId,dateStr){
+  try{
+    var sr=await sb.from('students').select('membership_id,memberships(class_limit_type,class_limit_count)').eq('id',studentId).single();
+    if(!sr.data||!sr.data.memberships) return;
+    var mem=sr.data.memberships;
+    var limitType=mem.class_limit_type;
+    if(limitType==='unlimited') return; // No deduction needed
+    if(limitType==='per_week'){
+      // Check weekly count
+      var weekAgo=new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+      var wr=await sb.from('class_attendance').select('id',{count:'exact',head:true}).eq('student_id',studentId).eq('school_id',SID).gte('noted_at',weekAgo.toISOString());
+      if((wr.count||0)>=(mem.class_limit_count||0)) return; // At limit — attendance already inserted, just log
+      return; // Under limit — no pack deduction needed
+    }
+    if(limitType==='per_month'){
+      var monthStart=new Date(); monthStart=new Date(monthStart.getFullYear(),monthStart.getMonth(),1);
+      var mr=await sb.from('class_attendance').select('id',{count:'exact',head:true}).eq('student_id',studentId).eq('school_id',SID).gte('noted_at',monthStart.toISOString());
+      if((mr.count||0)>=(mem.class_limit_count||0)) return;
+      return;
+    }
+    if(limitType==='class_pack'){
+      // FIFO deduct from oldest active pack
+      var pr=await sb.from('student_session_packs').select('*').eq('student_id',studentId).eq('school_id',SID).eq('status','active').gt('sessions_remaining',0).order('created_at',{ascending:true}).limit(1);
+      if(!pr.data||!pr.data.length) return;
+      var pack=pr.data[0];
+      var newRemaining=pack.sessions_remaining-1;
+      var newStatus=newRemaining<=0?'exhausted':'active';
+      await sb.from('student_session_packs').update({sessions_remaining:newRemaining,status:newStatus}).eq('id',pack.id);
+    }
+  }catch(e){console.error('Membership deduction error:',e);}
 }
 
 // ─────────────────────────────────────────────────────────────
