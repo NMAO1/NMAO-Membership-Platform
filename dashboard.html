@@ -4347,13 +4347,39 @@ function closeAddBeltTest(){ document.getElementById('addBeltTestModal').classLi
 function toggleBeltTestFee(){ document.getElementById('btFeeFields').style.display=document.getElementById('btFeeEnabled').checked?'block':'none'; }
 function populateBeltTestProgramDropdown(){ var sel=document.getElementById('btProgram');sel.innerHTML='<option value="">-- Select Program --</option>';allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); }
 async function saveBeltTest(){
-  var name=document.getElementById('btName').value.trim(); var date=document.getElementById('btDate').value;
-  if(!name||!date){setMsg('beltTestMsg','Name and date required.','error');return;} setMsg('beltTestMsg','Saving...','');
+  var name=document.getElementById('btName').value.trim();
+  var date=document.getElementById('btDate').value;
+  if(!name||!date){setMsg('beltTestMsg','Name and date required.','error');return;}
+  setMsg('beltTestMsg','Saving...','');
   var eid=document.getElementById('beltTestEditId').value;
-  var payload={name:name,program_id:document.getElementById('btProgram').value||null,test_date:date,test_time:document.getElementById('btTime').value||null,location:document.getElementById('btLocation').value.trim(),fee_enabled:document.getElementById('btFeeEnabled').checked,test_fee:parseFloat(document.getElementById('btFeeAmount').value)||0,payment_method:document.getElementById('btPaymentMethod').value,eligibility_rule:document.getElementById('btEligibilityMode').value,notes:document.getElementById('btNotes').value.trim(),status:'upcoming'};
-  var r; if(eid){r=await sb.from('belt_tests').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('belt_tests').insert(payload);}
-  if(r.error){setMsg('beltTestMsg',r.error.message,'error');}else{setMsg('beltTestMsg','Saved!','success');await loadBeltTests();if(calView==='month')buildMonthCalendar();setTimeout(closeAddBeltTest,800);}
+  var payload={
+    school_id:SID,
+    name:name,
+    program_id:document.getElementById('btProgram').value||null,
+    test_date:date,
+    test_time:document.getElementById('btTime').value||null,
+    location:document.getElementById('btLocation').value.trim(),
+    fee_enabled:document.getElementById('btFeeEnabled')?document.getElementById('btFeeEnabled').checked:false,
+    test_fee:document.getElementById('btFee')?parseFloat(document.getElementById('btFee').value)||0:0,
+    payment_method:document.getElementById('btPaymentMethod')?document.getElementById('btPaymentMethod').value:'portal',
+    eligibility_rule:document.getElementById('btProgram')?document.getElementById('btEligibility').value:'manual',
+    notes:document.getElementById('btNotes')?document.getElementById('btNotes').value.trim():''
+  };
+  var r;
+  if(eid){
+    r=await sb.from('belt_tests').update(payload).eq('id',eid).eq('school_id',SID);
+  }else{
+    r=await sb.from('belt_tests').insert(payload);
+  }
+  if(r.error){setMsg('beltTestMsg',r.error.message,'error');}
+  else{
+    setMsg('beltTestMsg','Saved!','success');
+    await loadBeltTests();
+    if(calView==='month')buildMonthCalendar();
+    setTimeout(closeAddBeltTest,800);
+  }
 }
+
 function openAddStudentToBeltTest(){ document.getElementById('btAddStudentPanel').style.display='block';document.getElementById('btStudentSearch').value='';document.getElementById('btStudentResults').innerHTML='';document.getElementById('btStudentSearch').focus(); }
 function searchBeltTestStudents(){ var q=document.getElementById('btStudentSearch').value.toLowerCase().trim();var el=document.getElementById('btStudentResults');if(!q||q.length<2){el.innerHTML='';return;}var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6);if(!filtered.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic">No students found.</div>';return;}el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" onclick="addStudentToBeltTestFromSearch(\''+s.id+'\')"><div style="font-size:0.85rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div><i class="fa-solid fa-plus" style="color:var(--gold);font-size:0.8rem"></i></div>';}).join(''); }
 async function addStudentToBeltTestFromSearch(sid){ var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});var r=await sb.from('belt_test_students').insert({school_id:SID,belt_test_id:currentBeltTestId,student_id:sid,status:'invited',fee_amount:t?t.test_fee||0:0});if(!r.error){document.getElementById('btAddStudentPanel').style.display='none';await loadBeltTestStudents();} }
