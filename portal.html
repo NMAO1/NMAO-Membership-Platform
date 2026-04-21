@@ -1500,14 +1500,15 @@ async function executePurchasePack(packId){
     });
 
     // Credit student pack balance
-    await sb.from('student_session_packs').insert({
-      student_id:currentStudent.id,
-      session_pack_id:packId,
-      sessions_remaining:pack.quantity,
-      sessions_original:pack.quantity,
-      expires_at:expiresAt,
-      status:'active'
-    });
+      await sb.from('student_session_packs').insert({
+        school_id:SID,
+        student_id:currentStudent.id,
+        session_pack_id:packId,
+        sessions_remaining:pack.quantity,
+        sessions_original:pack.quantity,
+        expires_at:expiresAt,
+        status:'active'
+      });
 
     // Reload packs to reflect new balance
     await buildPacks(currentStudent);
