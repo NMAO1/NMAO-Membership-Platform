@@ -4933,8 +4933,93 @@ var REPORT_DEFS = [
     filters:[
       {key:'status',label:'Status',type:'select',options:['active','expired','exhausted']}
     ]
+  },
+  { key:'retention', title:'Retention Risk', desc:'Students not attended in 14, 30, or 60 days.',
+    table:'students', join:null, dateField:'created_at',
+    customQuery:async function(sb,SID){
+      var r=await sb.from('students').select('*').eq('school_id',SID).eq('status','active').order('last_name');
+      return r;
+    },
+    customFilter:async function(data){
+      var results=[];
+      for(var i=0;i<data.length;i++){
+        var s=data[i];
+        var ar=await sb.from('class_attendance').select('noted_at').eq('student_id',s.id).order('noted_at',{ascending:false}).limit(1);
+        var last=ar.data&&ar.data.length?new Date(ar.data[0].noted_at):null;
+        var daysAgo=last?Math.floor((new Date()-last)/(1000*60*60*24)):999;
+        if(daysAgo>=14) results.push(Object.assign({},s,{days_ago:daysAgo,last_attended:last?last.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'Never'}));
+      }
+      return results.sort(function(a,b){return b.days_ago-a.days_ago;});
+    },
+    actionable:true,
+    columns:[
+      {key:'first_name',label:'First Name'},
+      {key:'last_name',label:'Last Name'},
+      {key:'email',label:'Email'},
+      {key:'phone',label:'Phone'},
+      {key:'last_attended',label:'Last Attended'},
+      {key:'days_ago',label:'Days Since',compute:function(r){return r.days_ago===999?'Never':r.days_ago+' days';}}
+    ],
+    filters:[]
+  },
+  { key:'utilization', title:'Class Utilization', desc:'Fill rate and attendance per class this month.',
+    table:'classes', join:null, dateField:'created_at',
+    customQuery:async function(sb,SID){
+      var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('name');
+      return r;
+    },
+    customFilter:async function(data){
+      var now=new Date(); var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+      var results=[];
+      for(var i=0;i<data.length;i++){
+        var c=data[i];
+        var sr=await sb.from('class_sessions').select('id',{count:'exact',head:true}).eq('class_id',c.id).gte('session_date',monthStart);
+        var sessionCount=sr.count||0;
+        var ar=await sb.from('class_attendance').select('id',{count:'exact',head:true}).eq('school_id',SID);
+        var cap=parseInt(c.capacity)||0;
+        var fillRate=cap&&sessionCount?Math.round((ar.count||0)/(cap*sessionCount)*100):0;
+        results.push(Object.assign({},c,{session_count:sessionCount,total_checkins:ar.count||0,capacity:cap,fill_rate:fillRate+'%'}));
+      }
+      return results.sort(function(a,b){return b.total_checkins-a.total_checkins;});
+    },
+    columns:[
+      {key:'name',label:'Class'},
+      {key:'instructor_name',label:'Instructor'},
+      {key:'capacity',label:'Capacity'},
+      {key:'session_count',label:'Sessions This Month'},
+      {key:'total_checkins',label:'Total Check-ins'},
+      {key:'fill_rate',label:'Fill Rate'}
+    ],
+    filters:[]
+  },
+  { key:'lead_funnel', title:'Lead Funnel', desc:'Conversion rate from lead to enrolled student.',
+    table:'leads', join:null, dateField:'created_at',
+    customQuery:async function(sb,SID){
+      var r=await sb.from('leads').select('*').eq('school_id',SID).order('created_at',{ascending:false});
+      return r;
+    },
+    customFilter:function(data){
+      var total=data.length;
+      var contacted=data.filter(function(l){return ['contacted','trial','converted'].includes(l.status);}).length;
+      var trial=data.filter(function(l){return ['trial','converted'].includes(l.status);}).length;
+      var converted=data.filter(function(l){return l.status==='converted';}).length;
+      var pct=function(n){return total?Math.round((n/total)*100)+'%':'0%';};
+      return [
+        {stage:'New Leads',count:total,rate:'100%',color:'#C9A84C'},
+        {stage:'Contacted',count:contacted,rate:pct(contacted),color:'#7DAAD4'},
+        {stage:'Trial Scheduled',count:trial,rate:pct(trial),color:'#9060D0'},
+        {stage:'Converted',count:converted,rate:pct(converted),color:'#5A9A6A'}
+      ];
+    },
+    columns:[
+      {key:'stage',label:'Stage'},
+      {key:'count',label:'Count'},
+      {key:'rate',label:'Conversion Rate'}
+    ],
+    filters:[]
   }
 ];
+
 
 
 function renderReportCards(){
