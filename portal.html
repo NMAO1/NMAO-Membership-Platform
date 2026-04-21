@@ -1070,7 +1070,7 @@ async function buildSchedule(s){
   try{
     var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',s.membership_id);
     if(mpR.data) mpR.data.forEach(function(x){if(studentProgIds.indexOf(x.program_id)===-1)studentProgIds.push(x.program_id);});
-  }catch(e){}
+}catch(e){document.getElementById('scheduleList').innerHTML='<div style="color:#E07070;padding:1rem">Schedule error: '+e.message+'</div>';}
   var classes=allFetched.filter(function(c){
     return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1;
   });
