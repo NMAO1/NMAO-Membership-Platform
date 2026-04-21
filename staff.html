@@ -494,8 +494,8 @@
         <i class="fa-solid fa-clipboard-check"></i> In <span class="cv-tab-badge green" id="cvBadgeCheckin">0</span>
       </button>
       <button class="cv-tab" id="cvtEligible" onclick="switchCvTab('eligible')">
-        <i class="fa-solid fa-ranking-star"></i> Eligible <span class="cv-tab-badge" id="cvBadgeEligible">—</span>
-      </button>
+  <i class="fa-solid fa-ranking-star"></i> Promote <span class="cv-tab-badge" id="cvBadgeEligible">—</span>
+</button>
     </div>
     <div class="cv-content">
       <!-- All Students tab -->
@@ -959,7 +959,7 @@ function renderCvEligible(){
     el.innerHTML='<div class="empty-state"><i class="fa-solid fa-ranking-star"></i><div class="empty-state-text">No students currently eligible for promotion.</div></div>';
     return;
   }
-  var html='<div style="padding:0.75rem;background:var(--gold-bg);border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--muted);display:flex;align-items:center;gap:0.5rem"><i class="fa-solid fa-circle-info" style="color:var(--gold)"></i>These students have met all requirements for their next belt.</div>';
+var html='<div style="padding:0.75rem;background:rgba(201,168,76,0.08);border-bottom:1px solid var(--border)"><div style="font-size:0.82rem;color:var(--gold);font-weight:700;margin-bottom:0.2rem"><i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Belt Promotion Eligible</div><div style="font-size:0.75rem;color:var(--muted);line-height:1.5">These students have met the class requirements for their next belt rank. Tap Promote to record the promotion.</div></div>';
   html+=eligible.map(function(s){return renderEligibleRow(s);}).join('');
   el.innerHTML=html;
 }
@@ -977,7 +977,7 @@ function renderStudentRow(s,showCheckin){
   var st=s.status||'trial';
   var memClass=st==='active'?'mem-active':st==='trial'?'mem-trial':'mem-warn';
   var memLabel=st==='active'?'Active':st==='trial'?'Trial':st.charAt(0).toUpperCase()+st.slice(1);
-  var eligBadge=elig?'<span class="eligible-star" title="Eligible for promotion"><i class="fa-solid fa-star"></i></span>':'';
+  var eligBadge=elig?'<span style="font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);letter-spacing:0.08em;text-transform:uppercase">Belt Ready</span>':'';
   var actionHtml='';
   if(showCheckin){
     actionHtml='<div class="student-action"><button class="btn-checkin'+(isIn?' checked':'')+'" id="chkbtn-'+s.id+'" onclick="toggleCheckin(\''+s.id+'\',event)">'+(isIn?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>In':'Check In')+'</button></div>';
