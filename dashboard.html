@@ -5137,7 +5137,7 @@ async function runReport(){
     if(def.customQuery){
       var r=await def.customQuery(sb,SID);
       if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
-      reportData=def.customFilter?def.customFilter(r.data||[]):(r.data||[]);
+      reportData=def.customFilter?(await def.customFilter(r.data||[])):(r.data||[]);
       document.getElementById('reportResultCount').textContent=reportData.length;
       var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
       var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
