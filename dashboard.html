@@ -5278,15 +5278,22 @@ async function runReport(){
       return;
     }
 function closeReport(){ document.getElementById('reportModal').classList.remove('active'); currentReportType=null; currentReportDef=null; reportData=[]; var ab=document.getElementById('reportActionBar'); if(ab) ab.innerHTML=''; }
-function toggleAllReportRows(cb){ document.querySelectorAll('.report-row-check').forEach(function(c){c.checked=cb.checked;}); var checked=document.querySelectorAll('.report-row-check:checked').length; var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=checked+' selected'; }
-function selectAllReportRows(){ var cbs=document.querySelectorAll('.report-row-check'); cbs.forEach(function(c){c.checked=true;}); var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=cbs.length+' selected'; var all=document.getElementById('reportSelectAll'); if(all) all.checked=true; }
+function toggleAllReportRows(cb){ document.querySelectorAll('#reportResultsTbody .report-row-check').forEach(function(c){c.checked=cb.checked;}); var checked=document.querySelectorAll('#reportResultsTbody .report-row-check:checked').length; var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=checked+' selected'; }
+function selectAllReportRows(){ var cbs=document.querySelectorAll('#reportResultsTbody .report-row-check'); cbs.forEach(function(c){c.checked=true;}); var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=cbs.length+' selected'; var all=document.getElementById('reportSelectAll'); if(all) all.checked=true; }
 function clearReportSelection(){ document.querySelectorAll('.report-row-check').forEach(function(c){c.checked=false;}); selectedReportRecipients=[]; var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent='0 selected'; var all=document.getElementById('reportSelectAll'); if(all) all.checked=false; var banner=document.getElementById('commRecipientBanner'); if(banner) banner.style.display='none'; var af=document.getElementById('commAudience'); if(af&&af.closest('.field')){af.closest('.field').style.opacity='';af.closest('.field').style.pointerEvents='';} }
 function broadcastToSelected(){
   var selected=[]; document.querySelectorAll('.report-row-check:checked').forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
   if(!selected.length){alert('Select at least one student first.');return;}
-  var withEmail=selected.filter(function(r){return r.email;});
+  var withEmail=selected.map(function(r){
+    var email=r.email||(r.students&&r.students.email)||null;
+    var first=r.first_name||(r.students&&r.students.first_name)||'';
+    var last=r.last_name||(r.students&&r.students.last_name)||'';
+    var id=r.id||(r.students&&r.students.id)||null;
+    return email?{id:id,email:email,name:(first+' '+last).trim()}:null;
+  }).filter(Boolean);
+  var seen={}; withEmail=withEmail.filter(function(r){if(seen[r.email])return false;seen[r.email]=true;return true;});
   if(!withEmail.length){alert('No email addresses found for selected students.');return;}
-  selectedReportRecipients=withEmail.map(function(r){return{id:r.id||null,email:r.email,name:((r.first_name||'')+' '+(r.last_name||'')).trim()};});
+  selectedReportRecipients=withEmail;
   closeReport();
   navigate('communications',document.getElementById('nav-communications'));
   setTimeout(function(){
