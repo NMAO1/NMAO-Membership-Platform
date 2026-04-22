@@ -116,15 +116,6 @@
     @keyframes celebPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
     @keyframes progressShrink{from{transform:scaleX(1);}to{transform:scaleX(0);}}
     @media(max-width:700px){.reg-layout{grid-template-columns:1fr;}}
-    /* §CSS: PHOTO_CAPTURE */
-.photo-capture-wrap{margin-bottom:1rem;}
-.photo-preview{width:100%;height:180px;background:var(--surface);border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden;}
-.photo-preview:hover{border-color:var(--gold);}
-.photo-preview img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-.photo-preview-label{font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;text-align:center;}
-.photo-preview i{font-size:2rem;color:var(--muted);margin-bottom:0.5rem;}
-.photo-retake{width:100%;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem;cursor:pointer;margin-top:0.4rem;transition:all 0.2s;display:none;}
-.photo-retake:hover{border-color:var(--gold);color:var(--gold);}
   </style>
 </head>
 <body>
@@ -183,19 +174,8 @@
         <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" /></div>
         <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" /></div>
         <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" /></div>
-     <div class="reg-field"><label>Program Interest</label><select class="reg-input" id="regProgram" style="cursor:pointer"><option value="">-- Select a program --</option></select></div>
-<div class="reg-field photo-capture-wrap">
-  <label>Photo <span style="color:var(--muted);font-weight:300">(optional)</span></label>
-  <div class="photo-preview" id="photoPreview" onclick="triggerPhotoCapture()">
-    <i class="fa-solid fa-camera"></i>
-    <div class="photo-preview-label">Tap to take photo</div>
-  </div>
-  <button class="photo-retake" id="photoRetakeBtn" onclick="triggerPhotoCapture()">
-    <i class="fa-solid fa-rotate-left" style="margin-right:0.4rem"></i>Retake Photo
-  </button>
-  <input type="file" id="photoInput" accept="image/*" capture="user" style="display:none" onchange="handlePhotoCapture(event)" />
-</div>
-<button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()">
+        <div class="reg-field"><label>Program Interest</label><select class="reg-input" id="regProgram" style="cursor:pointer"><option value="">-- Select a program --</option></select></div>
+        <button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit</button>
         <div class="reg-msg" id="regMsg"></div>
       </div>
     </div>
@@ -663,40 +643,6 @@ async function showCelebration(student,classCount,beltColor,callback){
 }
 
 // ─────────────────────────────────────────────────────────────
-//  §JS: PHOTO_CAPTURE
-// ─────────────────────────────────────────────────────────────
-var capturedPhotoFile=null;
-
-function triggerPhotoCapture(){
-  document.getElementById('photoInput').click();
-}
-
-function handlePhotoCapture(event){
-  var file=event.target.files[0];
-  if(!file)return;
-  capturedPhotoFile=file;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var preview=document.getElementById('photoPreview');
-    preview.innerHTML='<img src="'+e.target.result+'" alt="Preview" />';
-    document.getElementById('photoRetakeBtn').style.display='block';
-  };
-  reader.readAsDataURL(file);
-}
-
-async function uploadLeadPhoto(leadId){
-  if(!capturedPhotoFile)return null;
-  try{
-    var ext=capturedPhotoFile.name.split('.').pop()||'jpg';
-    var filePath=SID+'/leads/'+leadId+'.'+ext;
-    var up=await sb.storage.from('student-photos').upload(filePath,capturedPhotoFile,{upsert:true,contentType:capturedPhotoFile.type});
-    if(up.error){console.error('Photo upload error:',up.error);return null;}
-    var url=sb.storage.from('student-photos').getPublicUrl(filePath);
-    return url.data.publicUrl||null;
-  }catch(e){console.error('Photo upload error:',e);return null;}
-}
-  
-// ─────────────────────────────────────────────────────────────
 //  §JS: REGISTRATION
 // ─────────────────────────────────────────────────────────────
 async function submitRegistration(){
@@ -713,16 +659,9 @@ async function submitRegistration(){
   try{
     var payload={school_id:SID,first_name:first,last_name:last,status:'new',source:'kiosk'};
     if(email)payload.email=email;if(phone)payload.phone=phone;if(progId)payload.program_id=progId;
-    var r=await sb.from('leads').insert(payload).select().single();
-if(r.error){msg.textContent=r.error.message;msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';return;}
-// Upload photo if captured — non-fatal if fails
-if(capturedPhotoFile&&r.data){
-  var photoUrl=await uploadLeadPhoto(r.data.id);
-  if(photoUrl){
-    await sb.from('leads').update({photo_url:photoUrl}).eq('id',r.data.id);
-  }
-}
-showRegistrationSuccess(first);
+    var r=await sb.from('leads').insert(payload);
+    if(r.error){msg.textContent=r.error.message;msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';return;}
+    showRegistrationSuccess(first);
    }catch(e){msg.textContent=e.message||'Unknown error';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';}
 }
 
@@ -766,10 +705,6 @@ function resetRegistrationForm(){
   document.getElementById('regProgram').value='';
   document.getElementById('regMsg').textContent='';document.getElementById('regMsg').className='reg-msg';
   var btn=document.getElementById('regSubmitBtn');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';
-  capturedPhotoFile=null;
-document.getElementById('photoPreview').innerHTML='<i class="fa-solid fa-camera"></i><div class="photo-preview-label">Tap to take photo</div>';
-document.getElementById('photoRetakeBtn').style.display='none';
-document.getElementById('photoInput').value='';
 }
 
 // ─────────────────────────────────────────────────────────────
