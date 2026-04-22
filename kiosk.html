@@ -329,9 +329,19 @@ async function loadPrograms(){
     var r=await sb.from('programs').select('id,name').eq('school_id',SID).eq('active',true).order('name');
     allPrograms=r.data||[];
     var sel=document.getElementById('regProgram');
-    allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
-  }catch(e){}
+    if(!sel)return;
+    sel.innerHTML='<option value="">-- Select Program --</option>';
+    allPrograms.forEach(function(p){
+      var o=document.createElement('option');
+      o.value=p.id;
+      o.textContent=p.name;
+      sel.appendChild(o);
+    });
+  }catch(e){
+    console.error('loadPrograms error:',e);
+  }
 }
+
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: CLASS_DETECTION
