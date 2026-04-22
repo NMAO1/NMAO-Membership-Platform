@@ -5237,11 +5237,11 @@ function openReport(key){
       var div=document.createElement('div'); div.className='field'; div.style.marginBottom='0.6rem';
       var label=document.createElement('label'); label.textContent=f.label; div.appendChild(label);
       if(f.type==='select'){
-        var sel=document.createElement('select'); sel.id='rf-'+f.key; sel.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%';
+        var sel=document.createElement('select'); sel.id='rf-'+f.key; sel.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%;box-sizing:border-box';
         sel.innerHTML='<option value="">All</option>'+f.options.map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
         div.appendChild(sel);
       }else{
-        var inp=document.createElement('input'); inp.type='date'; inp.id='rf-'+f.key; inp.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%';
+        var inp=document.createElement('input'); inp.type='date'; inp.id='rf-'+f.key; inp.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%;box-sizing:border-box';
         div.appendChild(inp);
       }
       fs.appendChild(div);
