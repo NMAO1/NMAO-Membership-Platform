@@ -644,7 +644,7 @@ async function submitRegistration(){
     var payload={school_id:SID,first_name:first,last_name:last,status:'new',source:'kiosk'};
     if(email)payload.email=email;if(phone)payload.phone=phone;if(progId)payload.program_id=progId;
     var r=await sb.from('leads').insert(payload);
-    if(r.error){msg.textContent=r.error.message+' ('+r.error.code+')';
+    if(r.error){msg.textContent='Something went wrong. Please see the front desk.';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';return;}
     showRegistrationSuccess(first);
   }catch(e){msg.textContent='Something went wrong. Please see the front desk.';msg.className='reg-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit';}
 }
