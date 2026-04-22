@@ -208,7 +208,7 @@
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
-var sb=supabase.createClient(SURL,SKEY);
+var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
 
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1000 classes. You have achieved something extraordinary.'};
