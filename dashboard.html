@@ -1864,7 +1864,7 @@
           </div>
           <div>
             <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.65rem">Filters</div>
-            <div id="reportFiltersSection" style="padding:1rem;background:var(--black);border:1px solid var(--border)"></div>
+            <div id="reportFiltersSection" style="padding:1rem;background:var(--black);border:1px solid var(--border);overflow:hidden;min-width:0"></div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:1rem">
@@ -5241,7 +5241,7 @@ function openReport(key){
         sel.innerHTML='<option value="">All</option>'+f.options.map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
         div.appendChild(sel);
       }else{
-        var inp=document.createElement('input'); inp.type='date'; inp.id='rf-'+f.key; inp.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%;box-sizing:border-box';
+        var inp=document.createElement('input'); inp.type='date'; inp.id='rf-'+f.key; inp.style.cssText='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%;box-sizing:border-box;max-width:100%;min-width:0';
         div.appendChild(inp);
       }
       fs.appendChild(div);
