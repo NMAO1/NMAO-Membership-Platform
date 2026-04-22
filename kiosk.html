@@ -650,19 +650,40 @@ async function submitRegistration(){
 }
 
 function showRegistrationSuccess(firstName){
-  var goldColor=getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
-  var check=document.getElementById('celebCheck');var prog=document.getElementById('celebProgress');
-  check.style.background=goldColor;prog.style.background=goldColor;
-  document.getElementById('celebName').textContent=firstName;
-  document.getElementById('celebSubtitle').textContent='Welcome to the School!';
-  document.getElementById('celebClass').textContent='We will be in touch soon.';
-  document.getElementById('celebCount').textContent='';
-  document.getElementById('celebMilestone').style.display='none';
-  prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
-  document.getElementById('kioskCelebration').classList.add('active');
-  setTimeout(function(){document.getElementById('kioskCelebration').classList.remove('active');resetRegistrationForm();setMode('checkin');},3500);
+  try{
+    var goldColor=getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#C9A84C';
+    var check=document.getElementById('celebCheck');
+    var prog=document.getElementById('celebProgress');
+    if(check)check.style.background=goldColor;
+    if(prog)prog.style.background=goldColor;
+    var nameEl=document.getElementById('celebName');
+    var subEl=document.getElementById('celebSubtitle');
+    var classEl=document.getElementById('celebClass');
+    var countEl=document.getElementById('celebCount');
+    var milestoneEl=document.getElementById('celebMilestone');
+    if(nameEl)nameEl.textContent=firstName;
+    if(subEl)subEl.textContent='Welcome to the School!';
+    if(classEl)classEl.textContent='We will be in touch soon.';
+    if(countEl)countEl.textContent='';
+    if(milestoneEl)milestoneEl.style.display='none';
+    if(prog){prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';}
+    var cel=document.getElementById('kioskCelebration');
+    if(cel){
+      cel.classList.add('active');
+      setTimeout(function(){
+        cel.classList.remove('active');
+        resetRegistrationForm();
+        setMode('checkin');
+      },3500);
+    }
+  }catch(e){
+    console.error('showRegistrationSuccess error:',e);
+    resetRegistrationForm();
+    setMode('checkin');
+  }
 }
 
+  
 function resetRegistrationForm(){
   ['regFirst','regLast','regEmail','regPhone'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('regProgram').value='';
