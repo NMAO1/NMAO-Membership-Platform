@@ -264,11 +264,11 @@
     /* §CSS-MODALS */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(6px); -webkit-overflow-scrolling: touch; }
     .modal-overlay.active { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border); width: min(92vw,560px); max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 5; }
+    .modal { background: var(--surface); border: 1px solid var(--border); width: min(92vw,560px); max-height: 88vh; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
     .modal-title  { font-family: var(--font-display); font-size: 1rem; letter-spacing: 0.08em; color: var(--white); }
     .modal-close  { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
-    .modal-body   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .modal-body   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
     .unsaved-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: none; align-items: center; justify-content: center; }
     .unsaved-dialog.active { display: flex; }
     .unsaved-box   { background: var(--surface); border: 1px solid var(--gold); padding: 2rem; max-width: 380px; width: 90%; text-align: center; }
