@@ -225,8 +225,9 @@ var familyCheckinQueue=[],familyCheckinIndex=0;
 //  §JS: INIT
 // ─────────────────────────────────────────────────────────────
 async function init(){
+  // School branding — non-fatal if fails
   try{
-    var r=await sb.from('schools').select('*').eq('id',SID).single();
+    var r=await sb.from('schools').select('*').eq('id',SID).maybeSingle();
     if(r.data){
       schoolData=r.data;
       var d=r.data;
@@ -246,13 +247,18 @@ async function init(){
       }
       buildWelcomePanel(d);
     }
+  }catch(e){console.error('School branding error:',e);}
+
+  // Data loading — always runs regardless of branding
+  try{
     await loadStudents();
     await loadFamilies();
     await loadPrograms();
     await detectCurrentClass();
     document.getElementById('kioskSearch').focus();
-  }catch(e){console.error('Kiosk init error:',e);}
+  }catch(e){console.error('Kiosk data load error:',e);}
 }
+
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: WELCOME_PANEL
@@ -683,7 +689,7 @@ function showRegistrationSuccess(firstName){
       setTimeout(function(){
         cel.classList.remove('active');
         resetRegistrationForm();
-        setMode('checkin');
+        setMode(currentMode);
       },3500);
     }
   }catch(e){
