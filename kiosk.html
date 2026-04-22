@@ -676,7 +676,7 @@ function showRegistrationSuccess(firstName){
     if(classEl)classEl.textContent='We will be in touch soon.';
     if(countEl)countEl.textContent='';
     if(milestoneEl)milestoneEl.style.display='none';
-    if(prog){prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';}
+    if(prog){try{prog.style.animation='none';prog.offsetHeight;}catch(ex){}prog.style.animation='progressShrink 3.5s linear forwards';}
     var cel=document.getElementById('kioskCelebration');
     if(cel){
       cel.classList.add('active');
@@ -689,7 +689,7 @@ function showRegistrationSuccess(firstName){
   }catch(e){
     console.error('showRegistrationSuccess error:',e);
     resetRegistrationForm();
-    setMode('checkin');
+    setMode('register');
   }
 }
 
