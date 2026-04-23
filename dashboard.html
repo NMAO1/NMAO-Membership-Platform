@@ -5394,7 +5394,7 @@ function broadcastToSelected(){
     var af=document.getElementById('commAudience');
     if(af&&af.closest('.field')){af.closest('.field').style.opacity='0.4';af.closest('.field').style.pointerEvents='none';}
   },300);
-  }catch(e){ alert('Error: '+e.message+' | '+e.stack); }
+  }catch(e){ document.getElementById('reportMsg').textContent='ERR: '+e.message; }
 }
 
 
