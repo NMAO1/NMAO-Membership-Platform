@@ -5363,7 +5363,7 @@ function broadcastToSelected(){
     ?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked')
     :document.querySelectorAll('.report-row-check:checked');
   cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
-  if(!selected.length){alert('Select at least one student first.');return;}
+  if(!selected.length){setMsg('reportMsg','Please select at least one student first.','error');document.getElementById('reportConfigSection').style.display='block';return;}
   var seen={};
   selectedReportRecipients=selected.map(function(r){
     var email=r.email||(r.students&&r.students.email)||null;
@@ -5384,7 +5384,7 @@ function broadcastToSelected(){
     if(seen[name+id])return null; seen[name+id]=true;
     return {id:id,name:name,email:email,phone:phone};
   }).filter(Boolean);
-  if(!selectedReportRecipients.length){alert('No recipients found.');return;}
+  if(!selectedReportRecipients.length){setMsg('reportMsg','No valid recipients found — check student contact info.','error');document.getElementById('reportConfigSection').style.display='block';return;}
   closeReport();
   navigate('communications',document.getElementById('nav-communications'));
   setTimeout(function(){
