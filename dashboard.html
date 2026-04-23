@@ -5580,36 +5580,37 @@ function updateSmsCounter(el){
 }
 
 function loadStsTemplate(type){
+  var schoolNm=document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school';
   var templates={
     checkin:{
-      subject:'We noticed you haven\'t been in lately',
-      body:'<p>Hi there,</p><p>We\'ve missed seeing you on the mat! Your progress matters to us and we\'d love to have you back training with us.</p><p>Come train with us this week — we\'re here for you.</p>',
-      sms:'Hey! We\'ve missed you on the mat. Come train with us this week!'
+      subject:'We noticed you have not been in lately',
+      body:'<p>Hi there,</p><p>We have missed seeing you on the mat! Your progress matters to us and we would love to have you back training with us.</p><p>Come train with us this week.</p>',
+      sms:'Hey! We have missed you on the mat. Come train with us this week!'
     },
     birthday:{
-      subject:'Happy Birthday from '+( document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'us')+'!',
-      body:'<p>Wishing you an amazing birthday! 🎂</p><p>We are so grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>',
-      sms:'Happy Birthday! 🎂 We\'re so grateful to have you in our martial arts family!'
+      subject:'Happy Birthday from '+schoolNm+'!',
+      body:'<p>Wishing you an amazing birthday!</p><p>We are so grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>',
+      sms:'Happy Birthday! We are so grateful to have you in our martial arts family!'
     },
     renewal:{
       subject:'Your membership is expiring soon',
-      body:'<p>Hi,</p><p>Your membership is expiring soon. We\'d love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew and keep your momentum going.</p>',
+      body:'<p>Hi,</p><p>Your membership is expiring soon. We would love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew and keep your momentum going.</p>',
       sms:'Your membership is expiring soon! Contact us or log into the portal to renew.'
     },
     missyou:{
       subject:'We miss you on the mat',
-      body:'<p>Hi,</p><p>We\'ve noticed you haven\'t been in for a while and we wanted to reach out. Life gets busy — we understand.</p><p>Whenever you\'re ready to come back, we\'ll be here. Your spot on the mat is waiting.</p>',
-      sms:'We miss you on the mat! Whenever you\'re ready to come back, we\'ll be here.'
+      body:'<p>Hi,</p><p>We have noticed you have not been in for a while and we wanted to reach out. Life gets busy and we understand.</p><p>Whenever you are ready to come back, we will be here. Your spot on the mat is waiting.</p>',
+      sms:'We miss you on the mat! Whenever you are ready to come back, we will be here.'
     },
     belttest:{
-      subject:'You\'re invited to our upcoming Belt Test',
-      body:'<p>Congratulations — you have been invited to participate in our upcoming belt test!</p><p>This is a recognition of your hard work and dedication. Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>',
-      sms:'You\'re invited to our upcoming belt test! Please confirm your attendance.'
+      subject:'You are invited to our upcoming Belt Test',
+      body:'<p>Congratulations! You have been invited to participate in our upcoming belt test.</p><p>This is a recognition of your hard work and dedication. Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>',
+      sms:'You are invited to our upcoming belt test! Please confirm your attendance.'
     },
     promotion:{
       subject:'Congratulations on your promotion!',
       body:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are incredibly proud of your progress and look forward to continuing this journey with you.</p>',
-      sms:'Congratulations on your belt promotion! We\'re so proud of your hard work. 🥋'
+      sms:'Congratulations on your belt promotion! We are so proud of your hard work.'
     }
   };
   var t=templates[type]; if(!t) return;
@@ -5620,6 +5621,7 @@ function loadStsTemplate(type){
   document.getElementById('stsBodySms').value=t.sms;
   if(smsOn&&!emailOn) updateSmsCounter(document.getElementById('stsBodySms'));
 }
+
 
 async function sendToSelectedNow(){
   var emailOn=document.getElementById('stsEmailToggle').checked;
