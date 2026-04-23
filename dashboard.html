@@ -5812,5 +5812,168 @@ init();
 setTimeout(initCalView, 200);
 
 </script>
+<script>
+function broadcastToSelected(){
+  var tbody=document.getElementById('reportResultsTbody');
+  if(!tbody){setMsg('reportMsg','Run the report first.','error');return;}
+  var cbs=tbody.querySelectorAll('input[type="checkbox"]:checked');
+  if(!cbs.length){setMsg('reportMsg','Select at least one student first.','error');return;}
+  var selected=[];
+  cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(!isNaN(idx)&&reportData[idx])selected.push(reportData[idx]);});
+  if(!selected.length){setMsg('reportMsg','No valid rows selected.','error');return;}
+  var seen={};
+  selectedReportRecipients=selected.map(function(r){
+    var email=r.email||(r.students&&r.students.email)||null;
+    var phone=r.phone||(r.students&&r.students.phone)||null;
+    var first=r.first_name||(r.students&&r.students.first_name)||'';
+    var last=r.last_name||(r.students&&r.students.last_name)||'';
+    var id=r.id||r.student_id||(r.students&&r.students.id)||null;
+    if((!email||!phone)&&id){
+      var stu=allStudents.find(function(s){return s.id===id;});
+      if(stu){if(!email)email=stu.email||null;if(!phone)phone=stu.phone||null;if(!first)first=stu.first_name||'';if(!last)last=stu.last_name||'';}
+    }
+    var name=(first+' '+last).trim()||'Unknown';
+    var key=id||name;
+    if(seen[key])return null;seen[key]=true;
+    return {id:id,name:name,email:email,phone:phone};
+  }).filter(Boolean);
+  if(!selectedReportRecipients.length){setMsg('reportMsg','No contact info found for selected students.','error');return;}
+  closeReport();
+  openSendToSelected();
+}
+function openSendToSelected(){
+  var r=selectedReportRecipients;
+  var we=r.filter(function(x){return x.email;});
+  var wp=r.filter(function(x){return x.phone;});
+  var un=r.filter(function(x){return !x.email&&!x.phone;});
+  document.getElementById('stsRecipientSummary').textContent=r.length+' student'+(r.length!==1?'s':'')+' selected';
+  var bd='';
+  if(we.length)bd+='<span style="color:#7DBD7D"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>'+we.length+' email</span> ';
+  if(wp.length)bd+='<span style="color:#7DAAD4"><i class="fa-solid fa-comment-sms" style="margin-right:0.3rem"></i>'+wp.length+' SMS</span> ';
+  if(un.length)bd+='<span style="color:#E07070"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>'+un.length+' unreachable</span>';
+  document.getElementById('stsRecipientBreakdown').innerHTML=bd;
+  document.getElementById('stsRecipientNames').innerHTML=r.map(function(x){
+    var ic='';
+    if(x.email)ic+='<i class="fa-solid fa-envelope" style="color:#7DBD7D;font-size:0.72rem;margin-left:0.3rem"></i>';
+    if(x.phone)ic+='<i class="fa-solid fa-comment-sms" style="color:#7DAAD4;font-size:0.72rem;margin-left:0.3rem"></i>';
+    if(!x.email&&!x.phone)ic+='<i class="fa-solid fa-triangle-exclamation" style="color:#E07070;font-size:0.72rem;margin-left:0.3rem"></i>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:var(--white)">'+x.name+'</span>'+ic+'</div>';
+  }).join('');
+  document.getElementById('stsEmailCount').textContent=we.length+' recipient'+(we.length!==1?'s':'')+' have email';
+  document.getElementById('stsSmsCount').textContent=wp.length+' recipient'+(wp.length!==1?'s':'')+' have phone';
+  document.getElementById('stsEmailToggle').checked=we.length>0;
+  document.getElementById('stsEmailToggle').disabled=we.length===0;
+  document.getElementById('stsSmsToggle').checked=false;
+  document.getElementById('stsSmsToggle').disabled=wp.length===0;
+  document.getElementById('stsSubject').value='';
+  document.getElementById('stsSendMsg').textContent='';
+  document.getElementById('stsSendResult').style.display='none';
+  document.getElementById('stsRecipientList').style.display='none';
+  document.getElementById('stsRecipientToggle').innerHTML='Show <i class="fa-solid fa-chevron-down"></i>';
+  document.getElementById('stsSmsCounter').style.display='none';
+  document.getElementById('stsBodySms').value='';
+  setTimeout(function(){
+    if(!quillEditors['stsBodyEditor']){initQuill('stsBodyEditor','Write your message here...');}
+    else{quillEditors['stsBodyEditor'].setText('');}
+    updateStsChannels();
+  },100);
+  document.getElementById('sendToSelectedModal').classList.add('active');
+}
+function closeSendToSelected(){
+  document.getElementById('sendToSelectedModal').classList.remove('active');
+  document.querySelectorAll('.report-row-check').forEach(function(c){c.checked=false;});
+  selectedReportRecipients=[];
+  var sc=document.getElementById('reportSelectedCount');if(sc)sc.textContent='0 selected';
+  var btn=document.getElementById('reportSelectAllBtn');if(btn)btn.innerHTML='<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All';
+}
+function toggleStsRecipientList(){
+  var list=document.getElementById('stsRecipientList');
+  var tog=document.getElementById('stsRecipientToggle');
+  var open=list.style.display!=='none';
+  list.style.display=open?'none':'block';
+  tog.innerHTML=open?'Show <i class="fa-solid fa-chevron-down"></i>':'Hide <i class="fa-solid fa-chevron-up"></i>';
+}
+function updateStsChannels(){
+  var eon=document.getElementById('stsEmailToggle').checked;
+  var son=document.getElementById('stsSmsToggle').checked;
+  var we=selectedReportRecipients.filter(function(x){return x.email;}).length;
+  var wp=selectedReportRecipients.filter(function(x){return x.phone;}).length;
+  document.getElementById('stsSubjectField').style.display=eon?'block':'none';
+  document.getElementById('stsBodyEditor').style.display=(!son||eon)?'block':'none';
+  document.getElementById('stsBodySms').style.display=(son&&!eon)?'block':'none';
+  document.getElementById('stsSmsCounter').style.display=(son&&!eon)?'block':'none';
+  var prev='';
+  if(eon&&we>0)prev+='Send '+we+' email'+(we!==1?'s':'');
+  if(eon&&son&&we>0&&wp>0)prev+=' + ';
+  if(son&&wp>0)prev+='Send '+wp+' SMS';
+  if(!eon&&!son)prev='Select at least one channel';
+  document.getElementById('stsSendPreview').textContent=prev;
+  document.getElementById('stsSendBtn').disabled=(!eon&&!son);
+}
+function updateSmsCounter(el){
+  var len=el.value.length;
+  var c=document.getElementById('stsSmsCounter');
+  c.textContent=len+' / 160';
+  c.style.color=len>160?'#E07070':len>130?'#E2A84C':'var(--muted)';
+}
+function loadStsTemplate(type){
+  var sn=document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school';
+  var T={
+    checkin:{s:'We noticed you have not been in lately',e:'<p>Hi there,</p><p>We have missed seeing you on the mat! Your progress matters to us and we would love to have you back.</p><p>Come train with us this week.</p>',t:'Hey! We have missed you on the mat. Come train with us this week!'},
+    birthday:{s:'Happy Birthday from '+sn+'!',e:'<p>Wishing you an amazing birthday!</p><p>We are so grateful to have you as part of our martial arts family.</p>',t:'Happy Birthday! We are so grateful to have you in our martial arts family!'},
+    renewal:{s:'Your membership is expiring soon',e:'<p>Hi,</p><p>Your membership is expiring soon. We would love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew.</p>',t:'Your membership is expiring soon! Contact us to renew.'},
+    missyou:{s:'We miss you on the mat',e:'<p>Hi,</p><p>We have noticed you have not been in for a while. Whenever you are ready to come back, we will be here. Your spot on the mat is waiting.</p>',t:'We miss you on the mat! Whenever you are ready to come back, we will be here.'},
+    belttest:{s:'You are invited to our upcoming Belt Test',e:'<p>Congratulations! You have been invited to participate in our upcoming belt test.</p><p>Please confirm your attendance. We believe in you!</p>',t:'You are invited to our upcoming belt test! Please confirm your attendance.'},
+    promotion:{s:'Congratulations on your promotion!',e:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are so proud of you!</p>',t:'Congratulations on your belt promotion! We are so proud of your hard work.'}
+  };
+  var t=T[type];if(!t)return;
+  document.getElementById('stsSubject').value=t.s;
+  if(quillEditors['stsBodyEditor'])quillEditors['stsBodyEditor'].root.innerHTML=t.e;
+  document.getElementById('stsBodySms').value=t.t;
+  var son=document.getElementById('stsSmsToggle').checked;
+  var eon=document.getElementById('stsEmailToggle').checked;
+  if(son&&!eon)updateSmsCounter(document.getElementById('stsBodySms'));
+}
+async function sendToSelectedNow(){
+  var eon=document.getElementById('stsEmailToggle').checked;
+  var son=document.getElementById('stsSmsToggle').checked;
+  if(!eon&&!son){setMsg('stsSendMsg','Please select at least one channel.','error');return;}
+  var subj=document.getElementById('stsSubject').value.trim();
+  var ebody=quillEditors['stsBodyEditor']?quillEditors['stsBodyEditor'].root.innerHTML:'';
+  var sbody=document.getElementById('stsBodySms').value.trim();
+  if(eon&&!ebody){setMsg('stsSendMsg','Please enter a message body.','error');return;}
+  if(son&&!sbody){setMsg('stsSendMsg','Please enter an SMS message.','error');return;}
+  var er=eon?selectedReportRecipients.filter(function(x){return x.email;}):[];
+  var sr=son?selectedReportRecipients.filter(function(x){return x.phone;}):[];
+  if(!er.length&&!sr.length){setMsg('stsSendMsg','No recipients have contact info for the selected channels.','error');return;}
+  setMsg('stsSendMsg','Sending...','');
+  document.getElementById('stsSendBtn').disabled=true;
+  var es=0;var ss=0;var errs=[];
+  if(er.length){
+    try{
+      var res=await fetch(SURL+'/functions/v1/send-broadcast',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subject:subj,body:ebody,recipients:er})});
+      if(res.ok){es=er.length;}else{var e=await res.json();errs.push('Email: '+(e.error||'failed'));}
+    }catch(e){errs.push('Email: '+e.message);}
+  }
+  if(sr.length){
+    try{
+      var sres=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,type:'sms',body:sbody,recipients:sr})});
+      if(sres.ok){ss=sr.length;}else{var se=await sres.json();errs.push('SMS: '+(se.error||'failed'));}
+    }catch(e){errs.push('SMS: '+e.message);}
+  }
+  if(es||ss){try{await sb.from('communications').insert({school_id:SID,type:es&&ss?'both':es?'email':'sms',subject:subj||null,body:es?ebody:sbody,audience:'selected',status:'sent',sent_at:new Date().toISOString(),recipient_count:es+ss});}catch(e){}}
+  document.getElementById('stsSendBtn').disabled=false;
+  if(errs.length&&!es&&!ss){setMsg('stsSendMsg',errs.join(' | '),'error');return;}
+  var parts=[];
+  if(es)parts.push(es+' email'+(es!==1?'s':'')+' sent');
+  if(ss)parts.push(ss+' SMS sent');
+  var un=selectedReportRecipients.filter(function(x){return(!eon||!x.email)&&(!son||!x.phone);}).length;
+  if(un)parts.push(un+' skipped (no contact info)');
+  if(errs.length)parts.push(errs.join(', '));
+  document.getElementById('stsSendResultText').textContent=parts.join(' - ');
+  document.getElementById('stsSendResult').style.display='block';
+  document.getElementById('stsSendMsg').textContent='';
+}
+</script>
 </body>
 </html>
