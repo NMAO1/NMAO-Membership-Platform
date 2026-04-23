@@ -5283,7 +5283,7 @@ function wireReportToolbar(count){
         :'<i class="fa-solid fa-xmark" style="margin-right:0.3rem"></i>Deselect All';
     };
   }
-  if(sendBtn) sendBtn.onclick=broadcastToSelected;
+  if(sendBtn) sendBtn.onclick=function(){ broadcastToSelected(); };
   var tbody=document.getElementById('reportResultsTbody');
   if(tbody){
     tbody.onchange=function(){
