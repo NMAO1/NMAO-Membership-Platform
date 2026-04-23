@@ -4742,7 +4742,7 @@ async function saveAutomation(key){
   var subj=document.getElementById('auto-subj-'+key)?document.getElementById('auto-subj-'+key).value.trim():'';
   var body=document.getElementById('auto-body-text-'+key)?document.getElementById('auto-body-text-'+key).value.trim():'';
   setMsg('auto-msg-'+key,'Saving...','');
-  var payload={school_id:SID,trigger_key:key,enabled:enabled,channels:{email:email,sms:sms},subject:subj,body:body};
+  var payload={school_id:SID,trigger_key:key,enabled:enabled,email_enabled:email,sms_enabled:sms,subject:subj,body:body};
   var r=await sb.from('automation_settings').upsert(payload,{onConflict:'school_id,trigger_key'});
   if(r.error){setMsg('auto-msg-'+key,r.error.message,'error');}
   else{automationSettings[key]=payload;setMsg('auto-msg-'+key,'Saved!','success');setTimeout(function(){var el=document.getElementById('auto-msg-'+key);if(el)el.textContent='';},2500);}
