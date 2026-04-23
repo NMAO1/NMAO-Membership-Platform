@@ -5466,37 +5466,36 @@ function clearReportSelection(){
 }
 
 function broadcastToSelected(){
+  var tbody=document.getElementById('reportResultsTbody');
+  if(!tbody){alert('STOP 1: no tbody');return;}
+  var cbs=tbody.querySelectorAll('input[type="checkbox"]:checked');
+  if(!cbs.length){alert('STOP 2: no checked boxes');return;}
   var selected=[];
-  var cbs=document.getElementById('reportResultsTbody')
-    ?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked')
-    :document.querySelectorAll('.report-row-check:checked');
-  cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
-  if(!selected.length){setMsg('reportMsg','Please select at least one student first.','error');return;}
-  var seen={};
+  cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(!isNaN(idx)&&reportData[idx])selected.push(reportData[idx]);});
+  if(!selected.length){alert('STOP 3: reportData empty');return;}
   selectedReportRecipients=selected.map(function(r){
     var email=r.email||(r.students&&r.students.email)||null;
     var phone=r.phone||(r.students&&r.students.phone)||null;
     var first=r.first_name||(r.students&&r.students.first_name)||'';
     var last=r.last_name||(r.students&&r.students.last_name)||'';
     var id=r.id||r.student_id||(r.students&&r.students.id)||null;
-    if((!email||!phone)&&id){
-      var stu=allStudents.find(function(s){return s.id===id;});
-      if(stu){
-        if(!email)email=stu.email||null;
-        if(!phone)phone=stu.phone||null;
-        if(!first)first=stu.first_name||'';
-        if(!last)last=stu.last_name||'';
-      }
-    }
+    if((!email||!phone)&&id){var stu=allStudents.find(function(s){return s.id===id;});if(stu){if(!email)email=stu.email||null;if(!phone)phone=stu.phone||null;if(!first)first=stu.first_name||'';if(!last)last=stu.last_name||'';}}
     var name=(first+' '+last).trim()||'Unknown';
-    var key=(id||name);
+    var key=id||name;
+    var seen={};
     if(seen[key])return null; seen[key]=true;
     return {id:id,name:name,email:email,phone:phone};
   }).filter(Boolean);
-  if(!selectedReportRecipients.length){setMsg('reportMsg','No valid recipients found.','error');return;}
+  alert('STOP 4: recipients='+selectedReportRecipients.length);
+  if(!selectedReportRecipients.length){alert('STOP 5: no recipients');return;}
+  var modal=document.getElementById('sendToSelectedModal');
+  alert('STOP 6: modal='+(modal?'FOUND':'MISSING'));
+  if(!modal){return;}
   closeReport();
-openSendToSelected();
+  try{openSendToSelected();alert('STOP 7: modal opened OK');}
+  catch(e){alert('STOP 7 ERROR: '+e.message);}
 }
+
 
 // STS functions defined in separate script block below
 
