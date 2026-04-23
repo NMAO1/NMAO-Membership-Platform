@@ -4662,7 +4662,6 @@ async function saveAutomation(key){
 }
 
 // Broadcast
-function toggleTagAudience(){ var v=document.getElementById('commAudience').value; document.getElementById('commTagField').style.display=v==='tag'?'block':'none'; }
 async function sendCommunication(){
   var audience=document.getElementById('commAudience').value;
   var tagId=document.getElementById('commTag').value;
@@ -4670,33 +4669,41 @@ async function sendCommunication(){
   var body=getQuillContent('commBodyEditor');
   if(!body){setMsg('commMsg','Message body required.','error');return;}
   setMsg('commMsg','Sending...','');
-  var emailRecipients;
+  var emailRecipients, smsRecipients;
   if(selectedReportRecipients.length){
-    emailRecipients=selectedReportRecipients;
+    emailRecipients=selectedReportRecipients.filter(function(r){return r.email;});
+    smsRecipients=selectedReportRecipients.filter(function(r){return r.phone;});
   }else{
-    var recipients=allStudents.filter(function(s){
+    var pool=allStudents.filter(function(s){
       if(audience==='active') return s.status==='active';
-      if(audience==='all')    return true;
       if(audience==='tag')    return tagId&&s._tags&&s._tags.includes(tagId);
       return true;
     });
-    if(!recipients.length){setMsg('commMsg','No recipients found.','error');return;}
-    emailRecipients=recipients.filter(function(s){return s.email;});
+    emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name,phone:s.phone};});
+    smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:s.first_name+' '+s.last_name,email:s.email};});
   }
-  try{
-    var r=await fetch(SURL+'/functions/v1/send-broadcast',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({school_id:SID,subject:subject,body:body,recipients:emailRecipients.map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name};})})
-    });
-    if(r.ok){
-      clearReportSelection(); setMsg('commMsg','Sent to '+emailRecipients.length+' recipient'+(emailRecipients.length!==1?'s':'')+'!','success');
-      await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:emailRecipients.length});
-      setTimeout(function(){document.getElementById('commMsg').textContent='';},4000);
-    }else{
-      var err=await r.json(); setMsg('commMsg',err.error||'Send failed.','error');
-    }
-  }catch(e){setMsg('commMsg',e.message,'error');}
+  var totalReached=0; var errors=[];
+  if(emailRecipients.length){
+    try{
+      var r=await fetch(SURL+'/functions/v1/send-broadcast',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({school_id:SID,subject:subject,body:body,recipients:emailRecipients})
+      });
+      if(r.ok){totalReached+=emailRecipients.length;}
+      else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
+    }catch(e){errors.push('Email: '+e.message);}
+  }
+  var unreachable=selectedReportRecipients.length
+    ?selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;}).length
+    :0;
+  if(errors.length){setMsg('commMsg',errors.join(' | '),'error');return;}
+  var resultMsg='Sent to '+totalReached+' recipient'+(totalReached!==1?'s':'');
+  if(unreachable) resultMsg+=' ('+unreachable+' skipped — no contact info)';
+  clearReportSelection();
+  setMsg('commMsg',resultMsg,'success');
+  await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:totalReached});
+  setTimeout(function(){document.getElementById('commMsg').textContent='';},5000);
 }
 
 
@@ -5323,29 +5330,71 @@ async function runReport(){
 function closeReport(){ document.getElementById('reportModal').classList.remove('active'); currentReportType=null; currentReportDef=null; reportData=[]; var ab=document.getElementById('reportActionBar'); if(ab) ab.innerHTML=''; }
 function toggleAllReportRows(cb){ document.querySelectorAll('#reportResultsTbody .report-row-check').forEach(function(c){c.checked=cb.checked;}); var checked=document.querySelectorAll('#reportResultsTbody .report-row-check:checked').length; var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=checked+' selected'; }
 function selectAllReportRows(){ var cbs=document.querySelectorAll('#reportResultsTbody input[type="checkbox"]'); if(!cbs.length){alert('Run the report first.');return;} cbs.forEach(function(c){c.checked=true;}); var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent=cbs.length+' selected'; var all=document.getElementById('reportSelectAll'); if(all) all.checked=true; }
-function clearReportSelection(){ document.querySelectorAll('.report-row-check').forEach(function(c){c.checked=false;}); selectedReportRecipients=[]; var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent='0 selected'; var all=document.getElementById('reportSelectAll'); if(all) all.checked=false; var banner=document.getElementById('commRecipientBanner'); if(banner) banner.style.display='none'; var af=document.getElementById('commAudience'); if(af&&af.closest('.field')){af.closest('.field').style.opacity='';af.closest('.field').style.pointerEvents='';} }
+function renderRecipientBanner(){
+  var banner=document.getElementById('commRecipientBanner'); if(!banner) return;
+  var total=selectedReportRecipients.length;
+  var withEmail=selectedReportRecipients.filter(function(r){return r.email;}).length;
+  var withPhone=selectedReportRecipients.filter(function(r){return r.phone;}).length;
+  var unreachable=selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;});
+  var names=selectedReportRecipients.slice(0,3).map(function(r){return r.name;}).join(', ')+(total>3?' +'+(total-3)+' more':'');
+  var breakdown='';
+  if(withEmail) breakdown+='<span style="color:#7DBD7D"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>'+withEmail+' email</span> ';
+  if(withPhone) breakdown+='<span style="color:#7DAAD4"><i class="fa-solid fa-comment-sms" style="margin-right:0.3rem"></i>'+withPhone+' SMS</span> ';
+  if(unreachable.length) breakdown+='<span style="color:#E07070"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>'+unreachable.length+' unreachable ('+unreachable.map(function(r){return r.name;}).join(', ')+')</span>';
+  banner.style.display='block';
+  document.getElementById('commRecipientNames').innerHTML=
+    '<div style="margin-bottom:0.3rem"><strong>'+total+' selected:</strong> '+names+'</div>'+
+    '<div style="font-size:0.78rem;display:flex;gap:1rem;flex-wrap:wrap">'+breakdown+'</div>'+
+    (unreachable.length?'<div style="font-size:0.72rem;color:#E07070;margin-top:0.25rem">Update contact info for unreachable students before sending.</div>':'');
+}
+function clearReportSelection(){
+  document.querySelectorAll('.report-row-check').forEach(function(c){c.checked=false;});
+  selectedReportRecipients=[];
+  var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent='0 selected';
+  var all=document.getElementById('reportSelectAll'); if(all) all.checked=false;
+  var banner=document.getElementById('commRecipientBanner'); if(banner) banner.style.display='none';
+  var af=document.getElementById('commAudience');
+  if(af&&af.closest('.field')){af.closest('.field').style.opacity='';af.closest('.field').style.pointerEvents='';}
+}
+
 function broadcastToSelected(){
-  var selected=[]; var cbs=document.getElementById('reportResultsTbody')?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked'):document.querySelectorAll('.report-row-check:checked'); cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
+  var selected=[];
+  var cbs=document.getElementById('reportResultsTbody')
+    ?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked')
+    :document.querySelectorAll('.report-row-check:checked');
+  cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
   if(!selected.length){alert('Select at least one student first.');return;}
-  var withEmail=selected.map(function(r){
+  var seen={};
+  selectedReportRecipients=selected.map(function(r){
     var email=r.email||(r.students&&r.students.email)||null;
+    var phone=r.phone||(r.students&&r.students.phone)||null;
     var first=r.first_name||(r.students&&r.students.first_name)||'';
     var last=r.last_name||(r.students&&r.students.last_name)||'';
-    var id=r.id||(r.students&&r.students.id)||null;
-    return email?{id:id,email:email,name:(first+' '+last).trim()}:null;
+    var id=r.id||r.student_id||(r.students&&r.students.id)||null;
+    if((!email||!phone)&&id){
+      var stu=allStudents.find(function(s){return s.id===id;});
+      if(stu){
+        if(!email)email=stu.email||null;
+        if(!phone)phone=stu.phone||null;
+        if(!first)first=stu.first_name||'';
+        if(!last)last=stu.last_name||'';
+      }
+    }
+    var name=(first+' '+last).trim()||'Unknown';
+    if(seen[name+id])return null; seen[name+id]=true;
+    return {id:id,name:name,email:email,phone:phone};
   }).filter(Boolean);
-  var seen={}; withEmail=withEmail.filter(function(r){if(seen[r.email])return false;seen[r.email]=true;return true;});
-  if(!withEmail.length){alert('No email addresses found for selected students.');return;}
-  selectedReportRecipients=withEmail;
+  if(!selectedReportRecipients.length){alert('No recipients found.');return;}
   closeReport();
   navigate('communications',document.getElementById('nav-communications'));
   setTimeout(function(){
     switchCommTab('broadcast');
-    var names=selectedReportRecipients.slice(0,3).map(function(r){return r.name;}).join(', ')+(selectedReportRecipients.length>3?' +' +(selectedReportRecipients.length-3)+' more':'');
-    var banner=document.getElementById('commRecipientBanner'); if(banner){banner.style.display='block';document.getElementById('commRecipientNames').textContent=selectedReportRecipients.length+' recipients: '+names;}
-    var af=document.getElementById('commAudience'); if(af&&af.closest('.field')){af.closest('.field').style.opacity='0.4';af.closest('.field').style.pointerEvents='none';}
+    renderRecipientBanner();
+    var af=document.getElementById('commAudience');
+    if(af&&af.closest('.field')){af.closest('.field').style.opacity='0.4';af.closest('.field').style.pointerEvents='none';}
   },300);
 }
+
 
     var q=sb.from(def.table).select(selectStr).eq('school_id',SID);
 
