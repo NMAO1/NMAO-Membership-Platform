@@ -1874,8 +1874,14 @@
         </div>
       </div>
       <div id="reportResultsSection" style="display:none;margin-top:1.75rem;border-top:1px solid var(--border);padding-top:1.5rem">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
-          <div style="font-size:0.82rem;color:var(--muted)"><span id="reportResultCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.4rem;margin-right:0.3rem">0</span> records</div>
+     <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;padding:0.75rem 0;border-bottom:1px solid var(--border)">
+            <button class="btn-sm gold" id="reportSelectAllBtn"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button>
+            <span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span>
+            <button class="btn-sm" id="reportSendBtn" style="margin-left:auto"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send to Selected</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
+          <div style="font-size:0.82rem;color:var(--muted)"><span id="reportResultCount"
           <div style="display:flex;gap:0.75rem">
             <button class="panel-action" onclick="exportReportCSV()"><i class="fa-solid fa-file-csv" style="margin-right:0.4rem"></i>Export CSV</button>
             <button class="panel-action" onclick="exportReportPDF()"><i class="fa-solid fa-file-pdf" style="margin-right:0.4rem"></i>Export PDF</button>
