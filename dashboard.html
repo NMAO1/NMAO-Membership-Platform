@@ -1874,18 +1874,14 @@
         </div>
       </div>
      <div id="reportResultsSection" style="display:none;margin-top:1.75rem;border-top:1px solid var(--border);padding-top:1.5rem">
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;padding:0.75rem 0;margin-bottom:0.75rem;border-bottom:1px solid var(--border)"><button class="btn-sm gold" id="reportSelectAllBtn"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button><span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span><button class="btn-sm" id="reportSendBtn" style="margin-left:auto"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send to Selected</button></div>
-     <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1rem">
-          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;padding:0.75rem 0;border-bottom:1px solid var(--border)">
-            <button class="btn-sm gold" id="reportSelectAllBtn"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button>
-            <span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span>
-            <button class="btn-sm" id="reportSendBtn" style="margin-left:auto"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send to Selected</button>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
-          <div style="font-size:0.82rem;color:var(--muted)"><span id="reportResultCount"
-          <div style="display:flex;gap:0.75rem">
-            <button class="panel-action" onclick="exportReportCSV()"><i class="fa-solid fa-file-csv" style="margin-right:0.4rem"></i>Export CSV</button>
-            <button class="panel-action" onclick="exportReportPDF()"><i class="fa-solid fa-file-pdf" style="margin-right:0.4rem"></i>Export PDF</button>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;padding:0.75rem 0;margin-bottom:0.75rem;border-bottom:1px solid var(--border)">
+          <button class="btn-sm gold" id="reportSelectAllBtn"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button>
+          <span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span>
+          <span id="reportResultCount" style="font-size:0.78rem;color:var(--muted)"></span>
+          <div style="display:flex;gap:0.5rem;margin-left:auto">
+            <button class="panel-action" style="font-size:0.75rem" onclick="exportReportCSV()"><i class="fa-solid fa-file-csv" style="margin-right:0.3rem"></i>CSV</button>
+            <button class="panel-action" style="font-size:0.75rem" onclick="exportReportPDF()"><i class="fa-solid fa-file-pdf" style="margin-right:0.3rem"></i>PDF</button>
+            <button class="btn-sm gold" id="reportSendBtn"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send to Selected</button>
           </div>
         </div>
         <div class="table-wrap" style="max-height:420px;overflow-y:auto;border:1px solid var(--border)">
@@ -5260,9 +5256,49 @@ function openReport(key){
       fs.appendChild(div);
     });
   }
+  var sab=document.getElementById('reportSelectAllBtn');
+  if(sab) sab.innerHTML='<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All';
+  var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent='0 selected';
+  var rc=document.getElementById('reportResultCount'); if(rc) rc.textContent='';
   document.getElementById('reportModal').classList.add('active');
 }
 function closeReport(){ document.getElementById('reportModal').classList.remove('active'); currentReportType=null; currentReportDef=null; reportData=[]; }
+function wireReportToolbar(count){
+  var selectAllBtn=document.getElementById('reportSelectAllBtn');
+  var sendBtn=document.getElementById('reportSendBtn');
+  var selectedCount=document.getElementById('reportSelectedCount');
+  var resultCount=document.getElementById('reportResultCount');
+  if(resultCount) resultCount.textContent=count+' result'+(count!==1?'s':'');
+  if(selectedCount) selectedCount.textContent='0 selected';
+  if(selectAllBtn){
+    selectAllBtn.innerHTML='<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All';
+    selectAllBtn.onclick=function(){
+      var cbs=document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]');
+      var allChecked=Array.from(cbs).every(function(c){return c.checked;});
+      cbs.forEach(function(c){c.checked=!allChecked;});
+      var checked=allChecked?0:cbs.length;
+      if(selectedCount) selectedCount.textContent=checked+' selected';
+      selectAllBtn.innerHTML=allChecked
+        ?'<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All'
+        :'<i class="fa-solid fa-xmark" style="margin-right:0.3rem"></i>Deselect All';
+    };
+  }
+  if(sendBtn) sendBtn.onclick=broadcastToSelected;
+  var tbody=document.getElementById('reportResultsTbody');
+  if(tbody){
+    tbody.onchange=function(){
+      var cbs=tbody.querySelectorAll('input[type="checkbox"]');
+      var checked=tbody.querySelectorAll('input[type="checkbox"]:checked').length;
+      if(selectedCount) selectedCount.textContent=checked+' selected';
+      if(selectAllBtn){
+        selectAllBtn.innerHTML=(checked===cbs.length&&cbs.length>0)
+          ?'<i class="fa-solid fa-xmark" style="margin-right:0.3rem"></i>Deselect All'
+          :'<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All';
+      }
+    };
+  }
+}
+
 function selectAllColumns(val){ document.querySelectorAll('.report-col-check').forEach(function(cb){cb.checked=val;}); }
 async function runReport(){
   if(!currentReportDef){return;} setMsg('reportMsg','Running...','');
@@ -5279,7 +5315,7 @@ async function runReport(){
       var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
       thead.innerHTML='<tr>'+(!!def.actionable?'<th style="width:32px"></th>':'')+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
       tbody.innerHTML=reportData.map(function(row,idx){return '<tr>'+(!!def.actionable?'<td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>':'')+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]!==undefined?row[col.key]:'--');return '<td style="font-size:0.82rem">'+val+'</td>';}).join('')+'</tr>';}).join('');
-      var ab=document.getElementById('reportActionBar');if(!ab){ab=document.createElement('div');ab.id='reportActionBar';ab.style.cssText='display:none';document.getElementById('reportResultsSection').appendChild(ab);} if(ab){ab.style.cssText='display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;margin-bottom:0.5rem;flex-wrap:wrap;border-bottom:1px solid var(--border)';document.getElementById('reportResultsSection').insertBefore(ab,document.getElementById('reportResultsSection').firstChild);}ab.innerHTML='<button class="btn-sm gold" onclick="selectAllReportRows()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button><label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--muted);cursor:pointer"><input type="checkbox" id="reportSelectAll" style="accent-color:var(--gold);width:15px;height:15px" onchange="toggleAllReportRows(this)" /> All</label><button class="panel-action" style="font-size:0.75rem" onclick="broadcastToSelected()"><i class="fa-solid fa-paper-plane" style="margin-right:0.4rem"></i>Send to Selected</button><span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span><button class="btn-sm" style="margin-left:auto;font-size:0.72rem;color:var(--muted)" onclick="clearReportSelection()">Clear</button>';document.getElementById('reportResultsTbody').addEventListener('change',function(){var checked=document.querySelectorAll('.report-row-check:checked').length;document.getElementById('reportSelectedCount').textContent=checked+' selected';});
+      wireReportToolbar(reportData.length);
       document.getElementById('reportResultsSection').style.display='block';
       document.getElementById('reportMsg').textContent='';
       return;
@@ -5339,15 +5375,9 @@ function broadcastToSelected(){
         return '<td style="font-size:0.82rem">'+val+'</td>';
       }).join('')+'</tr>';
     }).join('');
-    var ab=document.getElementById('reportActionBar');if(!ab){ab=document.createElement('div');ab.id='reportActionBar';ab.style.cssText='display:none';document.getElementById('reportResultsSection').appendChild(ab);} if(ab){ab.style.cssText='display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;margin-bottom:0.5rem;flex-wrap:wrap;border-bottom:1px solid var(--border)';document.getElementById('reportResultsSection').insertBefore(ab,document.getElementById('reportResultsSection').firstChild);}ab.innerHTML='<button class="btn-sm gold" onclick="selectAllReportRows()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All</button><label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--muted);cursor:pointer"><input type="checkbox" id="reportSelectAll" style="accent-color:var(--gold);width:15px;height:15px" onchange="toggleAllReportRows(this)" /> All</label><button class="panel-action" style="font-size:0.75rem" onclick="broadcastToSelected()"><i class="fa-solid fa-paper-plane" style="margin-right:0.4rem"></i>Send to Selected</button><span id="reportSelectedCount" style="font-size:0.78rem;color:var(--muted)">0 selected</span><button class="btn-sm" style="margin-left:auto;font-size:0.72rem;color:var(--muted)" onclick="clearReportSelection()">Clear</button>';document.getElementById('reportResultsTbody').addEventListener('change',function(){var checked=document.querySelectorAll('.report-row-check:checked').length;document.getElementById('reportSelectedCount').textContent=checked+' selected';});
+    wireReportToolbar(reportData.length);
     document.getElementById('reportResultsSection').style.display='block';
     document.getElementById('reportMsg').textContent='';
-    var saBtn=document.getElementById('reportSelectAllBtn');
-    if(saBtn){saBtn.onclick=function(){var cbs=document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]');cbs.forEach(function(c){c.checked=true;});var sc=document.getElementById('reportSelectedCount');if(sc)sc.textContent=cbs.length+' selected';};}
-    var sendBtn=document.getElementById('reportSendBtn');
-    if(sendBtn){sendBtn.onclick=function(){broadcastToSelected();};}
-    var sac=document.getElementById('reportSelectAllCheck');
-    if(saBtn){saBtn.onclick=function(){var cbs=document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]');cbs.forEach(function(c){c.checked=true;});var sc=document.getElementById('reportSelectedCount');if(sc)sc.textContent=cbs.length+' selected';};}
     }catch(e){setMsg('reportMsg',e.message,'error');}
 }
 function exportReportCSV(){
