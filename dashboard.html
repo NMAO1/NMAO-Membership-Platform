@@ -5580,37 +5580,36 @@ function updateSmsCounter(el){
 }
 
 function loadStsTemplate(type){
-  var schoolNm=document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school';
   var templates={
     checkin:{
-      subject:'We noticed you have not been in lately',
-      body:'<p>Hi there,</p><p>We have missed seeing you on the mat! Your progress matters to us and we would love to have you back training with us.</p><p>Come train with us this week.</p>',
-      sms:'Hey! We have missed you on the mat. Come train with us this week!'
+      subject:'We noticed you haven\'t been in lately',
+      body:'<p>Hi there,</p><p>We\'ve missed seeing you on the mat! Your progress matters to us and we\'d love to have you back training with us.</p><p>Come train with us this week — we\'re here for you.</p>',
+      sms:'Hey! We\'ve missed you on the mat. Come train with us this week!'
     },
     birthday:{
-      subject:'Happy Birthday from '+schoolNm+'!',
-      body:'<p>Wishing you an amazing birthday!</p><p>We are so grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>',
-      sms:'Happy Birthday! We are so grateful to have you in our martial arts family!'
+      subject:'Happy Birthday from '+( document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'us')+'!',
+      body:'<p>Wishing you an amazing birthday! 🎂</p><p>We are so grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>',
+      sms:'Happy Birthday! 🎂 We\'re so grateful to have you in our martial arts family!'
     },
     renewal:{
       subject:'Your membership is expiring soon',
-      body:'<p>Hi,</p><p>Your membership is expiring soon. We would love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew and keep your momentum going.</p>',
+      body:'<p>Hi,</p><p>Your membership is expiring soon. We\'d love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew and keep your momentum going.</p>',
       sms:'Your membership is expiring soon! Contact us or log into the portal to renew.'
     },
     missyou:{
       subject:'We miss you on the mat',
-      body:'<p>Hi,</p><p>We have noticed you have not been in for a while and we wanted to reach out. Life gets busy and we understand.</p><p>Whenever you are ready to come back, we will be here. Your spot on the mat is waiting.</p>',
-      sms:'We miss you on the mat! Whenever you are ready to come back, we will be here.'
+      body:'<p>Hi,</p><p>We\'ve noticed you haven\'t been in for a while and we wanted to reach out. Life gets busy — we understand.</p><p>Whenever you\'re ready to come back, we\'ll be here. Your spot on the mat is waiting.</p>',
+      sms:'We miss you on the mat! Whenever you\'re ready to come back, we\'ll be here.'
     },
     belttest:{
-      subject:'You are invited to our upcoming Belt Test',
-      body:'<p>Congratulations! You have been invited to participate in our upcoming belt test.</p><p>This is a recognition of your hard work and dedication. Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>',
-      sms:'You are invited to our upcoming belt test! Please confirm your attendance.'
+      subject:'You\'re invited to our upcoming Belt Test',
+      body:'<p>Congratulations — you have been invited to participate in our upcoming belt test!</p><p>This is a recognition of your hard work and dedication. Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>',
+      sms:'You\'re invited to our upcoming belt test! Please confirm your attendance.'
     },
     promotion:{
       subject:'Congratulations on your promotion!',
       body:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are incredibly proud of your progress and look forward to continuing this journey with you.</p>',
-      sms:'Congratulations on your belt promotion! We are so proud of your hard work.'
+      sms:'Congratulations on your belt promotion! We\'re so proud of your hard work. 🥋'
     }
   };
   var t=templates[type]; if(!t) return;
@@ -5621,7 +5620,6 @@ function loadStsTemplate(type){
   document.getElementById('stsBodySms').value=t.sms;
   if(smsOn&&!emailOn) updateSmsCounter(document.getElementById('stsBodySms'));
 }
-
 
 async function sendToSelectedNow(){
   var emailOn=document.getElementById('stsEmailToggle').checked;
@@ -5809,186 +5807,10 @@ function formatDate(d){ if(!d) return '--'; try{return new Date(d+'T00:00:00').t
 function truncate(str,n){ return str&&str.length>n?str.slice(0,n)+'...':str||''; }
 
 // ─────────────────────────────── BOOT ───────────────────────────────
-console.log('SCRIPT LOADED OK');
+
 init();
 setTimeout(initCalView, 200);
 
-<div id="debugBar" style="position:fixed;bottom:0;left:0;right:0;background:#E07070;color:#fff;font-size:0.82rem;padding:0.5rem;z-index:99999;display:none"></div>
-<script>
-window.onerror=function(msg,src,line){
-  var el=document.getElementById('debugBar');
-  if(el){el.style.display='block';el.textContent='JS ERROR line '+line+': '+msg;}
-};
-</script>
-<script>
-function broadcastToSelected(){
-  var selected=[];
-  var cbs=document.getElementById('reportResultsTbody')
-    ?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked')
-    :document.querySelectorAll('.report-row-check:checked');
-  cbs.forEach(function(cb){var idx=parseInt(cb.dataset.idx);if(reportData[idx])selected.push(reportData[idx]);});
-  if(!selected.length){setMsg('reportMsg','Please select at least one student first.','error');return;}
-  var seen={};
-  selectedReportRecipients=selected.map(function(r){
-    var email=r.email||(r.students&&r.students.email)||null;
-    var phone=r.phone||(r.students&&r.students.phone)||null;
-    var first=r.first_name||(r.students&&r.students.first_name)||'';
-    var last=r.last_name||(r.students&&r.students.last_name)||'';
-    var id=r.id||r.student_id||(r.students&&r.students.id)||null;
-    if((!email||!phone)&&id){
-      var stu=allStudents.find(function(s){return s.id===id;});
-      if(stu){
-        if(!email)email=stu.email||null;
-        if(!phone)phone=stu.phone||null;
-        if(!first)first=stu.first_name||'';
-        if(!last)last=stu.last_name||'';
-      }
-    }
-    var name=(first+' '+last).trim()||'Unknown';
-    var key=(id||name);
-    if(seen[key])return null; seen[key]=true;
-    return {id:id,name:name,email:email,phone:phone};
-  }).filter(Boolean);
-  if(!selectedReportRecipients.length){setMsg('reportMsg','No valid recipients found.','error');return;}
-  openSendToSelected();
-}
-function openSendToSelected(){
-  var recipients=selectedReportRecipients;
-  var withEmail=recipients.filter(function(r){return r.email;});
-  var withPhone=recipients.filter(function(r){return r.phone;});
-  var unreachable=recipients.filter(function(r){return !r.email&&!r.phone;});
-  document.getElementById('stsRecipientSummary').textContent=recipients.length+' student'+(recipients.length!==1?'s':'')+' selected';
-  var bd='';
-  if(withEmail.length) bd+='<span style="color:#7DBD7D"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>'+withEmail.length+' email</span>';
-  if(withPhone.length) bd+='<span style="color:#7DAAD4"><i class="fa-solid fa-comment-sms" style="margin-right:0.3rem"></i>'+withPhone.length+' SMS</span>';
-  if(unreachable.length) bd+='<span style="color:#E07070"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>'+unreachable.length+' unreachable</span>';
-  document.getElementById('stsRecipientBreakdown').innerHTML=bd;
-  document.getElementById('stsRecipientNames').innerHTML=recipients.map(function(r){
-    var icons='';
-    if(r.email) icons+='<i class="fa-solid fa-envelope" style="color:#7DBD7D;font-size:0.72rem;margin-left:0.35rem"></i>';
-    if(r.phone) icons+='<i class="fa-solid fa-comment-sms" style="color:#7DAAD4;font-size:0.72rem;margin-left:0.35rem"></i>';
-    if(!r.email&&!r.phone) icons+='<i class="fa-solid fa-triangle-exclamation" style="color:#E07070;font-size:0.72rem;margin-left:0.35rem"></i>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span style="color:var(--white)">'+r.name+'</span><span>'+icons+'</span></div>';
-  }).join('');
-  document.getElementById('stsEmailCount').textContent=withEmail.length+' recipient'+(withEmail.length!==1?'s':'')+' have email';
-  document.getElementById('stsSmsCount').textContent=withPhone.length+' recipient'+(withPhone.length!==1?'s':'')+' have phone';
-  document.getElementById('stsEmailToggle').checked=withEmail.length>0;
-  document.getElementById('stsEmailToggle').disabled=withEmail.length===0;
-  document.getElementById('stsSmsToggle').checked=false;
-  document.getElementById('stsSmsToggle').disabled=withPhone.length===0;
-  document.getElementById('stsSubject').value='';
-  document.getElementById('stsSendMsg').textContent='';
-  document.getElementById('stsSendResult').style.display='none';
-  document.getElementById('stsRecipientList').style.display='none';
-  document.getElementById('stsRecipientToggle').innerHTML='Show <i class="fa-solid fa-chevron-down"></i>';
-  document.getElementById('stsSmsCounter').style.display='none';
-  document.getElementById('stsBodySms').value='';
-  setTimeout(function(){
-    if(!quillEditors['stsBodyEditor']){
-      initQuill('stsBodyEditor','Write your message here...');
-    }else{
-      quillEditors['stsBodyEditor'].setText('');
-    }
-    updateStsChannels();
-  },100);
-  document.getElementById('sendToSelectedModal').classList.add('active');
-}
-function closeSendToSelected(){
-  document.getElementById('sendToSelectedModal').classList.remove('active');
-  clearReportSelection();
-}
-function toggleStsRecipientList(){
-  var list=document.getElementById('stsRecipientList');
-  var toggle=document.getElementById('stsRecipientToggle');
-  var isOpen=list.style.display!=='none';
-  list.style.display=isOpen?'none':'block';
-  toggle.innerHTML=isOpen?'Show <i class="fa-solid fa-chevron-down"></i>':'Hide <i class="fa-solid fa-chevron-up"></i>';
-}
-function updateStsChannels(){
-  var emailOn=document.getElementById('stsEmailToggle').checked;
-  var smsOn=document.getElementById('stsSmsToggle').checked;
-  var withEmail=selectedReportRecipients.filter(function(r){return r.email;}).length;
-  var withPhone=selectedReportRecipients.filter(function(r){return r.phone;}).length;
-  document.getElementById('stsSubjectField').style.display=emailOn?'block':'none';
-  document.getElementById('stsBodyEditor').style.display=(!smsOn||emailOn)?'block':'none';
-  document.getElementById('stsBodySms').style.display=(smsOn&&!emailOn)?'block':'none';
-  document.getElementById('stsSmsCounter').style.display=(smsOn&&!emailOn)?'block':'none';
-  var preview='';
-  if(emailOn&&withEmail>0) preview+='Send '+withEmail+' email'+(withEmail!==1?'s':'');
-  if(emailOn&&smsOn&&withEmail>0&&withPhone>0) preview+=' + ';
-  if(smsOn&&withPhone>0) preview+='Send '+withPhone+' SMS';
-  if(!emailOn&&!smsOn) preview='Select at least one channel';
-  document.getElementById('stsSendPreview').textContent=preview;
-  document.getElementById('stsSendBtn').disabled=(!emailOn&&!smsOn);
-}
-function updateSmsCounter(el){
-  var len=el.value.length;
-  var counter=document.getElementById('stsSmsCounter');
-  counter.textContent=len+' / 160 characters';
-  counter.style.color=len>160?'#E07070':len>130?'#E2A84C':'var(--muted)';
-}
-function loadStsTemplate(type){
-  var schoolNm=document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school';
-  var templates={
-    checkin:{subject:'We noticed you have not been in lately',body:'<p>Hi there,</p><p>We have missed seeing you on the mat! Your progress matters to us and we would love to have you back training with us.</p><p>Come train with us this week.</p>',sms:'Hey! We have missed you on the mat. Come train with us this week!'},
-    birthday:{subject:'Happy Birthday from '+schoolNm+'!',body:'<p>Wishing you an amazing birthday!</p><p>We are so grateful to have you as part of our martial arts family. Come celebrate with us on the mat!</p>',sms:'Happy Birthday! We are so grateful to have you in our martial arts family!'},
-    renewal:{subject:'Your membership is expiring soon',body:'<p>Hi,</p><p>Your membership is expiring soon. We would love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew.</p>',sms:'Your membership is expiring soon! Contact us or log into the portal to renew.'},
-    missyou:{subject:'We miss you on the mat',body:'<p>Hi,</p><p>We have noticed you have not been in for a while and we wanted to reach out. Whenever you are ready to come back, we will be here. Your spot on the mat is waiting.</p>',sms:'We miss you on the mat! Whenever you are ready to come back, we will be here.'},
-    belttest:{subject:'You are invited to our upcoming Belt Test',body:'<p>Congratulations! You have been invited to participate in our upcoming belt test.</p><p>Please confirm your attendance and prepare to demonstrate everything you have learned.</p><p>We believe in you!</p>',sms:'You are invited to our upcoming belt test! Please confirm your attendance.'},
-    promotion:{subject:'Congratulations on your promotion!',body:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are incredibly proud of your progress.</p>',sms:'Congratulations on your belt promotion! We are so proud of your hard work.'}
-  };
-  var t=templates[type]; if(!t) return;
-  var emailOn=document.getElementById('stsEmailToggle').checked;
-  var smsOn=document.getElementById('stsSmsToggle').checked;
-  document.getElementById('stsSubject').value=t.subject;
-  if(quillEditors['stsBodyEditor']) quillEditors['stsBodyEditor'].root.innerHTML=t.body;
-  document.getElementById('stsBodySms').value=t.sms;
-  if(smsOn&&!emailOn) updateSmsCounter(document.getElementById('stsBodySms'));
-}
-async function sendToSelectedNow(){
-  var emailOn=document.getElementById('stsEmailToggle').checked;
-  var smsOn=document.getElementById('stsSmsToggle').checked;
-  if(!emailOn&&!smsOn){setMsg('stsSendMsg','Please select at least one channel.','error');return;}
-  var subject=document.getElementById('stsSubject').value.trim();
-  var emailBody=quillEditors['stsBodyEditor']?quillEditors['stsBodyEditor'].root.innerHTML:'';
-  var smsBody=document.getElementById('stsBodySms').value.trim();
-  if(emailOn&&!emailBody){setMsg('stsSendMsg','Please enter a message body.','error');return;}
-  if(smsOn&&!smsBody){setMsg('stsSendMsg','Please enter an SMS message.','error');return;}
-  var emailRecipients=emailOn?selectedReportRecipients.filter(function(r){return r.email;}) :[];
-  var smsRecipients=smsOn?selectedReportRecipients.filter(function(r){return r.phone;}) :[];
-  var unreachable=selectedReportRecipients.filter(function(r){return(!emailOn||!r.email)&&(!smsOn||!r.phone);});
-  if(!emailRecipients.length&&!smsRecipients.length){setMsg('stsSendMsg','No recipients have the required contact info for the selected channels.','error');return;}
-  setMsg('stsSendMsg','Sending...','');
-  document.getElementById('stsSendBtn').disabled=true;
-  var emailSent=0; var smsSent=0; var errors=[];
-  if(emailRecipients.length){
-    try{
-      var r=await fetch(SURL+'/functions/v1/send-broadcast',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subject:subject,body:emailBody,recipients:emailRecipients})});
-      if(r.ok){emailSent=emailRecipients.length;}
-      else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
-    }catch(e){errors.push('Email error: '+e.message);}
-  }
-  if(smsRecipients.length){
-    try{
-      var sr=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,type:'sms',body:smsBody,recipients:smsRecipients})});
-      if(sr.ok){smsSent=smsRecipients.length;}
-      else{var serr=await sr.json();errors.push('SMS: '+(serr.error||'failed'));}
-    }catch(e){errors.push('SMS error: '+e.message);}
-  }
-  if(emailSent||smsSent){
-    try{await sb.from('communications').insert({school_id:SID,type:emailSent&&smsSent?'both':emailSent?'email':'sms',subject:subject||null,body:emailSent?emailBody:smsBody,audience:'selected',status:'sent',sent_at:new Date().toISOString(),recipient_count:emailSent+smsSent});}catch(e){}
-  }
-  document.getElementById('stsSendBtn').disabled=false;
-  if(errors.length&&!emailSent&&!smsSent){setMsg('stsSendMsg',errors.join(' | '),'error');return;}
-  var resultParts=[];
-  if(emailSent) resultParts.push('<i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>'+emailSent+' email'+(emailSent!==1?'s':'')+' sent');
-  if(smsSent) resultParts.push('<i class="fa-solid fa-comment-sms" style="margin-right:0.3rem"></i>'+smsSent+' SMS sent');
-  if(unreachable.length) resultParts.push('<i class="fa-solid fa-triangle-exclamation" style="color:#E07070;margin-right:0.3rem"></i>'+unreachable.length+' skipped');
-  if(errors.length) resultParts.push('<span style="color:#E07070">'+errors.join(', ')+'</span>');
-  document.getElementById('stsSendResultText').innerHTML=resultParts.join(' &nbsp;&middot;&nbsp; ');
-  document.getElementById('stsSendResult').style.display='block';
-  document.getElementById('stsSendMsg').textContent='';
-}
 </script>
 </body>
 </html>
