@@ -5358,6 +5358,7 @@ function clearReportSelection(){
 }
 
 function broadcastToSelected(){
+  try{
   var selected=[];
   var cbs=document.getElementById('reportResultsTbody')
     ?document.getElementById('reportResultsTbody').querySelectorAll('input[type="checkbox"]:checked')
@@ -5393,6 +5394,7 @@ function broadcastToSelected(){
     var af=document.getElementById('commAudience');
     if(af&&af.closest('.field')){af.closest('.field').style.opacity='0.4';af.closest('.field').style.pointerEvents='none';}
   },300);
+  }catch(e){ alert('Error: '+e.message+' | '+e.stack); }
 }
 
 
