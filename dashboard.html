@@ -6901,6 +6901,11 @@ function openDayView(dateStr,dayName){
   document.getElementById('dayViewModal').classList.add('active');
 }
 </script>
+<div id="debugBar" style="position:fixed;bottom:0;left:0;right:0;background:#E07070;color:#fff;font-size:0.82rem;padding:0.5rem;z-index:99999;display:none"></div>
+<script>
+window.onerror=function(msg,src,line){var el=document.getElementById('debugBar');if(el){el.style.display='block';el.textContent='JS ERROR line '+line+': '+msg;}};
+</script>
 </body>
 </html>
+
 
