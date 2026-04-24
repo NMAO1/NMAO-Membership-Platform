@@ -2597,7 +2597,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',events:'Events',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -6346,12 +6346,6 @@ async function sendEventInvite() {
 function getEventPillsHTML(dateStr) { return allEvents.filter(function(ev) { var s = ev.event_sessions || []; return s.some(function(x) { return x.session_date === dateStr; }); }).map(function(ev) { var color = ev.color || "#2A9D8F"; var s = ev.event_sessions || []; var match = s.find(function(x) { return x.session_date === dateStr; }); var timeStr = match && match.start_time ? fmtTime(match.start_time) + " " : ""; return "<div class=\"cal-event\" style=\"background:" + color + "22;color:" + color + ";border-left:2px solid " + color + ";cursor:pointer\" onclick=\"openEventDetail('" + ev.id + "')\">" + timeStr + ev.title + "</div>"; }).join(""); }
 function getEventMonthDot(dateStr) { var evs = allEvents.filter(function(ev) { var s = ev.event_sessions || []; return s.some(function(x) { return x.session_date === dateStr; }); }); return evs.length ? "<div class=\"month-dot\" style=\"background:#2A9D8F\"></div>" : ""; }
 
-// Navigate override — adds Events title and lazy-loads on first visit
-var _origNavigateFn = window.navigate;
-window.navigate = async function(page, el) {
-  _origNavigateFn(page, el);
-  if (page === "events") { document.getElementById("pageTitle").textContent = "Events"; if (!allEvents.length) { try { await loadEvents(); } catch(e) {} } }
-};
 </script>
 </body>
 </html>
