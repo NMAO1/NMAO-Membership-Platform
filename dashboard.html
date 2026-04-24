@@ -467,7 +467,8 @@
     <div class="nav-item" id="nav-schedule"  onclick="navigate('schedule',this)"><i class="fa-solid fa-calendar-day nav-icon"></i> Schedule</div>
     <div class="nav-item" id="nav-classes"   onclick="navigate('classes',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> All Classes</div>
     <div class="nav-item" id="nav-sessions"  onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
-    <div class="nav-item" id="nav-events"    onclick="navigate('events',this)"><i class="fa-solid fa-calendar-star nav-icon"></i> Events</div>
+    <div class="nav-item" id="nav-events" onclick="navigate('events',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> Events</div>
+
 
 
     <div class="nav-section-label">Programs</div>
@@ -2382,7 +2383,7 @@ async function init() {
     await loadSessionTypes();
     await loadSessionPacks();
     await loadSessions();
-    await loadEvents();
+    try{await loadEvents();}catch(e){allEvents=[];}
     await loadAutomations();
     await loadAlertHistory();
     await loadSmsInbox();
