@@ -693,6 +693,131 @@
       </div>
     </div>
 
+<!-- §MODAL-EVENT-ADD -->
+<div class="modal-overlay" id="addEventModal">
+  <div class="modal" style="width:620px;max-width:97vw">
+    <div class="modal-header"><span class="modal-title" id="addEventTitle">Add Event</span><button class="modal-close" onclick="closeAddEvent()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="eventEditId" value="" />
+      <div class="field"><label>Event Title</label><input type="text" id="evTitle" placeholder="e.g. Spring Seminar" /></div>
+      <div class="form-row">
+        <div class="field"><label>Event Type</label><select id="evType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="Seminar">Seminar</option><option value="Workshop">Workshop</option><option value="Tournament">Tournament</option><option value="Community">Community Event</option><option value="Other">Other</option></select></div>
+        <div class="field"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="evColor" value="#2A9D8F" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="evColorHex" value="#2A9D8F" style="flex:1" oninput="syncEvColor()" /></div></div>
+      </div>
+      <div class="field"><label>Description</label><div id="evDescEditor" style="margin-top:0.25rem"></div></div>
+      <div class="form-row">
+        <div class="field"><label>Date</label><input type="date" id="evDate" /></div>
+        <div class="field"><label>Start Time</label><input type="time" id="evStartTime" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Duration (minutes)</label><input type="number" id="evDuration" value="120" min="15" step="15" /></div>
+        <div class="field"><label>Location</label><input type="text" id="evLocation" placeholder="e.g. Main Floor" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Capacity</label><input type="number" id="evCapacity" placeholder="Blank = unlimited" min="1" /></div>
+        <div class="field"><label>Registration Deadline</label><input type="date" id="evDeadline" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Staff Member</label><select id="evStaff" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select --</option></select></div>
+        <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="evGuest" placeholder="Guest name" /></div>
+      </div>
+      <div class="field"><label>Registration Status</label><select id="evRegStatus" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="open">Open</option><option value="closed">Closed</option></select></div>
+      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.5rem">Price Tiers</div>
+      <div id="evTierRows" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.5rem"></div>
+      <button class="btn-sm" onclick="addEventTierRow()"><i class="fa-solid fa-plus"></i> Add Price Tier</button>
+      <div class="check-group" style="margin-top:1rem">
+        <label class="check-item"><input type="checkbox" id="evShowPortal" checked /><span class="check-item-label">Show on member portal</span></label>
+        <label class="check-item"><input type="checkbox" id="evNotifyStaff" /><span class="check-item-label">Notify staff on registration</span></label>
+        <label class="check-item"><input type="checkbox" id="evWaitlist" checked /><span class="check-item-label">Enable waitlist</span></label>
+      </div>
+      <button class="btn-gold-full" style="margin-top:1rem" onclick="saveEvent()">Save Event</button>
+      <p class="form-msg" id="eventMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-DETAIL -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal" style="width:860px;max-width:97vw;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-header">
+      <div><div id="eventDetailTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"></div><div id="eventDetailMeta" style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem"></div></div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Invite Members</button>
+        <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
+        <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
+      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
+        <button class="profile-tab active" id="evdtab-registrations" onclick="switchEventDetailTab('registrations')">Registrations</button>
+        <button class="profile-tab" id="evdtab-checkin" onclick="switchEventDetailTab('checkin')">Check-In</button>
+        <button class="profile-tab" id="evdtab-waitlist" onclick="switchEventDetailTab('waitlist')">Waitlist</button>
+      </div>
+      <div id="evDetailTabRegistrations"><div id="eventRegistrationsList"></div></div>
+      <div id="evDetailTabCheckin" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Present <span id="eventCheckinCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.2rem;margin-left:0.3rem">0</span></div>
+          <button class="panel-action" style="font-size:0.72rem" onclick="markAllEventPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
+        </div>
+        <div id="eventCheckinList"></div>
+      </div>
+      <div id="evDetailTabWaitlist" style="display:none"><div id="eventWaitlistList"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-INVITE -->
+<div class="modal-overlay" id="eventInviteModal" style="z-index:280">
+  <div class="modal" style="width:540px;max-width:97vw">
+    <div class="modal-header"><span class="modal-title">Invite Members</span><button class="modal-close" onclick="closeEventInvite()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div id="eventInviteEventName" style="font-size:0.88rem;color:var(--gold);margin-bottom:1rem;font-family:var(--font-display)"></div>
+      <div class="field"><label>Audience</label><select id="evInviteAudience" onchange="toggleEvInviteProgram()" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="all">All Active Members</option><option value="program">By Program</option></select></div>
+      <div class="field" id="evInviteProgramField" style="display:none"><label>Program</label><select id="evInviteProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Program --</option></select></div>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="evInviteEmail" checked /><span class="check-item-label">Email</span></label>
+        <label class="check-item"><input type="checkbox" id="evInviteSms" /><span class="check-item-label">SMS</span></label>
+      </div>
+      <div class="field"><label>Custom Message (optional)</label><textarea id="evInviteCustomMsg" rows="4" placeholder="Leave blank to auto-generate from event details..."></textarea></div>
+      <button class="btn-gold-full" onclick="sendEventInvite()">Send Invitations</button>
+      <p class="form-msg" id="evInviteFormMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-ADD-REGISTRATION -->
+<div class="modal-overlay" id="addRegistrationModal" style="z-index:280">
+  <div class="modal" style="width:460px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title">Add Registration</span><button class="modal-close" onclick="closeAddRegistration()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="field"><label>Student</label>
+        <input type="text" id="evRegStudentSearch" placeholder="Search student..." oninput="searchEvRegStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
+        <div id="evRegStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto"></div>
+        <div id="evRegSelectedStudent" style="display:none;font-size:0.85rem;color:var(--gold);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i><span id="evRegSelectedName"></span> <button onclick="clearEvRegStudent()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">change</button></div>
+        <input type="hidden" id="evRegStudentId" value="" />
+      </div>
+      <div class="field"><label>Price Tier</label><select id="evRegTierSelect" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Free / No Tier --</option></select></div>
+      <div class="field"><label>Payment Status</label><select id="evRegPaid" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="complimentary">Complimentary</option></select></div>
+      <div class="field"><label>Notes (optional)</label><input type="text" id="evRegNotes" placeholder="Any notes about this registration..." /></div>
+      <button class="btn-gold-full" onclick="saveRegistration()">Save Registration</button>
+      <p class="form-msg" id="addRegMsg"></p>
+    </div>
+  </div>
+</div>
+
+
+        <!-- ═══════════════ §PAGE-EVENTS ═══════════════ -->
+    <div class="page" id="page-events">
+      <div class="content-heading"><h2>Events</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddEvent()"><i class="fa-solid fa-plus"></i> Add Event</button></div>
+      <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Seminars, workshops, tournaments, and community events.</p>
+      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap">
+        <button class="comm-tab active" id="evtab-upcoming" onclick="switchEventTab('upcoming')"><i class="fa-solid fa-calendar-check" style="margin-right:0.4rem"></i>Upcoming</button>
+        <button class="comm-tab" id="evtab-past" onclick="switchEventTab('past')"><i class="fa-solid fa-calendar" style="margin-right:0.4rem"></i>Past</button>
+      </div>
+      <div id="evTabUpcoming"><div id="eventsUpcomingList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div></div></div>
+      <div id="evTabPast" style="display:none"><div id="eventsPastList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No past events.</div></div></div>
+    </div>
+
     <!-- ═══════════════ §PAGE-PROGRAMS ═══════════════ -->
     <div class="page" id="page-programs">
       <div class="content-heading"><h2>Programs</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()"><i class="fa-solid fa-plus"></i> Add Program</button></div>
@@ -2196,6 +2321,7 @@ async function init() {
     await loadSessionTypes();
     await loadSessionPacks();
     await loadSessions();
+    try{await loadEvents();}catch(e){allEvents=[];}
     await loadAutomations();
     await loadAlertHistory();
     await loadSmsInbox();
@@ -2613,6 +2739,7 @@ function buildCalendar(){
     var daySessions=allSessions.filter(function(s){return s.session_date===dStr;});
     daySessions.forEach(function(s){var st=allSessionTypes.find(function(t){return t.id===s.session_type_id;});var typeName=(st?st.name:'Session').replace(/'/g,'');html+='<div class="cal-event session-event" onclick="openBookSession(\''+s.id+'\')">'+fmtTime(s.start_time)+' '+typeName+'</div>';});
     allStudents.forEach(function(s){if(!s.date_of_birth)return;var dob=new Date(s.date_of_birth+'T00:00:00');if(dob.getMonth()===d.getMonth()&&dob.getDate()===d.getDate()){html+='<div class="cal-event birthday-event">\uD83C\uDF82 '+s.first_name+'</div>';}});
+    html+=getEventPillsHTML(dStr);
     dayEl.innerHTML=html;
   }
 }
@@ -2641,6 +2768,7 @@ function buildMonthCalendar(){
     if(birthdays.length)  dots+='<div class="month-dot birthday-dot"></div>';
     if(tests.length)      dots+='<div class="month-dot test-dot"></div>';
     if(sessions.length)   dots+='<div class="month-dot session-dot"></div>';
+    dots+=getEventMonthDot(cellStr);
     var countLabel=dayClasses.length?dayClasses.length+' class'+(dayClasses.length!==1?'es':''):'';
     html+='<div class="month-day'+(isToday?' today':'')+(isCurrent?'':' other-month')+'" onclick="openDayView(\''+cellStr+'\',\''+dn+'\')">';
     html+='<div class="month-day-num">'+cell.day+'</div>';
@@ -5976,6 +6104,254 @@ async function sendToSelectedNow(){
   document.getElementById('stsSendResult').style.display='block';
   document.getElementById('stsSendMsg').textContent='';
 }
+  <script>
+// ─────────────────────────────── §EVENTS ───────────────────────────────
+
+var allEvents = [];
+var currentEventId = null;
+var currentEventRegistrations = [];
+
+async function loadEvents() {
+  try { var r = await sb.from("events").select("*, event_sessions(*), event_price_tiers(*)").eq("school_id", SID).eq("active", true).order("created_at", {ascending: false}); allEvents = r.data || []; renderEvents(); } catch(e) { allEvents = []; }
+}
+
+function renderEvents() {
+  var now = new Date().toISOString().split("T")[0];
+  var upcoming = allEvents.filter(function(ev) { var s = ev.event_sessions || []; if (!s.length) return true; return s.some(function(x) { return x.session_date >= now; }); });
+  var past = allEvents.filter(function(ev) { var s = ev.event_sessions || []; if (!s.length) return false; return s.every(function(x) { return x.session_date < now; }); });
+  renderEventList("eventsUpcomingList", upcoming);
+  renderEventList("eventsPastList", past);
+}
+
+function renderEventList(elId, list) {
+  var el = document.getElementById(elId); if (!el) return;
+  if (!list.length) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">No events found.</div>"; return; }
+  el.innerHTML = list.map(function(ev) {
+    var sess = ev.event_sessions || []; var tiers = ev.event_price_tiers || []; var first = sess.length ? sess[0] : null;
+    var dateStr = first ? new Date(first.session_date + "T00:00:00").toLocaleDateString("en-US", {weekday:"short", month:"short", day:"numeric", year:"numeric"}) : "Date TBD";
+    var timeStr = first && first.start_time ? fmtTime(first.start_time) : "";
+    var color = ev.color || "#2A9D8F";
+    var typeColors = {Seminar:"#7DAAD4", Workshop:"#9060D0", Tournament:"#E07070", Community:"#5A9A6A", Other:"#9A8F80"};
+    var typeColor = typeColors[ev.event_type] || "#2A9D8F";
+    var priceStr = !tiers.length ? "Free" : "$" + parseFloat(tiers[0].price || 0).toFixed(2) + (tiers.length > 1 ? "+" : "");
+    var regBadge = ev.registration_status === "closed" ? "<span style=\"font-size:0.62rem;padding:0.1rem 0.4rem;background:rgba(224,112,112,0.12);border:1px solid rgba(224,112,112,0.35);color:#E07070;margin-left:0.5rem\">Closed</span>" : "<span style=\"font-size:0.62rem;padding:0.1rem 0.4rem;background:rgba(90,154,106,0.12);border:1px solid rgba(90,154,106,0.35);color:#7DBD7D;margin-left:0.5rem\">Open</span>";
+    return "<div style=\"background:var(--surface);border:1px solid var(--border);border-left:3px solid " + color + ";padding:1.25rem;margin-bottom:0.75rem\"><div style=\"display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem\"><div style=\"flex:1;min-width:0\"><div style=\"font-family:var(--font-display);font-size:1.1rem;color:var(--white);margin-bottom:0.3rem\">" + ev.title + regBadge + "</div><div style=\"font-size:0.75rem;color:var(--muted);margin-bottom:0.4rem\">" + dateStr + (timeStr ? " at " + timeStr : "") + (ev.location ? " &nbsp;&middot;&nbsp; " + ev.location : "") + "</div><div style=\"display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center\"><span style=\"font-size:0.65rem;padding:0.15rem 0.55rem;background:" + typeColor + "22;border:1px solid " + typeColor + "55;color:" + typeColor + "\">" + (ev.event_type || "Event") + "</span>" + (ev.capacity ? "<span style=\"font-size:0.72rem;color:var(--muted)\"><i class=\"fa-solid fa-users\" style=\"margin-right:0.3rem\"></i>" + ev.capacity + " max</span>" : "") + "<span style=\"font-size:0.72rem;color:var(--gold)\">" + priceStr + "</span>" + (ev.guest_instructor ? "<span style=\"font-size:0.72rem;color:var(--muted2)\"><i class=\"fa-solid fa-person\" style=\"margin-right:0.3rem\"></i>" + ev.guest_instructor + "</span>" : "") + "</div></div><div style=\"display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap\"><button class=\"panel-action\" onclick=\"openEventDetail('" + ev.id + "')\"><i class=\"fa-solid fa-eye\"></i> Manage</button><button class=\"btn-sm\" onclick=\"openEditEvent('" + ev.id + "')\"><i class=\"fa-solid fa-pen\"></i> Edit</button><button class=\"btn-sm\" style=\"color:#E07070;border-color:rgba(224,112,112,0.4)\" onclick=\"deleteEvent('" + ev.id + "')\"><i class=\"fa-solid fa-trash\"></i></button></div></div></div>";
+  }).join("");
+}
+
+function switchEventTab(tab) {
+  document.getElementById("evTabUpcoming").style.display = tab === "upcoming" ? "block" : "none";
+  document.getElementById("evTabPast").style.display = tab === "past" ? "block" : "none";
+  ["upcoming","past"].forEach(function(t) { var btn = document.getElementById("evtab-" + t); if (btn) btn.classList.toggle("active", t === tab); });
+}
+
+function syncEvColor() { var h = document.getElementById("evColorHex").value; if (/^#[0-9A-Fa-f]{6}$/.test(h)) document.getElementById("evColor").value = h; }
+
+function populateEvStaffDropdown() {
+  var sel = document.getElementById("evStaff"); if (!sel) return;
+  sel.innerHTML = "<option value=\"\">-- Select --</option>";
+  allInstructors.forEach(function(i) { var o = document.createElement("option"); o.value = i.first_name + " " + i.last_name; o.textContent = i.first_name + " " + i.last_name; sel.appendChild(o); });
+}
+
+function addEventTierRow(label, price, availability) {
+  var row = document.createElement("div"); row.className = "ev-tier-row";
+  row.style.cssText = "display:flex;gap:0.5rem;align-items:center;background:var(--black);border:1px solid var(--border);padding:0.5rem 0.65rem;margin-bottom:0.25rem";
+  var pubSel = (!availability || availability === "public") ? " selected" : ""; var memSel = availability === "members" ? " selected" : "";
+  row.innerHTML = "<input type=\"text\" value=\"" + (label || "") + "\" placeholder=\"Tier label\" style=\"flex:2;background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.4rem 0.55rem;outline:none\" /><input type=\"number\" value=\"" + (price !== undefined && price !== null ? price : "0") + "\" placeholder=\"Price\" min=\"0\" step=\"0.01\" style=\"width:80px;background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.4rem 0.55rem;outline:none\" /><select style=\"flex:1;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.4rem 0.45rem\"><option value=\"public\"" + pubSel + ">Public</option><option value=\"members\"" + memSel + ">Members Only</option></select><button onclick=\"this.parentElement.remove()\" style=\"background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;flex-shrink:0\"><i class=\"fa-solid fa-xmark\"></i></button>";
+  document.getElementById("evTierRows").appendChild(row);
+}
+
+function openAddEvent() {
+  document.getElementById("addEventTitle").textContent = "Add Event"; document.getElementById("eventEditId").value = ""; document.getElementById("evTitle").value = ""; document.getElementById("evType").value = "Seminar"; document.getElementById("evColor").value = "#2A9D8F"; document.getElementById("evColorHex").value = "#2A9D8F"; document.getElementById("evDate").value = ""; document.getElementById("evStartTime").value = ""; document.getElementById("evDuration").value = "120"; document.getElementById("evLocation").value = ""; document.getElementById("evCapacity").value = ""; document.getElementById("evDeadline").value = ""; document.getElementById("evGuest").value = ""; document.getElementById("evRegStatus").value = "open"; document.getElementById("evShowPortal").checked = true; document.getElementById("evNotifyStaff").checked = false; document.getElementById("evWaitlist").checked = true; document.getElementById("evTierRows").innerHTML = ""; document.getElementById("eventMsg").textContent = "";
+  populateEvStaffDropdown();
+  setTimeout(function() { initQuill("evDescEditor", "Describe this event..."); if (quillEditors["evDescEditor"]) quillEditors["evDescEditor"].setText(""); }, 100);
+  addEventTierRow();
+  document.getElementById("addEventModal").classList.add("active");
+}
+
+function openEditEvent(evId) {
+  var ev = allEvents.find(function(x) { return x.id === evId; }); if (!ev) return;
+  document.getElementById("addEventTitle").textContent = "Edit Event"; document.getElementById("eventEditId").value = ev.id; document.getElementById("evTitle").value = ev.title || ""; document.getElementById("evType").value = ev.event_type || "Seminar"; document.getElementById("evColor").value = ev.color || "#2A9D8F"; document.getElementById("evColorHex").value = ev.color || "#2A9D8F"; document.getElementById("evLocation").value = ev.location || ""; document.getElementById("evCapacity").value = ev.capacity || ""; document.getElementById("evDeadline").value = ev.registration_deadline || ""; document.getElementById("evGuest").value = ev.guest_instructor || ""; document.getElementById("evRegStatus").value = ev.registration_status || "open"; document.getElementById("evShowPortal").checked = ev.show_on_portal !== false; document.getElementById("evNotifyStaff").checked = !!ev.notify_staff; document.getElementById("evWaitlist").checked = ev.enable_waitlist !== false; document.getElementById("eventMsg").textContent = "";
+  populateEvStaffDropdown();
+  var sess = ev.event_sessions || [];
+  if (sess.length) { document.getElementById("evDate").value = sess[0].session_date || ""; document.getElementById("evStartTime").value = sess[0].start_time ? sess[0].start_time.substring(0,5) : ""; document.getElementById("evDuration").value = sess[0].duration_minutes || 120; }
+  var tiers = ev.event_price_tiers || []; document.getElementById("evTierRows").innerHTML = "";
+  if (tiers.length) { tiers.forEach(function(t) { addEventTierRow(t.label, t.price, t.availability); }); } else { addEventTierRow(); }
+  if (ev.staff_member_name) { setTimeout(function() { document.getElementById("evStaff").value = ev.staff_member_name; }, 80); }
+  setTimeout(function() { initQuill("evDescEditor", "Describe this event..."); setQuillContent("evDescEditor", ev.description || ""); }, 100);
+  document.getElementById("addEventModal").classList.add("active");
+}
+
+function closeAddEvent() { document.getElementById("addEventModal").classList.remove("active"); }
+
+async function saveEvent() {
+  var eid = document.getElementById("eventEditId").value; var title = document.getElementById("evTitle").value.trim(); var date = document.getElementById("evDate").value;
+  if (!title) { setMsg("eventMsg", "Title required.", "error"); return; }
+  if (!date) { setMsg("eventMsg", "Date required.", "error"); return; }
+  setMsg("eventMsg", "Saving...", "");
+  var payload = { title: title, event_type: document.getElementById("evType").value, color: document.getElementById("evColor").value, description: getQuillContent("evDescEditor"), location: document.getElementById("evLocation").value.trim() || null, capacity: document.getElementById("evCapacity").value ? parseInt(document.getElementById("evCapacity").value) : null, registration_deadline: document.getElementById("evDeadline").value || null, staff_member_name: document.getElementById("evStaff").value || null, guest_instructor: document.getElementById("evGuest").value.trim() || null, registration_status: document.getElementById("evRegStatus").value, show_on_portal: document.getElementById("evShowPortal").checked, notify_staff: document.getElementById("evNotifyStaff").checked, enable_waitlist: document.getElementById("evWaitlist").checked, active: true };
+  var evResult;
+  if (eid) { evResult = await sb.from("events").update(payload).eq("id", eid).select().single(); } else { payload.school_id = SID; evResult = await sb.from("events").insert(payload).select().single(); }
+  if (evResult.error) { setMsg("eventMsg", evResult.error.message, "error"); return; }
+  var evId = evResult.data.id;
+  await sb.from("event_sessions").delete().eq("event_id", evId);
+  var startTime = document.getElementById("evStartTime").value; var duration = parseInt(document.getElementById("evDuration").value) || 120;
+  await sb.from("event_sessions").insert({ event_id: evId, school_id: SID, session_date: date, start_time: startTime || null, duration_minutes: duration, session_number: 1 });
+  await sb.from("event_price_tiers").delete().eq("event_id", evId);
+  var tierRows = document.getElementById("evTierRows").querySelectorAll(".ev-tier-row"); var tierInserts = [];
+  for (var i = 0; i < tierRows.length; i++) { var inputs = tierRows[i].querySelectorAll("input, select"); var tLabel = inputs[0] ? inputs[0].value.trim() : ""; var tPrice = inputs[1] ? parseFloat(inputs[1].value) || 0 : 0; var tAvail = inputs[2] ? inputs[2].value : "public"; if (tLabel) tierInserts.push({ event_id: evId, school_id: SID, label: tLabel, price: tPrice, availability: tAvail, sort_order: i }); }
+  if (tierInserts.length) { await sb.from("event_price_tiers").insert(tierInserts); }
+  setMsg("eventMsg", "Event saved!", "success");
+  await loadEvents(); buildCalendar(); if (calView === "month") buildMonthCalendar();
+  setTimeout(closeAddEvent, 1000);
+}
+
+async function deleteEvent(evId) {
+  if (!confirm("Delete this event? This cannot be undone.")) return;
+  await sb.from("event_sessions").delete().eq("event_id", evId); await sb.from("event_price_tiers").delete().eq("event_id", evId); await sb.from("event_registrations").delete().eq("event_id", evId); await sb.from("events").update({ active: false }).eq("id", evId);
+  await loadEvents(); buildCalendar(); if (calView === "month") buildMonthCalendar();
+}
+
+async function openEventDetail(evId) {
+  currentEventId = evId; var ev = allEvents.find(function(x) { return x.id === evId; }); if (!ev) return;
+  var sess = ev.event_sessions || []; var first = sess.length ? sess[0] : null;
+  document.getElementById("eventDetailTitle").textContent = ev.title;
+  document.getElementById("eventDetailMeta").textContent = (first ? new Date(first.session_date + "T00:00:00").toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric", year:"numeric"}) : "Date TBD") + (first && first.start_time ? " at " + fmtTime(first.start_time) : "") + (ev.location ? " - " + ev.location : "") + (ev.event_type ? " - " + ev.event_type : "");
+  document.getElementById("eventDetailModal").classList.add("active");
+  switchEventDetailTab("registrations"); await loadEventRegistrations();
+}
+
+function closeEventDetail() { document.getElementById("eventDetailModal").classList.remove("active"); currentEventId = null; }
+
+function switchEventDetailTab(tab) {
+  ["registrations","checkin","waitlist"].forEach(function(t) { var cap = t.charAt(0).toUpperCase() + t.slice(1); var panel = document.getElementById("evDetailTab" + cap); if (panel) panel.style.display = t === tab ? "block" : "none"; var btn = document.getElementById("evdtab-" + t); if (btn) btn.classList.toggle("active", t === tab); });
+  if (tab === "checkin") loadEventCheckin();
+  if (tab === "waitlist") loadEventWaitlist();
+}
+
+async function loadEventRegistrations() {
+  var el = document.getElementById("eventRegistrationsList"); el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+  try {
+    var r = await sb.from("event_registrations").select("*, students(first_name,last_name,email)").eq("event_id", currentEventId).order("created_at");
+    currentEventRegistrations = r.data || [];
+    if (!currentEventRegistrations.length) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1.5rem\">No registrations yet.</div>"; return; }
+    el.innerHTML = "<div class=\"table-wrap\"><table><thead><tr><th>Student</th><th>Tier</th><th>Payment</th><th>Registered</th><th>Actions</th></tr></thead><tbody>" + currentEventRegistrations.map(function(reg) {
+      var s = reg.students; var name = s ? s.first_name + " " + s.last_name : "Walk-in"; var dt = new Date(reg.created_at).toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric"}); var paidColor = reg.payment_status === "paid" ? "#7DBD7D" : reg.payment_status === "complimentary" ? "#7DAAD4" : "#E07070";
+      return "<tr><td class=\"name\">" + name + "</td><td>" + (reg.tier_label || "--") + "</td><td style=\"color:" + paidColor + "\">" + (reg.payment_status || "unpaid") + (reg.amount_paid ? " - $" + parseFloat(reg.amount_paid).toFixed(2) : "") + "</td><td style=\"font-size:0.78rem;color:var(--muted)\">" + dt + "</td><td style=\"display:flex;gap:0.35rem;padding:0.5rem 1rem\">" + (reg.payment_status !== "paid" ? "<button class=\"btn-sm gold\" onclick=\"markRegPaid('" + reg.id + "')\">Mark Paid</button>" : "") + "<button class=\"btn-sm\" style=\"color:#E07070;border-color:rgba(224,112,112,0.4)\" onclick=\"removeRegistration('" + reg.id + "')\"><i class=\"fa-solid fa-xmark\"></i></button></td></tr>";
+    }).join("") + "</tbody></table></div>";
+  } catch(e) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Registration data unavailable.</div>"; }
+}
+
+async function markRegPaid(regId) { await sb.from("event_registrations").update({ payment_status: "paid", paid_at: new Date().toISOString() }).eq("id", regId); await loadEventRegistrations(); }
+async function removeRegistration(regId) { if (!confirm("Remove this registration?")) return; await sb.from("event_registrations").delete().eq("id", regId); await loadEventRegistrations(); }
+
+async function loadEventCheckin() {
+  var el = document.getElementById("eventCheckinList"); el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+  try {
+    var r = await sb.from("event_registrations").select("*, students(first_name,last_name)").eq("event_id", currentEventId).order("created_at"); var data = r.data || [];
+    var checkedIn = data.filter(function(x) { return x.checked_in; }).length; document.getElementById("eventCheckinCount").textContent = checkedIn;
+    if (!data.length) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1.5rem\">No registrations yet.</div>"; return; }
+    el.innerHTML = data.map(function(reg) { var s = reg.students; var name = s ? s.first_name + " " + s.last_name : "Walk-in"; var present = !!reg.checked_in; return "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid " + (present ? "rgba(201,168,76,0.3)" : "var(--border)") + ";border-left:2px solid " + (present ? "var(--gold)" : "var(--border)") + ";margin-bottom:0.25rem\" id=\"evcheckin-" + reg.id + "\"><div style=\"font-size:0.88rem;color:var(--white)\">" + name + "</div><button onclick=\"toggleEventCheckin('" + reg.id + "')\" id=\"evcheckbtn-" + reg.id + "\" style=\"background:none;border:none;cursor:pointer;font-size:1.4rem;color:" + (present ? "var(--gold)" : "var(--muted)") + "\"><i class=\"fa-solid " + (present ? "fa-circle-check" : "fa-circle") + "\"></i></button></div>"; }).join("");
+  } catch(e) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Check-in data unavailable.</div>"; }
+}
+
+async function toggleEventCheckin(regId) { var r = await sb.from("event_registrations").select("checked_in").eq("id", regId).single(); if (r.error) return; var nowChecked = !r.data.checked_in; await sb.from("event_registrations").update({ checked_in: nowChecked, checked_in_at: nowChecked ? new Date().toISOString() : null }).eq("id", regId); await loadEventCheckin(); }
+async function markAllEventPresent() { if (!currentEventId) return; await sb.from("event_registrations").update({ checked_in: true, checked_in_at: new Date().toISOString() }).eq("event_id", currentEventId); await loadEventCheckin(); }
+
+async function loadEventWaitlist() {
+  var el = document.getElementById("eventWaitlistList"); el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+  try {
+    var r = await sb.from("event_waitlist").select("*, students(first_name,last_name,email)").eq("event_id", currentEventId).order("joined_at"); var data = r.data || [];
+    if (!data.length) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1.5rem\">No one on the waitlist.</div>"; return; }
+    el.innerHTML = data.map(function(w, idx) { var s = w.students; var name = s ? s.first_name + " " + s.last_name : "Unknown"; var dt = new Date(w.joined_at).toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric"}); return "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #7DAAD4;margin-bottom:0.35rem\"><div><div style=\"font-size:0.88rem;color:var(--white)\">" + (idx + 1) + ". " + name + "</div><div style=\"font-size:0.72rem;color:var(--muted)\">Joined " + dt + "</div></div><div style=\"display:flex;gap:0.4rem\"><button class=\"btn-sm gold\" onclick=\"promoteFromWaitlist('" + w.id + "','" + (w.student_id || "") + "')\">Promote</button><button class=\"btn-sm\" onclick=\"removeFromWaitlist('" + w.id + "')\">Remove</button></div></div>"; }).join("");
+  } catch(e) { el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Waitlist unavailable.</div>"; }
+}
+
+async function promoteFromWaitlist(waitlistId, studentId) {
+  if (!confirm("Promote this person to registered?")) return;
+  var ev = allEvents.find(function(x) { return x.id === currentEventId; }); var tierLabel = "General"; var tierPrice = 0;
+  if (ev && ev.event_price_tiers && ev.event_price_tiers.length) { tierLabel = ev.event_price_tiers[0].label; tierPrice = ev.event_price_tiers[0].price || 0; }
+  await sb.from("event_registrations").insert({ event_id: currentEventId, school_id: SID, student_id: studentId || null, tier_label: tierLabel, amount_paid: tierPrice, payment_status: "unpaid", checked_in: false });
+  await sb.from("event_waitlist").delete().eq("id", waitlistId);
+  await loadEventWaitlist(); await loadEventRegistrations();
+}
+
+async function removeFromWaitlist(waitlistId) { await sb.from("event_waitlist").delete().eq("id", waitlistId); await loadEventWaitlist(); }
+
+function openAddRegistration() {
+  if (!currentEventId) return; var ev = allEvents.find(function(x) { return x.id === currentEventId; });
+  document.getElementById("evRegStudentSearch").value = ""; document.getElementById("evRegStudentId").value = ""; document.getElementById("evRegSelectedStudent").style.display = "none"; document.getElementById("evRegStudentResults").style.display = "none"; document.getElementById("evRegPaid").value = "unpaid"; document.getElementById("evRegNotes").value = ""; document.getElementById("addRegMsg").textContent = "";
+  var tierSel = document.getElementById("evRegTierSelect"); tierSel.innerHTML = "<option value=\"\">-- Free / No Tier --</option>";
+  if (ev && ev.event_price_tiers) { ev.event_price_tiers.forEach(function(t) { var o = document.createElement("option"); o.value = t.id + "|" + t.label + "|" + t.price; o.textContent = t.label + " - $" + parseFloat(t.price || 0).toFixed(2); tierSel.appendChild(o); }); }
+  document.getElementById("addRegistrationModal").classList.add("active");
+}
+
+function closeAddRegistration() { document.getElementById("addRegistrationModal").classList.remove("active"); }
+
+function searchEvRegStudent() {
+  var q = document.getElementById("evRegStudentSearch").value.toLowerCase().trim(); var el = document.getElementById("evRegStudentResults");
+  if (!q || q.length < 2) { el.style.display = "none"; return; }
+  var filtered = allStudents.filter(function(s) { return (s.first_name + " " + s.last_name).toLowerCase().includes(q); }).slice(0, 6);
+  el.style.display = "block";
+  if (!filtered.length) { el.innerHTML = "<div style=\"padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic\">No students found.</div>"; return; }
+  el.innerHTML = filtered.map(function(s) { return "<div style=\"padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)\" onclick=\"selectEvRegStudent('" + s.id + "','" + s.first_name + " " + s.last_name + "')\">" + s.first_name + " " + s.last_name + "</div>"; }).join("");
+}
+
+function selectEvRegStudent(sid, name) { document.getElementById("evRegStudentId").value = sid; document.getElementById("evRegStudentSearch").value = name; document.getElementById("evRegSelectedName").textContent = name; document.getElementById("evRegSelectedStudent").style.display = "block"; document.getElementById("evRegStudentResults").style.display = "none"; }
+function clearEvRegStudent() { document.getElementById("evRegStudentId").value = ""; document.getElementById("evRegStudentSearch").value = ""; document.getElementById("evRegSelectedStudent").style.display = "none"; }
+
+async function saveRegistration() {
+  if (!currentEventId) return; var tierVal = document.getElementById("evRegTierSelect").value; var tierLabel = "General"; var tierPrice = 0;
+  if (tierVal) { var parts = tierVal.split("|"); tierLabel = parts[1] || "General"; tierPrice = parseFloat(parts[2]) || 0; }
+  setMsg("addRegMsg", "Saving...", "");
+  var payload = { event_id: currentEventId, school_id: SID, student_id: document.getElementById("evRegStudentId").value || null, tier_label: tierLabel, amount_paid: tierPrice, payment_status: document.getElementById("evRegPaid").value, checked_in: false, notes: document.getElementById("evRegNotes").value.trim() || null };
+  if (payload.payment_status === "paid") payload.paid_at = new Date().toISOString();
+  var r = await sb.from("event_registrations").insert(payload);
+  if (r.error) { setMsg("addRegMsg", r.error.message, "error"); return; }
+  setMsg("addRegMsg", "Registration saved!", "success"); await loadEventRegistrations(); setTimeout(closeAddRegistration, 800);
+}
+
+function openEventInvite() {
+  if (!currentEventId) return; var ev = allEvents.find(function(x) { return x.id === currentEventId; });
+  document.getElementById("eventInviteEventName").textContent = ev ? ev.title : ""; document.getElementById("evInviteAudience").value = "all"; document.getElementById("evInviteProgramField").style.display = "none"; document.getElementById("evInviteEmail").checked = true; document.getElementById("evInviteSms").checked = false; document.getElementById("evInviteCustomMsg").value = ""; document.getElementById("evInviteFormMsg").textContent = "";
+  var progSel = document.getElementById("evInviteProgram"); progSel.innerHTML = "<option value=\"\">-- Select Program --</option>";
+  allPrograms.forEach(function(p) { var o = document.createElement("option"); o.value = p.id; o.textContent = p.name; progSel.appendChild(o); });
+  document.getElementById("eventInviteModal").classList.add("active");
+}
+
+function closeEventInvite() { document.getElementById("eventInviteModal").classList.remove("active"); }
+function toggleEvInviteProgram() { document.getElementById("evInviteProgramField").style.display = document.getElementById("evInviteAudience").value === "program" ? "block" : "none"; }
+
+async function sendEventInvite() {
+  if (!currentEventId) return; var ev = allEvents.find(function(x) { return x.id === currentEventId; }); if (!ev) return;
+  var sendEmail = document.getElementById("evInviteEmail").checked; var sendSms = document.getElementById("evInviteSms").checked;
+  if (!sendEmail && !sendSms) { setMsg("evInviteFormMsg", "Select at least one channel.", "error"); return; }
+  var audience = document.getElementById("evInviteAudience").value; var progId = document.getElementById("evInviteProgram").value;
+  var pool = allStudents.filter(function(s) { return s.status === "active"; });
+  if (audience === "program" && progId) { pool = pool.filter(function(s) { return s.program_id === progId; }); }
+  var sess = ev.event_sessions || []; var first = sess.length ? sess[0] : null; var tiers = ev.event_price_tiers || []; var priceStr = !tiers.length ? "Free" : "$" + parseFloat(tiers[0].price || 0).toFixed(2);
+  var customMsg = document.getElementById("evInviteCustomMsg").value.trim();
+  var autoMsg = "You are invited to " + ev.title + "." + (first ? " Date: " + new Date(first.session_date + "T00:00:00").toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"}) + "." : "") + (ev.location ? " Location: " + ev.location + "." : "") + " Price: " + priceStr + ". We hope to see you there!";
+  var body = customMsg || autoMsg; var subject = "You are invited: " + ev.title;
+  var emailRecipients = sendEmail ? pool.filter(function(s) { return s.email; }).map(function(s) { return { id: s.id, name: s.first_name + " " + s.last_name, email: s.email, phone: s.phone }; }) : [];
+  var smsRecipients = sendSms ? pool.filter(function(s) { return s.phone; }).map(function(s) { return { id: s.id, name: s.first_name + " " + s.last_name, phone: s.phone, email: s.email }; }) : [];
+  setMsg("evInviteFormMsg", "Sending...", ""); var sent = 0;
+  if (emailRecipients.length) { try { var res = await fetch(SURL + "/functions/v1/send-broadcast", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SKEY }, body: JSON.stringify({ school_id: SID, subject: subject, body: "<p>" + body + "</p>", recipients: emailRecipients }) }); if (res.ok) sent += emailRecipients.length; } catch(e) {} }
+  if (smsRecipients.length) { try { var sres = await fetch(SURL + "/functions/v1/send-communication", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SKEY }, body: JSON.stringify({ school_id: SID, type: "sms", body: body, recipients: smsRecipients }) }); if (sres.ok) sent += smsRecipients.length; } catch(e) {} }
+  setMsg("evInviteFormMsg", "Invitations sent to " + sent + " members!", "success");
+  setTimeout(function() { document.getElementById("evInviteFormMsg").textContent = ""; closeEventInvite(); }, 2200);
+}
+
+// Calendar helpers — used by Mac edits to buildCalendar and buildMonthCalendar
+function getEventPillsHTML(dateStr) { return allEvents.filter(function(ev) { var s = ev.event_sessions || []; return s.some(function(x) { return x.session_date === dateStr; }); }).map(function(ev) { var color = ev.color || "#2A9D8F"; var s = ev.event_sessions || []; var match = s.find(function(x) { return x.session_date === dateStr; }); var timeStr = match && match.start_time ? fmtTime(match.start_time) + " " : ""; return "<div class=\"cal-event\" style=\"background:" + color + "22;color:" + color + ";border-left:2px solid " + color + ";cursor:pointer\" onclick=\"openEventDetail('" + ev.id + "')\">" + timeStr + ev.title + "</div>"; }).join(""); }
+function getEventMonthDot(dateStr) { var evs = allEvents.filter(function(ev) { var s = ev.event_sessions || []; return s.some(function(x) { return x.session_date === dateStr; }); }); return evs.length ? "<div class=\"month-dot\" style=\"background:#2A9D8F\"></div>" : ""; }
+
+// Navigate override — adds Events title and lazy-loads on first visit
+var _origNavigateFn = window.navigate;
+window.navigate = async function(page, el) {
+  _origNavigateFn(page, el);
+  if (page === "events") { document.getElementById("pageTitle").textContent = "Events"; if (!allEvents.length) { try { await loadEvents(); } catch(e) {} } }
+};
 </script>
 </body>
 </html>
