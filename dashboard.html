@@ -467,6 +467,8 @@
     <div class="nav-item" id="nav-schedule"  onclick="navigate('schedule',this)"><i class="fa-solid fa-calendar-day nav-icon"></i> Schedule</div>
     <div class="nav-item" id="nav-classes"   onclick="navigate('classes',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> All Classes</div>
     <div class="nav-item" id="nav-sessions"  onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
+    <div class="nav-item" id="nav-events"    onclick="navigate('events',this)"><i class="fa-solid fa-calendar-star nav-icon"></i> Events</div>
+
 
     <div class="nav-section-label">Programs</div>
     <div class="nav-item" id="nav-programs"    onclick="navigate('programs',this)"><i class="fa-solid fa-layer-group nav-icon"></i> Programs</div>
@@ -691,6 +693,192 @@
       </div>
     </div>
 
+<!-- §MODAL-EVENT -->
+<div class="modal-overlay" id="addEventModal">
+  <div class="modal" style="width:740px;max-width:97vw">
+    <div class="modal-header">
+      <span class="modal-title" id="addEventTitle">Add New Event</span>
+      <button class="modal-close" onclick="safeClose('addEventModal',closeAddEvent)"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eventEditId" value="" />
+
+      <!-- Basic Info -->
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Basic Info</div>
+      <div class="field"><label>Event Title</label><input type="text" id="eventTitle" placeholder="e.g. Summer Self Defense Seminar" /></div>
+      <div class="form-row">
+        <div class="field"><label>Event Type</label>
+          <select id="eventType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%">
+            <option value="seminar">Seminar</option>
+            <option value="workshop">Workshop</option>
+            <option value="tournament">Tournament</option>
+            <option value="community">Community Event</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Calendar Color</label>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <input type="color" id="eventColor" value="#7DAAD4" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" />
+            <input type="text" id="eventColorHex" value="#7DAAD4" style="flex:1" oninput="syncEventColor()" />
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Description</label><div id="eventDescEditor"></div></div>
+
+      <!-- Schedule -->
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Schedule</div>
+      <div style="display:flex;gap:1rem;margin-bottom:0.75rem">
+        <button class="btn-sm" id="eventSingleBtn" onclick="setEventSessionType('single')" style="border-color:var(--gold);color:var(--gold)">Single Session</button>
+        <button class="btn-sm" id="eventMultiBtn" onclick="setEventSessionType('multi')">Multi Session</button>
+      </div>
+      <div id="eventSessionRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem"></div>
+      <button class="btn-sm" id="eventAddSessionBtn" onclick="addEventSessionRow()" style="display:none"><i class="fa-solid fa-plus"></i> Add Session</button>
+
+      <!-- Details -->
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Event Details</div>
+      <div class="form-row">
+        <div class="field"><label>Location</label><input type="text" id="eventLocation" placeholder="e.g. Main School or offsite address" /></div>
+        <div class="field"><label>Staff Member</label>
+          <select id="eventStaffMember" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%">
+            <option value="">-- Select --</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="eventGuestInstructor" placeholder="e.g. Sensei John Smith" /></div>
+        <div class="field"><label>Registration Deadline</label><input type="date" id="eventRegDeadline" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Capacity (blank = unlimited)</label><input type="number" id="eventCapacity" placeholder="e.g. 30" min="1" /></div>
+        <div class="field"><label>Registration Status</label>
+          <select id="eventRegStatus" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%">
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Pricing</div>
+      <div id="eventPriceTierRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem"></div>
+      <button class="btn-sm" onclick="addEventPriceTier()"><i class="fa-solid fa-plus"></i> Add Price Tier</button>
+
+      <!-- Online Settings -->
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.75rem">Online Settings</div>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="eventShowPortal" checked /><span class="check-item-label">Show on member portal</span></label>
+        <label class="check-item"><input type="checkbox" id="eventNotifyStaff" checked /><span class="check-item-label">Notify staff on registration</span></label>
+        <label class="check-item"><input type="checkbox" id="eventWaitlist" /><span class="check-item-label">Enable waitlist when full</span></label>
+      </div>
+
+      <button class="btn-gold-full" style="margin-top:1.5rem" onclick="saveEvent()">Save Event</button>
+      <p class="form-msg" id="eventMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-DETAIL -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal" style="width:860px;max-width:97vw;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-header">
+      <div>
+        <div id="eventDetailTitle" style="font-family:var(--font-display);font-size:1.2rem;color:var(--white)"></div>
+        <div id="eventDetailMeta" style="font-size:0.82rem;color:var(--muted);margin-top:0.2rem"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button class="panel-action" onclick="openInviteModal()"><i class="fa-solid fa-paper-plane"></i> Invite Members</button>
+        <button class="panel-action" onclick="openEditEventFromDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div style="padding:1.5rem;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch">
+      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
+        <button class="profile-tab active" id="evttab-registrations" onclick="switchEventDetailTab('registrations')">Registrations</button>
+        <button class="profile-tab" id="evttab-checkin" onclick="switchEventDetailTab('checkin')">Check-In</button>
+        <button class="profile-tab" id="evttab-waitlist" onclick="switchEventDetailTab('waitlist')">Waitlist</button>
+      </div>
+      <div id="evtTabRegistrations">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div id="eventRegCount" style="font-size:0.82rem;color:var(--muted)"></div>
+          <button class="panel-action" style="font-size:0.72rem" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
+        </div>
+        <div id="eventRegistrationsList"></div>
+      </div>
+      <div id="evtTabCheckin" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div id="eventCheckinCount" style="font-size:0.82rem;color:var(--muted)"></div>
+          <button class="panel-action" style="font-size:0.72rem" onclick="markAllEventPresent()"><i class="fa-solid fa-check-double"></i> Mark All Present</button>
+        </div>
+        <div id="eventCheckinList"></div>
+      </div>
+      <div id="evtTabWaitlist" style="display:none">
+        <div id="eventWaitlistList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-INVITE -->
+<div class="modal-overlay" id="eventInviteModal">
+  <div class="modal" style="width:500px;max-width:95vw">
+    <div class="modal-header">
+      <span class="modal-title">Invite Members</span>
+      <button class="modal-close" onclick="closeInviteModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:0.85rem;color:var(--muted2);margin-bottom:1rem">Send an event invitation via email and/or SMS.</div>
+      <div class="field"><label>Send To</label>
+        <select id="inviteAudience" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%">
+          <option value="all">All Active Members</option>
+          <option value="program">By Program</option>
+        </select>
+      </div>
+      <div class="field" id="inviteProgramField" style="display:none">
+        <label>Select Program</label>
+        <select id="inviteProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select --</option></select>
+      </div>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="inviteEmail" checked /><span class="check-item-label">Email</span></label>
+        <label class="check-item"><input type="checkbox" id="inviteSms" /><span class="check-item-label">SMS</span></label>
+      </div>
+      <div class="field"><label>Message (optional — leave blank to use default)</label><textarea id="inviteMessage" rows="4" placeholder="Join us for an exciting event..."></textarea></div>
+      <button class="btn-gold-full" onclick="sendEventInvite()">Send Invitations</button>
+      <p class="form-msg" id="inviteMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-REGISTRATION -->
+<div class="modal-overlay" id="addRegistrationModal">
+  <div class="modal" style="width:460px;max-width:95vw">
+    <div class="modal-header">
+      <span class="modal-title">Add Registration</span>
+      <button class="modal-close" onclick="closeAddRegistration()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Student</label>
+        <input type="text" id="regStudentSearch" placeholder="Search student..." oninput="searchRegStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
+        <div id="regStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto"></div>
+        <div id="regSelectedStudent" style="display:none;font-size:0.85rem;color:var(--gold);padding:0.4rem 0">
+          <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>
+          <span id="regSelectedStudentName"></span>
+          <button onclick="clearRegStudent()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">change</button>
+        </div>
+        <input type="hidden" id="regStudentId" value="" />
+      </div>
+      <div class="field"><label>Price Tier</label>
+        <select id="regPriceTier" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"></select>
+      </div>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="regPaid" /><span class="check-item-label">Payment collected</span></label>
+      </div>
+      <button class="btn-gold-full" onclick="saveRegistration()">Save Registration</button>
+      <p class="form-msg" id="regMsg"></p>
+    </div>
+  </div>
+</div>
+
+    
     <!-- ═══════════════ §PAGE-PROGRAMS ═══════════════ -->
     <div class="page" id="page-programs">
       <div class="content-heading"><h2>Programs</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()"><i class="fa-solid fa-plus"></i> Add Program</button></div>
