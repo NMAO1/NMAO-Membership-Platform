@@ -466,9 +466,7 @@
     <div class="nav-section-label">Schedule</div>
     <div class="nav-item" id="nav-schedule"  onclick="navigate('schedule',this)"><i class="fa-solid fa-calendar-day nav-icon"></i> Schedule</div>
     <div class="nav-item" id="nav-classes"   onclick="navigate('classes',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> All Classes</div>
-    <div class="nav-item" id="nav-sessions" onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
-    <div class="nav-item" id="nav-events" onclick="navigate('events',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> Events</div>
-
+    <div class="nav-item" id="nav-sessions"  onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
 
     <div class="nav-section-label">Programs</div>
     <div class="nav-item" id="nav-programs"    onclick="navigate('programs',this)"><i class="fa-solid fa-layer-group nav-icon"></i> Programs</div>
@@ -691,131 +689,6 @@
         <button class="panel-action" onclick="saveSessionSettings()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save Session Settings</button>
         <p class="form-msg" id="sessSettingsMsg"></p>
       </div>
-    </div>
-
-<!-- §MODAL-EVENT-ADD -->
-<div class="modal-overlay" id="addEventModal">
-  <div class="modal" style="width:620px;max-width:97vw">
-    <div class="modal-header"><span class="modal-title" id="addEventTitle">Add Event</span><button class="modal-close" onclick="closeAddEvent()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <input type="hidden" id="eventEditId" value="" />
-      <div class="field"><label>Event Title</label><input type="text" id="evTitle" placeholder="e.g. Spring Seminar" /></div>
-      <div class="form-row">
-        <div class="field"><label>Event Type</label><select id="evType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="Seminar">Seminar</option><option value="Workshop">Workshop</option><option value="Tournament">Tournament</option><option value="Community">Community Event</option><option value="Other">Other</option></select></div>
-        <div class="field"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="evColor" value="#2A9D8F" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="evColorHex" value="#2A9D8F" style="flex:1" oninput="syncEvColor()" /></div></div>
-      </div>
-      <div class="field"><label>Description</label><div id="evDescEditor" style="margin-top:0.25rem"></div></div>
-      <div class="form-row">
-        <div class="field"><label>Date</label><input type="date" id="evDate" /></div>
-        <div class="field"><label>Start Time</label><input type="time" id="evStartTime" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>Duration (minutes)</label><input type="number" id="evDuration" value="120" min="15" step="15" /></div>
-        <div class="field"><label>Location</label><input type="text" id="evLocation" placeholder="e.g. Main Floor" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>Capacity</label><input type="number" id="evCapacity" placeholder="Blank = unlimited" min="1" /></div>
-        <div class="field"><label>Registration Deadline</label><input type="date" id="evDeadline" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>Staff Member</label><select id="evStaff" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select --</option></select></div>
-        <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="evGuest" placeholder="Guest name" /></div>
-      </div>
-      <div class="field"><label>Registration Status</label><select id="evRegStatus" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="open">Open</option><option value="closed">Closed</option></select></div>
-      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.5rem">Price Tiers</div>
-      <div id="evTierRows" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.5rem"></div>
-      <button class="btn-sm" onclick="addEventTierRow()"><i class="fa-solid fa-plus"></i> Add Price Tier</button>
-      <div class="check-group" style="margin-top:1rem">
-        <label class="check-item"><input type="checkbox" id="evShowPortal" checked /><span class="check-item-label">Show on member portal</span></label>
-        <label class="check-item"><input type="checkbox" id="evNotifyStaff" /><span class="check-item-label">Notify staff on registration</span></label>
-        <label class="check-item"><input type="checkbox" id="evWaitlist" checked /><span class="check-item-label">Enable waitlist</span></label>
-      </div>
-      <button class="btn-gold-full" style="margin-top:1rem" onclick="saveEvent()">Save Event</button>
-      <p class="form-msg" id="eventMsg"></p>
-    </div>
-  </div>
-</div>
-
-<!-- §MODAL-EVENT-DETAIL -->
-<div class="modal-overlay" id="eventDetailModal">
-  <div class="modal" style="width:860px;max-width:97vw;display:flex;flex-direction:column;overflow:hidden">
-    <div class="modal-header">
-      <div><div id="eventDetailTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"></div><div id="eventDetailMeta" style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem"></div></div>
-      <div style="display:flex;gap:0.5rem;align-items:center">
-        <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Invite Members</button>
-        <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
-        <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-    </div>
-    <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
-      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
-        <button class="profile-tab active" id="evdtab-registrations" onclick="switchEventDetailTab('registrations')">Registrations</button>
-        <button class="profile-tab" id="evdtab-checkin" onclick="switchEventDetailTab('checkin')">Check-In</button>
-        <button class="profile-tab" id="evdtab-waitlist" onclick="switchEventDetailTab('waitlist')">Waitlist</button>
-      </div>
-      <div id="evDetailTabRegistrations"><div id="eventRegistrationsList"></div></div>
-      <div id="evDetailTabCheckin" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-          <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Present <span id="eventCheckinCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.2rem;margin-left:0.3rem">0</span></div>
-          <button class="panel-action" style="font-size:0.72rem" onclick="markAllEventPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
-        </div>
-        <div id="eventCheckinList"></div>
-      </div>
-      <div id="evDetailTabWaitlist" style="display:none"><div id="eventWaitlistList"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- §MODAL-EVENT-INVITE -->
-<div class="modal-overlay" id="eventInviteModal" style="z-index:280">
-  <div class="modal" style="width:540px;max-width:97vw">
-    <div class="modal-header"><span class="modal-title">Invite Members</span><button class="modal-close" onclick="closeEventInvite()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <div id="eventInviteEventName" style="font-size:0.88rem;color:var(--gold);margin-bottom:1rem;font-family:var(--font-display)"></div>
-      <div class="field"><label>Audience</label><select id="evInviteAudience" onchange="toggleEvInviteProgram()" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="all">All Active Members</option><option value="program">By Program</option></select></div>
-      <div class="field" id="evInviteProgramField" style="display:none"><label>Program</label><select id="evInviteProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Program --</option></select></div>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="evInviteEmail" checked /><span class="check-item-label">Email</span></label>
-        <label class="check-item"><input type="checkbox" id="evInviteSms" /><span class="check-item-label">SMS</span></label>
-      </div>
-      <div class="field"><label>Custom Message (optional)</label><textarea id="evInviteCustomMsg" rows="4" placeholder="Leave blank to auto-generate from event details..."></textarea></div>
-      <button class="btn-gold-full" onclick="sendEventInvite()">Send Invitations</button>
-      <p class="form-msg" id="evInviteFormMsg"></p>
-    </div>
-  </div>
-</div>
-
-<!-- §MODAL-ADD-REGISTRATION -->
-<div class="modal-overlay" id="addRegistrationModal" style="z-index:280">
-  <div class="modal" style="width:460px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Add Registration</span><button class="modal-close" onclick="closeAddRegistration()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <div class="field"><label>Student</label>
-        <input type="text" id="evRegStudentSearch" placeholder="Search student..." oninput="searchEvRegStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
-        <div id="evRegStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto"></div>
-        <div id="evRegSelectedStudent" style="display:none;font-size:0.85rem;color:var(--gold);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i><span id="evRegSelectedName"></span> <button onclick="clearEvRegStudent()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">change</button></div>
-        <input type="hidden" id="evRegStudentId" value="" />
-      </div>
-      <div class="field"><label>Price Tier</label><select id="evRegTierSelect" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Free / No Tier --</option></select></div>
-      <div class="field"><label>Payment Status</label><select id="evRegPaid" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="complimentary">Complimentary</option></select></div>
-      <div class="field"><label>Notes (optional)</label><input type="text" id="evRegNotes" placeholder="Any notes about this registration..." /></div>
-      <button class="btn-gold-full" onclick="saveRegistration()">Save Registration</button>
-      <p class="form-msg" id="addRegMsg"></p>
-    </div>
-  </div>
-</div>
-
-
-        <!-- ═══════════════ §PAGE-EVENTS ═══════════════ -->
-    <div class="page" id="page-events">
-      <div class="content-heading"><h2>Events</h2><div class="rule-h"></div><button class="panel-action" onclick="alert('test')"><i class="fa-solid fa-plus"></i> Add Event</button></div>
-      <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Seminars, workshops, tournaments, and community events.</p>
-      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap">
-        <button class="comm-tab active" id="evtab-upcoming" onclick="switchEventTab('upcoming')"><i class="fa-solid fa-calendar-check" style="margin-right:0.4rem"></i>Upcoming</button>
-        <button class="comm-tab" id="evtab-past" onclick="switchEventTab('past')"><i class="fa-solid fa-calendar" style="margin-right:0.4rem"></i>Past</button>
-      </div>
-      <div id="evTabUpcoming"><div id="eventsUpcomingList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div></div></div>
-      <div id="evTabPast" style="display:none"><div id="eventsPastList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No past events.</div></div></div>
     </div>
 
     <!-- ═══════════════ §PAGE-PROGRAMS ═══════════════ -->
@@ -2321,7 +2194,6 @@ async function init() {
     await loadSessionTypes();
     await loadSessionPacks();
     await loadSessions();
-    try{await loadEvents();}catch(e){allEvents=[];}
     await loadAutomations();
     await loadAlertHistory();
     await loadSmsInbox();
@@ -2597,7 +2469,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',events:'Events',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -2739,7 +2611,6 @@ function buildCalendar(){
     var daySessions=allSessions.filter(function(s){return s.session_date===dStr;});
     daySessions.forEach(function(s){var st=allSessionTypes.find(function(t){return t.id===s.session_type_id;});var typeName=(st?st.name:'Session').replace(/'/g,'');html+='<div class="cal-event session-event" onclick="openBookSession(\''+s.id+'\')">'+fmtTime(s.start_time)+' '+typeName+'</div>';});
     allStudents.forEach(function(s){if(!s.date_of_birth)return;var dob=new Date(s.date_of_birth+'T00:00:00');if(dob.getMonth()===d.getMonth()&&dob.getDate()===d.getDate()){html+='<div class="cal-event birthday-event">\uD83C\uDF82 '+s.first_name+'</div>';}});
-    html+=getEventPillsHTML(dStr);
     dayEl.innerHTML=html;
   }
 }
@@ -2768,7 +2639,6 @@ function buildMonthCalendar(){
     if(birthdays.length)  dots+='<div class="month-dot birthday-dot"></div>';
     if(tests.length)      dots+='<div class="month-dot test-dot"></div>';
     if(sessions.length)   dots+='<div class="month-dot session-dot"></div>';
-    dots+=getEventMonthDot(cellStr);
     var countLabel=dayClasses.length?dayClasses.length+' class'+(dayClasses.length!==1?'es':''):'';
     html+='<div class="month-day'+(isToday?' today':'')+(isCurrent?'':' other-month')+'" onclick="openDayView(\''+cellStr+'\',\''+dn+'\')">';
     html+='<div class="month-day-num">'+cell.day+'</div>';
@@ -6103,27 +5973,6 @@ async function sendToSelectedNow(){
   document.getElementById('stsSendResultText').textContent=parts.join(' - ');
   document.getElementById('stsSendResult').style.display='block';
   document.getElementById('stsSendMsg').textContent='';
-}
-<script>
-var allEvents=[];
-var currentEventId=null;
-var currentEventRegistrations=[];
-function switchEventTab(tab){
-  document.getElementById("evTabUpcoming").style.display=tab==="upcoming"?"block":"none";
-  document.getElementById("evTabPast").style.display=tab==="past"?"block":"none";
-}
-function openAddEvent(){
-  document.getElementById("addEventModal").classList.add("active");
-}
-function closeAddEvent(){
-  document.getElementById("addEventModal").classList.remove("active");
-}
-async function loadEvents(){
-  try{
-    var r=await sb.from("events").select("*").eq("school_id",SID).eq("active",true);
-    allEvents=r.data||[];
-    document.getElementById("eventsUpcomingList").innerHTML="No events yet.";
-  }catch(e){allEvents=[];}
 }
 </script>
 </body>
