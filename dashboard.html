@@ -1147,7 +1147,7 @@
 
 <!-- §MODAL-ADD-REGISTRATION -->
 <div class="modal-overlay" id="addRegistrationModal">
-  <div class="modal" style="width:500px;max-width:95vw">
+  <div class="modal" style="width:560px;max-width:95vw">
     <div class="modal-header"><span class="modal-title">Add Registration</span><button class="modal-close" onclick="closeAddRegistration()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="field"><label>Search Student</label><input type="text" id="evRegStudentSearch" oninput="searchEvRegStudent()" placeholder="Type student name..." /></div>
@@ -1159,6 +1159,8 @@
         <div class="field"><label>Guest Email</label><input type="email" id="evRegGuestEmail" placeholder="guest@email.com" /></div>
         <div class="field"><label>Guest Phone</label><input type="text" id="evRegGuestPhone" placeholder="(555) 555-5555" /></div>
       </div>
+      <div class="field"><label>Pricing Tier</label><select id="evRegTier" onchange="onEvRegTierChange()"></select></div>
+      <div id="evRegSessionsBox"></div>
       <div class="form-row">
         <div class="field"><label>Amount</label><input type="number" id="evRegAmount" value="0" min="0" step="0.01" /></div>
         <div class="field" style="display:flex;align-items:flex-end;padding-bottom:0.25rem"><label class="check-item"><input type="checkbox" id="evRegPaid" /><span class="check-item-label">Paid</span></label></div>
