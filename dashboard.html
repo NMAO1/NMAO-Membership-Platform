@@ -1048,6 +1048,113 @@
   </div><!-- /.content -->
 </main><!-- /.main -->
 
+<!-- §MODAL-EVENT-ADD -->
+<div class="modal-overlay" id="addEventModal">
+  <div class="modal" style="width:600px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title" id="addEventTitle">Add Event</span><button class="modal-close" onclick="closeAddEvent()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="eventEditId" value="" />
+      <div class="field"><label>Event Title</label><input type="text" id="evTitle" placeholder="e.g. Spring Seminar with Master Tanaka" /></div>
+      <div class="form-row">
+        <div class="field"><label>Event Type</label><select id="evType"><option value="seminar">Seminar</option><option value="workshop">Workshop</option><option value="tournament">Tournament</option><option value="community">Community Event</option><option value="other">Other</option></select></div>
+        <div class="field"><label>Visibility</label><select id="evVisibility"><option value="students">Students Only</option><option value="public">Public</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Date</label><input type="date" id="evDate" /></div>
+        <div class="field"><label>Registration Deadline</label><input type="date" id="evRegistrationDeadline" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Start Time</label><input type="time" id="evStartTime" /></div>
+        <div class="field"><label>End Time</label><input type="time" id="evEndTime" /></div>
+      </div>
+      <div class="field"><label>Location</label><input type="text" id="evLocation" placeholder="e.g. Main Dojo or 123 Main St" /></div>
+      <div class="form-row">
+        <div class="field"><label>Capacity</label><input type="number" id="evCapacity" placeholder="e.g. 30" min="1" /></div>
+        <div class="field"><label>Ticket Price</label><input type="number" id="evTicketPrice" value="0" min="0" step="0.01" /></div>
+      </div>
+      <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="evGuestInstructor" placeholder="e.g. Master Hiroshi Tanaka" /></div>
+      <div class="field"><label>Description</label><textarea id="evDescription" rows="4" placeholder="What is this event about? Who is it for?"></textarea></div>
+      <button class="btn-gold-full" onclick="saveEvent()">Save Event</button>
+      <p class="form-msg" id="eventMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-DETAIL -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal" style="width:900px;max-width:97vw;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-header">
+      <div>
+        <div id="eventDetailTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"></div>
+        <div id="eventDetailMeta" style="font-size:0.82rem;color:var(--muted);margin-top:0.2rem"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invite</button>
+        <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
+        <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
+      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
+        <button class="profile-tab active" id="evdtab-registrations" onclick="switchEventDetailTab('registrations')">Registrations <span id="eventRegCount" style="color:var(--gold);font-family:var(--font-display);margin-left:0.3rem">0</span></button>
+        <button class="profile-tab" id="evdtab-checkin" onclick="switchEventDetailTab('checkin')">Check-In <span style="color:var(--muted);font-size:0.78rem;margin-left:0.3rem">(<span id="eventCheckinCount">0</span>/<span id="eventCheckinTotal">0</span>)</span></button>
+        <button class="profile-tab" id="evdtab-waitlist" onclick="switchEventDetailTab('waitlist')">Waitlist</button>
+      </div>
+      <div id="eventDetailTabRegistrations">
+        <div id="eventRegistrationsList"></div>
+      </div>
+      <div id="eventDetailTabCheckin" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+          <button class="panel-action" onclick="markAllEventPresent()"><i class="fa-solid fa-check-double"></i> Mark All Present</button>
+        </div>
+        <div id="eventCheckinList"></div>
+      </div>
+      <div id="eventDetailTabWaitlist" style="display:none">
+        <div id="eventWaitlistList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-EVENT-INVITE -->
+<div class="modal-overlay" id="eventInviteModal">
+  <div class="modal" style="width:560px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title" id="eventInviteTitle">Send Event Invite</span><button class="modal-close" onclick="closeEventInvite()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="field"><label>Audience</label><select id="evInviteAudience" onchange="toggleEvInviteProgram()"><option value="all_active">All Active Members</option><option value="trial">Trial Members</option><option value="by_program">By Program</option></select></div>
+      <div class="field" id="evInviteProgramBox" style="display:none"><label>Select Programs</label><div id="evInviteProgramChecks" style="background:var(--black);border:1px solid var(--border);padding:0.75rem;max-height:160px;overflow-y:auto"></div></div>
+      <div class="field"><label>Subject</label><input type="text" id="evInviteSubject" placeholder="Email subject" /></div>
+      <div class="field"><label>Message</label><textarea id="evInviteBody" rows="6" placeholder="Tell your students about this event..."></textarea></div>
+      <button class="btn-gold-full" onclick="sendEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invitation</button>
+      <p class="form-msg" id="eventInviteMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-ADD-REGISTRATION -->
+<div class="modal-overlay" id="addRegistrationModal">
+  <div class="modal" style="width:500px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title">Add Registration</span><button class="modal-close" onclick="closeAddRegistration()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="field"><label>Search Student</label><input type="text" id="evRegStudentSearch" oninput="searchEvRegStudent()" placeholder="Type student name..." /></div>
+      <div id="evRegStudentResults" style="background:var(--surface);border:1px solid var(--border);max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+      <div id="evRegSelectedStudent" style="display:none;padding:0.5rem 0.75rem;background:var(--black);border:1px solid var(--border);border-left:2px solid var(--gold);font-size:0.88rem;color:var(--white)"></div>
+      <div style="padding:0.5rem 0;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);text-align:center">OR</div>
+      <div class="field"><label>Guest Name (non-student)</label><input type="text" id="evRegGuestName" placeholder="Walk-in guest name" /></div>
+      <div class="form-row">
+        <div class="field"><label>Guest Email</label><input type="email" id="evRegGuestEmail" placeholder="guest@email.com" /></div>
+        <div class="field"><label>Guest Phone</label><input type="text" id="evRegGuestPhone" placeholder="(555) 555-5555" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Amount</label><input type="number" id="evRegAmount" value="0" min="0" step="0.01" /></div>
+        <div class="field" style="display:flex;align-items:flex-end;padding-bottom:0.25rem"><label class="check-item"><input type="checkbox" id="evRegPaid" /><span class="check-item-label">Paid</span></label></div>
+      </div>
+      <button class="btn-gold-full" onclick="saveRegistration()">Add Registration</button>
+      <p class="form-msg" id="addRegistrationMsg"></p>
+    </div>
+  </div>
+</div>
+  
 <!-- ═══════════════════════════════════════════════════════
      §MODALS — All overlay modals
      Search: §MODAL-PLAN §MODAL-BELTTEST §MODAL-TAG
