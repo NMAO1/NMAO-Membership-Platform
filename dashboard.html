@@ -6213,6 +6213,15 @@ async function sendToSelectedNow(){
     await window.loadEvents();
     setTimeout(window.attachFlatpickrGlobally, 300);
   });
+
+  // Failsafe: also load events after page ready, in case init wrap missed
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function(){
+      setTimeout(function(){ window.loadEvents(); }, 800);
+    });
+  } else {
+    setTimeout(function(){ window.loadEvents(); }, 800);
+  }
   wrapFn("buildCalendar", function(){ try { window.appendEventPillsToWeek(); } catch(e){} });
   wrapFn("buildMonthCalendar", function(){ try { window.appendEventDotsToMonth(); } catch(e){} });
 
