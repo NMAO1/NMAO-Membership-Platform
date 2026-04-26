@@ -6178,6 +6178,976 @@ async function sendToSelectedNow(){
   document.getElementById('stsSendMsg').textContent='';
 }
   </script>
+<script>
+// NMAO EVENTS V2 — Multi-session + Pricing Tiers + Flatpickr
+// Replaces Block D entirely. Same iPad-safe rules: double quotes only,
+// no apostrophes inside JS strings, no navigate override, all functions on window.
+
+(function(){
+  // Globals
+  window.allEvents = [];
+  window.allEventSessions = {};
+  window.allEventTiers = {};
+  window.currentEventId = null;
+  window.currentEventRegistrations = [];
+  window.currentEventDetailTab = "registrations";
+  window.currentEventTab = "upcoming";
+  window.currentCheckinSessionId = null;
+  window.evRegSelectedStudentId = null;
+  window.evMode = "single";
+  window.evTierRowCounter = 0;
+  window.evSessionRowCounter = 0;
+  window.evRegTierSessionsRequired = 0;
+
+  function wrapFn(name, after){
+    var existing = window[name];
+    if (typeof existing !== "function") { window[name] = after; return; }
+    window[name] = async function(){
+      var result = await existing.apply(this, arguments);
+      try { await after.apply(this, arguments); } catch(e) { console.error(name + " events hook:", e); }
+      return result;
+    };
+  }
+
+  wrapFn("init", async function(){
+    await window.loadEvents();
+    setTimeout(window.attachFlatpickrGlobally, 300);
+  });
+  wrapFn("buildCalendar", function(){ try { window.appendEventPillsToWeek(); } catch(e){} });
+  wrapFn("buildMonthCalendar", function(){ try { window.appendEventDotsToMonth(); } catch(e){} });
+
+  document.addEventListener("DOMContentLoaded", function(){
+    var navEl = document.getElementById("nav-events");
+    if (navEl) navEl.addEventListener("click", function(){ setTimeout(function(){ window.renderEvents(); }, 50); });
+  });
+  setTimeout(function(){
+    var navEl = document.getElementById("nav-events");
+    if (navEl && !navEl.dataset.evWired) {
+      navEl.dataset.evWired = "1";
+      navEl.addEventListener("click", function(){ setTimeout(function(){ window.renderEvents(); }, 50); });
+    }
+  }, 500);
+
+  function fmtEventDate(dateStr){
+    if (!dateStr) return "";
+    try {
+      var d = new Date(dateStr + "T00:00:00");
+      return d.toLocaleDateString("en-US", {weekday:"short", month:"short", day:"numeric", year:"numeric"});
+    } catch(e) { return dateStr; }
+  }
+  function fmtEventTime(t){
+    if (!t) return "";
+    try {
+      var parts = t.split(":");
+      var h = parseInt(parts[0]); var m = parts[1];
+      var ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return h + ":" + m + " " + ampm;
+    } catch(e) { return t; }
+  }
+  function escAttr(s){
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escText(s){
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  window.attachFlatpickrGlobally = function(){
+    if (typeof flatpickr === "undefined") return;
+    document.querySelectorAll("input[type=\"date\"]").forEach(function(el){
+      if (el.dataset.fpAttached) return;
+      el.dataset.fpAttached = "1";
+      try { flatpickr(el, {dateFormat: "Y-m-d", allowInput: true}); } catch(e){}
+    });
+    document.querySelectorAll("input[type=\"time\"]").forEach(function(el){
+      if (el.dataset.fpAttached) return;
+      el.dataset.fpAttached = "1";
+      try { flatpickr(el, {enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: false, allowInput: true}); } catch(e){}
+    });
+  };
+
+  window.loadEvents = async function(){
+    try {
+      var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", true).order("event_date", {ascending: false});
+      if (r.error) { console.error("loadEvents:", r.error.message); window.allEvents = []; }
+      else { window.allEvents = r.data || []; }
+      var ids = window.allEvents.map(function(ev){ return ev.id; });
+      window.allEventSessions = {};
+      window.allEventTiers = {};
+      if (ids.length) {
+        var sessR = await sb.from("event_sessions").select("*").in("event_id", ids).order("sort_order");
+        (sessR.data || []).forEach(function(s){
+          if (!window.allEventSessions[s.event_id]) window.allEventSessions[s.event_id] = [];
+          window.allEventSessions[s.event_id].push(s);
+        });
+        var tierR = await sb.from("event_price_tiers").select("*").in("event_id", ids).order("sort_order");
+        (tierR.data || []).forEach(function(t){
+          if (!window.allEventTiers[t.event_id]) window.allEventTiers[t.event_id] = [];
+          window.allEventTiers[t.event_id].push(t);
+        });
+      }
+      window.renderEvents();
+      try { window.appendEventPillsToWeek(); } catch(e){}
+      try { window.appendEventDotsToMonth(); } catch(e){}
+    } catch(e){ console.error("loadEvents threw:", e); window.allEvents = []; }
+  };
+
+  window.renderEvents = function(){
+    var todayStr = new Date().toISOString().split("T")[0];
+    var upcoming = []; var past = [];
+    window.allEvents.forEach(function(ev){
+      var sessions = window.allEventSessions[ev.id] || [];
+      var firstDate = sessions.length ? sessions[0].session_date : ev.event_date;
+      var lastDate = sessions.length ? sessions[sessions.length - 1].session_date : ev.event_date;
+      ev._firstDate = firstDate;
+      ev._lastDate = lastDate;
+      if ((lastDate || ev.event_date || "") >= todayStr) upcoming.push(ev); else past.push(ev);
+    });
+    upcoming.sort(function(a,b){ return (a._firstDate || "") > (b._firstDate || "") ? 1 : -1; });
+    past.sort(function(a,b){ return (a._firstDate || "") > (b._firstDate || "") ? -1 : 1; });
+    window.renderEventList("eventsUpcomingList", upcoming);
+    window.renderEventList("eventsPastList", past);
+  };
+
+  window.renderEventList = function(elId, list){
+    var el = document.getElementById(elId);
+    if (!el) return;
+    if (!list.length) {
+      el.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">No events found.</div>";
+      return;
+    }
+    el.innerHTML = list.map(function(ev){
+      var typeColor = {seminar:"#7DAAD4", workshop:"#9060D0", camp:"#5A9A6A", tournament:"#E2A84C", community:"#7DBD7D", other:"#9A8F80"}[ev.event_type] || "#7DAAD4";
+      var typeLabel = (ev.event_type || "event").charAt(0).toUpperCase() + (ev.event_type || "event").slice(1);
+      var sessions = window.allEventSessions[ev.id] || [];
+      var tiers = window.allEventTiers[ev.id] || [];
+      var dateStr;
+      if (sessions.length > 1) {
+        dateStr = fmtEventDate(ev._firstDate) + " - " + fmtEventDate(ev._lastDate) + " (" + sessions.length + " sessions)";
+      } else if (sessions.length === 1) {
+        dateStr = fmtEventDate(sessions[0].session_date) + (sessions[0].start_time ? " at " + fmtEventTime(sessions[0].start_time) : "");
+      } else {
+        dateStr = fmtEventDate(ev.event_date);
+      }
+      var priceStr;
+      if (tiers.length === 0) priceStr = "No pricing";
+      else if (tiers.length === 1) priceStr = parseFloat(tiers[0].price) > 0 ? "$" + parseFloat(tiers[0].price).toFixed(2) : "Free";
+      else {
+        var prices = tiers.map(function(t){ return parseFloat(t.price); }).filter(function(p){ return p > 0; });
+        if (prices.length === 0) priceStr = "Free";
+        else priceStr = "$" + Math.min.apply(null, prices).toFixed(0) + " - $" + Math.max.apply(null, prices).toFixed(0);
+      }
+      var locStr = ev.location ? " " + String.fromCharCode(183) + " " + escText(ev.location) : "";
+      var capStr = ev.capacity ? " " + String.fromCharCode(183) + " Cap " + ev.capacity : "";
+      return "<div style=\"background:var(--surface);border:1px solid var(--border);border-left:3px solid " + typeColor + ";padding:1rem 1.25rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem\">" +
+        "<div style=\"flex:1;min-width:0\">" +
+          "<div style=\"display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;flex-wrap:wrap\">" +
+            "<div style=\"font-family:var(--font-display);font-size:1rem;color:var(--white)\">" + escText(ev.title || "Untitled Event") + "</div>" +
+            "<span style=\"font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.15rem 0.5rem;background:" + typeColor + "22;border:1px solid " + typeColor + "66;color:" + typeColor + "\">" + typeLabel + "</span>" +
+          "</div>" +
+          "<div style=\"font-size:0.78rem;color:var(--muted)\">" + dateStr + locStr + capStr + "</div>" +
+        "</div>" +
+        "<div style=\"display:flex;align-items:center;gap:0.75rem;flex-shrink:0\">" +
+          "<div style=\"font-family:var(--font-display);font-size:1.1rem;color:var(--gold)\">" + priceStr + "</div>" +
+          "<button class=\"btn-sm gold\" onclick=\"openEventDetail(&quot;" + ev.id + "&quot;)\"><i class=\"fa-solid fa-eye\"></i> Manage</button>" +
+        "</div>" +
+      "</div>";
+    }).join("");
+  };
+
+  window.switchEventTab = function(tab){
+    window.currentEventTab = tab;
+    ["upcoming","past"].forEach(function(t){
+      var panel = document.getElementById("eventsTab" + t.charAt(0).toUpperCase() + t.slice(1));
+      if (panel) panel.style.display = (t === tab) ? "block" : "none";
+      var btn = document.getElementById("evtab-" + t);
+      if (btn) btn.classList.toggle("active", t === tab);
+    });
+  };
+
+  window.setEventMode = function(mode){
+    window.evMode = mode;
+    var singleBtn = document.getElementById("evModeSingleBtn");
+    var multiBtn = document.getElementById("evModeMultiBtn");
+    var addBtn = document.getElementById("evAddSessionBtn");
+    if (singleBtn) {
+      singleBtn.style.borderColor = (mode === "single") ? "var(--gold)" : "var(--border)";
+      singleBtn.style.color = (mode === "single") ? "var(--gold)" : "var(--muted)";
+    }
+    if (multiBtn) {
+      multiBtn.style.borderColor = (mode === "multi") ? "var(--gold)" : "var(--border)";
+      multiBtn.style.color = (mode === "multi") ? "var(--gold)" : "var(--muted)";
+    }
+    if (addBtn) addBtn.style.display = (mode === "multi") ? "inline-block" : "none";
+    var rows = document.getElementById("evSessionRows");
+    if (rows) {
+      var current = rows.querySelectorAll(".ev-session-row").length;
+      if (mode === "single" && current > 1) {
+        var nodes = rows.querySelectorAll(".ev-session-row");
+        for (var i = 1; i < nodes.length; i++) nodes[i].remove();
+      }
+      if (current === 0) window.addEventSessionRow();
+    }
+  };
+
+  window.addEventSessionRow = function(prefill){
+    var rows = document.getElementById("evSessionRows");
+    if (!rows) return;
+    var idx = window.evSessionRowCounter++;
+    var div = document.createElement("div");
+    div.className = "ev-session-row";
+    div.style.cssText = "display:flex;gap:0.5rem;align-items:center;padding:0.6rem;background:var(--black);border:1px solid var(--border)";
+    var dateVal = prefill && prefill.session_date ? prefill.session_date : "";
+    var startVal = prefill && prefill.start_time ? prefill.start_time.substring(0,5) : "";
+    var endVal = prefill && prefill.end_time ? prefill.end_time.substring(0,5) : "";
+    div.innerHTML =
+      "<div style=\"flex:2\"><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Date</label><input type=\"date\" class=\"ev-sess-date\" value=\"" + dateVal + "\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\" /></div>" +
+      "<div style=\"flex:1\"><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Start</label><input type=\"time\" class=\"ev-sess-start\" value=\"" + startVal + "\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\" /></div>" +
+      "<div style=\"flex:1\"><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">End</label><input type=\"time\" class=\"ev-sess-end\" value=\"" + endVal + "\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\" /></div>" +
+      "<button type=\"button\" onclick=\"removeEventSessionRow(this)\" style=\"background:none;border:1px solid var(--border);color:#E07070;cursor:pointer;padding:0.4rem 0.6rem;align-self:flex-end\"><i class=\"fa-solid fa-trash\"></i></button>";
+    rows.appendChild(div);
+    setTimeout(window.attachFlatpickrGlobally, 50);
+  };
+
+  window.removeEventSessionRow = function(btn){
+    var row = btn.closest(".ev-session-row");
+    if (row) row.remove();
+    var remaining = document.getElementById("evSessionRows").querySelectorAll(".ev-session-row").length;
+    if (remaining === 0) window.addEventSessionRow();
+  };
+
+  window.addEventTierRow = function(prefill){
+    var rows = document.getElementById("evTierRows");
+    if (!rows) return;
+    var idx = window.evTierRowCounter++;
+    var labelVal = prefill ? prefill.label : "";
+    var priceVal = prefill ? prefill.price : "0";
+    var sessionsVal = prefill ? (prefill.sessions_included || 0) : 0;
+    var visVal = prefill ? prefill.visibility : "public";
+    var tierId = prefill ? prefill.id : "";
+    var div = document.createElement("div");
+    div.className = "ev-tier-row";
+    div.style.cssText = "display:grid;grid-template-columns:2fr 1fr 1.2fr 1.5fr auto;gap:0.5rem;align-items:end;padding:0.65rem;background:var(--black);border:1px solid var(--border)";
+    div.dataset.tierId = tierId;
+    div.innerHTML =
+      "<div><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Label</label><input type=\"text\" class=\"ev-tier-label\" value=\"" + escAttr(labelVal) + "\" placeholder=\"Full Camp\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\" /></div>" +
+      "<div><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Price</label><input type=\"number\" class=\"ev-tier-price\" value=\"" + priceVal + "\" min=\"0\" step=\"0.01\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\" /></div>" +
+      "<div><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Sessions</label><select class=\"ev-tier-sessions\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\"><option value=\"0\"" + (sessionsVal == 0 ? " selected" : "") + ">All Sessions</option><option value=\"1\"" + (sessionsVal == 1 ? " selected" : "") + ">1 Day</option><option value=\"2\"" + (sessionsVal == 2 ? " selected" : "") + ">2 Days</option><option value=\"3\"" + (sessionsVal == 3 ? " selected" : "") + ">3 Days</option><option value=\"4\"" + (sessionsVal == 4 ? " selected" : "") + ">4 Days</option><option value=\"5\"" + (sessionsVal == 5 ? " selected" : "") + ">5 Days</option></select></div>" +
+      "<div><label style=\"font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;display:block\">Visibility</label><select class=\"ev-tier-vis\" style=\"width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.65rem\"><option value=\"public\"" + (visVal === "public" ? " selected" : "") + ">Public</option><option value=\"members\"" + (visVal === "members" ? " selected" : "") + ">Members Only</option><option value=\"hidden\"" + (visVal === "hidden" ? " selected" : "") + ">Hidden / Staff</option></select></div>" +
+      "<button type=\"button\" onclick=\"removeEventTierRow(this)\" style=\"background:none;border:1px solid var(--border);color:#E07070;cursor:pointer;padding:0.4rem 0.6rem\"><i class=\"fa-solid fa-trash\"></i></button>";
+    rows.appendChild(div);
+  };
+
+  window.removeEventTierRow = function(btn){
+    var row = btn.closest(".ev-tier-row");
+    if (row) row.remove();
+  };
+
+  window.openAddEvent = function(){
+    var modal = document.getElementById("addEventModal");
+    if (!modal) { alert("Event modal not found in HTML."); return; }
+    var titleEl = document.getElementById("addEventTitle");
+    if (titleEl) titleEl.textContent = "Add Event";
+    document.getElementById("eventEditId").value = "";
+    document.getElementById("evTitle").value = "";
+    document.getElementById("evDescription").value = "";
+    document.getElementById("evLocation").value = "";
+    document.getElementById("evCapacity").value = "";
+    document.getElementById("evGuestInstructor").value = "";
+    document.getElementById("evRegistrationDeadline").value = "";
+    document.getElementById("evType").value = "seminar";
+    document.getElementById("evVisibility").value = "students";
+    document.getElementById("eventMsg").textContent = "";
+    document.getElementById("evSessionRows").innerHTML = "";
+    document.getElementById("evTierRows").innerHTML = "";
+    window.evSessionRowCounter = 0;
+    window.evTierRowCounter = 0;
+    window.setEventMode("single");
+    window.addEventTierRow({label: "Full Event", price: 0, sessions_included: 0, visibility: "public"});
+    modal.classList.add("active");
+    setTimeout(window.attachFlatpickrGlobally, 100);
+  };
+
+  window.closeAddEvent = function(){
+    var modal = document.getElementById("addEventModal");
+    if (modal) modal.classList.remove("active");
+  };
+
+  window.openEditEvent = async function(eventId){
+    var ev = window.allEvents.find(function(x){ return x.id === eventId; });
+    if (!ev) return;
+    window.openAddEvent();
+    var titleEl = document.getElementById("addEventTitle");
+    if (titleEl) titleEl.textContent = "Edit Event";
+    document.getElementById("eventEditId").value = ev.id;
+    document.getElementById("evTitle").value = ev.title || "";
+    document.getElementById("evDescription").value = ev.description || "";
+    document.getElementById("evLocation").value = ev.location || "";
+    document.getElementById("evCapacity").value = ev.capacity || "";
+    document.getElementById("evGuestInstructor").value = ev.guest_instructor || "";
+    document.getElementById("evRegistrationDeadline").value = ev.registration_deadline || "";
+    document.getElementById("evType").value = ev.event_type || "seminar";
+    document.getElementById("evVisibility").value = ev.visibility || "students";
+    var sessions = window.allEventSessions[ev.id] || [];
+    var tiers = window.allEventTiers[ev.id] || [];
+    document.getElementById("evSessionRows").innerHTML = "";
+    document.getElementById("evTierRows").innerHTML = "";
+    if (sessions.length > 1) window.setEventMode("multi"); else window.setEventMode("single");
+    if (sessions.length === 0) {
+      window.addEventSessionRow({session_date: ev.event_date, start_time: "", end_time: ""});
+    } else {
+      sessions.forEach(function(s){ window.addEventSessionRow(s); });
+    }
+    if (tiers.length === 0) {
+      window.addEventTierRow({label: "Full Event", price: 0, sessions_included: 0, visibility: "public"});
+    } else {
+      tiers.forEach(function(t){ window.addEventTierRow(t); });
+    }
+  };
+
+  window.saveEvent = async function(){
+    var msg = document.getElementById("eventMsg");
+    var eid = document.getElementById("eventEditId").value;
+    var title = (document.getElementById("evTitle").value || "").trim();
+    if (!title) { if (msg) { msg.textContent = "Title is required."; msg.style.color = "#E07070"; } return; }
+    var sessionRows = document.querySelectorAll("#evSessionRows .ev-session-row");
+    var sessions = [];
+    sessionRows.forEach(function(row, idx){
+      var date = row.querySelector(".ev-sess-date").value;
+      var start = row.querySelector(".ev-sess-start").value;
+      var end = row.querySelector(".ev-sess-end").value;
+      if (date) sessions.push({session_date: date, start_time: start || null, end_time: end || null, sort_order: idx});
+    });
+    if (!sessions.length) { if (msg) { msg.textContent = "Add at least one session date."; msg.style.color = "#E07070"; } return; }
+    var tierRows = document.querySelectorAll("#evTierRows .ev-tier-row");
+    var tiers = [];
+    tierRows.forEach(function(row, idx){
+      var label = (row.querySelector(".ev-tier-label").value || "").trim();
+      if (!label) return;
+      tiers.push({
+        id: row.dataset.tierId || null,
+        label: label,
+        price: parseFloat(row.querySelector(".ev-tier-price").value) || 0,
+        sessions_included: parseInt(row.querySelector(".ev-tier-sessions").value) || 0,
+        visibility: row.querySelector(".ev-tier-vis").value || "public",
+        sort_order: idx
+      });
+    });
+    if (!tiers.length) { if (msg) { msg.textContent = "Add at least one pricing tier."; msg.style.color = "#E07070"; } return; }
+    if (msg) { msg.textContent = "Saving..."; msg.style.color = "var(--muted)"; }
+    var payload = {
+      title: title,
+      description: (document.getElementById("evDescription").value || "").trim(),
+      event_date: sessions[0].session_date,
+      location: (document.getElementById("evLocation").value || "").trim() || null,
+      capacity: document.getElementById("evCapacity").value ? parseInt(document.getElementById("evCapacity").value) : null,
+      ticket_price: tiers.length ? tiers[0].price : 0,
+      visibility: document.getElementById("evVisibility").value,
+      guest_instructor: (document.getElementById("evGuestInstructor").value || "").trim() || null,
+      event_type: document.getElementById("evType").value,
+      registration_deadline: document.getElementById("evRegistrationDeadline").value || null,
+      active: true
+    };
+    var eventId;
+    if (eid) {
+      var u = await sb.from("events").update(payload).eq("id", eid);
+      if (u.error) { if (msg) { msg.textContent = u.error.message; msg.style.color = "#E07070"; } return; }
+      eventId = eid;
+    } else {
+      payload.school_id = SID;
+      var ins = await sb.from("events").insert(payload).select().single();
+      if (ins.error) { if (msg) { msg.textContent = ins.error.message; msg.style.color = "#E07070"; } return; }
+      eventId = ins.data.id;
+    }
+    await sb.from("event_sessions").delete().eq("event_id", eventId);
+    var sessInserts = sessions.map(function(s){ return Object.assign({}, s, {school_id: SID, event_id: eventId}); });
+    var sessRes = await sb.from("event_sessions").insert(sessInserts);
+    if (sessRes.error) { if (msg) { msg.textContent = "Sessions: " + sessRes.error.message; msg.style.color = "#E07070"; } return; }
+    await sb.from("event_price_tiers").delete().eq("event_id", eventId);
+    var tierInserts = tiers.map(function(t){ return {school_id: SID, event_id: eventId, label: t.label, price: t.price, sessions_included: t.sessions_included, visibility: t.visibility, sort_order: t.sort_order}; });
+    var tierRes = await sb.from("event_price_tiers").insert(tierInserts);
+    if (tierRes.error) { if (msg) { msg.textContent = "Tiers: " + tierRes.error.message; msg.style.color = "#E07070"; } return; }
+    if (msg) { msg.textContent = "Saved!"; msg.style.color = "#7DBD7D"; }
+    await window.loadEvents();
+    setTimeout(window.closeAddEvent, 800);
+  };
+
+  window.deleteEvent = async function(eventId){
+    if (!confirm("Delete this event? This cannot be undone.")) return;
+    var r = await sb.from("events").update({active: false}).eq("id", eventId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    if (window.currentEventId === eventId) window.closeEventDetail();
+    await window.loadEvents();
+  };
+
+  window.openEventDetail = async function(eventId){
+    window.currentEventId = eventId;
+    var ev = window.allEvents.find(function(x){ return x.id === eventId; });
+    if (!ev) return;
+    var modal = document.getElementById("eventDetailModal");
+    if (!modal) return;
+    var titleEl = document.getElementById("eventDetailTitle");
+    var metaEl = document.getElementById("eventDetailMeta");
+    if (titleEl) titleEl.textContent = ev.title || "Event";
+    var sessions = window.allEventSessions[eventId] || [];
+    if (metaEl) {
+      var dateText;
+      if (sessions.length > 1) dateText = sessions.length + " sessions: " + fmtEventDate(sessions[0].session_date) + " - " + fmtEventDate(sessions[sessions.length - 1].session_date);
+      else if (sessions.length === 1) dateText = fmtEventDate(sessions[0].session_date) + (sessions[0].start_time ? " at " + fmtEventTime(sessions[0].start_time) : "");
+      else dateText = fmtEventDate(ev.event_date);
+      var locStr = ev.location ? " " + String.fromCharCode(183) + " " + ev.location : "";
+      metaEl.textContent = dateText + locStr;
+    }
+    modal.classList.add("active");
+    window.switchEventDetailTab("registrations");
+    await window.loadEventRegistrations();
+  };
+
+  window.closeEventDetail = function(){
+    var modal = document.getElementById("eventDetailModal");
+    if (modal) modal.classList.remove("active");
+    window.currentEventId = null;
+    window.currentEventRegistrations = [];
+    window.currentCheckinSessionId = null;
+  };
+
+  window.switchEventDetailTab = function(tab){
+    window.currentEventDetailTab = tab;
+    ["registrations","checkin","waitlist"].forEach(function(t){
+      var panel = document.getElementById("eventDetailTab" + t.charAt(0).toUpperCase() + t.slice(1));
+      if (panel) panel.style.display = (t === tab) ? "block" : "none";
+      var btn = document.getElementById("evdtab-" + t);
+      if (btn) btn.classList.toggle("active", t === tab);
+    });
+    if (tab === "registrations") window.loadEventRegistrations();
+    else if (tab === "checkin") window.loadEventCheckin();
+    else if (tab === "waitlist") window.loadEventWaitlist();
+  };
+
+  window.loadEventRegistrations = async function(){
+    if (!window.currentEventId) return;
+    var listEl = document.getElementById("eventRegistrationsList");
+    if (!listEl) return;
+    listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+    var r = await sb.from("event_registrations").select("*, students(first_name, last_name, email, phone)").eq("event_id", window.currentEventId).order("registered_at", {ascending: false});
+    if (r.error) { listEl.innerHTML = "<div style=\"color:#E07070;font-size:0.85rem\">Error: " + escText(r.error.message) + "</div>"; return; }
+    var data = r.data || [];
+    window.currentEventRegistrations = data;
+    var countEl = document.getElementById("eventRegCount");
+    if (countEl) countEl.textContent = data.length;
+    if (!data.length) { listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">No registrations yet.</div>"; return; }
+    var regIds = data.map(function(r){ return r.id; });
+    var sessionMap = {};
+    if (regIds.length) {
+      var sm = await sb.from("registration_sessions").select("registration_id").in("registration_id", regIds);
+      (sm.data || []).forEach(function(rs){ sessionMap[rs.registration_id] = (sessionMap[rs.registration_id] || 0) + 1; });
+    }
+    listEl.innerHTML = data.map(function(reg){
+      var s = reg.students;
+      var name = s ? (s.first_name + " " + s.last_name) : (reg.guest_name || "Guest");
+      var contact = s ? (s.email || s.phone || "") : (reg.guest_email || reg.guest_phone || "");
+      var paidBadge = reg.paid
+        ? "<span style=\"font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D\">Paid</span>"
+        : "<span style=\"font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(224,112,112,0.15);border:1px solid rgba(224,112,112,0.4);color:#E07070\">Unpaid</span>";
+      var amt = reg.amount ? "$" + parseFloat(reg.amount).toFixed(2) : "Free";
+      var tierBadge = reg.tier_label ? " " + String.fromCharCode(183) + " " + escText(reg.tier_label) : "";
+      var sessionCount = sessionMap[reg.id] || 0;
+      var sessionBadge = sessionCount > 0 ? " " + String.fromCharCode(183) + " " + sessionCount + " day" + (sessionCount !== 1 ? "s" : "") : "";
+      return "<div style=\"display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem\">" +
+        "<div style=\"flex:1;min-width:0\">" +
+          "<div style=\"font-size:0.88rem;color:var(--white);margin-bottom:0.15rem\">" + escText(name) + "</div>" +
+          "<div style=\"font-size:0.72rem;color:var(--muted)\">" + escText(contact) + " " + String.fromCharCode(183) + " " + amt + tierBadge + sessionBadge + "</div>" +
+        "</div>" +
+        "<div style=\"display:flex;align-items:center;gap:0.5rem;flex-shrink:0\">" +
+          paidBadge +
+          (reg.paid ? "" : "<button class=\"btn-sm gold\" onclick=\"markRegPaid(&quot;" + reg.id + "&quot;)\">Mark Paid</button>") +
+          "<button class=\"btn-sm\" style=\"color:#E07070;border-color:rgba(224,112,112,0.4)\" onclick=\"removeRegistration(&quot;" + reg.id + "&quot;)\"><i class=\"fa-solid fa-trash\"></i></button>" +
+        "</div>" +
+      "</div>";
+    }).join("");
+  };
+
+  window.markRegPaid = async function(regId){
+    var r = await sb.from("event_registrations").update({paid: true, paid_at: new Date().toISOString()}).eq("id", regId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    await window.loadEventRegistrations();
+  };
+
+  window.removeRegistration = async function(regId){
+    if (!confirm("Remove this registration?")) return;
+    await sb.from("registration_sessions").delete().eq("registration_id", regId);
+    var r = await sb.from("event_registrations").delete().eq("id", regId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    await window.loadEventRegistrations();
+  };
+
+  window.loadEventCheckin = async function(){
+    if (!window.currentEventId) return;
+    var listEl = document.getElementById("eventCheckinList");
+    if (!listEl) return;
+    var sessions = window.allEventSessions[window.currentEventId] || [];
+    if (!sessions.length) {
+      listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">No sessions for this event.</div>";
+      return;
+    }
+    if (!window.currentCheckinSessionId || !sessions.find(function(s){ return s.id === window.currentCheckinSessionId; })) {
+      window.currentCheckinSessionId = sessions[0].id;
+    }
+    var selectorEl = document.getElementById("eventCheckinSessionSelector");
+    if (selectorEl) {
+      if (sessions.length > 1) {
+        selectorEl.innerHTML = "<div style=\"font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem\">Select Session</div>" +
+          "<div style=\"display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem\">" +
+          sessions.map(function(s){
+            var active = s.id === window.currentCheckinSessionId;
+            return "<button class=\"btn-sm\" onclick=\"selectCheckinSession(&quot;" + s.id + "&quot;)\" style=\"" + (active ? "border-color:var(--gold);color:var(--gold)" : "") + "\">" + fmtEventDate(s.session_date) + (s.start_time ? " " + fmtEventTime(s.start_time) : "") + "</button>";
+          }).join("") +
+          "</div>";
+      } else {
+        selectorEl.innerHTML = "";
+      }
+    }
+    listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+    var rs = await sb.from("registration_sessions").select("*, event_registrations(id, student_id, guest_name, students(first_name, last_name))").eq("event_session_id", window.currentCheckinSessionId).eq("school_id", SID);
+    if (rs.error) { listEl.innerHTML = "<div style=\"color:#E07070;font-size:0.85rem\">Error: " + escText(rs.error.message) + "</div>"; return; }
+    var data = rs.data || [];
+    var checkedCount = data.filter(function(rs){ return rs.checked_in; }).length;
+    var countEl = document.getElementById("eventCheckinCount");
+    if (countEl) countEl.textContent = checkedCount;
+    var totalEl = document.getElementById("eventCheckinTotal");
+    if (totalEl) totalEl.textContent = data.length;
+    if (!data.length) {
+      listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">No registrants for this session.</div>";
+      return;
+    }
+    listEl.innerHTML = data.map(function(rs){
+      var reg = rs.event_registrations;
+      var s = reg && reg.students;
+      var name = s ? (s.first_name + " " + s.last_name) : (reg && reg.guest_name) || "Guest";
+      var checked = !!rs.checked_in;
+      return "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid " + (checked ? "rgba(201,168,76,0.3)" : "var(--border)") + ";border-left:2px solid " + (checked ? "var(--gold)" : "var(--border)") + ";margin-bottom:0.3rem\">" +
+        "<div style=\"font-size:0.88rem;color:var(--white)\">" + escText(name) + "</div>" +
+        "<button onclick=\"toggleEventCheckin(&quot;" + rs.id + "&quot;)\" style=\"background:none;border:none;cursor:pointer;font-size:1.4rem;color:" + (checked ? "var(--gold)" : "var(--muted)") + "\">" +
+          "<i class=\"fa-solid " + (checked ? "fa-circle-check" : "fa-circle") + "\"></i>" +
+        "</button>" +
+      "</div>";
+    }).join("");
+  };
+
+  window.selectCheckinSession = function(sid){
+    window.currentCheckinSessionId = sid;
+    window.loadEventCheckin();
+  };
+
+  window.toggleEventCheckin = async function(rsId){
+    var rec = (await sb.from("registration_sessions").select("checked_in").eq("id", rsId).single()).data;
+    if (!rec) return;
+    var newVal = !rec.checked_in;
+    var update = {checked_in: newVal, checked_in_at: newVal ? new Date().toISOString() : null};
+    var r = await sb.from("registration_sessions").update(update).eq("id", rsId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    await window.loadEventCheckin();
+  };
+
+  window.markAllEventPresent = async function(){
+    if (!window.currentEventId || !window.currentCheckinSessionId) return;
+    if (!confirm("Mark all registrants as checked in for this session?")) return;
+    var r = await sb.from("registration_sessions").update({checked_in: true, checked_in_at: new Date().toISOString()}).eq("event_session_id", window.currentCheckinSessionId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    await window.loadEventCheckin();
+  };
+
+  window.loadEventWaitlist = async function(){
+    if (!window.currentEventId) return;
+    var listEl = document.getElementById("eventWaitlistList");
+    if (!listEl) return;
+    listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem\">Loading...</div>";
+    var r = await sb.from("event_waitlist").select("*, students(first_name, last_name, email, phone)").eq("event_id", window.currentEventId).order("joined_at");
+    if (r.error) { listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">Waitlist unavailable: " + escText(r.error.message) + "</div>"; return; }
+    var data = r.data || [];
+    if (!data.length) { listEl.innerHTML = "<div style=\"color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0\">No one on the waitlist.</div>"; return; }
+    listEl.innerHTML = data.map(function(w, idx){
+      var s = w.students;
+      var name = s ? (s.first_name + " " + s.last_name) : (w.guest_name || "Guest");
+      var contact = s ? (s.email || s.phone || "") : (w.guest_email || w.guest_phone || "");
+      return "<div style=\"display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #9060D0;margin-bottom:0.35rem\">" +
+        "<div style=\"display:flex;align-items:center;gap:0.65rem\">" +
+          "<div style=\"font-family:var(--font-display);font-size:1rem;color:#B090E8;min-width:24px;text-align:center\">" + (idx + 1) + "</div>" +
+          "<div>" +
+            "<div style=\"font-size:0.88rem;color:var(--white)\">" + escText(name) + "</div>" +
+            "<div style=\"font-size:0.72rem;color:var(--muted)\">" + escText(contact) + "</div>" +
+          "</div>" +
+        "</div>" +
+        "<div style=\"display:flex;gap:0.4rem\">" +
+          "<button class=\"btn-sm gold\" onclick=\"promoteFromWaitlist(&quot;" + w.id + "&quot;)\">Promote</button>" +
+          "<button class=\"btn-sm\" style=\"color:#E07070;border-color:rgba(224,112,112,0.4)\" onclick=\"removeFromWaitlist(&quot;" + w.id + "&quot;)\"><i class=\"fa-solid fa-xmark\"></i></button>" +
+        "</div>" +
+      "</div>";
+    }).join("");
+  };
+
+  window.promoteFromWaitlist = async function(waitlistId){
+    var rec = (await sb.from("event_waitlist").select("*").eq("id", waitlistId).single()).data;
+    if (!rec) return;
+    var ins = await sb.from("event_registrations").insert({
+      school_id: SID, event_id: rec.event_id, student_id: rec.student_id || null,
+      guest_name: rec.guest_name || null, guest_email: rec.guest_email || null, guest_phone: rec.guest_phone || null,
+      paid: false, registered_at: new Date().toISOString()
+    });
+    if (ins.error) { alert("Error: " + ins.error.message); return; }
+    await sb.from("event_waitlist").delete().eq("id", waitlistId);
+    await window.loadEventWaitlist();
+    await window.loadEventRegistrations();
+  };
+
+  window.removeFromWaitlist = async function(waitlistId){
+    if (!confirm("Remove from waitlist?")) return;
+    var r = await sb.from("event_waitlist").delete().eq("id", waitlistId);
+    if (r.error) { alert("Error: " + r.error.message); return; }
+    await window.loadEventWaitlist();
+  };
+
+  window.openAddRegistration = function(){
+    if (!window.currentEventId) return;
+    var modal = document.getElementById("addRegistrationModal");
+    if (!modal) return;
+    document.getElementById("evRegStudentSearch").value = "";
+    document.getElementById("evRegStudentResults").innerHTML = "";
+    document.getElementById("evRegSelectedStudent").style.display = "none";
+    var paidEl = document.getElementById("evRegPaid");
+    if (paidEl) paidEl.checked = false;
+    var msg = document.getElementById("addRegistrationMsg");
+    if (msg) msg.textContent = "";
+    window.evRegSelectedStudentId = null;
+    var tiers = window.allEventTiers[window.currentEventId] || [];
+    var tierSel = document.getElementById("evRegTier");
+    if (tierSel) {
+      tierSel.innerHTML = tiers.length
+        ? tiers.map(function(t){ return "<option value=\"" + t.id + "\" data-price=\"" + t.price + "\" data-sessions=\"" + (t.sessions_included || 0) + "\">" + escText(t.label) + " - $" + parseFloat(t.price).toFixed(2) + "</option>"; }).join("")
+        : "<option value=\"\">No tiers configured</option>";
+      window.onEvRegTierChange();
+    }
+    modal.classList.add("active");
+  };
+
+  window.onEvRegTierChange = function(){
+    var tierSel = document.getElementById("evRegTier");
+    if (!tierSel || !tierSel.selectedOptions.length) return;
+    var opt = tierSel.selectedOptions[0];
+    var price = parseFloat(opt.dataset.price) || 0;
+    var sessionsRequired = parseInt(opt.dataset.sessions) || 0;
+    var amtEl = document.getElementById("evRegAmount");
+    if (amtEl) amtEl.value = price.toFixed(2);
+    window.evRegTierSessionsRequired = sessionsRequired;
+    var sessions = window.allEventSessions[window.currentEventId] || [];
+    var box = document.getElementById("evRegSessionsBox");
+    if (!box) return;
+    if (sessions.length === 0) { box.innerHTML = ""; return; }
+    var requiredText = sessionsRequired === 0 ? "All sessions auto-selected" : "Select " + sessionsRequired + " session" + (sessionsRequired !== 1 ? "s" : "");
+    box.innerHTML = "<div style=\"font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem\">Sessions Attending <span style=\"color:var(--gold);text-transform:none;letter-spacing:0;font-size:0.72rem;margin-left:0.4rem\">(" + requiredText + ")</span></div>" +
+      "<div style=\"background:var(--black);border:1px solid var(--border);padding:0.65rem;max-height:160px;overflow-y:auto\">" +
+      sessions.map(function(s){
+        var allSelected = sessionsRequired === 0;
+        var disabled = allSelected ? "disabled" : "";
+        return "<label class=\"check-item\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0\">" +
+          "<input type=\"checkbox\" class=\"ev-reg-session\" value=\"" + s.id + "\"" + (allSelected ? " checked" : "") + " " + disabled + " onchange=\"validateRegSessionPick()\" />" +
+          "<span class=\"check-item-label\">" + fmtEventDate(s.session_date) + (s.start_time ? " at " + fmtEventTime(s.start_time) : "") + "</span>" +
+        "</label>";
+      }).join("") +
+      "</div>" +
+      "<div id=\"evRegSessionWarning\" style=\"font-size:0.72rem;color:#E07070;margin-top:0.3rem;display:none\"></div>";
+  };
+
+  window.validateRegSessionPick = function(){
+    var required = window.evRegTierSessionsRequired;
+    if (required === 0) return;
+    var picked = document.querySelectorAll(".ev-reg-session:checked").length;
+    var warn = document.getElementById("evRegSessionWarning");
+    if (picked > required) {
+      if (warn) {
+        warn.style.display = "block";
+        warn.textContent = "Tier covers " + required + " session(s). Uncheck " + (picked - required) + ".";
+      }
+    } else {
+      if (warn) warn.style.display = "none";
+    }
+  };
+
+  window.closeAddRegistration = function(){
+    var modal = document.getElementById("addRegistrationModal");
+    if (modal) modal.classList.remove("active");
+    window.evRegSelectedStudentId = null;
+  };
+
+  window.searchEvRegStudent = function(){
+    var q = (document.getElementById("evRegStudentSearch").value || "").toLowerCase().trim();
+    var el = document.getElementById("evRegStudentResults");
+    if (!q || q.length < 2) { el.innerHTML = ""; return; }
+    var pool = window.allStudents || [];
+    var filtered = pool.filter(function(s){
+      return (s.first_name + " " + s.last_name).toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 6);
+    if (!filtered.length) { el.innerHTML = "<div style=\"font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic\">No students found.</div>"; return; }
+    el.innerHTML = filtered.map(function(s){
+      return "<div style=\"padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)\" onclick=\"selectEvRegStudent(&quot;" + s.id + "&quot;,&quot;" + escAttr(s.first_name + " " + s.last_name) + "&quot;)\">" + escText(s.first_name + " " + s.last_name) + "</div>";
+    }).join("");
+  };
+
+  window.selectEvRegStudent = function(sid, name){
+    window.evRegSelectedStudentId = sid;
+    document.getElementById("evRegStudentSearch").value = name;
+    document.getElementById("evRegStudentResults").innerHTML = "";
+    var sel = document.getElementById("evRegSelectedStudent");
+    if (sel) {
+      sel.style.display = "block";
+      sel.innerHTML = "<i class=\"fa-solid fa-circle-check\" style=\"color:#5A9A6A;margin-right:0.4rem\"></i>" + escText(name);
+    }
+  };
+
+  window.clearEvRegStudent = function(){
+    window.evRegSelectedStudentId = null;
+    var sr = document.getElementById("evRegStudentSearch");
+    if (sr) sr.value = "";
+    var sel = document.getElementById("evRegSelectedStudent");
+    if (sel) sel.style.display = "none";
+  };
+
+  window.saveRegistration = async function(){
+    if (!window.currentEventId) return;
+    var msg = document.getElementById("addRegistrationMsg");
+    var sid = window.evRegSelectedStudentId;
+    var guestName = "";
+    var gnEl = document.getElementById("evRegGuestName");
+    if (gnEl) guestName = (gnEl.value || "").trim();
+    if (!sid && !guestName) { if (msg) { msg.textContent = "Select a student or enter a guest name."; msg.style.color = "#E07070"; } return; }
+    var tierSel = document.getElementById("evRegTier");
+    var tierId = tierSel && tierSel.value ? tierSel.value : null;
+    var tierLabel = tierSel && tierSel.selectedOptions.length ? tierSel.selectedOptions[0].textContent.split(" - ")[0] : null;
+    var sessions = window.allEventSessions[window.currentEventId] || [];
+    var required = window.evRegTierSessionsRequired;
+    var pickedSessionIds = [];
+    if (required === 0) {
+      pickedSessionIds = sessions.map(function(s){ return s.id; });
+    } else {
+      document.querySelectorAll(".ev-reg-session:checked").forEach(function(cb){ pickedSessionIds.push(cb.value); });
+      if (pickedSessionIds.length !== required) {
+        if (msg) { msg.textContent = "Pick exactly " + required + " session" + (required !== 1 ? "s" : "") + " for this tier."; msg.style.color = "#E07070"; }
+        return;
+      }
+    }
+    if (msg) { msg.textContent = "Saving..."; msg.style.color = "var(--muted)"; }
+    var amtEl = document.getElementById("evRegAmount");
+    var paidEl = document.getElementById("evRegPaid");
+    var geEl = document.getElementById("evRegGuestEmail");
+    var gpEl = document.getElementById("evRegGuestPhone");
+    var payload = {
+      school_id: SID, event_id: window.currentEventId,
+      student_id: sid || null,
+      guest_name: sid ? null : (guestName || null),
+      guest_email: (geEl && !sid) ? ((geEl.value || "").trim() || null) : null,
+      guest_phone: (gpEl && !sid) ? ((gpEl.value || "").trim() || null) : null,
+      amount: amtEl ? (parseFloat(amtEl.value) || 0) : 0,
+      paid: paidEl ? paidEl.checked : false,
+      price_tier_id: tierId, tier_label: tierLabel,
+      registered_at: new Date().toISOString()
+    };
+    if (payload.paid) payload.paid_at = new Date().toISOString();
+    var r = await sb.from("event_registrations").insert(payload).select().single();
+    if (r.error) { if (msg) { msg.textContent = r.error.message; msg.style.color = "#E07070"; } return; }
+    var regId = r.data.id;
+    if (pickedSessionIds.length) {
+      var sessLinks = pickedSessionIds.map(function(esid){ return {school_id: SID, registration_id: regId, event_session_id: esid}; });
+      var sessRes = await sb.from("registration_sessions").insert(sessLinks);
+      if (sessRes.error) { if (msg) { msg.textContent = "Sessions: " + sessRes.error.message; msg.style.color = "#E07070"; } return; }
+    }
+    if (msg) { msg.textContent = "Registered!"; msg.style.color = "#7DBD7D"; }
+    await window.loadEventRegistrations();
+    setTimeout(window.closeAddRegistration, 800);
+  };
+
+  window.openEventInvite = function(){
+    if (!window.currentEventId) return;
+    var modal = document.getElementById("eventInviteModal");
+    if (!modal) return;
+    var ev = window.allEvents.find(function(x){ return x.id === window.currentEventId; });
+    if (!ev) return;
+    var titleEl = document.getElementById("eventInviteTitle");
+    if (titleEl) titleEl.textContent = "Invite Students to: " + (ev.title || "Event");
+    var subjEl = document.getElementById("evInviteSubject");
+    if (subjEl) subjEl.value = "You are invited: " + (ev.title || "");
+    var bodyEl = document.getElementById("evInviteBody");
+    if (bodyEl) {
+      var sessions = window.allEventSessions[ev.id] || [];
+      var dateStr;
+      if (sessions.length > 1) dateStr = sessions.length + " sessions starting " + fmtEventDate(sessions[0].session_date);
+      else if (sessions.length === 1) dateStr = fmtEventDate(sessions[0].session_date) + (sessions[0].start_time ? " at " + fmtEventTime(sessions[0].start_time) : "");
+      else dateStr = fmtEventDate(ev.event_date);
+      var locStr = ev.location ? " at " + ev.location : "";
+      bodyEl.value = "You are invited to " + (ev.title || "our event") + " on " + dateStr + locStr + ". Reserve your spot today.";
+    }
+    var progBox = document.getElementById("evInviteProgramChecks");
+    if (progBox && window.allPrograms) {
+      progBox.innerHTML = window.allPrograms.map(function(p){
+        return "<label class=\"check-item\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0\">" +
+          "<input type=\"checkbox\" class=\"ev-invite-prog\" value=\"" + p.id + "\" />" +
+          "<span class=\"check-item-label\">" + escText(p.name) + "</span>" +
+        "</label>";
+      }).join("") || "<div style=\"color:var(--muted);font-style:italic;font-size:0.82rem\">No programs.</div>";
+    }
+    var audSel = document.getElementById("evInviteAudience");
+    if (audSel) audSel.value = "all_active";
+    var msg = document.getElementById("eventInviteMsg");
+    if (msg) msg.textContent = "";
+    modal.classList.add("active");
+  };
+
+  window.closeEventInvite = function(){
+    var modal = document.getElementById("eventInviteModal");
+    if (modal) modal.classList.remove("active");
+  };
+
+  window.toggleEvInviteProgram = function(){
+    var audSel = document.getElementById("evInviteAudience");
+    var box = document.getElementById("evInviteProgramBox");
+    if (!audSel || !box) return;
+    box.style.display = (audSel.value === "by_program") ? "block" : "none";
+  };
+
+  window.sendEventInvite = async function(){
+    if (!window.currentEventId) return;
+    var msg = document.getElementById("eventInviteMsg");
+    var subj = (document.getElementById("evInviteSubject").value || "").trim();
+    var body = (document.getElementById("evInviteBody").value || "").trim();
+    if (!subj || !body) { if (msg) { msg.textContent = "Subject and body required."; msg.style.color = "#E07070"; } return; }
+    var audSel = document.getElementById("evInviteAudience");
+    var audience = audSel ? audSel.value : "all_active";
+    var pool = (window.allStudents || []).filter(function(s){
+      if (audience === "all_active") return s.status === "active";
+      if (audience === "trial") return s.status === "trial";
+      if (audience === "by_program") {
+        var picked = [];
+        document.querySelectorAll(".ev-invite-prog:checked").forEach(function(cb){ picked.push(cb.value); });
+        return picked.indexOf(s.program_id) !== -1;
+      }
+      return true;
+    });
+    var recipients = pool.filter(function(s){ return s.email; }).map(function(s){
+      return {id: s.id, email: s.email, name: s.first_name + " " + s.last_name, phone: s.phone};
+    });
+    if (!recipients.length) { if (msg) { msg.textContent = "No recipients with email found."; msg.style.color = "#E07070"; } return; }
+    if (msg) { msg.textContent = "Sending to " + recipients.length + " recipients..."; msg.style.color = "var(--muted)"; }
+    try {
+      var r = await fetch(SURL + "/functions/v1/send-broadcast", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
+        body: JSON.stringify({school_id: SID, subject: subj, body: body, recipients: recipients})
+      });
+      if (!r.ok) {
+        var err = await r.json().catch(function(){ return {error: "Failed"}; });
+        if (msg) { msg.textContent = "Error: " + (err.error || "Failed"); msg.style.color = "#E07070"; }
+        return;
+      }
+      if (msg) { msg.textContent = "Sent to " + recipients.length + " recipients!"; msg.style.color = "#7DBD7D"; }
+      try {
+        await sb.from("communications").insert({
+          school_id: SID, type: "email", subject: subj, body: body,
+          audience: "event_invite", status: "sent",
+          sent_at: new Date().toISOString(), recipient_count: recipients.length
+        });
+      } catch(e){}
+      setTimeout(window.closeEventInvite, 1400);
+    } catch(e){ if (msg) { msg.textContent = "Error: " + e.message; msg.style.color = "#E07070"; } }
+  };
+
+  window.getEventPillsHTML = function(dateStr){
+    var pills = [];
+    Object.keys(window.allEventSessions).forEach(function(eventId){
+      var sessions = window.allEventSessions[eventId];
+      sessions.forEach(function(s){
+        if (s.session_date === dateStr) {
+          var ev = window.allEvents.find(function(e){ return e.id === eventId; });
+          if (!ev) return;
+          var safeTitle = escText(ev.title || "Event");
+          pills.push("<div style=\"font-size:0.65rem;padding:0.15rem 0.35rem;border-radius:2px;margin-bottom:0.2rem;background:rgba(125,170,212,0.15);color:#7DAAD4;border-left:2px solid #7DAAD4;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\" onclick=\"openEventDetail(&quot;" + ev.id + "&quot;)\">" +
+            (s.start_time ? fmtEventTime(s.start_time) + " " : "") + safeTitle +
+          "</div>");
+        }
+      });
+    });
+    return pills.join("");
+  };
+
+  window.getEventMonthDot = function(dateStr){
+    var hasEvent = false;
+    Object.keys(window.allEventSessions).forEach(function(eventId){
+      if ((window.allEventSessions[eventId] || []).some(function(s){ return s.session_date === dateStr; })) hasEvent = true;
+    });
+    return hasEvent ? "<div style=\"width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#7DAAD4\"></div>" : "";
+  };
+
+  window.appendEventPillsToWeek = function(){
+    var weekView = document.getElementById("calWeekView");
+    if (!weekView || weekView.style.display === "none") return;
+    var now = new Date();
+    var calWeekOffset = (typeof window.calWeekOffset === "number") ? window.calWeekOffset : 0;
+    var start = new Date(now);
+    start.setDate(now.getDate() - now.getDay() + (calWeekOffset * 7));
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(start);
+      d.setDate(start.getDate() + i);
+      var dStr = d.toISOString().split("T")[0];
+      var cell = document.getElementById("calDay" + i);
+      if (!cell) continue;
+      cell.querySelectorAll("[data-event-pill=\"1\"]").forEach(function(p){ p.remove(); });
+      var pillsHTML = window.getEventPillsHTML(dStr);
+      if (pillsHTML) {
+        var wrap = document.createElement("div");
+        wrap.setAttribute("data-event-pill", "1");
+        wrap.innerHTML = pillsHTML;
+        cell.appendChild(wrap);
+      }
+    }
+  };
+
+  window.appendEventDotsToMonth = function(){
+    var monthView = document.getElementById("calMonthView");
+    if (!monthView || monthView.style.display === "none") return;
+    var grid = document.getElementById("monthGridCells");
+    if (!grid) return;
+    var now = new Date();
+    var calMonthOffset = (typeof window.calMonthOffset === "number") ? window.calMonthOffset : 0;
+    var target = new Date(now.getFullYear(), now.getMonth() + calMonthOffset, 1);
+    var firstDay = target.getDay();
+    var daysInMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    var prevDays = new Date(target.getFullYear(), target.getMonth(), 0).getDate();
+    var cells = [];
+    for (var i = firstDay - 1; i >= 0; i--) cells.push({day: prevDays - i, month: "prev"});
+    for (var d = 1; d <= daysInMonth; d++) cells.push({day: d, month: "current"});
+    var remaining = 42 - cells.length;
+    for (var n = 1; n <= remaining; n++) cells.push({day: n, month: "next"});
+    var children = grid.children;
+    for (var idx = 0; idx < children.length && idx < cells.length; idx++) {
+      var cell = children[idx];
+      var info = cells[idx];
+      if (info.month !== "current") continue;
+      var cellDate = new Date(target.getFullYear(), target.getMonth(), info.day);
+      var cellStr = cellDate.toISOString().split("T")[0];
+      var dot = window.getEventMonthDot(cellStr);
+      if (!dot) continue;
+      var dotsContainer = cell.querySelector(".month-day-dots");
+      if (!dotsContainer) continue;
+      if (dotsContainer.querySelector("[data-event-dot=\"1\"]")) continue;
+      var dotEl = document.createElement("div");
+      dotEl.setAttribute("data-event-dot", "1");
+      dotEl.style.cssText = "width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#7DAAD4";
+      dotsContainer.appendChild(dotEl);
+    }
+  };
+
+})();
+</script>
   
   <script>
 // NMAO EVENTS V2.1 — Tabbed wizard overlay
