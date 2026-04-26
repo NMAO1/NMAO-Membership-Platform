@@ -1108,6 +1108,13 @@
         <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="evGuestInstructor" placeholder="e.g. Master Hiroshi Tanaka" /></div>
 
         <div class="field"><label>Description</label><textarea id="evDescription" rows="3" placeholder="What is this event about? Who is it for?"></textarea></div>
+        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem;margin-top:1.25rem">Public Signup</div>
+        <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
+        <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">When enabled, anyone with the link can register. Use this to share via email, social media, or QR code.</p>
+        <label class="check-item" style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.85rem;background:var(--black);border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="evPublicSignupEnabled" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer" />
+          <span style="font-size:0.88rem;color:var(--white)">Enable public signup link for this event</span>
+        </label>
       </div>
 
       <!-- TAB 2: SCHEDULE -->
@@ -1161,7 +1168,8 @@
         <div id="eventDetailTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"></div>
         <div id="eventDetailMeta" style="font-size:0.82rem;color:var(--muted);margin-top:0.2rem"></div>
       </div>
-      <div style="display:flex;gap:0.5rem;align-items:center">
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+        <button class="panel-action" id="evCopyLinkBtn" onclick="copyEventPublicLink()" style="display:none"><i class="fa-solid fa-link"></i> Copy Public Link</button>
         <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invite</button>
         <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
         <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -6994,7 +7002,11 @@ async function sendToSelectedNow(){
       else if (sessions.length === 1) dateStr = fmtEventDate(sessions[0].session_date) + (sessions[0].start_time ? " at " + fmtEventTime(sessions[0].start_time) : "");
       else dateStr = fmtEventDate(ev.event_date);
       var locStr = ev.location ? " at " + ev.location : "";
-      bodyEl.value = "You are invited to " + (ev.title || "our event") + " on " + dateStr + locStr + ". Reserve your spot today.";
+      var publicLink = "";
+      if (ev.public_signup_enabled) {
+        publicLink = "\n\nRegister here: https://nmao1.github.io/NMAO-Membership-Platform/event.html?id=" + ev.id;
+      }
+      bodyEl.value = "You are invited to " + (ev.title || "our event") + " on " + dateStr + locStr + ". Reserve your spot today." + publicLink;
     }
     var progBox = document.getElementById("evInviteProgramChecks");
     if (progBox && window.allPrograms) {
@@ -7328,7 +7340,78 @@ async function sendToSelectedNow(){
     window.renderEvTypeCards();
     window.switchEvWizardTab("details");
   };
+// Override openAddEvent to also reset the public signup checkbox
+  var prevOpenAdd = window.openAddEvent;
+  window.openAddEvent = function(){
+    prevOpenAdd();
+    var pubEl = document.getElementById("evPublicSignupEnabled");
+    if (pubEl) pubEl.checked = false;
+  };
 
+  // Override openEditEvent to populate the public signup checkbox
+  var prevOpenEdit = window.openEditEvent;
+  window.openEditEvent = async function(eventId){
+    await prevOpenEdit(eventId);
+    var ev = (window.allEvents || []).find(function(x){ return x.id === eventId; });
+    var pubEl = document.getElementById("evPublicSignupEnabled");
+    if (pubEl && ev) pubEl.checked = !!ev.public_signup_enabled;
+  };
+
+  // Override saveEvent to include the public_signup_enabled field
+  var prevSaveEvent = window.saveEvent;
+  window.saveEvent = async function(){
+    var pubEl = document.getElementById("evPublicSignupEnabled");
+    var enabled = pubEl ? pubEl.checked : false;
+    // Patch the events table after the original save runs
+    await prevSaveEvent();
+    // Find the most recent event ID for this title and update the flag
+    var eid = document.getElementById("eventEditId").value;
+    if (!eid) {
+      // New event was just created; find it by latest registered_at
+      var title = (document.getElementById("evTitle").value || "").trim();
+      var r = await sb.from("events").select("id").eq("school_id", SID).eq("title", title).order("created_at", {ascending: false}).limit(1).single();
+      if (r.data) eid = r.data.id;
+    }
+    if (eid) {
+      await sb.from("events").update({public_signup_enabled: enabled}).eq("id", eid);
+      await window.loadEvents();
+    }
+  };
+
+  // Override openEventDetail to show/hide the Copy Link button
+  var prevOpenDetail = window.openEventDetail;
+  window.openEventDetail = async function(eventId){
+    await prevOpenDetail(eventId);
+    var ev = (window.allEvents || []).find(function(x){ return x.id === eventId; });
+    var btn = document.getElementById("evCopyLinkBtn");
+    if (btn) btn.style.display = (ev && ev.public_signup_enabled) ? "inline-flex" : "none";
+  };
+
+  // Copy public link to clipboard
+  window.copyEventPublicLink = function(){
+    if (!window.currentEventId) return;
+    var url = "https://nmao1.github.io/NMAO-Membership-Platform/event.html?id=" + window.currentEventId;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function(){
+        var btn = document.getElementById("evCopyLinkBtn");
+        if (btn) {
+          var orig = btn.innerHTML;
+          btn.innerHTML = "<i class=\"fa-solid fa-check\"></i> Copied!";
+          btn.style.borderColor = "#7DBD7D";
+          btn.style.color = "#7DBD7D";
+          setTimeout(function(){
+            btn.innerHTML = orig;
+            btn.style.borderColor = "";
+            btn.style.color = "";
+          }, 1800);
+        }
+      }).catch(function(){
+        prompt("Copy this link:", url);
+      });
+    } else {
+      prompt("Copy this link:", url);
+    }
+  };
 })();
 </script>
 </body>
