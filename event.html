@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --black: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold: #C9A84C;
+      --white: #ffffff;
+      --muted: #8a8278;
+      --font-display: "Cormorant Garamond", serif;
+      --font-ui: "Inter", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--white); font-family: var(--font-ui); min-height: 100vh; padding: 1.5rem; line-height: 1.5; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 2rem; padding-top: 1.5rem; }
+    .school-name { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 500; }
+    .header-rule { width: 60px; height: 1px; background: var(--gold); margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1.25rem; }
+    .event-title { font-family: var(--font-display); font-size: 2rem; color: var(--white); margin-bottom: 0.6rem; line-height: 1.15; font-weight: 600; }
+    .event-meta { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .event-meta-item { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0; }
+    .event-meta-item i { color: var(--gold); width: 18px; }
+    .event-description { font-size: 0.95rem; color: var(--white); line-height: 1.6; padding-top: 1rem; border-top: 1px solid var(--border); white-space: pre-wrap; }
+    .section-label { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.5rem; font-family: var(--font-display); font-weight: 500; }
+    .section-rule { height: 1px; background: var(--border); margin-bottom: 1rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; font-weight: 500; }
+    .field input, .field select, .field textarea {
+      width: 100%; background: var(--black); border: 1px solid var(--border); color: var(--white);
+      padding: 0.75rem 0.9rem; font-family: var(--font-ui); font-size: 0.95rem;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--gold); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    .tier-card {
+      background: var(--black); border: 2px solid var(--border); padding: 1rem 1.25rem;
+      cursor: pointer; transition: all 0.18s; margin-bottom: 0.5rem; display: flex;
+      justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    .tier-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .tier-card .tier-label { font-family: var(--font-display); font-size: 1.05rem; color: var(--white); margin-bottom: 0.2rem; font-weight: 500; }
+    .tier-card .tier-meta { font-size: 0.75rem; color: var(--muted); }
+    .tier-card .tier-price { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold); font-weight: 600; }
+    .session-pick {
+      display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.85rem;
+      background: var(--black); border: 1px solid var(--border); margin-bottom: 0.35rem; cursor: pointer;
+    }
+    .session-pick.checked { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+    .session-pick input { width: 18px; height: 18px; accent-color: var(--gold); }
+    .session-pick label { color: var(--white); font-size: 0.9rem; cursor: pointer; flex: 1; }
+    .btn-primary {
+      width: 100%; padding: 1rem; background: var(--gold); color: var(--black); border: none;
+      font-family: var(--font-ui); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 600; cursor: pointer; transition: all 0.18s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .msg { margin-top: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem; text-align: center; }
+    .msg.error { background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.4); color: #E07070; }
+    .msg.success { background: rgba(125,189,125,0.12); border: 1px solid rgba(125,189,125,0.4); color: #7DBD7D; }
+    .loading-state { text-align: center; padding: 3rem 1rem; color: var(--muted); font-style: italic; font-size: 0.9rem; }
+    .footer { text-align: center; padding: 2rem 1rem 1rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; }
+    .success-screen { text-align: center; padding: 2.5rem 1.5rem; }
+    .success-screen i { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+    .success-screen h2 { font-family: var(--font-display); font-size: 1.75rem; color: var(--white); margin-bottom: 0.75rem; font-weight: 600; }
+    .success-screen p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="root">
+      <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading event...</div>
+    </div>
+    <div class="footer">Powered by NMAO</div>
+  </div>
+
+  <script>
+    var SURL = "https://ykiozrdwudawpxdzbbyc.supabase.co";
+    var SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c";
+    var sb = supabase.createClient(SURL, SKEY);
+
+    var state = {
+      event: null, school: null, sessions: [], tiers: [],
+      selectedTierId: null, selectedSessionIds: [], submitting: false
+    };
+
+    function getEventIdFromUrl() {
+      var params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
+
+    function fmtDate(dateStr) {
+      if (!dateStr) return "";
+      try {
+        var d = new Date(dateStr + "T00:00:00");
+        return d.toLocaleDateString("en-US", {weekday:"short", month:"short", day:"numeric", year:"numeric"});
+      } catch(e) { return dateStr; }
+    }
+    function fmtTime(t) {
+      if (!t) return "";
+      try {
+        var parts = t.split(":");
+        var h = parseInt(parts[0]); var m = parts[1];
+        var ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return h + ":" + m + " " + ampm;
+      } catch(e) { return t; }
+    }
+    function escText(s) {
+      if (s === null || s === undefined) return "";
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function loadEvent() {
+      var eventId = getEventIdFromUrl();
+      if (!eventId) {
+        document.getElementById("root").innerHTML = "<div class=\"card\"><div class=\"loading-state\">Event not found.</div></div>";
+        return;
+      }
+      try {
+        var ev = await sb.from("events").select("*").eq("id", eventId).single();
+        if (ev.error || !ev.data) {
+          document.getElementById("root").innerHTML = "<div class=\"card\"><div class=\"loading-state\">This event is not available for public signup.</div></div>";
+          return;
+        }
+        state.event = ev.data;
+        var school = await sb.from("schools").select("name").eq("id", ev.data.school_id).single();
+        state.school = school.data || {name: ""};
+        var sess = await sb.from("event_sessions").select("*").eq("event_id", eventId).order("sort_order");
+        state.sessions = sess.data || [];
+        var tiers = await sb.from("event_price_tiers").select("*").eq("event_id", eventId).order("sort_order");
+        state.tiers = tiers.data || [];
+        if (state.tiers.length > 0) {
+          state.selectedTierId = state.tiers[0].id;
+          autoSelectSessions();
+        }
+        render();
+      } catch(e) {
+        document.getElementById("root").innerHTML = "<div class=\"card\"><div class=\"loading-state\">Error loading event: " + escText(e.message) + "</div></div>";
+      }
+    }
+
+    function autoSelectSessions() {
+      var tier = state.tiers.find(function(t){ return t.id === state.selectedTierId; });
+      if (!tier) { state.selectedSessionIds = []; return; }
+      if (tier.sessions_included === 0 || tier.sessions_included === null) {
+        state.selectedSessionIds = state.sessions.map(function(s){ return s.id; });
+      } else {
+        state.selectedSessionIds = [];
+      }
+    }
+
+    window.selectTier = function(tierId) {
+      state.selectedTierId = tierId;
+      autoSelectSessions();
+      render();
+    };
+
+    window.toggleSession = function(sessionId) {
+      var tier = state.tiers.find(function(t){ return t.id === state.selectedTierId; });
+      if (!tier) return;
+      if (tier.sessions_included === 0 || tier.sessions_included === null) return;
+      var idx = state.selectedSessionIds.indexOf(sessionId);
+      if (idx === -1) {
+        if (state.selectedSessionIds.length < tier.sessions_included) state.selectedSessionIds.push(sessionId);
+      } else {
+        state.selectedSessionIds.splice(idx, 1);
+      }
+      render();
+    };
+
+    function render() {
+      var ev = state.event;
+      var sch = state.school;
+      var schName = sch && sch.name ? sch.name : "Event";
+      var dateStr;
+      if (state.sessions.length > 1) {
+        dateStr = state.sessions.length + " sessions: " + fmtDate(state.sessions[0].session_date) + " — " + fmtDate(state.sessions[state.sessions.length - 1].session_date);
+      } else if (state.sessions.length === 1) {
+        dateStr = fmtDate(state.sessions[0].session_date) + (state.sessions[0].start_time ? " at " + fmtTime(state.sessions[0].start_time) : "");
+      } else {
+        dateStr = fmtDate(ev.event_date);
+      }
+
+      var tierCardsHTML = state.tiers.length === 0
+        ? "<div style=\"color:var(--muted);font-style:italic;font-size:0.88rem\">No public pricing available.</div>"
+        : state.tiers.map(function(t) {
+            var sessionsLabel = (t.sessions_included === 0 || t.sessions_included === null) ? "All sessions" : t.sessions_included + " day" + (t.sessions_included !== 1 ? "s" : "");
+            var priceLabel = parseFloat(t.price) > 0 ? "$" + parseFloat(t.price).toFixed(2) : "Free";
+            var selectedClass = t.id === state.selectedTierId ? " selected" : "";
+            return "<div class=\"tier-card" + selectedClass + "\" onclick=\"selectTier(&quot;" + t.id + "&quot;)\">" +
+              "<div><div class=\"tier-label\">" + escText(t.label) + "</div><div class=\"tier-meta\">" + sessionsLabel + "</div></div>" +
+              "<div class=\"tier-price\">" + priceLabel + "</div>" +
+            "</div>";
+          }).join("");
+
+      var sessionPickHTML = "";
+      var tier = state.tiers.find(function(t){ return t.id === state.selectedTierId; });
+      if (state.sessions.length > 0 && tier && tier.sessions_included > 0) {
+        sessionPickHTML = "<div class=\"section-label\">Select " + tier.sessions_included + " Day" + (tier.sessions_included !== 1 ? "s" : "") + "</div>" +
+          "<div class=\"section-rule\"></div>" +
+          state.sessions.map(function(s) {
+            var checked = state.selectedSessionIds.indexOf(s.id) !== -1;
+            var checkedClass = checked ? " checked" : "";
+            return "<div class=\"session-pick" + checkedClass + "\" onclick=\"toggleSession(&quot;" + s.id + "&quot;)\">" +
+              "<input type=\"checkbox\" " + (checked ? "checked" : "") + " onchange=\"event.stopPropagation()\" onclick=\"event.stopPropagation();toggleSession(&quot;" + s.id + "&quot;)\" />" +
+              "<label>" + fmtDate(s.session_date) + (s.start_time ? " at " + fmtTime(s.start_time) : "") + "</label>" +
+            "</div>";
+          }).join("") +
+          "<div style=\"font-size:0.78rem;color:var(--muted);margin-top:0.5rem\">" + state.selectedSessionIds.length + " of " + tier.sessions_included + " selected</div>";
+      }
+
+      var paidNote = "";
+      if (tier && parseFloat(tier.price) > 0) {
+        paidNote = "<div style=\"background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);padding:0.85rem;margin-bottom:1rem;font-size:0.85rem;color:var(--white)\"><i class=\"fa-solid fa-circle-info\" style=\"color:var(--gold);margin-right:0.4rem\"></i>This is a paid registration. The school will contact you to arrange payment.</div>";
+      }
+
+      document.getElementById("root").innerHTML =
+        "<div class=\"header\">" +
+          "<div class=\"school-name\">" + escText(schName) + "</div>" +
+          "<div class=\"header-rule\"></div>" +
+        "</div>" +
+        "<div class=\"card\">" +
+          "<div class=\"event-title\">" + escText(ev.title) + "</div>" +
+          "<div class=\"event-meta-item\"><i class=\"fa-solid fa-calendar-days\"></i><span>" + dateStr + "</span></div>" +
+          (ev.location ? "<div class=\"event-meta-item\"><i class=\"fa-solid fa-location-dot\"></i><span>" + escText(ev.location) + "</span></div>" : "") +
+          (ev.guest_instructor ? "<div class=\"event-meta-item\"><i class=\"fa-solid fa-user-tie\"></i><span>" + escText(ev.guest_instructor) + "</span></div>" : "") +
+          (ev.capacity ? "<div class=\"event-meta-item\"><i class=\"fa-solid fa-users\"></i><span>Capacity " + ev.capacity + "</span></div>" : "") +
+          (ev.description ? "<div class=\"event-description\">" + escText(ev.description) + "</div>" : "") +
+        "</div>" +
+        "<div class=\"card\">" +
+          "<div class=\"section-label\">Choose a Pricing Option</div>" +
+          "<div class=\"section-rule\"></div>" +
+          tierCardsHTML +
+          (sessionPickHTML ? "<div style=\"margin-top:1.5rem\">" + sessionPickHTML + "</div>" : "") +
+        "</div>" +
+        "<div class=\"card\">" +
+          "<div class=\"section-label\">Your Information</div>" +
+          "<div class=\"section-rule\"></div>" +
+          paidNote +
+          "<div class=\"form-row\">" +
+            "<div class=\"field\"><label>First Name</label><input type=\"text\" id=\"firstName\" required /></div>" +
+            "<div class=\"field\"><label>Last Name</label><input type=\"text\" id=\"lastName\" required /></div>" +
+          "</div>" +
+          "<div class=\"field\"><label>Email</label><input type=\"email\" id=\"email\" required /></div>" +
+          "<div class=\"field\"><label>Phone</label><input type=\"tel\" id=\"phone\" placeholder=\"(555) 555-5555\" /></div>" +
+          "<button class=\"btn-primary\" onclick=\"submitRegistration()\" id=\"submitBtn\"><i class=\"fa-solid fa-check\"></i> Register</button>" +
+          "<div id=\"submitMsg\"></div>" +
+        "</div>";
+    }
+
+    window.submitRegistration = async function() {
+      if (state.submitting) return;
+      var msgEl = document.getElementById("submitMsg");
+      var btn = document.getElementById("submitBtn");
+      msgEl.innerHTML = "";
+
+      var firstName = (document.getElementById("firstName").value || "").trim();
+      var lastName = (document.getElementById("lastName").value || "").trim();
+      var email = (document.getElementById("email").value || "").trim();
+      var phone = (document.getElementById("phone").value || "").trim();
+
+      if (!firstName || !lastName) { msgEl.innerHTML = "<div class=\"msg error\">First and last name are required.</div>"; return; }
+      if (!email || email.indexOf("@") === -1) { msgEl.innerHTML = "<div class=\"msg error\">Please enter a valid email address.</div>"; return; }
+      if (!state.selectedTierId) { msgEl.innerHTML = "<div class=\"msg error\">Please select a pricing option.</div>"; return; }
+
+      var tier = state.tiers.find(function(t){ return t.id === state.selectedTierId; });
+      if (tier && tier.sessions_included > 0 && state.selectedSessionIds.length !== tier.sessions_included) {
+        msgEl.innerHTML = "<div class=\"msg error\">Please select exactly " + tier.sessions_included + " session" + (tier.sessions_included !== 1 ? "s" : "") + ".</div>";
+        return;
+      }
+
+      state.submitting = true;
+      btn.disabled = true;
+      msgEl.innerHTML = "<div class=\"msg\" style=\"color:var(--muted)\">Submitting registration...</div>";
+
+      try {
+        var r = await fetch(SURL + "/functions/v1/register-public", {
+          method: "POST",
+          headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
+          body: JSON.stringify({
+            event_id: state.event.id,
+            tier_id: state.selectedTierId,
+            session_ids: state.selectedSessionIds,
+            guest_first_name: firstName,
+            guest_last_name: lastName,
+            guest_email: email,
+            guest_phone: phone
+          })
+        });
+        var data = await r.json();
+        if (!r.ok || data.error) {
+          msgEl.innerHTML = "<div class=\"msg error\">" + escText(data.error || "Registration failed.") + "</div>";
+          state.submitting = false;
+          btn.disabled = false;
+          return;
+        }
+        document.getElementById("root").innerHTML =
+          "<div class=\"header\">" +
+            "<div class=\"school-name\">" + escText(state.school.name || "") + "</div>" +
+            "<div class=\"header-rule\"></div>" +
+          "</div>" +
+          "<div class=\"card success-screen\">" +
+            "<i class=\"fa-solid fa-circle-check\"></i>" +
+            "<h2>You are registered!</h2>" +
+            "<p>Thank you for signing up for <strong>" + escText(state.event.title) + "</strong>. " +
+            (tier && parseFloat(tier.price) > 0 ? "We will contact you shortly to arrange payment. " : "") +
+            "A confirmation has been sent to <strong>" + escText(email) + "</strong>.</p>" +
+          "</div>";
+      } catch(e) {
+        msgEl.innerHTML = "<div class=\"msg error\">Network error: " + escText(e.message) + "</div>";
+        state.submitting = false;
+        btn.disabled = false;
+      }
+    };
+
+    loadEvent();
+  </script>
+</body>
+</html>
