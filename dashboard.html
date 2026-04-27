@@ -7648,7 +7648,7 @@ async function sendToSelectedNow(){
   };
 
   window.renderSmsBadge = function(){
-    var nav = document.getElementById("nav-communications");
+    var nav = document.querySelector(".nav-item.communications") || document.querySelector(".communications");
     if (!nav) return;
     var existing = nav.querySelector(".sms-unread-badge");
     if (existing) existing.remove();
@@ -7673,7 +7673,7 @@ async function sendToSelectedNow(){
   setInterval(function(){ window.refreshSmsUnreadBadge(); }, 60000);
 
   setTimeout(function(){
-    var nav = document.getElementById("nav-communications");
+    var nav = document.querySelector(".nav-item.communications") || document.querySelector(".communications");
     if (nav && !nav.dataset.smsWired) {
       nav.dataset.smsWired = "1";
       nav.addEventListener("click", function(){
