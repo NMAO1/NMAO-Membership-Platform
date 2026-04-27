@@ -7629,12 +7629,10 @@ async function sendToSelectedNow(){
 </script>
 <script>
 // NMAO SMS UNREAD BADGE — shows unread inbound SMS count on Communications nav
-// Refreshes on init, every 60s, and when user clicks Communications nav.
 
 (function(){
 
   window.smsUnreadCount = 0;
-  window._smsBadgeInterval = null;
 
   window.refreshSmsUnreadBadge = async function(){
     try {
@@ -7660,11 +7658,10 @@ async function sendToSelectedNow(){
     var badge = document.createElement("span");
     badge.className = "sms-unread-badge";
     badge.textContent = displayCount;
-    badge.style.cssText = "display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;background:#E07070;color:#fff;font-family:var(--font-ui);font-size:0.68rem;font-weight:600;border-radius:10px;margin-left:auto;letter-spacing:0";
+    badge.style.cssText = "display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;background:#E07070;color:#fff;font-family:var(--font-ui);font-size:0.68rem;font-weight:600;border-radius:10px;margin-left:0.5rem;letter-spacing:0";
     nav.appendChild(badge);
   };
 
-  // Refresh on init (after page loads)
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function(){
       setTimeout(function(){ window.refreshSmsUnreadBadge(); }, 1200);
@@ -7673,18 +7670,13 @@ async function sendToSelectedNow(){
     setTimeout(function(){ window.refreshSmsUnreadBadge(); }, 1200);
   }
 
-  // Auto-refresh every 60 seconds
-  window._smsBadgeInterval = setInterval(function(){
-    window.refreshSmsUnreadBadge();
-  }, 60000);
+  setInterval(function(){ window.refreshSmsUnreadBadge(); }, 60000);
 
-  // Refresh when Communications nav is clicked (count goes down as messages get read)
   setTimeout(function(){
     var nav = document.getElementById("nav-communications");
     if (nav && !nav.dataset.smsWired) {
       nav.dataset.smsWired = "1";
       nav.addEventListener("click", function(){
-        // Wait a moment for the page to render, then refresh count
         setTimeout(function(){ window.refreshSmsUnreadBadge(); }, 1500);
       });
     }
