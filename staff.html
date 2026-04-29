@@ -1238,15 +1238,16 @@ async function toggleCheckin(studentId,event){
     checkedInIds.delete(studentId);
     showToast('Check-in removed','warn');
   }else{
-    // Get/create session
-    if(!classSessionId){
-      var cr=await sb.from('class_sessions').insert({
-        class_id:currentClassData.id,school_id:SID,
-        session_date:currentClassData._dateStr,status:'scheduled'
-      }).select().single();
-      if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
-      classSessionId=cr.data.id;
-    }
+   // Get/create session
+if(!classSessionId){
+  var sessStatus=computeSessionStatus(currentClassData.start_time,currentClassData.end_time,new Date());
+  var cr=await sb.from('class_sessions').insert({
+    class_id:currentClassData.id,school_id:SID,
+    session_date:currentClassData._dateStr,status:sessStatus
+  }).select().single();
+  if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
+  classSessionId=cr.data.id;
+}
     // Insert attendance
     var ir=await sb.from('class_attendance').insert({
       session_id:classSessionId,student_id:studentId,
@@ -1514,6 +1515,20 @@ function switchTab(name){
   if(name==='Tests')buildTestsTab();
 }
 
+  function computeSessionStatus(startTimeStr,endTimeStr,now){
+  if(!startTimeStr)return "scheduled";
+  var nowStr=now.toTimeString().slice(0,5);
+  var start=startTimeStr.slice(0,5);
+  var end=endTimeStr?endTimeStr.slice(0,5):null;
+  if(nowStr<start)return "scheduled";
+  if(end&&nowStr>end)return "completed";
+  if(!end){
+    var startMins=parseInt(start.split(":")[0])*60+parseInt(start.split(":")[1]);
+    var nowMins=now.getHours()*60+now.getMinutes();
+    if(nowMins-startMins>90)return "completed";
+  }
+  return "in_progress";
+}
 // ─────────────────────────────────────────────────────────────
 //  UTILITIES
 // ─────────────────────────────────────────────────────────────
