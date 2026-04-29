@@ -399,8 +399,18 @@ async function getOrCreateSession(){
   if(!currentClass)return;
   var today=new Date().toISOString().split('T')[0];
   var sr=await sb.from('class_sessions').select('id').eq('class_id',currentClass.id).eq('session_date',today).limit(1);
-  if(sr.data&&sr.data.length){currentSessionId=sr.data[0].id;}
-  else{var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
+  if(sr.data&&sr.data.length){
+    currentSessionId=sr.data[0].id;
+  }else{
+    var status=computeSessionStatus(currentClass.start_time,currentClass.end_time,new Date());
+    var cr=await sb.from('class_sessions').insert({
+      class_id:currentClass.id,
+      school_id:SID,
+      session_date:today,
+      status:status
+    }).select().single();
+    if(!cr.error)currentSessionId=cr.data.id;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -590,8 +600,7 @@ async function doCheckinForStudent(student,callback){
     // §KIOSK: RECORD_ATTENDANCE
     if(!sid){
       if(!currentClass){var fc=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).limit(1);if(fc.data&&fc.data.length)currentClass=fc.data[0];}
-      if(currentClass){var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error){currentSessionId=cr.data.id;sid=currentSessionId;}}
-    }
+      if(currentClass){var fbStatus=computeSessionStatus(currentClass.start_time,currentClass.end_time,new Date());var cr=await sb.from('class_sessions').insert({class_id:currentClass.id,school_id:SID,session_date:today,status:fbStatus}).select().single();if(!cr.error){currentSessionId=cr.data.id;sid=currentSessionId;}}    }
     if(sid){await sb.from('class_attendance').insert({session_id:sid,student_id:student.id,school_id:SID,status:'present',noted_at:new Date().toISOString()});}
     var totalCount=await getStudentAttendanceCount(student.id);
     var beltColor=await getStudentBeltColor(student);
@@ -747,6 +756,20 @@ function resetKiosk(){
 // ─────────────────────────────────────────────────────────────
 function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var min=p[1];return(hr>12?hr-12:hr||12)+':'+min+' '+(hr>=12?'PM':'AM');}
 
+  function computeSessionStatus(startTimeStr,endTimeStr,now){
+  if(!startTimeStr)return "scheduled";
+  var nowStr=now.toTimeString().slice(0,5);
+  var start=startTimeStr.slice(0,5);
+  var end=endTimeStr?endTimeStr.slice(0,5):null;
+  if(nowStr<start)return "scheduled";
+  if(end&&nowStr>end)return "completed";
+  if(!end){
+    var startMins=parseInt(start.split(":")[0])*60+parseInt(start.split(":")[1]);
+    var nowMins=now.getHours()*60+now.getMinutes();
+    if(nowMins-startMins>90)return "completed";
+  }
+  return "in_progress";
+}
 // ─────────────────────────────────────────────────────────────
 //  §JS: BOOT
 // ─────────────────────────────────────────────────────────────
