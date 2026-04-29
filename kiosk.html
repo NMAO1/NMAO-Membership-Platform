@@ -353,10 +353,16 @@ async function loadPrograms(){
 //  §JS: CLASS_DETECTION
 // ─────────────────────────────────────────────────────────────
 async function detectCurrentClass(){
+  // Check-in window: 60 min before class start, until 90 min after class start
+  // (or class end, whichever is later). Pre-window is hardcoded for now;
+  // see Bug #55 for per-school configurability and Bug #56 for class picker
+  // when multiple classes are eligible.
   var now=new Date();
   var timeStr=now.toTimeString().slice(0,5);
   var cutoff=new Date(now.getTime()-90*60*1000);
   var cutoffStr=cutoff.toTimeString().slice(0,5);
+  var preWindow=new Date(now.getTime()+60*60*1000);
+  var preWindowStr=preWindow.toTimeString().slice(0,5);
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true);
   var classes=r.data||[];
   var today=(['sunday','monday','tuesday','wednesday','thursday','friday','saturday'])[now.getDay()];
@@ -364,10 +370,21 @@ async function detectCurrentClass(){
     if(!c.days_of_week||!c.days_of_week.includes(today))return false;
     var start=c.start_time?c.start_time.slice(0,5):'00:00';
     var end=c.end_time?c.end_time.slice(0,5):'23:59';
-    return(start<=timeStr&&timeStr<=end)||(start>=cutoffStr&&start<=timeStr);
+    return(start<=timeStr&&timeStr<=end)||(start>=cutoffStr&&start<=timeStr)||(start>timeStr&&start<=preWindowStr);
   });
   if(active.length){
-    active.sort(function(a,b){return a.start_time>b.start_time?-1:1;});
+    // Sort: currently-running classes preferred over upcoming ones.
+    // Within each group, latest-start wins. This is a stopgap until
+    // the multi-class picker (Bug #56) is built.
+    active.sort(function(a,b){
+      var aStart=a.start_time?a.start_time.slice(0,5):'00:00';
+      var bStart=b.start_time?b.start_time.slice(0,5):'00:00';
+      var aRunning=aStart<=timeStr;
+      var bRunning=bStart<=timeStr;
+      if(aRunning&&!bRunning)return -1;
+      if(bRunning&&!aRunning)return 1;
+      return aStart>bStart?-1:1;
+    });
     currentClass=active[0];
     document.getElementById('kioskCurrentClass').style.display='block';
     document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' \u00b7 '+fmtTime(currentClass.start_time);
@@ -538,8 +555,7 @@ async function doCheckinForStudent(student,callback){
         if(callback)callback();return;
       }
     }else{
-      showKioskDenial('No class is currently in session. Check-in is available during class and for up to 90 minutes after class starts.');      if(callback)callback();return;
-    }
+       showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and stays open until 90 minutes after class starts.');    }
 
     // §KIOSK: WEEKLY_LIMIT_CHECK
     // Rolling 7-day limit for per_week memberships
