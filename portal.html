@@ -1276,12 +1276,13 @@ async function processAutoCheckIn(){
       var sessionId=null;
       if(sr.data&&sr.data.length){
         sessionId=sr.data[0].id;
-      }else{
-        var nr=await sb.from('class_sessions')
-          .insert({class_id:enr.class_id,school_id:SID,session_date:todayStr,status:'in_progress'})
-          .select().single();
-        if(!nr.error) sessionId=nr.data.id;
-      }
+     }else{
+  var sessStatus=computeSessionStatus(cls.start_time,cls.end_time,new Date());
+  var nr=await sb.from('class_sessions')
+    .insert({class_id:enr.class_id,school_id:SID,session_date:todayStr,status:sessStatus})
+    .select().single();
+  if(!nr.error) sessionId=nr.data.id;
+}
       if(!sessionId) continue;
 
       // Check if already checked in — filter by school_id
@@ -2062,6 +2063,20 @@ async function buildInstructorTodayClasses(){
   }).join('');
 }
 
+  function computeSessionStatus(startTimeStr,endTimeStr,now){
+  if(!startTimeStr)return "scheduled";
+  var nowStr=now.toTimeString().slice(0,5);
+  var start=startTimeStr.slice(0,5);
+  var end=endTimeStr?endTimeStr.slice(0,5):null;
+  if(nowStr<start)return "scheduled";
+  if(end&&nowStr>end)return "completed";
+  if(!end){
+    var startMins=parseInt(start.split(":")[0])*60+parseInt(start.split(":")[1]);
+    var nowMins=now.getHours()*60+now.getMinutes();
+    if(nowMins-startMins>90)return "completed";
+  }
+  return "in_progress";
+}
 // ─────────────────────────────────────────────────────────────
 //  §JS: UTILITIES
 // ─────────────────────────────────────────────────────────────
