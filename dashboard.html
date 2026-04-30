@@ -2276,7 +2276,7 @@
 
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-var SID  = '6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+var SID  = null;
 var sb   = supabase.createClient(SURL, SKEY);
 
 var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -2365,10 +2365,13 @@ async function init() {
     var r = await sb.auth.getSession();
     if (!r.data || !r.data.session) { window.location.href='index.html'; return; }
     var user = r.data.session.user;
-    var ownerCheck = await sb.from('schools').select('id').eq('id',SID).eq('owner_id',user.id).single();
-    if (ownerCheck.error || !ownerCheck.data) {
-      var instrCheck = await sb.from('instructors').select('id').eq('school_id',SID).eq('email',user.email).eq('active',true).single();
+    var ownerCheck = await sb.from('schools').select('id').eq('owner_id',user.id).single();
+    if (!ownerCheck.error && ownerCheck.data) {
+      SID = ownerCheck.data.id;
+    } else {
+      var instrCheck = await sb.from('instructors').select('id,school_id').eq('email',user.email).eq('active',true).single();
       if (instrCheck.error || !instrCheck.data) { await sb.auth.signOut(); window.location.href='index.html'; return; }
+      SID = instrCheck.data.school_id;
     }
     var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email.split('@')[0];
     document.getElementById('userName').textContent    = name;
