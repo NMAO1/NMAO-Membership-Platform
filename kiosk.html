@@ -207,7 +207,7 @@
 // ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+var SID=null;
 var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
 
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
@@ -225,6 +225,21 @@ var familyCheckinQueue=[],familyCheckinIndex=0;
 //  §JS: INIT
 // ─────────────────────────────────────────────────────────────
 async function init(){
+  // §KIOSK: SLUG_RESOLUTION
+  // Read ?school=<slug> from URL and resolve to school UUID
+  var params=new URLSearchParams(window.location.search);
+  var slug=params.get('school');
+  if(!slug){
+    document.body.innerHTML='<div style="text-align:center;padding:4rem;color:#E07070;font-family:sans-serif;background:#0A0A0A;min-height:100vh"><h1 style="margin-bottom:1rem">Configuration Error</h1><p>This kiosk URL is missing the school parameter.</p><p style="margin-top:1rem;font-size:0.85rem;color:#7A7060">Add <code>?school=your-slug</code> to the URL.</p></div>';
+    return;
+  }
+  var slugR=await sb.from('schools').select('id').eq('slug',slug).eq('is_active',true).maybeSingle();
+  if(!slugR.data){
+    document.body.innerHTML='<div style="text-align:center;padding:4rem;color:#E07070;font-family:sans-serif;background:#0A0A0A;min-height:100vh"><h1 style="margin-bottom:1rem">School Not Found</h1><p>No active school found with slug "'+slug+'".</p></div>';
+    return;
+  }
+  SID=slugR.data.id;
+
   // School branding — non-fatal if fails
   try{
     var r=await sb.from('schools').select('*').eq('id',SID).maybeSingle();
@@ -258,7 +273,6 @@ async function init(){
     document.getElementById('kioskSearch').focus();
   }catch(e){console.error('Kiosk data load error:',e);}
 }
-
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: WELCOME_PANEL
