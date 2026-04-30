@@ -254,7 +254,7 @@
     <p class="modal-s" id="mS">Access your NMAO dashboard</p>
     <div class="plan-pill" id="mPill" style="display:none">
       <span class="pill-n" id="mPN">Professional</span>
-      <span class="pill-p" id="mPP">$79/mo</span>
+      <span class="pill-p" id="mPP">$100/mo</span>
     </div>
     <div class="tabs">
       <button class="tab on" id="tL" onclick="switchTab('login')">Sign In</button>
@@ -272,11 +272,11 @@
       <div class="field"><label>Password</label><input type="password" id="sP" placeholder="Create a password"></div>
       <div class="field">
         <label>Plan</label>
-      <select id="sPl">
-  <option value="starter">Starter - $50/month</option>
-  <option value="professional" selected>Professional - $100/month</option>
-  <option value="elite">Elite - $150/month</option>
-</select>
+      <select id="sPl" onchange="syncPillToDropdown()">
+          <option value="starter">Starter - $50/month</option>
+          <option value="professional" selected>Professional - $100/month</option>
+          <option value="elite">Elite - $150/month</option>
+        </select>
       </div>
       <button class="btn-sub" id="sSub" onclick="doSignup()">Create Account and Subscribe</button>
     </div>
@@ -316,6 +316,15 @@ function switchTab(t) {
   document.getElementById('mS').textContent = login ? 'Access your NMAO dashboard' : 'Create your account and choose a plan';
   document.getElementById('mPill').style.display = login ? 'none' : 'flex';
   document.getElementById('mMsg').textContent = '';
+  if (!login) syncPillToDropdown();
+}
+
+function syncPillToDropdown() {
+  var p = document.getElementById('sPl').value;
+  if (PLANS[p]) {
+    document.getElementById('mPN').textContent = PLANS[p].name;
+    document.getElementById('mPP').textContent = '$' + PLANS[p].price + '/mo';
+  }
 }
 
 function selectPlan(p, price) {
