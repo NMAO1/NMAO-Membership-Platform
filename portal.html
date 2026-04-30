@@ -743,7 +743,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 // ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+var SID=null;
 var PORTAL_URL='https://nmao1.github.io/NMAO-Membership-Platform/portal.html';
 var sb=supabase.createClient(SURL,SKEY);
 
@@ -848,21 +848,27 @@ async function loadSchoolBranding(){
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-      sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('school_id',SID).eq('email',user.email).maybeSingle(),
-      sb.from('families').select('*').eq('school_id',SID).eq('email',user.email).maybeSingle(),
-      sb.from('instructors').select('*').eq('school_id',SID).eq('email',user.email).eq('active',true).maybeSingle()
+      sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('email',user.email).maybeSingle(),
+      sb.from('families').select('*').eq('email',user.email).maybeSingle(),
+      sb.from('instructors').select('*').eq('email',user.email).eq('active',true).maybeSingle()
     ]);
     var studentR=results[0],familyR=results[1],instrR=results[2];
     if(!studentR.error&&studentR.data){
+      SID=studentR.data.school_id;
+      await loadSchoolBranding();
       currentStudent=studentR.data;
       sessionStorage.setItem('nmao_user_type','student');
       if(!studentR.data.portal_onboarded){showOnboardingScreen(studentR.data);}
       else{showStudentPortal(studentR.data);}
     }else if(!familyR.error&&familyR.data){
+      SID=familyR.data.school_id;
+      await loadSchoolBranding();
       currentFamily=familyR.data;
       sessionStorage.setItem('nmao_user_type','family');
       await showFamilyPortal(familyR.data);
     }else if(!instrR.error&&instrR.data){
+      SID=instrR.data.school_id;
+      await loadSchoolBranding();
       sessionStorage.setItem('nmao_user_type','instructor');
       await showInstructorPortal(instrR.data);
     }else{
@@ -873,7 +879,6 @@ async function detectUserTypeAndRoute(user){
     showNoAccountError(user.email);
   }
 }
-
 function showNoAccountError(email){
   hideAllScreens();
   document.getElementById('portalScreen').style.display='block';
