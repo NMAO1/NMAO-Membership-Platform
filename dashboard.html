@@ -3066,9 +3066,9 @@ async function saveClass(){
   var start=document.getElementById('classStart').value;
   var end=document.getElementById('classEnd').value;
   var days=[]; document.querySelectorAll('.day-btn.selected').forEach(function(b){days.push(b.dataset.day);});
-  if(!title||!start||!end||!days.length){setMsg('classMsg','Fill in title, times, and select days.','error');return;}
-  setMsg('classMsg','Saving...','');
-  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,program_id:document.getElementById('classProgram').value||null};
+var programId=document.getElementById('classProgram').value;
+if(!title||!start||!end||!days.length||!programId){setMsg('classMsg','Fill in title, times, days, and program.','error');return;}  setMsg('classMsg','Saving...','');
+  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,program_id:programId};
   var r; if(eid){r=await sb.from('classes').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('classes').insert(payload);}
   if(r.error){setMsg('classMsg',r.error.message,'error');}else{setMsg('classMsg','Class saved!','success');await loadClasses();await fetchEnrollmentCounts();buildTodaySchedule();buildWeekGrid();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
 }
