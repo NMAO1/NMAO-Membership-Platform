@@ -255,8 +255,10 @@
     .belt-level-header:hover { background: rgba(201,168,76,0.04); }
     .video-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem; background: var(--black); border: 1px solid var(--border); margin-bottom: 0.4rem; border-left: 2px solid var(--gold); }
     .eligible-badge { display: inline-block; background: rgba(90,154,106,0.15); border: 1px solid rgba(90,154,106,0.4); color: #7DBD7D; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; margin-top: 0.3rem; }
-    .anim-option { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem 0.5rem; background: var(--surface); border: 2px solid var(--border); cursor: pointer; min-width: 76px; }
-    .anim-option.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .anim-option { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem 0.5rem; background: var(--surface); border: 2px solid transparent; cursor: pointer; min-width: 76px; opacity: 0.55; transition: all 0.15s ease; }
+    .anim-option:hover { opacity: 0.85; border-color: rgba(201,168,76,0.3); }
+    .anim-option.selected { border-color: var(--gold); background: rgba(201,168,76,0.18); opacity: 1; box-shadow: 0 0 0 1px var(--gold) inset, 0 4px 12px rgba(201,168,76,0.2); }
+    .anim-option.selected .anim-label { color: var(--gold); font-weight: 600; }
     .anim-icon  { font-size: 1.4rem; line-height: 1; }
     .anim-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
     .milestone-row { background: var(--surface); border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.6rem; }
