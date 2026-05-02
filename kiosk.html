@@ -271,6 +271,25 @@ var r=await sb.from("schools").select("id,name,slug,logo_url,bio,tagline,color,b
     await loadPrograms();
     await detectCurrentClass();
     document.getElementById('kioskSearch').focus();
+    // Preview mode for milestone test from dashboard
+    if (params.get("preview") === "1") {
+      var milestone = parseInt(params.get("milestone"), 10) || 0;
+      var msg = params.get("msg") || "";
+      var fakeStudent = { first_name: "Sample", last_name: "Student", celebrated_milestones: [], id: "preview-only" };
+      schoolData.milestone_messages = schoolData.milestone_messages || {};
+      if (milestone) schoolData.milestone_messages[milestone] = { message: msg };
+      var origFrom = sb.from.bind(sb);
+      sb.from = function(table) {
+        var ret = origFrom(table);
+        if (table === "students") {
+          ret.update = function() { return { eq: function() { return Promise.resolve({ data: null, error: null }); } }; };
+        }
+        return ret;
+      };
+      setTimeout(function() {
+        showCelebration(fakeStudent, milestone, null, function() { window.close(); });
+      }, 400);
+    }
   }catch(e){console.error('Kiosk data load error:',e);}
 }
 
