@@ -43,6 +43,10 @@
     }
     .field textarea:focus { border-color: var(--gold); outline: none; }
     .btn-sm      { font-size: 0.82rem !important; }
+    .days-grid   { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
+    .day-btn     { font-size: 0.82rem !important; padding: 0.6rem 0.4rem; background: var(--black); border: 1px solid var(--border); color: var(--muted); font-family: var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s ease; }
+    .day-btn:hover    { border-color: rgba(201,168,76,0.4); color: var(--white); }
+    .day-btn.selected { background: var(--gold); border-color: var(--gold); color: var(--black); font-weight: 600; }
     .chip        { font-size: 0.72rem !important; }
     .chip-paused { background: rgba(90,130,200,0.15); border: 1px solid rgba(90,130,200,0.4); color: #7AAAD4; }
     .class-tag   { font-size: 0.72rem !important; }
@@ -95,25 +99,25 @@
 
     /* §CSS-CALENDAR */
     .cal-grid        { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; border: 1px solid var(--border); }
-    .cal-day-header  { padding: 0.5rem; text-align: center; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
+    .cal-day-header  { padding: 0.5rem; text-align: center; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
     .cal-day         { min-height: 90px; padding: 0.4rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--black); }
     .cal-day:nth-child(7n) { border-right: none; }
     .cal-day.today   { background: rgba(201,168,76,0.04); }
-    .cal-day-num     { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.35rem; font-family: var(--font-display); }
+    .cal-day-num     { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; font-family: var(--font-display); }
     .cal-day.today .cal-day-num { color: var(--gold); font-weight: 700; }
-    .cal-event       { font-size: 0.65rem; padding: 0.15rem 0.35rem; border-radius: 2px; margin-bottom: 0.2rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal-event       { font-size: 0.72rem; padding: 0.15rem 0.35rem; border-radius: 2px; margin-bottom: 0.2rem; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cal-event.class-event    { background: rgba(201,168,76,0.15); color: var(--gold); border-left: 2px solid var(--gold); }
     .cal-event.session-event  { background: rgba(130,80,220,0.15); color: #B090E8; border-left: 2px solid #9060D0; }
     .cal-event.birthday-event { background: rgba(90,154,106,0.15); color: #7DBD7D; border-left: 2px solid #5A9A6A; }
     .month-grid-outer   { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; border: 1px solid var(--border); }
-    .month-day-header   { padding: 0.5rem; text-align: center; font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
+    .month-day-header   { padding: 0.5rem; text-align: center; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
     .month-day          { min-height: 80px; padding: 0.4rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--black); cursor: pointer; transition: background 0.15s; }
     .month-day:nth-child(7n) { border-right: none; }
     .month-day:hover    { background: rgba(201,168,76,0.04); }
     .month-day.today    { background: rgba(201,168,76,0.06); }
     .month-day.today .month-day-num { color: var(--gold); font-weight: 700; }
     .month-day.other-month { opacity: 0.35; }
-    .month-day-num  { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; font-family: var(--font-display); }
+    .month-day-num  { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.3rem; font-family: var(--font-display); }
     .month-day-dots { display: flex; gap: 0.2rem; flex-wrap: wrap; margin-top: 0.2rem; }
     .month-dot      { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .month-dot.class-dot    { background: var(--gold); }
