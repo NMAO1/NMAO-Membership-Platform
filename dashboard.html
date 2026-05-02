@@ -2312,11 +2312,7 @@ var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','s
 var DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var MONTHS     = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MILESTONES = [10,25,50,100,200,300,400,500,600,700,800,900,1000];
-var ANIMATIONS = [
-  {key:'confetti',icon:'🎊',label:'Gold Confetti'},{key:'belt',icon:'🥋',label:'Flying Belt'},
-  {key:'stars',icon:'⭐',label:'Star Burst'},{key:'fire',icon:'🔥',label:'Fire Rise'},
-  {key:'petals',icon:'🌸',label:'Petal Shower'},{key:'lightning',icon:'⚡',label:'Lightning'},
-  {key:'trophy',icon:'🏆',label:'Trophy Drop'},{key:'bullseye',icon:'🎯',label:'Bulls Eye'}
+
 ];
 var DEFAULT_MESSAGES = {
   10:'You showed up. You did the work. The journey has begun.',
@@ -4750,14 +4746,11 @@ function buildMilestonesEditor(){
   var el=document.getElementById('milestonesEditor'); if(!el) return; var html='';
   for(var i=0;i<MILESTONES.length;i++){
     var m=MILESTONES[i]; var saved=milestoneSettings[m]||{}; var selAnim=saved.animation||'confetti'; var msg=saved.message||DEFAULT_MESSAGES[m]||'';
-    var animBtns='';
-    for(var j=0;j<ANIMATIONS.length;j++){var a=ANIMATIONS[j];animBtns+='<div class="anim-option'+(a.key===selAnim?' selected':'')+'" onclick="selectAnim('+m+',\''+a.key+'\',this)" data-anim="'+a.key+'"><div class="anim-icon">'+a.icon+'</div><div class="anim-label">'+a.label+'</div></div>';}
- html+='<div class="milestone-row" id="mrow-'+m+'"><div class="milestone-row-header" onclick="toggleMilestone(\'mbody-'+m+'\')"><div class="milestone-number">'+m+' Classes</div><div style="font-size:0.82rem;color:var(--muted);flex:1">'+msg.slice(0,45)+'...</div><i class="fa-solid fa-chevron-down" style="color:var(--muted);font-size:0.75rem"></i></div><div class="milestone-body" id="mbody-'+m+'"><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">'+animBtns+'</div><div class="field"><label>Celebration Message</label><textarea id="mmsg-'+m+'" rows="4">'+msg+'</textarea></div><button type="button" class="btn-secondary" style="margin-top:0.5rem" onclick="previewMilestone('+m+')"><i class="fa-solid fa-play" style="margin-right:0.4rem"></i>Preview Celebration</button></div></div>';
+ html+='<div class="milestone-row" id="mrow-'+m+'"><div class="milestone-row-header" onclick="toggleMilestone(\'mbody-'+m+'\')"><div class="milestone-number">'+m+' Classes</div><div style="font-size:0.82rem;color:var(--muted);flex:1">'+msg.slice(0,45)+'...</div><i class="fa-solid fa-chevron-down" style="color:var(--muted);font-size:0.75rem"></i></div><div class="milestone-body" id="mbody-'+m+'"><div class="field"><label>Celebration Message</label><textarea id="mmsg-'+m+'" rows="4">'+msg+'</textarea></div><button type="button" class="btn-secondary" style="margin-top:0.5rem" onclick="previewMilestone('+m+')"><i class="fa-solid fa-play" style="margin-right:0.4rem"></i>Preview Celebration</button></div></div>';
   }
   el.innerHTML=html;
 }
 function toggleMilestone(id){ var el=document.getElementById(id); if(el) el.style.display=el.style.display==='block'?'none':'block'; }
-function selectAnim(milestone,animKey,clickedEl){ var row=document.getElementById('mrow-'+milestone);if(row){var opts=row.querySelectorAll('.anim-option');for(var i=0;i<opts.length;i++)opts[i].classList.remove('selected');}clickedEl.classList.add('selected'); }
 window.previewMilestone = function(milestone){
   var slug = (window.schoolData && window.schoolData.slug) || "";
   if (!slug) { alert("School slug not loaded yet. Try again in a moment."); return; }
@@ -4774,7 +4767,7 @@ window.previewMilestone = function(milestone){
 };
 async function saveMilestones(){
   var settings={};
-  for(var i=0;i<MILESTONES.length;i++){var m=MILESTONES[i];var row=document.getElementById('mrow-'+m);var selEl=row?row.querySelector('.anim-option.selected'):null;var anim=selEl?selEl.dataset.anim:'confetti';var msgEl=document.getElementById('mmsg-'+m);settings[m]={animation:anim,message:msgEl?msgEl.value.trim():''};}
+  for(var i=0;i<MILESTONES.length;i++){var m=MILESTONES[i];var row=document.getElementById('mrow-'+m);var msgEl=document.getElementById('mmsg-'+m);settings[m]={message:msgEl?msgEl.value.trim():''};}
   setMsg('milestonesMsg','Saving...','');
   var r=await sb.from('schools').update({milestone_messages:settings}).eq('id',SID);
   if(r.error){setMsg('milestonesMsg',r.error.message,'error');}else{milestoneSettings=settings;setMsg('milestonesMsg','Saved!','success');setTimeout(function(){document.getElementById('milestonesMsg').textContent='';},3000);}
