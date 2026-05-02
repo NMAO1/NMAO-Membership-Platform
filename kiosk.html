@@ -709,7 +709,6 @@ async function showCelebration(student,classCount,beltColor,callback){
         confetti({particleCount:60,angle:120,spread:55,origin:{x:1,y:0.7},colors:goldColors,zIndex:1000});
       },800);
     }
-  }else{milestoneEl.style.display='none';}
     var newCelebrated=celebrated.concat([hit]);
     student.celebrated_milestones=newCelebrated;
     await sb.from('students').update({celebrated_milestones:newCelebrated}).eq('id',student.id);
