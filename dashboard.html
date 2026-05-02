@@ -2833,18 +2833,16 @@ function shiftMonth(dir) { calMonthOffset+=dir; buildMonthCalendar(); }
 // §CALENDAR — batch load enrollment counts for all classes
 async function fetchEnrollmentCounts() {
   try {
-    var r = await sb.from('class_enrollments').select('class_id')
+    var r = await sb.from('class_enrollments').select('class_id,session_date')
       .eq('school_id', SID).in('status', ['active','enrolled']);
     enrollmentCounts = {};
     (r.data || []).forEach(function(row) {
-      enrollmentCounts[row.class_id] = (enrollmentCounts[row.class_id] || 0) + 1;
+      if (!enrollmentCounts[row.class_id]) enrollmentCounts[row.class_id] = {};
+      var d = row.session_date;
+      enrollmentCounts[row.class_id][d] = (enrollmentCounts[row.class_id][d] || 0) + 1;
     });
   } catch(e) {
-    // Fallback: use cached enrolled_count column from allClasses
     enrollmentCounts = {};
-    allClasses.forEach(function(c) {
-      if (c.enrolled_count) enrollmentCounts[c.id] = parseInt(c.enrolled_count);
-    });
   }
 }
 
@@ -2860,7 +2858,7 @@ function buildCalendar(){
     var html='<div class="cal-day-num">'+d.getDate()+'</div>';
     var dn=DAYS[d.getDay()];
     var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-    dayClasses.forEach(function(c){var cname=(c.name||c.title||'Class').replace(/'/g,'');html+='<div class="cal-event class-event" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dStr+'\')" style="display:flex;align-items:center;gap:0.2rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+cname+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';});
+    dayClasses.forEach(function(c){var cname=(c.name||c.title||'Class').replace(/'/g,'');html+='<div class="cal-event class-event" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dStr+'\')" style="display:flex;align-items:center;gap:0.2rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+cname+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill',d.toISOString().split('T')[0])+'</div>';});
     var daySessions=allSessions.filter(function(s){return s.session_date===dStr;});
     daySessions.forEach(function(s){var st=allSessionTypes.find(function(t){return t.id===s.session_type_id;});var typeName=(st?st.name:'Session').replace(/'/g,'');html+='<div class="cal-event session-event" onclick="openBookSession(\''+s.id+'\')">'+fmtTime(s.start_time)+' '+typeName+'</div>';});
     allStudents.forEach(function(s){if(!s.date_of_birth)return;var dob=new Date(s.date_of_birth+'T00:00:00');if(dob.getMonth()===d.getMonth()&&dob.getDate()===d.getDate()){html+='<div class="cal-event birthday-event">\uD83C\uDF82 '+s.first_name+'</div>';}});
@@ -2912,7 +2910,7 @@ function openDayView(dateStr,dayName){
   var html='';
   if(dayClasses.length){
     html+='<div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Classes</div>';
-    dayClasses.forEach(function(c){var cname=c.name||c.title||'Class';html+='<div class="class-card" style="margin-bottom:0.75rem;cursor:pointer" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dateStr+'\')"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+cname+'</div>'+enrollBadgeHTML(c.id,c.capacity,'full')+'</div><div class="class-actions"><button class="btn-sm gold" onclick="event.stopPropagation();openAttendance(\''+c.id+'\',\''+cname.replace(/'/g,'')+'\')">Attendance</button></div></div>';});
+    dayClasses.forEach(function(c){var cname=c.name||c.title||'Class';html+='<div class="class-card" style="margin-bottom:0.75rem;cursor:pointer" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dateStr+'\')"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+cname+'</div>'+enrollBadgeHTML(c.id,c.capacity,'full',dateStr)+'</div><div class="class-actions"><button class="btn-sm gold" onclick="event.stopPropagation();openAttendance(\''+c.id+'\',\''+cname.replace(/'/g,'')+'\')">Attendance</button></div></div>';});
   }
   if(daySessions.length){
     html+='<div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:#9060D0;margin:1rem 0 0.5rem">Sessions</div>';
@@ -3023,7 +3021,7 @@ function classCardHTML(c){
   var dn=c.name||c.title||'Untitled'; var st=dn.replace(/'/g,'');
   var instr=c.instructor_name?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem"></i>'+c.instructor_name+'</div>':'';
   var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'');
-  var enroll=enrollBadgeHTML(c.id,c.capacity,'full');
+  var enroll='';
   return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+enroll+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
 }
 function buildWeekGrid(){
@@ -6027,8 +6025,9 @@ async function connectStripe(){
 // ─────────────────────────────── §UTILS ───────────────────────────────
 
 // §UTILS — RSVP enrollment badge for calendar pills and class cards
-function enrollBadgeHTML(classId, capacity, style) {
-  var enrolled = enrollmentCounts[classId] || 0;
+function enrollBadgeHTML(classId, capacity, style, dateStr) {
+  var classMap = enrollmentCounts[classId] || {};
+  var enrolled = dateStr ? (classMap[dateStr] || 0) : 0;
   var cap      = parseInt(capacity) || 0;
   if (!enrolled && !cap) return '';
   var color = !cap ? '#9A8F80'
