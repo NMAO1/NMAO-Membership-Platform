@@ -418,10 +418,10 @@
         <button class="panel-action" style="font-size:0.72rem" onclick="markAllPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
       </div>
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
-        <button class="btn-sm" id="attTabRsvp"     onclick="switchAttTab('rsvp')" style="border-color:var(--gold);color:var(--gold)">RSVP'd</button>
-        <button class="btn-sm" id="attTabChecked"  onclick="switchAttTab('checked')">Checked In</button>
-        <button class="btn-sm" id="attTabEligible" onclick="switchAttTab('eligible')">Eligible</button>
-        <button class="btn-sm" id="attTabAll"      onclick="switchAttTab('all')">All Students</button>
+        <button class="btn-sm" id="rosterTabRsvp"     onclick="switchRosterTab('rsvp')" style="border-color:var(--gold);color:var(--gold)">RSVP'd</button>
+        <button class="btn-sm" id="rosterTabChecked"  onclick="switchRosterTab('checked')">Checked In</button>
+        <button class="btn-sm" id="rosterTabEligible" onclick="switchRosterTab('eligible')">Eligible</button>
+        <button class="btn-sm" id="rosterTabAll"      onclick="switchRosterTab('all')">All Students</button>
       </div>
 <div id="classRosterList" style="display:flex;flex-direction:column;gap:0.4rem;max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
 
@@ -1619,25 +1619,7 @@
   </div>
 </div>
 
-<!-- §MODAL-ATTENDANCE -->
-<div class="modal-overlay" id="attendanceModal">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="attendanceModalTitle">Class Attendance</span><button class="modal-close" onclick="closeAttendance()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Date</div><div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white)" id="attendanceDate"></div></div>
-        <div style="text-align:right"><div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">Present</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)" id="attendanceCount">0</div></div>
-      </div>
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-        <button class="btn-sm" id="attTabChecked"  onclick="switchAttTab('checked')" style="border-color:var(--gold);color:var(--gold)">Checked In</button>
-        <button class="btn-sm" id="attTabEligible" onclick="switchAttTab('eligible')">Eligible</button>
-        <button class="btn-sm" id="attTabAll"      onclick="switchAttTab('all')">All Students</button>
-      </div>
-      <div id="attendanceList" style="display:flex;flex-direction:column;gap:0.35rem;max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
-      <p class="form-msg" id="attendanceMsg"></p>
-    </div>
-  </div>
-</div>
+
 
 <!-- §MODAL-CLASS -->
 <div class="modal-overlay" id="addClassModal">
@@ -2363,7 +2345,7 @@ var enrollmentCounts = {};
 // UI state
 var currentProfileStudent   = null, currentProfileBeltLevels = [], currentProfileTags = [];
 var currentBeltSystemId     = null, currentBeltLevelId = null;
-var currentAttendanceClassId= null, currentSessionId = null, attendanceRecords = {}, rsvpStudentIds = {};var currentAttTab           = 'rsvp';
+var rosterRsvpIds = {};
 var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSessionId = null;
 var rosterAttendance        = {};
 var currentRosterTab = 'all';
@@ -2933,7 +2915,7 @@ function closeDayPopover() { document.getElementById('dayPopover').style.display
 
 // Roster from calendar
 async function openClassRosterFromCal(classId,dateStr){
-  currentRosterClassId=classId; currentRosterSessionId=null; rosterAttendance={};
+  currentRosterClassId=classId; currentRosterSessionId=null; rosterAttendance={}; rosterRsvpIds={};
   var cls=allClasses.find(function(c){return c.id===classId;}); if(!cls) return;
   var cname=cls.name||cls.title||'Class';
   document.getElementById('classRosterTitle').textContent=cname;
@@ -2945,10 +2927,15 @@ async function openClassRosterFromCal(classId,dateStr){
   if(sr.data&&sr.data.length){currentRosterSessionId=sr.data[0].id;}
   else{var cr=await sb.from('class_sessions').insert({class_id:classId,school_id:SID,session_date:dateStr,status:'scheduled'}).select().single();if(!cr.error)currentRosterSessionId=cr.data.id;}
   if(currentRosterSessionId){var ar=await sb.from('class_attendance').select('*').eq('session_id',currentRosterSessionId);if(ar.data)ar.data.forEach(function(x){rosterAttendance[x.student_id]=x.id;});}
+  try{
+    var rr=await sb.from('class_enrollments').select('student_id,status').eq('class_id',classId).eq('school_id',SID).eq('session_date',dateStr).in('status',['enrolled','attended']);
+    if(rr.data)rr.data.forEach(function(row){rosterRsvpIds[row.student_id]=row.status;});
+  }catch(e){console.error('roster RSVP load:',e);}
   var studR=await sb.from('students').select('*').eq('school_id',SID).in('status',['active','trial']).order('last_name');
   var students=studR.data||[];
   currentRosterStudents = students;
-  switchRosterTab('all');
+  currentRosterTab='rsvp';
+  switchRosterTab('rsvp');
 }
 async function toggleRosterAttendance(sid){
   var btn=document.getElementById('rbtn-'+sid); var row=document.getElementById('rrow-'+sid);
@@ -2977,7 +2964,7 @@ async function markAllPresent(){
 }
   function switchRosterTab(tab) {
   currentRosterTab = tab;
-  var tabs = ['checked','eligible','all'];
+  var tabs = ['rsvp','checked','eligible','all'];
   tabs.forEach(function(t) {
     var btn = document.getElementById('rosterTab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (btn) {
@@ -2988,18 +2975,27 @@ async function markAllPresent(){
   var list = document.getElementById('classRosterList');
   var students = currentRosterStudents;
   var filtered;
-  if (tab === 'checked')       filtered = students.filter(function(s){ return !!rosterAttendance[s.id]; });
-  else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id]; });
+  if (tab === 'rsvp')          filtered = students.filter(function(s){ return !!rosterRsvpIds[s.id]; });
+  else if (tab === 'checked')  filtered = students.filter(function(s){ return !!rosterAttendance[s.id]; });
+  else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id] && !rosterRsvpIds[s.id]; });
   else                         filtered = students;
+  document.getElementById('classRosterCount').textContent = Object.keys(rosterAttendance).length;
   if (!filtered.length) {
-    list.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">' +
-      (tab === 'checked' ? 'No one checked in yet.' : tab === 'eligible' ? 'All students checked in!' : 'No active students.') + '</div>';
+    var emptyMsg = tab === 'rsvp' ? 'No RSVPs for this class yet.'
+                 : tab === 'checked' ? 'No one checked in yet.'
+                 : tab === 'eligible' ? 'All students accounted for.'
+                 : 'No active students.';
+    list.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">' + emptyMsg + '</div>';
     return;
   }
   list.innerHTML = filtered.map(function(s) {
     var present = !!rosterAttendance[s.id];
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
-      '<div style="font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + '</div>' +
+    var rsvpStatus = rosterRsvpIds[s.id];
+    var rsvpBadge = '';
+    if (rsvpStatus === 'attended') rsvpBadge = '<span style="font-size:0.62rem;color:var(--gold);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">checked in</span>';
+    else if (rsvpStatus === 'enrolled') rsvpBadge = '<span style="font-size:0.62rem;color:var(--muted2);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">expected</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : rsvpStatus ? 'rgba(201,168,76,0.4)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
+      '<div style="font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + rsvpBadge + '</div>' +
       '<button onclick="toggleRosterAttendance(\'' + s.id + '\')" id="rbtn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:' + (present ? 'var(--gold)' : 'var(--muted)') + '">' +
         '<i class="fa-solid ' + (present ? 'fa-circle-check' : 'fa-circle') + '"></i>' +
       '</button>' +
@@ -3111,78 +3107,12 @@ function populateInstructorDropdown(){
   allInstructors.forEach(function(i){var o=document.createElement('option');o.value=i.first_name+' '+i.last_name;o.textContent=i.first_name+' '+i.last_name;sel.appendChild(o);});
 }
 
-// Attendance modal
-async function openAttendance(classId,ct){
-  currentAttendanceClassId=classId; currentSessionId=null; attendanceRecords={}; currentAttTab='rsvp';
-  document.getElementById('attendanceModalTitle').textContent=ct+' - Attendance';
-  document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('attendanceCount').textContent='0';
-  document.getElementById('attendanceMsg').textContent='';
-  document.getElementById('attendanceList').innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Loading...</div>';
-  document.getElementById('attendanceModal').classList.add('active');
+// Attendance — single roster modal for all entry points
+function openAttendance(classId,ct){
   var today=new Date().toISOString().split('T')[0];
-  var sr=await sb.from('class_sessions').select('id').eq('class_id',classId).eq('session_date',today).limit(1);
-  if(sr.data&&sr.data.length){currentSessionId=sr.data[0].id;}
-  else{var cr=await sb.from('class_sessions').insert({class_id:classId,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
-  await loadRsvpStudents(classId,today);
-  await loadAttendanceStudents();
+  openClassRosterFromCal(classId,today);
 }
-
-async function loadRsvpStudents(classId,today){
-  rsvpStudentIds={};
-  try{
-    var r=await sb.from('class_enrollments').select('student_id,status').eq('class_id',classId).eq('school_id',SID).eq('session_date',today).in('status',['enrolled','attended']);
-    if(r.data)r.data.forEach(function(row){rsvpStudentIds[row.student_id]=row.status;});
-  }catch(e){console.error('loadRsvpStudents error:',e);}
-}
-function closeAttendance(){ document.getElementById('attendanceModal').classList.remove('active'); currentAttendanceClassId=null; currentSessionId=null; attendanceRecords={}; }
-async function loadAttendanceStudents(){
-  var list=document.getElementById('attendanceList');
-  var r=await sb.from('students').select('*').eq('school_id',SID).in('status',['active','trial']).order('last_name');
-  var data=r.data||[];
-  if(!data||!data.length){list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No active students.</div>';return;}
-  if(currentSessionId){var r2=await sb.from('class_attendance').select('*').eq('session_id',currentSessionId);if(r2.data)r2.data.forEach(function(x){attendanceRecords[x.student_id]=x.id;});}
-  document.getElementById('attendanceCount').textContent=Object.keys(attendanceRecords).length;
-  function renderStudentRow(s){var present=!!attendanceRecords[s.id];return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid '+(present?'rgba(201,168,76,0.3)':'var(--border)')+';border-left:2px solid '+(present?'var(--gold)':'var(--border)')+'" id="attrow-'+s.id+'"><div style="font-size:0.92rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div><button onclick="toggleAttendance(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')" id="attbtn-'+s.id+'" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:'+(present?'var(--gold)':'var(--muted)')+'"><i class="fa-solid '+(present?'fa-circle-check':'fa-circle')+'"></i></button></div>';}
-  window._attAllStudents=data; window._renderStudentRow=renderStudentRow;
-  switchAttTab(currentAttTab);
-}
-function switchAttTab(tab){
-  currentAttTab=tab;
-  var tabs=['rsvp','checked','eligible','all'];
-  tabs.forEach(function(t){var btn=document.getElementById('attTab'+t.charAt(0).toUpperCase()+t.slice(1));if(btn){btn.style.borderColor=t===tab?'var(--gold)':'var(--border)';btn.style.color=t===tab?'var(--gold)':'var(--muted)';}});
-  var list=document.getElementById('attendanceList'); var data=window._attAllStudents||[];
-  if(!data.length){list.innerHTML='';return;}
-  var renderRow=window._renderStudentRow||function(){return'';}; var html='';
-  if(tab==='rsvp'){
-    var rsvped=data.filter(function(s){return !!rsvpStudentIds[s.id];});
-    if(rsvped.length){
-      html=rsvped.map(function(s){
-        var status=rsvpStudentIds[s.id];
-        var statusBadge=status==='attended'?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.5rem">(checked in)</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.5rem">(expected)</span>';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid '+(status==='attended'?'var(--gold)':'rgba(201,168,76,0.4)')+'"><div style="font-size:0.92rem;color:var(--white)">'+s.first_name+' '+s.last_name+statusBadge+'</div></div>';
-      }).join('');
-    }else{
-      html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">No RSVPs for today yet.</div>';
-    }
-  }
-  else if(tab==='checked'){var checked=data.filter(function(s){return!!attendanceRecords[s.id];});html=checked.length?checked.map(renderRow).join(''):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">No one checked in yet.</div>';}
-  else if(tab==='eligible'){var eligible=data.filter(function(s){return!attendanceRecords[s.id];});html=eligible.length?eligible.map(renderRow).join(''):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">All students checked in!</div>';}
-  else{html=data.map(renderRow).join('');}
-  list.innerHTML=html;
-}
-async function toggleAttendance(sid,sn){
-  var btn=document.getElementById('attbtn-'+sid); var row=document.getElementById('attrow-'+sid);
-  if(attendanceRecords[sid]){
-    var del=await sb.from('class_attendance').delete().eq('id',attendanceRecords[sid]);
-    if(!del.error){delete attendanceRecords[sid];if(btn){btn.innerHTML='<i class="fa-solid fa-circle"></i>';btn.style.color='var(--muted)';}if(row)row.style.borderColor='var(--border)';}
-  }else{
-    if(!currentSessionId) return;
-    var ins=await sb.from('class_attendance').insert({session_id:currentSessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()}).select().single();
-    if(!ins.error){attendanceRecords[sid]=ins.data.id;if(btn){btn.innerHTML='<i class="fa-solid fa-circle-check"></i>';btn.style.color='var(--gold)';}if(row)row.style.borderColor='rgba(201,168,76,0.3)';setMsg('attendanceMsg',sn+' checked in!','success');}
-  }
-  document.getElementById('attendanceCount').textContent=Object.keys(attendanceRecords).length;
-}
+function closeAttendance(){ closeClassRoster(); }
 
 // Home stats
   async function buildMembershipAlertBanner(){
