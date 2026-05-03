@@ -852,20 +852,20 @@ async function detectUserTypeAndRoute(user){
       sb.from('instructors').select('*').eq('email',user.email).eq('active',true).maybeSingle()
     ]);
     var studentR=results[0],familyR=results[1],instrR=results[2];
-    if(!studentR.error&&studentR.data){
-      SID=studentR.data.school_id;
-      await loadSchoolBranding();
-      currentStudent=studentR.data;
-      sessionStorage.setItem('nmao_user_type','student');
-      if(!studentR.data.portal_onboarded){showOnboardingScreen(studentR.data);}
-      else{showStudentPortal(studentR.data);}
-    }else if(!familyR.error&&familyR.data){
-      SID=familyR.data.school_id;
-      await loadSchoolBranding();
-      currentFamily=familyR.data;
-      sessionStorage.setItem('nmao_user_type','family');
-      await showFamilyPortal(familyR.data);
-    }else if(!instrR.error&&instrR.data){
+    if(!familyR.error&&familyR.data){
+  SID=familyR.data.school_id;
+  await loadSchoolBranding();
+  currentFamily=familyR.data;
+  sessionStorage.setItem('nmao_user_type','family');
+  await showFamilyPortal(familyR.data);
+}else if(!studentR.error&&studentR.data){
+  SID=studentR.data.school_id;
+  await loadSchoolBranding();
+  currentStudent=studentR.data;
+  sessionStorage.setItem('nmao_user_type','student');
+  if(!studentR.data.portal_onboarded){showOnboardingScreen(studentR.data);}
+  else{showStudentPortal(studentR.data);}
+}else if(!instrR.error&&instrR.data){
       SID=instrR.data.school_id;
       await loadSchoolBranding();
       sessionStorage.setItem('nmao_user_type','instructor');
