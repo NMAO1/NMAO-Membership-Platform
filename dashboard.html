@@ -4275,7 +4275,30 @@ async function saveFamily(){
     showToast("Could not send invite: "+e.message,"err");
     return false;
   }
+  }
+    async function deleteFamily(fid){
+  var f=allFamilies.find(function(x){return x.id===fid;});
+  if(!f)return;
+  var students=allStudents.filter(function(s){return s.family_id===fid;});
+  var msg=students.length
+    ?"Delete the "+f.name+" family?\n\n"+students.length+" linked student"+(students.length!==1?"s":"")+" will be unlinked but kept in the system."
+    :"Delete the "+f.name+" family?";
+  if(!confirm(msg))return;
+  try{
+    if(students.length){
+      var unlinkR=await sb.from("students").update({family_id:null}).eq("family_id",fid);
+      if(unlinkR.error)throw new Error("Could not unlink students: "+unlinkR.error.message);
+    }
+    var delR=await sb.from("families").delete().eq("id",fid);
+    if(delR.error)throw new Error(delR.error.message);
+    showToast(f.name+" deleted","ok");
+    await loadStudents();
+    await loadFamilies();
+  }catch(e){
+    showToast("Delete failed: "+e.message,"err");
+  }
 }
+
 // ─────────────────────────────── §INSTRUCTORS ───────────────────────────────
 
 async function loadInstructors(){
