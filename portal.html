@@ -1976,9 +1976,17 @@ async function confirmFamilySelections(){
         if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
         else{var cr=await sb.from('class_sessions').insert({class_id:sel.classId,school_id:SID,session_date:sel.dateStr,status:'scheduled'}).select().single();if(!cr.error)sessionId=cr.data.id;}
         if(sessionId){
-          var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
-          await sb.from('class_attendance').insert(attInserts);
-        }
+      var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
+      await sb.from('class_attendance').insert(attInserts);
+      // Sync class_enrollments: flip any matching enrolled rows to attended
+      await sb.from('class_enrollments')
+        .update({status:'attended'})
+        .eq('school_id',SID)
+        .eq('class_id',sel.classId)
+        .eq('session_date',sel.dateStr)
+        .in('student_id',studentIds)
+        .eq('status','enrolled');
+    }
       }catch(e){errors.push('Check-in error: '+e.message);}
     }else{
       try{
