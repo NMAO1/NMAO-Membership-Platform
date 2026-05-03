@@ -417,14 +417,17 @@
         <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Present <span id="classRosterCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.2rem;margin-left:0.3rem">0</span></div>
         <button class="panel-action" style="font-size:0.72rem" onclick="markAllPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
       </div>
-        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
         <button class="btn-sm" id="rosterTabRsvp"     onclick="switchRosterTab('rsvp')" style="border-color:var(--gold);color:var(--gold)">RSVP'd</button>
         <button class="btn-sm" id="rosterTabChecked"  onclick="switchRosterTab('checked')">Checked In</button>
         <button class="btn-sm" id="rosterTabEligible" onclick="switchRosterTab('eligible')">Eligible</button>
         <button class="btn-sm" id="rosterTabAll"      onclick="switchRosterTab('all')">All Students</button>
       </div>
+      <div id="rosterSearchWrap" style="display:none;margin-bottom:0.5rem;position:relative">
+        <input type="text" id="rosterSearchInput" placeholder="Search students..." oninput="renderRosterList()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.85rem 0.55rem 2.2rem;outline:none" />
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.82rem;pointer-events:none"></i>
+      </div>
 <div id="classRosterList" style="display:flex;flex-direction:column;gap:0.4rem;max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
-
       <p class="form-msg" id="classRosterMsg" style="margin-top:0.75rem"></p>
     </div>
   </div>
@@ -2812,18 +2815,39 @@ function initCalView(){
 function shiftWeek(dir)  { calWeekOffset+=dir; buildCalendar(); }
 function shiftMonth(dir) { calMonthOffset+=dir; buildMonthCalendar(); }
 
-// §CALENDAR — batch load enrollment counts for all classes
+// §CALENDAR — batch load enrollment counts. A student counts if they
+// either RSVP'd (class_enrollments) or were checked in (class_attendance).
+// Dedupe by student so a checked-in RSVP only counts once.
 async function fetchEnrollmentCounts() {
   try {
-    var r = await sb.from('class_enrollments').select('class_id,session_date')
-      .eq('school_id', SID).in('status', ['active','enrolled']);
     enrollmentCounts = {};
-    (r.data || []).forEach(function(row) {
-      if (!enrollmentCounts[row.class_id]) enrollmentCounts[row.class_id] = {};
-      var d = row.session_date;
-      enrollmentCounts[row.class_id][d] = (enrollmentCounts[row.class_id][d] || 0) + 1;
+    var seen = {}; // { classId: { dateStr: { studentId: true } } }
+    var ensure = function(cid, d){
+      if(!seen[cid]) seen[cid] = {};
+      if(!seen[cid][d]) seen[cid][d] = {};
+      return seen[cid][d];
+    };
+    var r1 = await sb.from('class_enrollments').select('class_id,session_date,student_id')
+      .eq('school_id', SID).in('status', ['enrolled','attended']);
+    (r1.data || []).forEach(function(row){
+      if(!row.class_id || !row.session_date || !row.student_id) return;
+      ensure(row.class_id, row.session_date)[row.student_id] = true;
+    });
+    var r2 = await sb.from('class_attendance').select('student_id,class_sessions(class_id,session_date)')
+      .eq('school_id', SID);
+    (r2.data || []).forEach(function(row){
+      var sess = row.class_sessions;
+      if(!sess || !sess.class_id || !sess.session_date || !row.student_id) return;
+      ensure(sess.class_id, sess.session_date)[row.student_id] = true;
+    });
+    Object.keys(seen).forEach(function(cid){
+      enrollmentCounts[cid] = {};
+      Object.keys(seen[cid]).forEach(function(d){
+        enrollmentCounts[cid][d] = Object.keys(seen[cid][d]).length;
+      });
     });
   } catch(e) {
+    console.error('fetchEnrollmentCounts:', e);
     enrollmentCounts = {};
   }
 }
@@ -2938,22 +2962,15 @@ async function openClassRosterFromCal(classId,dateStr){
   switchRosterTab('rsvp');
 }
 async function toggleRosterAttendance(sid){
-  var btn=document.getElementById('rbtn-'+sid); var row=document.getElementById('rrow-'+sid);
   if(rosterAttendance[sid]){
-    await sb.from('class_attendance').delete().eq('id',rosterAttendance[sid]);
-    delete rosterAttendance[sid];
-    if(btn){btn.innerHTML='<i class="fa-solid fa-circle"></i>';btn.style.color='var(--muted)';}
-    if(row){row.style.borderColor='var(--border)';row.style.borderLeftColor='var(--border)';}
+    var del=await sb.from('class_attendance').delete().eq('id',rosterAttendance[sid]);
+    if(!del.error){ delete rosterAttendance[sid]; }
   }else{
     if(!currentRosterSessionId) return;
     var ins=await sb.from('class_attendance').insert({session_id:currentRosterSessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()}).select().single();
-    if(!ins.error){
-      rosterAttendance[sid]=ins.data.id;
-      if(btn){btn.innerHTML='<i class="fa-solid fa-circle-check"></i>';btn.style.color='var(--gold)';}
-      if(row){row.style.borderColor='rgba(201,168,76,0.3)';row.style.borderLeftColor='var(--gold)';}
-    }
+    if(!ins.error){ rosterAttendance[sid]=ins.data.id; }
   }
-  document.getElementById('classRosterCount').textContent=Object.keys(rosterAttendance).length;
+  renderRosterList();
 }
 async function markAllPresent(){
   if(!currentRosterSessionId) return;
@@ -2972,19 +2989,38 @@ async function markAllPresent(){
       btn.style.color       = t === tab ? 'var(--gold)' : 'var(--muted)';
     }
   });
+  var searchWrap = document.getElementById('rosterSearchWrap');
+  var searchInput = document.getElementById('rosterSearchInput');
+  if (searchWrap) searchWrap.style.display = (tab === 'eligible' || tab === 'all') ? 'block' : 'none';
+  if (searchInput) searchInput.value = '';
+  renderRosterList();
+}
+
+function renderRosterList() {
+  var tab = currentRosterTab || 'rsvp';
   var list = document.getElementById('classRosterList');
-  var students = currentRosterStudents;
+  if (!list) return;
+  var students = currentRosterStudents || [];
   var filtered;
   if (tab === 'rsvp')          filtered = students.filter(function(s){ return !!rosterRsvpIds[s.id]; });
   else if (tab === 'checked')  filtered = students.filter(function(s){ return !!rosterAttendance[s.id]; });
   else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id] && !rosterRsvpIds[s.id]; });
   else                         filtered = students;
+  if (tab === 'eligible' || tab === 'all') {
+    var qEl = document.getElementById('rosterSearchInput');
+    var q = qEl ? qEl.value.toLowerCase().trim() : '';
+    if (q) filtered = filtered.filter(function(s){ return (s.first_name + ' ' + s.last_name).toLowerCase().indexOf(q) !== -1; });
+  }
   document.getElementById('classRosterCount').textContent = Object.keys(rosterAttendance).length;
   if (!filtered.length) {
-    var emptyMsg = tab === 'rsvp' ? 'No RSVPs for this class yet.'
-                 : tab === 'checked' ? 'No one checked in yet.'
-                 : tab === 'eligible' ? 'All students accounted for.'
-                 : 'No active students.';
+    var qEl2 = document.getElementById('rosterSearchInput');
+    var hasQuery = (tab === 'eligible' || tab === 'all') && qEl2 && qEl2.value.trim();
+    var emptyMsg;
+    if (hasQuery) emptyMsg = 'No students match your search.';
+    else if (tab === 'rsvp') emptyMsg = 'No RSVPs for this class yet.';
+    else if (tab === 'checked') emptyMsg = 'No one checked in yet.';
+    else if (tab === 'eligible') emptyMsg = 'All students accounted for.';
+    else emptyMsg = 'No active students.';
     list.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">' + emptyMsg + '</div>';
     return;
   }
@@ -3002,8 +3038,18 @@ async function markAllPresent(){
     '</div>';
   }).join('');
 }
-function closeClassRoster(){ document.getElementById('classRosterModal').classList.remove('active'); currentRosterClassId=null; currentRosterSessionId=null; rosterAttendance={}; }
-
+function closeClassRoster(){
+  document.getElementById('classRosterModal').classList.remove('active');
+  currentRosterClassId=null;
+  currentRosterSessionId=null;
+  rosterAttendance={};
+  rosterRsvpIds={};
+  fetchEnrollmentCounts().then(function(){
+    buildCalendar();
+    buildWeekGrid();
+    if(calView==='month') buildMonthCalendar();
+  });
+}
 // ─────────────────────────────── §SCHEDULE ───────────────────────────────
 
 function getTodayClasses(){ var today=DAYS[new Date().getDay()]; return allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;}); }
