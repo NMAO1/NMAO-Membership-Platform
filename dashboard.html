@@ -3678,7 +3678,7 @@ async function saveStudent() {
   if (!pid)  { setMsg('studentMsg','Please select a program.','error'); return; }
   if (!mid)  { setMsg('studentMsg','Please select a membership.','error'); return; }
   setMsg('studentMsg','Saving...','');
-  var payload = { first_name:first, last_name:last, email:document.getElementById('stuEmail').value.trim(), phone:document.getElementById('stuPhone').value.trim(), date_of_birth:document.getElementById('stuDOB').value||null, program_id:pid, membership_id:mid, plan_type:'membership', status:document.getElementById('stuStatus').value, start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0], notes:document.getElementById('stuNotes').value.trim()||null };
+  var payload = { first_name:first, last_name:last, email:document.getElementById('studentEmail').value.trim().toLowerCase(), phone:document.getElementById('stuPhone').value.trim(), date_of_birth:document.getElementById('stuDOB').value||null, program_id:pid, membership_id:mid, plan_type:'membership', status:document.getElementById('stuStatus').value, start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0], notes:document.getElementById('stuNotes').value.trim()||null };
   var r; if (eid) { r=await sb.from('students').update(payload).eq('id',eid); } else { payload.school_id=SID; r=await sb.from('students').insert(payload); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
   else { setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200); }
@@ -4226,7 +4226,7 @@ async function saveFamily(){
   var notesEl=document.getElementById("familyNotes");
   var payload={
     name:name,
-    email:document.getElementById("familyEmail").value.trim(),
+    email:document.getElementById("familyEmail").value.trim().toLowerCase(),
     phone:document.getElementById("familyPhone").value.trim(),
     notes:notesEl?notesEl.value.trim():null
   };
@@ -4356,7 +4356,7 @@ async function saveInstructor(){
   var last=document.getElementById('instrLast').value.trim();
   if(!first||!last){setMsg('instructorMsg','First and last name required.','error');return;}
   setMsg('instructorMsg','Saving...','');
-  var payload={first_name:first,last_name:last,email:document.getElementById('instrEmail').value.trim(),phone:document.getElementById('instrPhone').value.trim(),specialties:document.getElementById('instrSpecialties').value.trim()||null,bio:document.getElementById('instrBio').value.trim()||null,payroll_rate:parseFloat(document.getElementById('instrPayrollRate').value)||0,payroll_type:document.getElementById('instrPayrollType').value,notes:document.getElementById('instrNotes').value.trim()||null,active:true};
+  var payload={first_name:first,last_name:last,email:document.getElementById('instrEmail').value.trim().toLowerCase(),phone:document.getElementById('instrPhone').value.trim(),specialties:document.getElementById('instrSpecialties').value.trim()||null,bio:document.getElementById('instrBio').value.trim()||null,payroll_rate:parseFloat(document.getElementById('instrPayrollRate').value)||0,payroll_type:document.getElementById('instrPayrollType').value,notes:document.getElementById('instrNotes').value.trim()||null,active:true};
   var r; if(eid){r=await sb.from('instructors').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('instructors').insert(payload);}
   if(r.error){setMsg('instructorMsg',r.error.message,'error');}else{setMsg('instructorMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadInstructors();setTimeout(closeAddInstructor,1000);}
 }
