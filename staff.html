@@ -1040,28 +1040,6 @@ function renderStudentRow(s,showCheckin){
     actionHtml+
   '</div>';
 }
-function renderEligibleRow(s,nextTest,nominatedIds,attCountMap){
-  var ini=(s.first_name[0]+(s.last_name?s.last_name[0]:'')).toUpperCase();
-  var beltLevel=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
-  var idx=beltLevel?allBeltLevels.indexOf(beltLevel):-1;
-  var nextLevel=allBeltLevels[idx+1]||null;
-  var fromName=beltLevel?beltLevel.name:'Starting';
-  var toName=nextLevel?nextLevel.name:'—';
-  var fromColor=beltLevel?beltLevel.color_hex:'#888';
-  var toColor=nextLevel?nextLevel.color_hex:'#888';
-  var attCount=attCountMap[s.id]||0;
-  var required=nextLevel?(nextLevel.classes_required||0):0;
-  var isNominated=nominatedIds&&nominatedIds.has(s.id);
-
-  var actionHtml='';
-  if(!nextTest){
-    // No test scheduled — button disabled
-    actionHtml='<button disabled style="height:40px;padding:0 0.85rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;cursor:not-allowed;opacity:0.5">No Test</button>';
-  }else if(isNominated){
-    actionHtml='<button disabled style="height:40px;padding:0 0.85rem;background:var(--green-bg);border:1px solid var(--green-border);color:#7DBD7D;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-check" style="margin-right:0.3rem"></i>Nominated</button>';
-  }else{
-    actionHtml='<button onclick="nominateForTest(\''+s.id+'\')" style="height:40px;padding:0 0.85rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s" id="nomBtn-'+s.id+'">Nominate</button>';
-  }
 
   function recomputeEligible(){
   eligibleStudentIds=new Set();
