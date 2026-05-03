@@ -417,11 +417,12 @@
         <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Present <span id="classRosterCount" style="color:var(--gold);font-family:var(--font-display);font-size:1.2rem;margin-left:0.3rem">0</span></div>
         <button class="panel-action" style="font-size:0.72rem" onclick="markAllPresent()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Mark All Present</button>
       </div>
-         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-  <button class="btn-sm" id="rosterTabChecked" onclick="switchRosterTab('checked')">Checked In</button>
-  <button class="btn-sm" id="rosterTabEligible" onclick="switchRosterTab('eligible')">Eligible</button>
-  <button class="btn-sm" id="rosterTabAll" onclick="switchRosterTab('all')" style="border-color:var(--gold);color:var(--gold)">All</button>
-</div>
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+        <button class="btn-sm" id="attTabRsvp"     onclick="switchAttTab('rsvp')" style="border-color:var(--gold);color:var(--gold)">RSVP'd</button>
+        <button class="btn-sm" id="attTabChecked"  onclick="switchAttTab('checked')">Checked In</button>
+        <button class="btn-sm" id="attTabEligible" onclick="switchAttTab('eligible')">Eligible</button>
+        <button class="btn-sm" id="attTabAll"      onclick="switchAttTab('all')">All Students</button>
+      </div>
 <div id="classRosterList" style="display:flex;flex-direction:column;gap:0.4rem;max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
 
       <p class="form-msg" id="classRosterMsg" style="margin-top:0.75rem"></p>
@@ -2362,8 +2363,7 @@ var enrollmentCounts = {};
 // UI state
 var currentProfileStudent   = null, currentProfileBeltLevels = [], currentProfileTags = [];
 var currentBeltSystemId     = null, currentBeltLevelId = null;
-var currentAttendanceClassId= null, currentSessionId = null, attendanceRecords = {};
-var currentAttTab           = 'eligible';
+var currentAttendanceClassId= null, currentSessionId = null, attendanceRecords = {}, rsvpStudentIds = {};var currentAttTab           = 'rsvp';
 var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSessionId = null;
 var rosterAttendance        = {};
 var currentRosterTab = 'all';
@@ -3113,7 +3113,7 @@ function populateInstructorDropdown(){
 
 // Attendance modal
 async function openAttendance(classId,ct){
-  currentAttendanceClassId=classId; currentSessionId=null; attendanceRecords={}; currentAttTab='eligible';
+  currentAttendanceClassId=classId; currentSessionId=null; attendanceRecords={}; currentAttTab='rsvp';
   document.getElementById('attendanceModalTitle').textContent=ct+' - Attendance';
   document.getElementById('attendanceDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   document.getElementById('attendanceCount').textContent='0';
@@ -3124,7 +3124,16 @@ async function openAttendance(classId,ct){
   var sr=await sb.from('class_sessions').select('id').eq('class_id',classId).eq('session_date',today).limit(1);
   if(sr.data&&sr.data.length){currentSessionId=sr.data[0].id;}
   else{var cr=await sb.from('class_sessions').insert({class_id:classId,school_id:SID,session_date:today,status:'scheduled'}).select().single();if(!cr.error)currentSessionId=cr.data.id;}
+  await loadRsvpStudents(classId,today);
   await loadAttendanceStudents();
+}
+
+async function loadRsvpStudents(classId,today){
+  rsvpStudentIds={};
+  try{
+    var r=await sb.from('class_enrollments').select('student_id,status').eq('class_id',classId).eq('school_id',SID).eq('session_date',today).in('status',['enrolled','attended']);
+    if(r.data)r.data.forEach(function(row){rsvpStudentIds[row.student_id]=row.status;});
+  }catch(e){console.error('loadRsvpStudents error:',e);}
 }
 function closeAttendance(){ document.getElementById('attendanceModal').classList.remove('active'); currentAttendanceClassId=null; currentSessionId=null; attendanceRecords={}; }
 async function loadAttendanceStudents(){
@@ -3140,12 +3149,24 @@ async function loadAttendanceStudents(){
 }
 function switchAttTab(tab){
   currentAttTab=tab;
-  var tabs=['checked','eligible','all'];
+  var tabs=['rsvp','checked','eligible','all'];
   tabs.forEach(function(t){var btn=document.getElementById('attTab'+t.charAt(0).toUpperCase()+t.slice(1));if(btn){btn.style.borderColor=t===tab?'var(--gold)':'var(--border)';btn.style.color=t===tab?'var(--gold)':'var(--muted)';}});
   var list=document.getElementById('attendanceList'); var data=window._attAllStudents||[];
   if(!data.length){list.innerHTML='';return;}
   var renderRow=window._renderStudentRow||function(){return'';}; var html='';
-  if(tab==='checked'){var checked=data.filter(function(s){return!!attendanceRecords[s.id];});html=checked.length?checked.map(renderRow).join(''):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">No one checked in yet.</div>';}
+  if(tab==='rsvp'){
+    var rsvped=data.filter(function(s){return !!rsvpStudentIds[s.id];});
+    if(rsvped.length){
+      html=rsvped.map(function(s){
+        var status=rsvpStudentIds[s.id];
+        var statusBadge=status==='attended'?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.5rem">(checked in)</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.5rem">(expected)</span>';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid '+(status==='attended'?'var(--gold)':'rgba(201,168,76,0.4)')+'"><div style="font-size:0.92rem;color:var(--white)">'+s.first_name+' '+s.last_name+statusBadge+'</div></div>';
+      }).join('');
+    }else{
+      html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">No RSVPs for today yet.</div>';
+    }
+  }
+  else if(tab==='checked'){var checked=data.filter(function(s){return!!attendanceRecords[s.id];});html=checked.length?checked.map(renderRow).join(''):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">No one checked in yet.</div>';}
   else if(tab==='eligible'){var eligible=data.filter(function(s){return!attendanceRecords[s.id];});html=eligible.length?eligible.map(renderRow).join(''):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">All students checked in!</div>';}
   else{html=data.map(renderRow).join('');}
   list.innerHTML=html;
