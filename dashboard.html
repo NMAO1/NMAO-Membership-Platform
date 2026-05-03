@@ -4206,7 +4206,11 @@ function renderFamilies(){
   if(!allFamilies.length){el.innerHTML='<div class="no-classes">No families yet.</div>';return;}
   el.innerHTML=allFamilies.map(function(f){
     var students=allStudents.filter(function(s){return s.family_id===f.id;});
-    return '<div class="panel" style="margin-bottom:1rem"><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white);margin-bottom:0.35rem"><i class="fa-solid fa-people-roof" style="color:var(--gold);margin-right:0.5rem"></i>'+f.name+'</div><div style="font-size:0.85rem;color:var(--muted)">'+(f.email||'--')+(f.phone?' \u00B7 '+f.phone:'')+'</div>'+(students.length?'<div style="font-size:0.78rem;color:var(--muted2);margin-top:0.3rem">'+students.map(function(s){return s.first_name+' '+s.last_name;}).join(', ')+'</div>':'')+'</div><button class="btn-sm gold" onclick="openEditFamily(\''+f.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div></div>';
+    var hasEmail=f.email&&f.email.indexOf("@")!==-1;
+    var safeName=(f.name||"").replace(/'/g,"\\'");
+    var safeEmail=(f.email||"").replace(/'/g,"\\'");
+    var inviteBtn=hasEmail?'<button class="btn-sm" onclick="sendFamilyPortalInvite(\''+safeEmail+'\',\''+safeName+'\')" title="Send portal sign-in link" style="margin-right:0.4rem"><i class="fa-solid fa-paper-plane"></i> Invite</button>':'';
+    return '<div class="panel" style="margin-bottom:1rem"><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem"><div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white);margin-bottom:0.35rem"><i class="fa-solid fa-people-roof" style="color:var(--gold);margin-right:0.5rem"></i>'+f.name+'</div><div style="font-size:0.85rem;color:var(--muted)">'+(f.email||'--')+(f.phone?' \u00B7 '+f.phone:'')+'</div>'+(students.length?'<div style="font-size:0.78rem;color:var(--muted2);margin-top:0.3rem">'+students.map(function(s){return s.first_name+' '+s.last_name;}).join(', ')+'</div>':'')+'</div><div style="flex-shrink:0;display:flex;align-items:center">'+inviteBtn+'<button class="btn-sm gold" onclick="openEditFamily(\''+f.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div></div></div>';
   }).join('');
 }
 function openAddFamily(){ document.getElementById('addFamilyTitle').textContent='Add Family';document.getElementById('familyEditId').value='';document.getElementById('familyName').value='';document.getElementById('familyEmail').value='';document.getElementById('familyPhone').value='';document.getElementById('familyNotes').value='';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='none';document.getElementById('addFamilyModal').classList.add('active'); }
@@ -4217,13 +4221,60 @@ function searchFamilyStudent(){ var q=document.getElementById('familyStudentSear
 async function linkFamilyStudent(sid,fid){ if(!fid) return; await sb.from('students').update({family_id:fid}).eq('id',sid); await loadStudents(); renderFamilyLinkedStudents(fid); document.getElementById('familyStudentSearch').value=''; document.getElementById('familyStudentSearchResults').style.display='none'; }
 function closeAddFamily(){ document.getElementById('addFamilyModal').classList.remove('active'); }
 async function saveFamily(){
-  var eid=document.getElementById('familyEditId').value;
-  var name=document.getElementById('familyName').value.trim();
-  if(!name){setMsg('familyMsg','Family name required.','error');return;}
-  setMsg('familyMsg','Saving...','');
-  var payload={name:name,email:document.getElementById('familyEmail').value.trim(),phone:document.getElementById('familyPhone').value.trim()};
-  var r; if(eid){r=await sb.from('families').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('families').insert(payload);}
-  if(r.error){setMsg('familyMsg',r.error.message,'error');}else{setMsg('familyMsg',eid?'Updated!':'Family added!','success');await loadFamilies();setTimeout(closeAddFamily,1000);}
+  var eid=document.getElementById("familyEditId").value;
+  var name=document.getElementById("familyName").value.trim();
+  if(!name){setMsg("familyMsg","Family name required.","error");return;}
+  setMsg("familyMsg","Saving...","");
+  var notesEl=document.getElementById("familyNotes");
+  var payload={
+    name:name,
+    email:document.getElementById("familyEmail").value.trim(),
+    phone:document.getElementById("familyPhone").value.trim(),
+    notes:notesEl?notesEl.value.trim():null
+  };
+  var r;
+  var isNew=!eid;
+  if(eid){
+    r=await sb.from("families").update(payload).eq("id",eid);
+  }else{
+    payload.school_id=SID;
+    r=await sb.from("families").insert(payload);
+  }
+  if(r.error){
+    setMsg("familyMsg",r.error.message,"error");
+    return;
+  }
+  setMsg("familyMsg",isNew?"Family added!":"Updated!","success");
+  // Auto-send portal invite on new family creation only
+  if(isNew&&payload.email){
+    await sendFamilyPortalInvite(payload.email,payload.name);
+  }
+  await loadFamilies();
+  setTimeout(closeAddFamily,1000);
+}
+  async function sendFamilyPortalInvite(email,familyName){
+  if(!email||!email.includes("@")){
+    showToast("No email on file for "+familyName+" — cannot send invite","warn");
+    return false;
+  }
+  try{
+    var r=await sb.auth.signInWithOtp({
+      email:email,
+      options:{
+        emailRedirectTo:"https://nmao1.github.io/NMAO-Membership-Platform/portal.html",
+        shouldCreateUser:true
+      }
+    });
+    if(r.error){
+      showToast("Could not send invite: "+r.error.message,"err");
+      return false;
+    }
+    showToast("Portal invite sent to "+email,"ok");
+    return true;
+  }catch(e){
+    showToast("Could not send invite: "+e.message,"err");
+    return false;
+  }
 }
 // ─────────────────────────────── §INSTRUCTORS ───────────────────────────────
 
