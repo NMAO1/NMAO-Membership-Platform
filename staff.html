@@ -1063,27 +1063,42 @@ function renderEligibleRow(s,nextTest,nominatedIds,attCountMap){
     actionHtml='<button onclick="nominateForTest(\''+s.id+'\')" style="height:40px;padding:0 0.85rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s" id="nomBtn-'+s.id+'">Nominate</button>';
   }
 
-  return '<div class="student-row" id="erow-'+s.id+'">'+
-    '<div class="student-avatar">'+
-      (s.photo_url?'<img src="'+s.photo_url+'" alt="'+ini+'" />':ini)+
-    '</div>'+
-    '<div class="student-info">'+
-      '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
-      '<div class="student-meta">'+
-        '<span style="display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap">'+
-          '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+fromColor+'"></span>'+
-          '<i class="fa-solid fa-arrow-right" style="font-size:0.65rem;color:var(--muted)"></i>'+
-          '<span style="display:inline-block;width:20px;height:8px;border-radius:2px;background:'+toColor+'"></span>'+
-          '<span style="font-size:0.72rem;color:var(--muted2)">'+fromName+' → '+toName+'</span>'+
-          (required>0?'<span style="font-size:0.68rem;color:var(--gold)">'+attCount+'/'+required+' classes</span>':'')+''+
-        '</span>'+
-      '</div>'+
-    '</div>'+
-    '<div class="student-action">'+actionHtml+'</div>'+
-  '</div>';
+  function recomputeEligible(){
+  eligibleStudentIds=new Set();
+  allStudents.forEach(function(s){
+    if(!checkedInIds.has(s.id)&&!rsvpStudentIds.has(s.id)){
+      eligibleStudentIds.add(s.id);
+    }
+  });
 }
 
- 
+function setActiveTabVisibility(tab){
+  var tabs=['rsvp','checkin','eligible','all'];
+  tabs.forEach(function(t){
+    var btn=document.getElementById('cvt'+t.charAt(0).toUpperCase()+t.slice(1));
+    var panel=document.getElementById('cvPanel'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(btn)btn.classList.toggle('active',t===tab);
+    if(panel)panel.style.display=t===tab?'block':'none';
+  });
+  var sw=document.getElementById('cvSearchWrap');
+  if(sw)sw.style.display=(tab==='all'||tab==='eligible')?'block':'none';
+}
+
+function filterCvList(q){
+  if(cvActiveTab==='all')renderCvAllStudents(q);
+  else if(cvActiveTab==='eligible')renderCvEligible(q);
+}
+
+function switchCvTab(tab){
+  cvActiveTab=tab;
+  setActiveTabVisibility(tab);
+  var si=document.getElementById('cvSearch');
+  if(si)si.value='';
+  if(tab==='rsvp')renderCvRsvp();
+  else if(tab==='checkin')renderCvCheckedIn();
+  else if(tab==='eligible')renderCvEligible('');
+  else if(tab==='all')renderCvAllStudents('');
+}
 
 // ─────────────────────────────────────────────────────────────
 //  CHECK IN
