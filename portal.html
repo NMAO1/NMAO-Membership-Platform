@@ -1363,8 +1363,8 @@ async function buildBeltSection(s,levels){
   }else{
     html+='<div style="font-size:0.92rem;color:var(--muted);margin-bottom:1rem"><i class="fa-solid fa-circle-info" style="margin-right:0.4rem"></i>Starting rank: '+(levels[0]?levels[0].name:'--')+'</div>';
   }
-  if(nb&&(nb.classes_required||0)>0){
-    var count=await getClassesSincePromotion(s);var req=nb.classes_required;
+  if(cb&&nb&&(cb.classes_required||0)>0){
+    var count=await getClassesSincePromotion(s);var req=cb.classes_required;
     var pct=Math.min(100,Math.round((count/req)*100));var eligible=count>=req;
     html+='<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted2);margin-bottom:0.3rem"><span><i class="fa-solid fa-chart-line" style="margin-right:0.3rem"></i>Progress toward '+nb.name+'</span><span>'+count+'/'+req+'</span></div><div class="belt-bar-bg"><div class="belt-bar-fill" style="width:'+pct+'%;background:'+(eligible?'#5A9A6A':'var(--gold)')+'"></div></div>'+(eligible?'<div class="eligible-badge"><i class="fa-solid fa-check"></i>Eligible for promotion — speak to your instructor!</div>':'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-hourglass-half" style="margin-right:0.3rem"></i>'+(req-count)+' more classes until eligible</div>')+'</div>';
   }else if(nb){
