@@ -1660,8 +1660,9 @@
       <div class="field"><label>Description</label><div id="progDescEditor"></div></div>
       <div class="form-row">
         <div class="field"><label>Age Group</label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div>
-        <div class="field"><label>Belt Progression</label><select id="progBelt"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
+        <div class="field"><label>Belt Progression</label><select id="progBelt" onchange="toggleProgBeltSystem()"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
       </div>
+      <div class="field" id="progBeltSystemField"><label>Belt System</label><select id="progBeltSystem"><option value="">-- Select Belt System --</option></select><div id="progBeltSystemHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;display:none"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No belt systems yet. Create one in the Belt Systems panel first.</div></div>
       <div class="field"><label>Program Color</label><div style="display:flex;gap:0.75rem;align-items:center"><input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" /></div></div>
       <button class="btn-gold-full" onclick="saveProgram()">Save Program</button>
       <p class="form-msg" id="programMsg"></p>
@@ -4643,16 +4644,88 @@ function renderPrograms(){
   await loadPrograms();
 }
 
-function openAddProgram(){ document.getElementById('addProgramTitle').textContent='Add New Program';document.getElementById('progEditId').value='';document.getElementById('progName').value='';document.getElementById('progAge').value='Adults (18+)';document.getElementById('progBelt').value='Belt Progression';document.getElementById('progColor').value='#C9A84C';document.getElementById('progColorHex').value='#C9A84C';document.getElementById('programMsg').textContent='';setTimeout(function(){if(quillEditors['progDescEditor'])quillEditors['progDescEditor'].setText('');},50);document.getElementById('addProgramModal').classList.add('active'); }
-function openEditProgram(pid){ var p=allPrograms.find(function(x){return x.id===pid;}); if(!p) return; document.getElementById('addProgramTitle').textContent='Edit Program';document.getElementById('progEditId').value=p.id;document.getElementById('progName').value=p.name||'';document.getElementById('progAge').value=p.age_group||'Adults (18+)';document.getElementById('progBelt').value=p.belt_system||'Belt Progression';document.getElementById('progColor').value=p.color||'#C9A84C';document.getElementById('progColorHex').value=p.color||'#C9A84C';document.getElementById('programMsg').textContent='';setTimeout(function(){if(quillEditors['progDescEditor'])setQuillContent('progDescEditor',p.description||'');},50);document.getElementById('addProgramModal').classList.add('active'); }
+function populateProgBeltSystemDropdown(selectedId){
+  var sel=document.getElementById('progBeltSystem');
+  var hint=document.getElementById('progBeltSystemHint');
+  sel.innerHTML='<option value="">-- Select Belt System --</option>';
+  if(!allBeltSystems||!allBeltSystems.length){
+    if(hint)hint.style.display='block';
+    return;
+  }
+  if(hint)hint.style.display='none';
+  allBeltSystems.forEach(function(bs){
+    var o=document.createElement('option');
+    o.value=bs.id;
+    o.textContent=bs.name;
+    if(selectedId&&bs.id===selectedId)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function toggleProgBeltSystem(){
+  var beltVal=document.getElementById('progBelt').value;
+  var field=document.getElementById('progBeltSystemField');
+  if(field)field.style.display=beltVal==='Belt Progression'?'block':'none';
+}
+
+function openAddProgram(){
+  document.getElementById('addProgramTitle').textContent='Add New Program';
+  document.getElementById('progEditId').value='';
+  document.getElementById('progName').value='';
+  document.getElementById('progAge').value='Adults (18+)';
+  document.getElementById('progBelt').value='Belt Progression';
+  document.getElementById('progColor').value='#C9A84C';
+  document.getElementById('progColorHex').value='#C9A84C';
+  document.getElementById('programMsg').textContent='';
+  populateProgBeltSystemDropdown(null);
+  toggleProgBeltSystem();
+  setTimeout(function(){if(quillEditors['progDescEditor'])quillEditors['progDescEditor'].setText('');},50);
+  document.getElementById('addProgramModal').classList.add('active');
+}
+
+function openEditProgram(pid){
+  var p=allPrograms.find(function(x){return x.id===pid;});
+  if(!p)return;
+  document.getElementById('addProgramTitle').textContent='Edit Program';
+  document.getElementById('progEditId').value=p.id;
+  document.getElementById('progName').value=p.name||'';
+  document.getElementById('progAge').value=p.age_group||'Adults (18+)';
+  document.getElementById('progBelt').value=p.belt_system||'Belt Progression';
+  document.getElementById('progColor').value=p.color||'#C9A84C';
+  document.getElementById('progColorHex').value=p.color||'#C9A84C';
+  document.getElementById('programMsg').textContent='';
+  populateProgBeltSystemDropdown(p.belt_system_id||null);
+  toggleProgBeltSystem();
+  setTimeout(function(){if(quillEditors['progDescEditor'])setQuillContent('progDescEditor',p.description||'');},50);
+  document.getElementById('addProgramModal').classList.add('active');
+}
 function closeAddProgram(){ document.getElementById('addProgramModal').classList.remove('active'); }
 function syncProgColor(){ var h=document.getElementById('progColorHex').value; if(/^#[0-9A-Fa-f]{6}$/.test(h)) document.getElementById('progColor').value=h; }
 async function saveProgram(){
-  var name=document.getElementById('progName').value.trim(); if(!name){setMsg('programMsg','Program name required.','error');return;} setMsg('programMsg','Saving...','');
+  var name=document.getElementById('progName').value.trim();
+  if(!name){setMsg('programMsg','Program name required.','error');return;}
+  var beltVal=document.getElementById('progBelt').value;
+  var beltSystemId=document.getElementById('progBeltSystem').value||null;
+  if(beltVal==='Belt Progression'&&!beltSystemId){
+    setMsg('programMsg','Please select a belt system, or change to No Belt Progression.','error');
+    return;
+  }
+  setMsg('programMsg','Saving...','');
   var eid=document.getElementById('progEditId').value;
-  var payload={name:name,description:getQuillContent('progDescEditor'),age_group:document.getElementById('progAge').value,belt_system:document.getElementById('progBelt').value,color:document.getElementById('progColor').value,active:true};
-  var r; if(eid){r=await sb.from('programs').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('programs').insert(payload);}
-  if(r.error){setMsg('programMsg',r.error.message,'error');}else{setMsg('programMsg','Saved!','success');await loadPrograms();setTimeout(closeAddProgram,1000);}
+  var payload={
+    name:name,
+    description:getQuillContent('progDescEditor'),
+    age_group:document.getElementById('progAge').value,
+    belt_system:beltVal,
+    belt_system_id:beltVal==='Belt Progression'?beltSystemId:null,
+    color:document.getElementById('progColor').value,
+    active:true
+  };
+  var r;
+  if(eid){r=await sb.from('programs').update(payload).eq('id',eid);}
+  else{payload.school_id=SID;r=await sb.from('programs').insert(payload);}
+  if(r.error){setMsg('programMsg',r.error.message,'error');}
+  else{setMsg('programMsg','Saved!','success');await loadPrograms();setTimeout(closeAddProgram,1000);}
 }
 
 // Belt Systems
