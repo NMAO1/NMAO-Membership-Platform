@@ -1315,7 +1315,6 @@
     <div class="modal-body">
       <input type="hidden" id="beltTestEditId" value="" />
       <div class="field"><label>Test Name</label><input type="text" id="btName" placeholder="e.g. Adult Karate Spring Belt Test" /></div>
-     <div class="field"><label>Program</label><select id="btProgram"><option value="">-- Select Program --</option></select></div>
       <div class="form-row">
         <div class="field"><label>Test Date</label><input type="date" id="btDate" /></div>
         <div class="field"><label>Time</label><input type="time" id="btTime" /></div>
@@ -1328,13 +1327,7 @@
           <div class="field"><label>Payment Method</label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div>
         </div>
       </div>
-      <div class="field"><label>Eligibility</label><select id="btEligibilityMode"><option value="manual">Manual Only</option><option value="confirm">Show Eligible</option><option value="auto">Auto-Invite All Eligible</option></select></div>
       <div class="field"><label>Notes</label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
-      <div id="btAddStudentPanel" style="display:none;padding:1rem;background:var(--black);border:1px solid var(--border)">
-        <input type="text" id="btStudentSearch" placeholder="Search by name..." oninput="searchBeltTestStudents()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem;outline:none;margin-bottom:0.5rem" />
-        <div id="btStudentResults" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
-        <button class="btn-sm" style="margin-top:0.5rem" onclick="document.getElementById('btAddStudentPanel').style.display='none'">Cancel</button>
-      </div>
       <button class="btn-gold-full" onclick="saveBeltTest()">Schedule Belt Test</button>
       <p class="form-msg" id="beltTestMsg"></p>
     </div>
@@ -4822,11 +4815,10 @@ function renderBeltTests(){
   upEl.innerHTML=!upcoming.length?'<div class="no-classes">No upcoming belt tests.</div>':upcoming.map(function(t){var prog=allPrograms.find(function(p){return p.id===t.program_id;});return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>'+(prog?'<span>'+prog.name+'</span>':'')+'</div></div><span class="test-status-badge test-status-upcoming">Upcoming</span></div><div style="display:flex;gap:0.5rem;margin-top:0.75rem"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button><button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';}).join('');
   pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button></div></div></div>';}).join('');
 }
-function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';document.getElementById('btEligibilityMode').value='manual';document.getElementById('btNotes').value='';document.getElementById('btAddStudentPanel').style.display='none';document.getElementById('beltTestMsg').textContent='';populateBeltTestProgramDropdown();document.getElementById('addBeltTestModal').classList.add('active'); }
-function openEditBeltTest(tid){ var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return; document.getElementById('beltTestEditId').value=t.id;document.getElementById('btName').value=t.name||'';document.getElementById('btDate').value=t.test_date||'';document.getElementById('btTime').value=t.test_time||'';document.getElementById('btLocation').value=t.location||'';document.getElementById('btFeeEnabled').checked=!!t.fee_enabled;document.getElementById('btFeeFields').style.display=t.fee_enabled?'block':'none';document.getElementById('btFeeAmount').value=t.test_fee||0;document.getElementById('btPaymentMethod').value=t.payment_method||'portal';document.getElementById('btEligibilityMode').value=t.eligibility_rule||'manual';document.getElementById('btNotes').value=t.notes||'';document.getElementById('beltTestMsg').textContent='';populateBeltTestProgramDropdown();if(t.program_id)setTimeout(function(){document.getElementById('btProgram').value=t.program_id;},50);document.getElementById('addBeltTestModal').classList.add('active'); }
+function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';document.getElementById('btNotes').value='';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
+function openEditBeltTest(tid){ var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return; document.getElementById('beltTestEditId').value=t.id;document.getElementById('btName').value=t.name||'';document.getElementById('btDate').value=t.test_date||'';document.getElementById('btTime').value=t.test_time||'';document.getElementById('btLocation').value=t.location||'';document.getElementById('btFeeEnabled').checked=!!t.fee_enabled;document.getElementById('btFeeFields').style.display=t.fee_enabled?'block':'none';document.getElementById('btFeeAmount').value=t.test_fee||0;document.getElementById('btPaymentMethod').value=t.payment_method||'portal';document.getElementById('btNotes').value=t.notes||'';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
 function closeAddBeltTest(){ document.getElementById('addBeltTestModal').classList.remove('active'); }
 function toggleBeltTestFee(){ document.getElementById('btFeeFields').style.display=document.getElementById('btFeeEnabled').checked?'block':'none'; }
-function populateBeltTestProgramDropdown(){ var sel=document.getElementById('btProgram');sel.innerHTML='<option value="">-- Select Program --</option>';allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); }
 async function saveBeltTest(){
   var name=document.getElementById('btName').value.trim();
   var date=document.getElementById('btDate').value;
@@ -4836,14 +4828,12 @@ async function saveBeltTest(){
   var payload={
     school_id:SID,
     name:name,
-    program_id:document.getElementById('btProgram').value||null,
     test_date:date,
     test_time:document.getElementById('btTime').value||null,
     location:document.getElementById('btLocation').value.trim(),
     fee_enabled:document.getElementById('btFeeEnabled')?document.getElementById('btFeeEnabled').checked:false,
     test_fee:document.getElementById('btFeeAmount')?parseFloat(document.getElementById('btFeeAmount').value)||0:0,
     payment_method:document.getElementById('btPaymentMethod')?document.getElementById('btPaymentMethod').value:'portal',
-    eligibility_rule:document.getElementById('btEligibilityMode')?document.getElementById('btEligibilityMode').value:'manual',
     notes:document.getElementById('btNotes')?document.getElementById('btNotes').value.trim():''
   };
   var r;
