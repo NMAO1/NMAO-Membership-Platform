@@ -1517,10 +1517,17 @@
     <div class="modal-header"><span class="modal-title">Belt Promotion</span><button class="modal-close" onclick="closePromoteModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div id="promoteEligibilityBanner" style="display:none;padding:0.75rem;margin-bottom:1rem;border-radius:2px;font-size:0.85rem"></div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-bottom:1.5rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-bottom:1rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border)">
         <div style="text-align:center"><div id="promoteFromSwatch" style="width:48px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);margin:0 auto 0.4rem"></div><div id="promoteFromName" style="font-size:0.78rem;color:var(--muted)"></div></div>
         <div style="color:var(--gold);font-size:1.2rem"><i class="fa-solid fa-arrow-right"></i></div>
         <div style="text-align:center"><div id="promoteToSwatch" style="width:48px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);margin:0 auto 0.4rem"></div><div id="promoteToName" style="font-size:0.78rem;color:var(--white);font-weight:700"></div></div>
+      </div>
+      <div style="margin-bottom:1rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
+        <label class="check-item" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer"><input type="checkbox" id="promoteOnboardingMode" onchange="togglePromoteOnboardingMode()" /><span class="check-item-label">Onboarding mode <span style="color:var(--muted);font-weight:normal">(set existing rank without recording promotion)</span></span></label>
+        <div id="promoteRankSelectField" style="display:none;margin-top:0.75rem">
+          <label style="font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.4rem">Set Rank To</label>
+          <select id="promoteRankSelect" onchange="updatePromoteRankPreview()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.55rem 0.75rem"></select>
+        </div>
       </div>
       <div class="field"><label>Promotion Date</label><input type="date" id="promotionDate" /></div>
       <div class="form-row">
@@ -3910,6 +3917,23 @@ async function loadClassesSincePromotion(sid){
 // Promote
 async function openPromoteModal() {
   if(!currentProfileStudent||!currentProfileBeltLevels.length) return;
+  // Reset onboarding toggle to OFF on every open
+  var onboardCheckbox=document.getElementById('promoteOnboardingMode');
+  if(onboardCheckbox)onboardCheckbox.checked=false;
+  var rankSelectField=document.getElementById('promoteRankSelectField');
+  if(rankSelectField)rankSelectField.style.display='none';
+  // Populate the rank dropdown with all belts (used by onboarding mode)
+  var rankSelect=document.getElementById('promoteRankSelect');
+  if(rankSelect){
+    rankSelect.innerHTML='';
+    currentProfileBeltLevels.forEach(function(b){
+      var o=document.createElement('option');
+      o.value=b.id;
+      o.textContent=b.name;
+      if(b.id===currentProfileStudent.current_belt_id)o.selected=true;
+      rankSelect.appendChild(o);
+    });
+  }
   var s=currentProfileStudent;
   var cb=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
   var ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
@@ -3936,19 +3960,66 @@ async function openPromoteModal() {
   else{document.getElementById('promotionYoutubeSection').style.display='none';}
   document.getElementById('promoteModal').classList.add('active');
 }
+
+function togglePromoteOnboardingMode() {
+  var on=document.getElementById('promoteOnboardingMode').checked;
+  document.getElementById('promoteRankSelectField').style.display=on?'block':'none';
+  document.getElementById('promoteEligibilityBanner').style.display=on?'none':'block';
+  document.getElementById('promotionYoutubeSection').style.display=on?'none':(document.getElementById('promotionVideosList').innerHTML?'block':'none');
+  // In onboarding mode, hide fee section since you're not charging for setting initial rank
+  var feeRow=document.getElementById('promotionFee').closest('.form-row');
+  if(feeRow)feeRow.style.display=on?'none':'flex';
+  // Update preview to match selected rank
+  if(on)updatePromoteRankPreview();
+  else{
+    // Restore the next-belt preview
+    var s=currentProfileStudent;
+    var cb=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+    var ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
+    var to=currentProfileBeltLevels[ci+1]||null;
+    if(to){
+      document.getElementById('promoteToSwatch').style.background=to.color_hex;
+      document.getElementById('promoteToName').textContent=to.name;
+    }
+  }
+}
+
+function updatePromoteRankPreview() {
+  var sel=document.getElementById('promoteRankSelect');
+  if(!sel)return;
+  var picked=currentProfileBeltLevels.find(function(b){return b.id===sel.value;});
+  if(!picked)return;
+  document.getElementById('promoteToSwatch').style.background=picked.color_hex;
+  document.getElementById('promoteToName').textContent=picked.name;
+}
 function closePromoteModal() { document.getElementById('promoteModal').classList.remove('active'); }
 async function confirmPromotion() {
   if(!currentProfileStudent||!currentProfileBeltLevels.length) return;
   var s=currentProfileStudent;
-  var cb=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
-  var ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
-  var from=cb||currentProfileBeltLevels[0]; var to=currentProfileBeltLevels[ci+1];
-  if(!to) return;
+  var onboardingMode=document.getElementById('promoteOnboardingMode')&&document.getElementById('promoteOnboardingMode').checked;
+  var to;
+  if(onboardingMode){
+    var rankSelect=document.getElementById('promoteRankSelect');
+    if(!rankSelect||!rankSelect.value){setMsg('promotionMsg','Please select a rank.','error');return;}
+    to=currentProfileBeltLevels.find(function(b){return b.id===rankSelect.value;});
+    if(!to){setMsg('promotionMsg','Invalid rank selection.','error');return;}
+  }else{
+    var cb=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+    var ci=cb?currentProfileBeltLevels.indexOf(cb):-1;
+    to=currentProfileBeltLevels[ci+1];
+    if(!to)return;
+  }
   setMsg('promotionMsg','Saving...','');
   var upd=await sb.from('students').update({current_belt_id:to.id,current_belt:to.name}).eq('id',s.id);
   if(upd.error){setMsg('promotionMsg',upd.error.message,'error');return;}
-  await sb.from('belt_promotions').insert({school_id:SID,student_id:s.id,belt_from:from.name,belt_to:to.name,belt_from_id:from.id,belt_to_id:to.id,promotion_date:document.getElementById('promotionDate').value,promoted_at:new Date().toISOString(),promoted_by:document.getElementById('userName').textContent,fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,fee_paid:document.getElementById('promotionFeePaid').checked,notes:document.getElementById('promotionNotes').value.trim()});
-  setMsg('promotionMsg','Promoted to '+to.name+'!','success');
+  if(!onboardingMode){
+    var cb2=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
+    var from=cb2||currentProfileBeltLevels[0];
+    await sb.from('belt_promotions').insert({school_id:SID,student_id:s.id,belt_from:from.name,belt_to:to.name,belt_from_id:from.id,belt_to_id:to.id,promotion_date:document.getElementById('promotionDate').value,promoted_at:new Date().toISOString(),promoted_by:document.getElementById('userName').textContent,fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,fee_paid:document.getElementById('promotionFeePaid').checked,notes:document.getElementById('promotionNotes').value.trim()});
+    setMsg('promotionMsg','Promoted to '+to.name+'!','success');
+  }else{
+    setMsg('promotionMsg','Rank set to '+to.name+'.','success');
+  }
   await loadStudents();
   setTimeout(async function(){closePromoteModal();await openStudentProfile(s.id);},800);
 }
