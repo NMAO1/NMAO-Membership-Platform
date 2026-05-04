@@ -3661,6 +3661,14 @@ async function filterMembershipsForProgram() {
   sel.innerHTML = '<option value="">-- Select --</option>';
   mems.forEach(function(m){ var o=document.createElement('option'); o.value=m.id; var p='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':''); o.textContent=m.name+' - '+p; sel.appendChild(o); });
 }
+async function getFirstBeltForProgram(programId){
+  if(!programId)return null;
+  var prog=(allPrograms||[]).find(function(p){return p.id===programId;});
+  if(!prog||!prog.belt_system_id)return null;
+  var r=await sb.from("belt_levels").select("id").eq("belt_system_id",prog.belt_system_id).order("sort_order").limit(1);
+  if(r.error||!r.data||!r.data.length)return null;
+  return r.data[0].id;
+}
 async function saveStudent() {
   var eid   = document.getElementById('stuEditId').value;
   var first = document.getElementById('stuFirst').value.trim();
@@ -3671,8 +3679,38 @@ async function saveStudent() {
   if (!pid)  { setMsg('studentMsg','Please select a program.','error'); return; }
   if (!mid)  { setMsg('studentMsg','Please select a membership.','error'); return; }
   setMsg('studentMsg','Saving...','');
-  var payload = { first_name:first, last_name:last, email:document.getElementById('studentEmail').value.trim().toLowerCase(), phone:document.getElementById('stuPhone').value.trim(), date_of_birth:document.getElementById('stuDOB').value||null, program_id:pid, membership_id:mid, plan_type:'membership', status:document.getElementById('stuStatus').value, start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0], notes:document.getElementById('stuNotes').value.trim()||null };
-  var r; if (eid) { r=await sb.from('students').update(payload).eq('id',eid); } else { payload.school_id=SID; r=await sb.from('students').insert(payload); }
+
+  var payload = {
+    first_name:first,
+    last_name:last,
+    email:document.getElementById('studentEmail').value.trim().toLowerCase(),
+    phone:document.getElementById('stuPhone').value.trim(),
+    date_of_birth:document.getElementById('stuDOB').value||null,
+    program_id:pid,
+    membership_id:mid,
+    plan_type:'membership',
+    status:document.getElementById('stuStatus').value,
+    start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0],
+    notes:document.getElementById('stuNotes').value.trim()||null
+  };
+
+  // Belt assignment logic
+  if(!eid){
+    // Insert: always try to assign the first belt of the chosen program's belt system
+    var firstBeltId=await getFirstBeltForProgram(pid);
+    if(firstBeltId)payload.current_belt_id=firstBeltId;
+  }else{
+    // Update: only auto-assign if program is changing AND student currently has no belt
+    var existing=(allStudents||[]).find(function(s){return s.id===eid;});
+    if(existing&&existing.program_id!==pid&&!existing.current_belt_id){
+      var firstBeltId=await getFirstBeltForProgram(pid);
+      if(firstBeltId)payload.current_belt_id=firstBeltId;
+    }
+  }
+
+  var r;
+  if (eid) { r=await sb.from('students').update(payload).eq('id',eid); }
+  else { payload.school_id=SID; r=await sb.from('students').insert(payload); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
   else { setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200); }
 }
