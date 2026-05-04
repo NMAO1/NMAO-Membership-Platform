@@ -4010,7 +4010,7 @@ async function confirmPromotion() {
     if(!to)return;
   }
   setMsg('promotionMsg','Saving...','');
-  var upd=await sb.from('students').update({current_belt_id:to.id,current_belt:to.name}).eq('id',s.id);
+  var upd=await sb.from('students').update({current_belt_id:to.id}).eq('id',s.id);
   if(upd.error){setMsg('promotionMsg',upd.error.message,'error');return;}
   if(!onboardingMode){
     var cb2=currentProfileBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
