@@ -1347,7 +1347,6 @@
     <div class="modal-header">
       <div><div id="beltTestDetailTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"></div><div id="beltTestDetailMeta" style="font-size:0.82rem;color:var(--muted);margin-top:0.2rem"></div></div>
       <div style="display:flex;gap:0.5rem;align-items:center">
-        <button class="panel-action" onclick="openAddStudentToBeltTest()"><i class="fa-solid fa-user-plus"></i> Add Student</button>
         <button onclick="closeBeltTestDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
@@ -4792,25 +4791,148 @@ async function saveBeltTest(){
 function openAddStudentToBeltTest(){ document.getElementById('btAddStudentPanel').style.display='block';document.getElementById('btStudentSearch').value='';document.getElementById('btStudentResults').innerHTML='';document.getElementById('btStudentSearch').focus(); }
 function searchBeltTestStudents(){ var q=document.getElementById('btStudentSearch').value.toLowerCase().trim();var el=document.getElementById('btStudentResults');if(!q||q.length<2){el.innerHTML='';return;}var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6);if(!filtered.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic">No students found.</div>';return;}el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" onclick="addStudentToBeltTestFromSearch(\''+s.id+'\')"><div style="font-size:0.85rem;color:var(--white)">'+s.first_name+' '+s.last_name+'</div><i class="fa-solid fa-plus" style="color:var(--gold);font-size:0.8rem"></i></div>';}).join(''); }
 async function addStudentToBeltTestFromSearch(sid){ var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});var r=await sb.from('belt_test_students').insert({school_id:SID,belt_test_id:currentBeltTestId,student_id:sid,status:'invited',fee_amount:t?t.test_fee||0:0});if(!r.error){document.getElementById('btAddStudentPanel').style.display='none';await loadBeltTestStudents();} }
-async function openBeltTestDetail(tid){ currentBeltTestId=tid;var t=allBeltTests.find(function(x){return x.id===tid;});if(!t)return;document.getElementById('beltTestDetailTitle').textContent=t.name;var prog=allPrograms.find(function(p){return p.id===t.program_id;});document.getElementById('beltTestDetailMeta').textContent=new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+(prog?' \u00B7 '+prog.name:'')+(t.location?' \u00B7 '+t.location:'');document.getElementById('beltTestDetailModal').classList.add('active');switchBeltTestTab('students');await loadBeltTestStudents(); }
+async function openBeltTestDetail(tid){ currentBeltTestId=tid;beltTestPickerSearch="";beltTestPickerSelected={};var t=allBeltTests.find(function(x){return x.id===tid;});if(!t)return;document.getElementById('beltTestDetailTitle').textContent=t.name;var prog=allPrograms.find(function(p){return p.id===t.program_id;});document.getElementById('beltTestDetailMeta').textContent=new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+(prog?' \u00B7 '+prog.name:'')+(t.location?' \u00B7 '+t.location:'');document.getElementById('beltTestDetailModal').classList.add('active');switchBeltTestTab('students');await loadBeltTestStudents(); }
 function closeBeltTestDetail(){ document.getElementById('beltTestDetailModal').classList.remove('active');currentBeltTestId=null; }
 function switchBeltTestTab(tab){ var tabs=['students','results','payments'];tabs.forEach(function(t){var p=document.getElementById('beltTestTab'+t.charAt(0).toUpperCase()+t.slice(1));if(p)p.style.display=t===tab?'block':'none';var btn=document.getElementById('bttab-'+t);if(btn)btn.classList.toggle('active',t===tab);}); }
-async function loadBeltTestStudents(){
-  if(!currentBeltTestId) return;
-  var r=await sb.from('belt_test_students').select('*, students(first_name,last_name,current_belt)').eq('belt_test_id',currentBeltTestId);
-  var data=r.data||[]; var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});
-  var sl=document.getElementById('beltTestStudentsList');var rl=document.getElementById('beltTestResultsList');var pl=document.getElementById('beltTestPaymentsList');
-  if(!data.length){sl.innerHTML='<div class="no-classes">No students added yet.</div>';rl.innerHTML='<div class="no-classes">No results yet.</div>';pl.innerHTML='<div class="no-classes">No payment records.</div>';return;}
-  sl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Current Belt</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+data.map(function(bs){var s=bs.students;var name=s?s.first_name+' '+s.last_name:'Unknown';return '<tr><td class="name">'+name+'</td><td>'+(s?s.current_belt||'Unranked':'--')+'</td><td>'+bs.status+'</td><td><button class="btn-sm gold" onclick="confirmBeltTestStudent(\''+bs.id+'\')">Confirm</button> <button class="btn-sm" onclick="removeBeltTestStudent(\''+bs.id+'\')">Remove</button></td></tr>';}).join('')+'</tbody></table></div>';
-  rl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Current Belt</th><th>Result</th><th>Actions</th></tr></thead><tbody>'+data.map(function(bs){var s=bs.students;var name=s?s.first_name+' '+s.last_name:'Unknown';return '<tr><td class="name">'+name+'</td><td>'+(s?s.current_belt||'Unranked':'--')+'</td><td>'+(bs.passed===true?'<span style="color:#7DBD7D">Passed</span>':bs.passed===false?'<span style="color:#E07070">Held Back</span>':'<span style="color:var(--muted)">Pending</span>')+'</td><td><button class="btn-sm gold" onclick="markBeltTestResult(\''+bs.id+'\',\'promoted\')">Pass</button> <button class="btn-sm" onclick="markBeltTestResult(\''+bs.id+'\',\'held_back\')">Hold</button></td></tr>';}).join('');
-  if(t&&t.fee_enabled){pl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Fee</th><th>Paid</th><th>Actions</th></tr></thead><tbody>'+data.map(function(bs){var s=bs.students;var name=s?s.first_name+' '+s.last_name:'Unknown';return '<tr><td class="name">'+name+'</td><td style="color:var(--gold)">$'+parseFloat(bs.fee_amount||t.test_fee||0).toFixed(2)+'</td><td>'+(bs.fee_paid?'<span style="color:#5A9A6A">Paid</span>':'<span style="color:#E07070">Unpaid</span>')+'</td><td><button class="btn-sm gold" onclick="markBeltTestFeePaid(\''+bs.id+'\')">Mark Paid</button></td></tr>';}).join('')+'</tbody></table></div>';}
-  else{pl.innerHTML='<div class="no-classes">No test fee configured.</div>';}
-}
-async function confirmBeltTestStudent(bsid){ await sb.from('belt_test_students').update({status:'confirmed'}).eq('id',bsid);await loadBeltTestStudents(); }
-async function removeBeltTestStudent(bsid){ await sb.from('belt_test_students').delete().eq('id',bsid);await loadBeltTestStudents(); }
-async function markBeltTestResult(bsid,result){ await sb.from('belt_test_students').update({passed:result==='promoted'}).eq('id',bsid);await loadBeltTestStudents(); }
-async function markBeltTestFeePaid(bsid){ await sb.from('belt_test_students').update({fee_paid:true,paid_at:new Date().toISOString()}).eq('id',bsid);await loadBeltTestStudents(); }
+// ─────────────────────────────────────────────────────────────
+//  Belt Test V2 — Picker
+// ─────────────────────────────────────────────────────────────
+var beltTestPickerSearch="";
+var beltTestPickerSelected={};
 
+async function loadBeltTestStudents(){
+  if(!currentBeltTestId)return;
+  var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});
+  if(!t)return;
+
+  var btsR=await sb.from("belt_test_students").select("*, students(id,first_name,last_name,program_id,current_belt_id,start_date)").eq("belt_test_id",currentBeltTestId).eq("school_id",SID);
+  var invitedRows=btsR.data||[];
+  var invitedIds={};
+  invitedRows.forEach(function(r){if(r.student_id)invitedIds[r.student_id]=r;});
+
+  var attR=await sb.from("class_attendance").select("student_id,noted_at").eq("school_id",SID);
+  var attendance={};
+  (attR.data||[]).forEach(function(a){
+    if(!attendance[a.student_id])attendance[a.student_id]=[];
+    attendance[a.student_id].push(a.noted_at);
+  });
+
+  var promoR=await sb.from("belt_promotions").select("student_id,promoted_at").eq("school_id",SID).order("promoted_at",{ascending:false});
+  var lastPromo={};
+  (promoR.data||[]).forEach(function(p){if(!lastPromo[p.student_id])lastPromo[p.student_id]=p.promoted_at;});
+
+  var beltsBySystem={};
+  (allPrograms||[]).forEach(function(p){if(p.belt_system_id)beltsBySystem[p.belt_system_id]=null;});
+  var systemIds=Object.keys(beltsBySystem);
+  if(systemIds.length){
+    var blR=await sb.from("belt_levels").select("id,name,color_hex,sort_order,classes_required,belt_system_id").in("belt_system_id",systemIds).order("sort_order");
+    (blR.data||[]).forEach(function(b){
+      if(!beltsBySystem[b.belt_system_id])beltsBySystem[b.belt_system_id]=[];
+      beltsBySystem[b.belt_system_id].push(b);
+    });
+  }
+
+  var rows=[];
+  (allStudents||[]).filter(function(s){return s.status!=="archived";}).forEach(function(s){
+    var prog=(allPrograms||[]).find(function(p){return p.id===s.program_id;});
+    var beltSystemId=prog?prog.belt_system_id:null;
+    var belts=beltSystemId?beltsBySystem[beltSystemId]:null;
+    var current=null,nextBelt=null,gap=null,count=0,eligible=false,nearEligible=false;
+
+    if(belts&&belts.length){
+      current=belts.find(function(b){return b.id===s.current_belt_id;})||belts[0];
+      var ci=current?belts.indexOf(current):-1;
+      nextBelt=ci>=0?(belts[ci+1]||null):null;
+    }
+
+    var sinceISO=lastPromo[s.id]||(s.start_date?s.start_date+"T00:00:00":null);
+    var attList=attendance[s.id]||[];
+    if(sinceISO){
+      var sinceMs=new Date(sinceISO).getTime();
+      attList.forEach(function(a){if(new Date(a).getTime()>=sinceMs)count++;});
+    }else{
+      count=attList.length;
+    }
+
+    if(current&&(current.classes_required||0)>0&&nextBelt){
+      var req=current.classes_required;
+      gap=req-count;
+      eligible=count>=req;
+      nearEligible=!eligible&&gap<=5&&gap>0;
+    }
+
+    rows.push({
+      student:s,program:prog,currentBelt:current,nextBelt:nextBelt,
+      count:count,gap:gap,eligible:eligible,nearEligible:nearEligible,
+      hasBeltSystem:!!belts&&belts.length>0,
+      invitedRow:invitedIds[s.id]||null
+    });
+  });
+
+  renderBeltTestPicker(rows,t);
+  renderBeltTestResultsTab(invitedRows,t);
+  renderBeltTestPaymentsTab(invitedRows,t);
+}
+
+function renderBeltTestPicker(rows,t){
+  var sl=document.getElementById("beltTestStudentsList");
+  var q=(beltTestPickerSearch||"").toLowerCase();
+
+  var invited=rows.filter(function(r){return r.invitedRow;});
+  var pool=rows.filter(function(r){return !r.invitedRow;});
+  if(t.program_id)pool=pool.filter(function(r){return r.student.program_id===t.program_id;});
+
+  var eligibleNow=pool.filter(function(r){return r.eligible;});
+  var nearList=pool.filter(function(r){return r.nearEligible;});
+
+  var searchHits=q?pool.filter(function(r){
+    var n=(r.student.first_name+" "+r.student.last_name).toLowerCase();
+    return n.indexOf(q)!==-1;
+  }):[];
+
+  eligibleNow.sort(function(a,b){return b.count-a.count;});
+  nearList.sort(function(a,b){return a.gap-b.gap;});
+  invited.sort(function(a,b){return (a.student.first_name||"").localeCompare(b.student.first_name||"");});
+
+  var html="";
+  html+='<div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">';
+  html+='<input type="text" id="btPickerSearch" placeholder="Search all students by name..." value="'+escAttr(beltTestPickerSearch)+'" oninput="updateBeltTestPickerSearch(this.value)" style="flex:1;min-width:220px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem 0.75rem;outline:none" />';
+  var selCount=Object.keys(beltTestPickerSelected).length;
+  html+='<button class="btn-gold-full" style="width:auto;padding:0.6rem 1.1rem;'+(selCount?'':'opacity:0.4;cursor:not-allowed')+'" onclick="addSelectedToBeltTest()" '+(selCount?'':'disabled')+'><i class="fa-solid fa-user-plus" style="margin-right:0.4rem"></i>Add Selected ('+selCount+')</button>';
+  html+='</div>';
+
+  if(invited.length){
+    html+=sectionHeader("Currently Invited",invited.length,"fa-circle-check","var(--gold)");
+    html+=invited.map(function(r){return invitedRowHTML(r);}).join("");
+  }
+
+  if(q){
+    html+=sectionHeader("Search Results",searchHits.length,"fa-magnifying-glass","var(--muted2)");
+    html+=searchHits.length?searchHits.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No matches.</div>';
+  }else{
+    html+=sectionHeader("Eligible Now",eligibleNow.length,"fa-star","#7DBD7D");
+    html+=eligibleNow.length?eligibleNow.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No students currently meet the class requirement for their next belt.</div>';
+
+    html+=sectionHeader("Within 5 Classes",nearList.length,"fa-hourglass-half","var(--gold)");
+    html+=nearList.length?nearList.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No students are within 5 classes of eligibility.</div>';
+  }
+
+  sl.innerHTML=html;
+}
+
+function sectionHeader(label,count,icon,color){
+  return '<div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:'+color+';margin:1.25rem 0 0.5rem;display:flex;align-items:center;gap:0.5rem"><i class="fa-solid '+icon+'"></i>'+label+' <span style="color:var(--muted);font-weight:normal">('+count+')</span></div>';
+}
+
+function pickerRowHTML(r){
+  var s=r.student;
+  var checked=!!beltTestPickerSelected[s.id];
+  var beltLabel=r.currentBelt?r.currentBelt.name:(r.hasBeltSystem?"(needs first belt)":"(no belt system)");
+  var nextLabel=r.nextBelt?(" → "+r.nextBelt.name):"";
+  var countLabel="";
+  if(r.currentBelt&&(r.currentBelt.classes_required||0)>0){
+    countLabel=' · <span style="color:'+(r.eligible?"#7DBD7D":"var(--muted2)")+'">'+r.count+"/"+r.currentBelt.classes_required+(r.eligible?" ✓":"")+"</span>";
+  }else
 // Milestones
 function buildMilestonesEditor(){
   var el=document.getElementById('milestonesEditor'); if(!el) return; var html='';
