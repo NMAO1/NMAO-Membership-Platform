@@ -5510,7 +5510,7 @@ async function sendCommunication(){
   if(unreachable) resultMsg+=' ('+unreachable+' skipped — no contact info)';
   clearReportSelection();
   setMsg('commMsg',resultMsg,'success');
-  await sb.from('communications').insert({school_id:SID,type:'email',subject:subject||null,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:totalReached});
+  await sb.from('communications').insert({school_id:SID,type:'announcement',channel:'email',subject:subject||'(no subject)',body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:totalReached});
   setTimeout(function(){document.getElementById('commMsg').textContent='';},5000);
 }
 
@@ -6423,8 +6423,8 @@ function loadStsTemplate(type){
   if(emailSent||smsSent){
     try{
       await sb.from('communications').insert({
-        school_id:SID,type:emailSent&&smsSent?'both':emailSent?'email':'sms',
-        subject:subject||null,body:emailSent?emailBody:smsBody,
+        school_id:SID,type:'announcement',channel:emailSent&&smsSent?'both':emailSent?'email':'sms',
+        subject:subject||'(no subject)',body:emailSent?emailBody:smsBody,
         audience:'selected',status:'sent',sent_at:new Date().toISOString(),
         recipient_count:emailSent+smsSent
       });
