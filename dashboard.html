@@ -7563,12 +7563,12 @@ window.closeWelcomeModal = async function() {
       }
       if (msg) { msg.textContent = "Sent to " + recipients.length + " recipients!"; msg.style.color = "#7DBD7D"; }
       try {
-        await sb.from("communications").insert({
-          school_id: SID, type: "email", subject: subj, body: body,
-          audience: "event_invite", status: "sent",
-          sent_at: new Date().toISOString(), recipient_count: recipients.length
-        });
-      } catch(e){}
+  await sb.from("communications").insert({
+    school_id: SID, type: "announcement", subject: subj, body: body,
+    audience: "selected", status: "sent",
+    sent_at: new Date().toISOString(), recipient_count: recipients.length
+  });
+} catch(e){ console.error("event invite log insert failed:", e); }
       setTimeout(window.closeEventInvite, 1400);
     } catch(e){ if (msg) { msg.textContent = "Error: " + e.message; msg.style.color = "#E07070"; } }
   };
