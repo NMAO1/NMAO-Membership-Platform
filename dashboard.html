@@ -5493,10 +5493,10 @@ async function sendCommunication(){
   var totalReached=0; var errors=[];
   if(emailRecipients.length){
     try{
-      var r=await fetch(SURL+'/functions/v1/send-broadcast',{
+      var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,subject:subject,body:body,recipients:emailRecipients})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients})
       });
       if(r.ok){totalReached+=emailRecipients.length;}
       else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
@@ -6361,10 +6361,10 @@ async function sendToSelectedNow(){
   // Send emails
   if(emailRecipients.length){
     try{
-      var r=await fetch(SURL+'/functions/v1/send-broadcast',{
+     var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,subject:subject,body:emailBody,recipients:emailRecipients})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:emailBody,recipients:emailRecipients})
       });
       if(r.ok){emailSent=emailRecipients.length;}
       else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
@@ -6655,46 +6655,6 @@ function loadStsTemplate(type){
   var son=document.getElementById('stsSmsToggle').checked;
   var eon=document.getElementById('stsEmailToggle').checked;
   if(son&&!eon)updateSmsCounter(document.getElementById('stsBodySms'));
-}
-async function sendToSelectedNow(){
-  var eon=document.getElementById('stsEmailToggle').checked;
-  var son=document.getElementById('stsSmsToggle').checked;
-  if(!eon&&!son){setMsg('stsSendMsg','Please select at least one channel.','error');return;}
-  var subj=document.getElementById('stsSubject').value.trim();
-  var ebody=quillEditors['stsBodyEditor']?quillEditors['stsBodyEditor'].root.innerHTML:'';
-  var sbody=document.getElementById('stsBodySms').value.trim();
-  if(eon&&!ebody){setMsg('stsSendMsg','Please enter a message body.','error');return;}
-  if(son&&!sbody){setMsg('stsSendMsg','Please enter an SMS message.','error');return;}
-  var er=eon?selectedReportRecipients.filter(function(x){return x.email;}):[];
-  var sr=son?selectedReportRecipients.filter(function(x){return x.phone;}):[];
-  if(!er.length&&!sr.length){setMsg('stsSendMsg','No recipients have contact info for the selected channels.','error');return;}
-  setMsg('stsSendMsg','Sending...','');
-  document.getElementById('stsSendBtn').disabled=true;
-  var es=0;var ss=0;var errs=[];
-  if(er.length){
-    try{
-      var res=await fetch(SURL+'/functions/v1/send-broadcast',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subject:subj,body:ebody,recipients:er})});
-      if(res.ok){es=er.length;}else{var e=await res.json();errs.push('Email: '+(e.error||'failed'));}
-    }catch(e){errs.push('Email: '+e.message);}
-  }
-  if(sr.length){
-    try{
-      var sres=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,type:'sms',body:sbody,recipients:sr})});
-      if(sres.ok){ss=sr.length;}else{var se=await sres.json();errs.push('SMS: '+(se.error||'failed'));}
-    }catch(e){errs.push('SMS: '+e.message);}
-  }
-  if(es||ss){try{await sb.from('communications').insert({school_id:SID,type:es&&ss?'both':es?'email':'sms',subject:subj||null,body:es?ebody:sbody,audience:'selected',status:'sent',sent_at:new Date().toISOString(),recipient_count:es+ss});}catch(e){}}
-  document.getElementById('stsSendBtn').disabled=false;
-  if(errs.length&&!es&&!ss){setMsg('stsSendMsg',errs.join(' | '),'error');return;}
-  var parts=[];
-  if(es)parts.push(es+' email'+(es!==1?'s':'')+' sent');
-  if(ss)parts.push(ss+' SMS sent');
-  var un=selectedReportRecipients.filter(function(x){return(!eon||!x.email)&&(!son||!x.phone);}).length;
-  if(un)parts.push(un+' skipped (no contact info)');
-  if(errs.length)parts.push(errs.join(', '));
-  document.getElementById('stsSendResultText').textContent=parts.join(' - ');
-  document.getElementById('stsSendResult').style.display='block';
-  document.getElementById('stsSendMsg').textContent='';
 }
   </script>
 <script>
@@ -7588,10 +7548,10 @@ window.closeWelcomeModal = async function() {
     if (!recipients.length) { if (msg) { msg.textContent = "No recipients with email found."; msg.style.color = "#E07070"; } return; }
     if (msg) { msg.textContent = "Sending to " + recipients.length + " recipients..."; msg.style.color = "var(--muted)"; }
     try {
-      var r = await fetch(SURL + "/functions/v1/send-broadcast", {
+      var r = await fetch(SURL + "/functions/v1/send-communication", {
         method: "POST",
-        headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
-        body: JSON.stringify({school_id: SID, subject: subj, body: body, recipients: recipients})
+        headers: {"Content-Type":"application/json","Authorization":"Bearer "+SKEY},
+        body: JSON.stringify({school_id: SID, type: "email", subject: subj, body: body, recipients: recipients})
       });
       if (!r.ok) {
         var err = await r.json().catch(function(){ return {error: "Failed"}; });
