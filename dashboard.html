@@ -2295,7 +2295,8 @@
 
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-var SID  = null;
+var SID = null;
+var ownerEmail = null;    // ← ADD THIS LINE
 var sb   = supabase.createClient(SURL, SKEY);
 
 var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -2378,6 +2379,7 @@ async function init() {
     var r = await sb.auth.getSession();
     if (!r.data || !r.data.session) { window.location.href='index.html'; return; }
     var user = r.data.session.user;
+    ownerEmail = user.email;    
     var ownerCheck = await sb.from('schools').select('id').eq('owner_id',user.id).single();
     if (!ownerCheck.error && ownerCheck.data) {
       SID = ownerCheck.data.id;
@@ -5496,7 +5498,7 @@ async function sendCommunication(){
       var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients,reply_to:ownerEmail})
       });
       if(r.ok){totalReached+=emailRecipients.length;}
       else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
@@ -6401,7 +6403,7 @@ function loadStsTemplate(type){
      var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:emailBody,recipients:emailRecipients})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:emailBody,recipients:emailRecipients,reply_to:ownerEmail})
       });
       if(r.ok){emailSent=emailRecipients.length;}
       else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
@@ -7552,7 +7554,7 @@ window.closeWelcomeModal = async function() {
       var r = await fetch(SURL + "/functions/v1/send-communication", {
         method: "POST",
         headers: {"Content-Type":"application/json","Authorization":"Bearer "+SKEY},
-        body: JSON.stringify({school_id: SID, type: "email", subject: subj, body: body, recipients: recipients})
+        body: JSON.stringify({school_id: SID, type: "email", subject: subj, body: body, recipients: recipients, reply_to: ownerEmail})
       });
       if (!r.ok) {
         var err = await r.json().catch(function(){ return {error: "Failed"}; });
