@@ -6342,7 +6342,44 @@ function loadStsTemplate(type){
   if(smsOn&&!emailOn) updateSmsCounter(document.getElementById('stsBodySms'));
 }
 
-async function sendToSelectedNow(){
+
+
+
+
+    var q=sb.from(def.table).select(selectStr).eq('school_id',SID);
+
+    // Apply date filters
+    if(def.filters){
+      def.filters.forEach(function(f){
+        var el=document.getElementById('rf-'+f.key); if(!el||!el.value) return;
+        var df=def.dateField||'created_at';
+        if(f.key==='date_from') q=q.gte(df,el.value+'T00:00:00');
+        else if(f.key==='date_to') q=q.lte(df,el.value+'T23:59:59');
+        else q=q.eq(f.key,el.value);
+      });
+    }
+    q=q.limit(1000);
+    var r=await q;
+    if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
+    reportData=r.data||[];
+    document.getElementById('reportResultCount').textContent=reportData.length;
+    // Determine selected columns
+    var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
+    var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
+    // Build table
+ var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
+      thead.innerHTML='<tr><th style="width:32px"></th>'+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
+      tbody.innerHTML=reportData.map(function(row,idx){
+      return '<tr><td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>'+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]||'--');
+        return '<td style="font-size:0.82rem">'+val+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    wireReportToolbar(reportData.length);
+    document.getElementById('reportResultsSection').style.display='block';
+    document.getElementById('reportMsg').textContent='';
+    }catch(e){setMsg('reportMsg',e.message,'error');}
+}
+  async function sendToSelectedNow(){
   var emailOn=document.getElementById('stsEmailToggle').checked;
   var smsOn=document.getElementById('stsSmsToggle').checked;
   if(!emailOn&&!smsOn){setMsg('stsSendMsg','Please select at least one channel.','error');return;}
@@ -6407,42 +6444,6 @@ async function sendToSelectedNow(){
   document.getElementById('stsSendResultText').innerHTML=resultParts.join(' &nbsp;·&nbsp; ');
   document.getElementById('stsSendResult').style.display='block';
   document.getElementById('stsSendMsg').textContent='';
-}
-
-
-
-    var q=sb.from(def.table).select(selectStr).eq('school_id',SID);
-
-    // Apply date filters
-    if(def.filters){
-      def.filters.forEach(function(f){
-        var el=document.getElementById('rf-'+f.key); if(!el||!el.value) return;
-        var df=def.dateField||'created_at';
-        if(f.key==='date_from') q=q.gte(df,el.value+'T00:00:00');
-        else if(f.key==='date_to') q=q.lte(df,el.value+'T23:59:59');
-        else q=q.eq(f.key,el.value);
-      });
-    }
-    q=q.limit(1000);
-    var r=await q;
-    if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
-    reportData=r.data||[];
-    document.getElementById('reportResultCount').textContent=reportData.length;
-    // Determine selected columns
-    var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
-    var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
-    // Build table
- var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
-      thead.innerHTML='<tr><th style="width:32px"></th>'+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
-      tbody.innerHTML=reportData.map(function(row,idx){
-      return '<tr><td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>'+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]||'--');
-        return '<td style="font-size:0.82rem">'+val+'</td>';
-      }).join('')+'</tr>';
-    }).join('');
-    wireReportToolbar(reportData.length);
-    document.getElementById('reportResultsSection').style.display='block';
-    document.getElementById('reportMsg').textContent='';
-    }catch(e){setMsg('reportMsg',e.message,'error');}
 }
 function exportReportCSV(){
   if(!reportData.length||!currentReportDef) return;
