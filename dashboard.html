@@ -1493,9 +1493,12 @@
         </div>
         <div id="profileTabFinancial" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Payment History</div>
-            <button class="panel-action" style="font-size:0.72rem" onclick="toggleManualPaymentForm()"><i class="fa-solid fa-plus"></i> Record Payment</button>
-          </div>
+          <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Payment History</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="panel-action" style="font-size:0.72rem" onclick="toggleStripeChargeForm()"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</button>
+          <button class="panel-action" style="font-size:0.72rem" onclick="toggleManualPaymentForm()"><i class="fa-solid fa-plus"></i> Record Manual</button>
+        </div>
+      </div>
           <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-bottom:1rem">
             <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
             <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
@@ -1504,6 +1507,33 @@
             <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
             <p class="form-msg" id="manualPayMsg"></p>
           </div>
+          <div id="stripeChargeForm" class="manual-payment-form" style="display:none;margin-bottom:1rem">
+  <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</div>
+  <div class="field">
+    <label>Membership Plan</label>
+    <select id="stripeChargeTier"><option value="">-- Select Plan --</option></select>
+  </div>
+  <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+    <button class="panel-action" style="font-size:0.72rem" id="stripeChargeCreateBtn" onclick="createStripeCheckoutLink()"><i class="fa-solid fa-link"></i> Create Payment Link</button>
+    <button class="btn-sm" onclick="toggleStripeChargeForm()">Cancel</button>
+  </div>
+  <p class="form-msg" id="stripeChargeMsg"></p>
+
+  <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
+    <div id="stripeChargeQR" style="display:flex;justify-content:center;margin-bottom:1rem;padding:1rem;background:#fff;border-radius:4px;min-height:60px"></div>
+    <div class="field">
+      <label>Payment Link</label>
+      <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.78rem" />
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <button class="btn-sm" onclick="copyCheckoutLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+      <button class="btn-sm" onclick="emailCheckoutLink()"><i class="fa-solid fa-envelope"></i> Email</button>
+      <button class="btn-sm" onclick="smsCheckoutLink()"><i class="fa-solid fa-message"></i> SMS</button>
+    </div>
+    <p class="form-msg" id="stripeChargeDeliveryMsg"></p>
+  </div>
+</div>
           <div id="profilePaymentHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div>
         </div>
       </div>
@@ -4233,6 +4263,99 @@ async function runImport(){
   document.getElementById('importLogList').innerHTML=errors.map(function(e){return '<div class="import-log-entry '+e.status+'"><i class="fa-solid '+(e.status==='ok'?'fa-circle-check':e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus')+'"></i>Row '+e.row+': '+e.msg+'</div>';}).join('');
   document.getElementById('importStep1').style.display='none';
   document.getElementById('importStep2').style.display='block';
+}
+// Stripe charge flow (J.4.4)
+function toggleStripeChargeForm() {
+  var f = document.getElementById('stripeChargeForm');
+  var openNow = f.style.display === 'none';
+  f.style.display = openNow ? 'block' : 'none';
+  document.getElementById('stripeChargeMsg').textContent = '';
+  document.getElementById('stripeChargeDelivery').style.display = 'none';
+  if (openNow) {
+    populateStripeChargeMemDropdown();
+    document.getElementById('manualPaymentForm').style.display = 'none';
+  }
+}
+
+async function populateStripeChargeMemDropdown() {
+  var sel = document.getElementById('stripeChargeTier');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  var mpR = await sb.from('membership_programs').select('membership_id,program_id');
+  var mpData = mpR.data || [];
+  var html = '<option value="">-- Select a Plan --</option>';
+  allPrograms.forEach(function(prog) {
+    var progMemIds = mpData.filter(function(x){return x.program_id===prog.id;}).map(function(x){return x.membership_id;});
+    var progMems = allMemberships.filter(function(m){return progMemIds.indexOf(m.id)!==-1;});
+    if (progMems.length) {
+      html += '<optgroup label="'+prog.name+'">';
+      progMems.forEach(function(m) {
+        var p = '$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
+        html += '<option value="'+m.id+'">'+m.name+' - '+p+'</option>';
+      });
+      html += '</optgroup>';
+    }
+  });
+  sel.innerHTML = html;
+}
+
+async function createStripeCheckoutLink() {
+  if (!currentProfileStudent) return;
+  var membershipId = document.getElementById('stripeChargeTier').value;
+  if (!membershipId) { setMsg('stripeChargeMsg', 'Select a membership plan first.', 'error'); return; }
+  if (!currentProfileStudent.email && !currentProfileStudent.stripe_customer_id) {
+    setMsg('stripeChargeMsg', 'Student needs an email address before creating a payment link.', 'error');
+    return;
+  }
+  setMsg('stripeChargeMsg', 'Creating payment link...', '');
+  var btn = document.getElementById('stripeChargeCreateBtn');
+  btn.disabled = true;
+  try {
+    var r = await fetch(SURL + '/functions/v1/stripe-create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: currentProfileStudent.id,
+        membership_id: membershipId,
+        success_url: window.location.origin + window.location.pathname + '?payment=success',
+        cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
+      })
+    });
+    var data = await r.json();
+    if (!r.ok || data.error) {
+      setMsg('stripeChargeMsg', data.error || 'Failed to create payment link.', 'error');
+      btn.disabled = false;
+      return;
+    }
+    document.getElementById('stripeChargeUrl').value = data.url;
+    window._currentCheckoutUrl = data.url;
+    document.getElementById('stripeChargeDelivery').style.display = 'block';
+    setMsg('stripeChargeMsg', 'Payment link created!', 'success');
+    renderCheckoutQR(data.url);
+  } catch (e) {
+    setMsg('stripeChargeMsg', 'Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function copyCheckoutLink() {
+  if (!window._currentCheckoutUrl) return;
+  navigator.clipboard.writeText(window._currentCheckoutUrl).then(function(){
+    setMsg('stripeChargeDeliveryMsg', 'Copied to clipboard!', 'success');
+    setTimeout(function(){document.getElementById('stripeChargeDeliveryMsg').textContent='';}, 1500);
+  });
+}
+
+// Stubs for J.4.5 — full implementation in next step
+function renderCheckoutQR(url) {
+  document.getElementById('stripeChargeQR').innerHTML = '<div style="color:#888;font-size:0.72rem;font-style:italic">QR code rendering coming in J.4.5</div>';
+}
+function emailCheckoutLink() {
+  setMsg('stripeChargeDeliveryMsg', 'Email delivery coming in J.4.5 — use Copy Link for now.', '');
+}
+function smsCheckoutLink() {
+  setMsg('stripeChargeDeliveryMsg', 'SMS delivery coming in J.4.5 — use Copy Link for now.', '');
 }
 
 // ─────────────────────────────── §LEADS ───────────────────────────────
