@@ -1425,8 +1425,8 @@
           <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
           <div id="profileMembershipslist"></div>
           <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
-            <button class="panel-action" style="font-size:0.72rem" onclick="openChangeMembership()"><i class="fa-solid fa-arrow-right-arrow-left"></i> Change Plan</button>
-            <button class="panel-action" style="font-size:0.72rem" onclick="openAddMembershipToProfile()"><i class="fa-solid fa-plus"></i> Add</button>
+            <button class="panel-action" style="font-size:0.72rem" onclick="openChangeMembership()"><i class="fa-solid fa-arrow-right-arrow-left"></i> Switch Plan (No Charge)</button>
+            <button class="panel-action" style="font-size:0.72rem" onclick="openAddMembershipToProfile()"><i class="fa-solid fa-plus"></i> Comp Plan</button>
           </div>
           <div id="profileMembershipChangeBox" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
             <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
@@ -3876,7 +3876,7 @@ async function sendPortalMagicLink() {
 
 async function openChangeMembership() {
   if (!currentProfileStudent) return;
-  document.getElementById('profileMembershipChangeTitle').textContent='Change Primary Plan';
+  document.getElementById('profileMembershipChangeTitle').textContent='Switch Plan (No Charge)';
   document.getElementById('profileMembershipChangeBox').style.display='block';
   document.getElementById('changeMembershipMsg').textContent='';
   var sel=document.getElementById('profileMemSelect'); sel.innerHTML='<option value="">Loading...</option>';
@@ -3891,7 +3891,7 @@ async function openChangeMembership() {
 }
 async function openAddMembershipToProfile() {
   if (!currentProfileStudent) return;
-  document.getElementById('profileMembershipChangeTitle').textContent='Add Membership';
+  document.getElementById('profileMembershipChangeTitle').textContent='Comp Plan';
   document.getElementById('profileMembershipChangeBox').style.display='block';
   document.getElementById('changeMembershipMsg').textContent='';
   var sel=document.getElementById('profileMemSelect'); sel.innerHTML='<option value="">-- Select a Plan to Add --</option>';
@@ -3908,7 +3908,7 @@ async function saveChangeMembership() {
   setMsg('changeMembershipMsg','Saving...','');
   var mid=val; var pid=null; if(val.includes('|')){var parts=val.split('|');mid=parts[0];pid=parts[1];}
   var title=document.getElementById('profileMembershipChangeTitle').textContent;
-  if(title==='Add Membership'){
+  if(title==='Comp Plan'){
     var r=await sb.from('student_memberships').insert({school_id:SID,student_id:currentProfileStudent.id,membership_id:mid,program_id:pid,status:'active',start_date:new Date().toISOString().split('T')[0]});
     if(r.error){setMsg('changeMembershipMsg',r.error.message,'error');}else{setMsg('changeMembershipMsg','Added!','success');await loadProfileMemberships(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMembershipChangeBox').style.display='none';},800);}
   }else{
