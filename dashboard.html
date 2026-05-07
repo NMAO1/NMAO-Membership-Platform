@@ -1422,19 +1422,71 @@
       <div style="padding:1.5rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1.5rem">
         <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div>
         <div>
-          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
-          <div id="profileMembershipslist"></div>
-          <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
-            <button class="panel-action" style="font-size:0.72rem" onclick="openChangeMembership()"><i class="fa-solid fa-arrow-right-arrow-left"></i> Switch Plan (No Charge)</button>
-            <button class="panel-action" style="font-size:0.72rem" onclick="openAddMembershipToProfile()"><i class="fa-solid fa-plus"></i> Comp Plan</button>
-          </div>
-          <div id="profileMembershipChangeBox" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
-            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
-            <select id="profileMemSelect" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;margin-bottom:0.5rem"><option value="">Loading...</option></select>
-            <div style="display:flex;gap:0.5rem"><button class="panel-action" onclick="saveChangeMembership()">Save</button><button class="btn-sm" onclick="cancelChangeMembership()">Cancel</button></div>
-            <p class="form-msg" id="changeMembershipMsg"></p>
-          </div>
-        </div>
+  <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
+  <div id="profileMembershipslist"></div>
+
+  <!-- Primary actions: payment processing -->
+  <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
+    <button class="panel-action gold" style="font-size:0.72rem" onclick="toggleStripeChargeForm()"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</button>
+    <button class="panel-action" style="font-size:0.72rem" onclick="toggleManualPaymentForm()"><i class="fa-solid fa-receipt"></i> Record Manual</button>
+  </div>
+
+  <!-- Stripe charge form (moved from Financial tab) -->
+  <div id="stripeChargeForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
+    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</div>
+    <div class="field">
+      <label>Membership Plan</label>
+      <select id="stripeChargeTier"><option value="">-- Select Plan --</option></select>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+      <button class="panel-action" style="font-size:0.72rem" id="stripeChargeCreateBtn" onclick="createStripeCheckoutLink()"><i class="fa-solid fa-link"></i> Create Payment Link</button>
+      <button class="btn-sm" onclick="toggleStripeChargeForm()">Cancel</button>
+    </div>
+    <p class="form-msg" id="stripeChargeMsg"></p>
+    <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
+      <div id="stripeChargeQR" style="display:flex;justify-content:center;margin-bottom:1rem;padding:1rem;background:#fff;border-radius:4px;min-height:60px"></div>
+      <div class="field">
+        <label>Payment Link</label>
+        <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.72rem" />
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn-sm" onclick="copyCheckoutLink()"><i class="fa-solid fa-copy"></i> Copy</button>
+        <button class="btn-sm" onclick="emailCheckoutLink()"><i class="fa-solid fa-envelope"></i> Email</button>
+        <button class="btn-sm" onclick="smsCheckoutLink()"><i class="fa-solid fa-message"></i> SMS</button>
+      </div>
+      <p class="form-msg" id="stripeChargeDeliveryMsg"></p>
+    </div>
+  </div>
+
+  <!-- Manual payment form (moved from Financial tab) -->
+  <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
+    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
+    <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
+    <div class="form-row"><div class="field"><label>Method</label><select id="manualPayMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Date</label><input type="date" id="manualPayDate" /></div></div>
+    <div class="field"><label>Note (optional)</label><input type="text" id="manualPayNote" placeholder="e.g. Monthly dues April" /></div>
+    <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
+    <p class="form-msg" id="manualPayMsg"></p>
+  </div>
+
+  <!-- Secondary actions: admin overrides (collapsed) -->
+  <div style="margin-top:0.85rem;border-top:1px solid var(--border);padding-top:0.75rem">
+    <button onclick="toggleMembershipMoreActions()" style="background:none;border:none;color:var(--muted);font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.4rem">
+      <i class="fa-solid fa-chevron-down" id="membershipMoreCaret" style="font-size:0.6rem"></i> More actions
+    </button>
+    <div id="membershipMoreActions" style="display:none;padding-top:0.5rem">
+      <a onclick="openChangeMembership()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Switch Plan (No Charge)</a>
+      <a onclick="openAddMembershipToProfile()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Comp Plan</a>
+    </div>
+  </div>
+
+  <div id="profileMembershipChangeBox" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
+    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
+    <select id="profileMemSelect" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;margin-bottom:0.5rem"><option value="">Loading...</option></select>
+    <div style="display:flex;gap:0.5rem"><button class="panel-action" onclick="saveChangeMembership()">Save</button><button class="btn-sm" onclick="cancelChangeMembership()">Cancel</button></div>
+    <p class="form-msg" id="changeMembershipMsg"></p>
+  </div>
+</div>
         <div>
           <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Billing Day Override</div>
           <select id="profileAutopayDay" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;width:100%"><option value="">Use Membership Default</option><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select>
@@ -1492,48 +1544,7 @@
           <div id="profileMsgHistory" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem"></div>
         </div>
         <div id="profileTabFinancial" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-          <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Payment History</div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <button class="panel-action" style="font-size:0.72rem" onclick="toggleStripeChargeForm()"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</button>
-          <button class="panel-action" style="font-size:0.72rem" onclick="toggleManualPaymentForm()"><i class="fa-solid fa-plus"></i> Record Manual</button>
-        </div>
-      </div>
-          <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-bottom:1rem">
-            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
-            <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
-            <div class="form-row"><div class="field"><label>Method</label><select id="manualPayMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Date</label><input type="date" id="manualPayDate" /></div></div>
-            <div class="field"><label>Note (optional)</label><input type="text" id="manualPayNote" placeholder="e.g. Monthly dues April" /></div>
-            <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
-            <p class="form-msg" id="manualPayMsg"></p>
-          </div>
-          <div id="stripeChargeForm" class="manual-payment-form" style="display:none;margin-bottom:1rem">
-  <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</div>
-  <div class="field">
-    <label>Membership Plan</label>
-    <select id="stripeChargeTier"><option value="">-- Select Plan --</option></select>
-  </div>
-  <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
-    <button class="panel-action" style="font-size:0.72rem" id="stripeChargeCreateBtn" onclick="createStripeCheckoutLink()"><i class="fa-solid fa-link"></i> Create Payment Link</button>
-    <button class="btn-sm" onclick="toggleStripeChargeForm()">Cancel</button>
-  </div>
-  <p class="form-msg" id="stripeChargeMsg"></p>
-
-  <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
-    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
-    <div id="stripeChargeQR" style="display:flex;justify-content:center;margin-bottom:1rem;padding:1rem;background:#fff;border-radius:4px;min-height:60px"></div>
-    <div class="field">
-      <label>Payment Link</label>
-      <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.78rem" />
-    </div>
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-      <button class="btn-sm" onclick="copyCheckoutLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
-      <button class="btn-sm" onclick="emailCheckoutLink()"><i class="fa-solid fa-envelope"></i> Email</button>
-      <button class="btn-sm" onclick="smsCheckoutLink()"><i class="fa-solid fa-message"></i> SMS</button>
-    </div>
-    <p class="form-msg" id="stripeChargeDeliveryMsg"></p>
-  </div>
-</div>
+  <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem">Payment History</div>
           <div id="profilePaymentHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div>
         </div>
       </div>
@@ -3993,6 +4004,14 @@ async function openPromoteModal() {
   document.getElementById('promoteModal').classList.add('active');
 }
 
+function toggleMembershipMoreActions() {
+  var el = document.getElementById('membershipMoreActions');
+  var caret = document.getElementById('membershipMoreCaret');
+  var isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  caret.className = isOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+  caret.style.fontSize = '0.6rem';
+}
 function togglePromoteOnboardingMode() {
   var on=document.getElementById('promoteOnboardingMode').checked;
   document.getElementById('promoteRankSelectField').style.display=on?'block':'none';
