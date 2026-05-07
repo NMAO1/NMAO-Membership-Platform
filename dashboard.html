@@ -4484,11 +4484,111 @@ function copyCheckoutLink() {
 }
 
 // Stubs for J.4.5 — full implementation in next step
-function emailCheckoutLink() {
-  setMsg('stripeChargeDeliveryMsg', 'Email delivery coming in J.4.5 — use Copy Link for now.', '');
+async function emailCheckoutLink() {
+  if (!window._currentCheckoutUrl || !currentProfileStudent) return;
+  if (!currentProfileStudent.email) {
+    setMsg('stripeChargeDeliveryMsg', 'Student has no email address on file.', 'error');
+    return;
+  }
+  setMsg('stripeChargeDeliveryMsg', 'Sending email...', '');
+
+  var url = window._currentCheckoutUrl;
+  var name = currentProfileStudent.first_name || 'there';
+  var subject = 'Your membership payment link';
+  var body = '<p>Hi ' + name + ',</p>' +
+    '<p>Here is your secure payment link to complete your membership:</p>' +
+    '<p><a href="' + url + '">Click here to complete payment</a></p>' +
+    '<p>Or copy and paste this link into your browser:<br>' + url + '</p>' +
+    '<p>This link is unique to you. Please do not share it with others.</p>';
+
+  try {
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({
+        school_id: SID,
+        type: 'email',
+        subject: subject,
+        body: body,
+        recipients: [{
+          id: currentProfileStudent.id,
+          email: currentProfileStudent.email,
+          name: currentProfileStudent.first_name + ' ' + currentProfileStudent.last_name,
+          phone: currentProfileStudent.phone || null
+        }],
+        reply_to: ownerEmail || null
+      })
+    });
+    if (r.ok) {
+      setMsg('stripeChargeDeliveryMsg', 'Email sent to ' + currentProfileStudent.email, 'success');
+      await sb.from('communications').insert({
+        school_id: SID,
+        type: 'announcement',
+        channel: 'email',
+        subject: subject,
+        body: body,
+        audience: 'selected',
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        recipient_count: 1
+      });
+    } else {
+      var err = await r.json();
+      setMsg('stripeChargeDeliveryMsg', 'Email failed: ' + (err.error || 'Unknown error'), 'error');
+    }
+  } catch (e) {
+    setMsg('stripeChargeDeliveryMsg', 'Email error: ' + e.message, 'error');
+  }
 }
-function smsCheckoutLink() {
-  setMsg('stripeChargeDeliveryMsg', 'SMS delivery coming in J.4.5 — use Copy Link for now.', '');
+
+async function smsCheckoutLink() {
+  if (!window._currentCheckoutUrl || !currentProfileStudent) return;
+  if (!currentProfileStudent.phone) {
+    setMsg('stripeChargeDeliveryMsg', 'Student has no phone number on file.', 'error');
+    return;
+  }
+  setMsg('stripeChargeDeliveryMsg', 'Sending SMS...', '');
+
+  var url = window._currentCheckoutUrl;
+  var firstName = currentProfileStudent.first_name || 'there';
+  var body = 'Hi ' + firstName + ', here is your payment link: ' + url;
+
+  try {
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({
+        school_id: SID,
+        type: 'sms',
+        body: body,
+        recipients: [{
+          id: currentProfileStudent.id,
+          phone: currentProfileStudent.phone,
+          name: currentProfileStudent.first_name + ' ' + currentProfileStudent.last_name,
+          email: currentProfileStudent.email || null
+        }]
+      })
+    });
+    if (r.ok) {
+      setMsg('stripeChargeDeliveryMsg', 'SMS sent to ' + currentProfileStudent.phone, 'success');
+      await sb.from('communications').insert({
+        school_id: SID,
+        type: 'announcement',
+        channel: 'sms',
+        subject: '(SMS)',
+        body: body,
+        audience: 'selected',
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        recipient_count: 1
+      });
+    } else {
+      var err = await r.json();
+      setMsg('stripeChargeDeliveryMsg', 'SMS failed: ' + (err.error || 'Unknown error'), 'error');
+    }
+  } catch (e) {
+    setMsg('stripeChargeDeliveryMsg', 'SMS error: ' + e.message, 'error');
+  }
 }
 
 // ─────────────────────────────── §LEADS ───────────────────────────────
