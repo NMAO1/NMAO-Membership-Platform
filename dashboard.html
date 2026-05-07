@@ -6594,19 +6594,18 @@ async function loadStripeConnectStatus(){
   }catch(e){}
 }
 async function connectStripe(){
-  setMsg('stripeMsg','Connecting...','');
+  setMsg('stripeConnectMsg','Connecting...','');
   try{
-    var r=await fetch(SURL+'/functions/v1/create-stripe-connect',{
+    var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
       body:JSON.stringify({school_id:SID,return_url:window.location.href})
     });
     var data=await r.json();
     if(data.url){window.location.href=data.url;}
-    else{setMsg('stripeMsg',data.error||'Failed to connect Stripe.','error');}
-  }catch(e){setMsg('stripeMsg',e.message,'error');}
+    else{setMsg('stripeConnectMsg',data.error||'Failed to connect Stripe.','error');}
+  }catch(e){setMsg('stripeConnectMsg',e.message,'error');}
 }
-
 // ─────────────────────────────── §UTILS ───────────────────────────────
 
 // §UTILS — RSVP enrollment badge for calendar pills and class cards
