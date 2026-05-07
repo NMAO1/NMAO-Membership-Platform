@@ -1445,7 +1445,6 @@
     <p class="form-msg" id="stripeChargeMsg"></p>
     <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
       <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
-      <div id="stripeChargeQR" style="display:flex;justify-content:center;margin-bottom:1rem;padding:1rem;background:#fff;border-radius:4px;min-height:60px"></div>
       <div class="field">
         <label>Payment Link</label>
         <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.72rem" />
@@ -4469,7 +4468,6 @@ async function createStripeCheckoutLink() {
     window._currentCheckoutUrl = data.url;
     document.getElementById('stripeChargeDelivery').style.display = 'block';
     setMsg('stripeChargeMsg', 'Payment link created!', 'success');
-    renderCheckoutQR(data.url);
   } catch (e) {
     setMsg('stripeChargeMsg', 'Error: ' + e.message, 'error');
   } finally {
@@ -4486,9 +4484,6 @@ function copyCheckoutLink() {
 }
 
 // Stubs for J.4.5 — full implementation in next step
-function renderCheckoutQR(url) {
-  document.getElementById('stripeChargeQR').innerHTML = '<div style="color:#888;font-size:0.72rem;font-style:italic">QR code rendering coming in J.4.5</div>';
-}
 function emailCheckoutLink() {
   setMsg('stripeChargeDeliveryMsg', 'Email delivery coming in J.4.5 — use Copy Link for now.', '');
 }
