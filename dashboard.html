@@ -1462,7 +1462,8 @@
   <!-- Manual payment form (moved from Financial tab) -->
   <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
     <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
-    <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
+    <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType" onchange="onManualPayTypeChange()"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
+    <div class="field" id="manualPayMembershipField"><label>Membership Plan</label><select id="manualPayMembership"><option value="">-- Select Plan --</option></select></div>
     <div class="form-row"><div class="field"><label>Method</label><select id="manualPayMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Date</label><input type="date" id="manualPayDate" /></div></div>
     <div class="field"><label>Note (optional)</label><input type="text" id="manualPayNote" placeholder="e.g. Monthly dues April" /></div>
     <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
@@ -4131,15 +4132,133 @@ async function loadProfilePaymentHistory(sid){
     el.innerHTML=data.map(function(p){var dt=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0;border-bottom:1px solid var(--border)"><div><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[p.type]||p.type||'Payment')+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(p.description||'')+' \u00B7 '+dt+'</div></div><div style="font-size:0.88rem;color:var(--gold)">$'+parseFloat(p.amount||0).toFixed(2)+'</div></div>';}).join('');
   }catch(e){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Payment history unavailable.</div>';}
 }
-function toggleManualPaymentForm(){ var f=document.getElementById('manualPaymentForm'); f.style.display=f.style.display==='none'?'block':'none'; document.getElementById('manualPayMsg').textContent=''; }
-async function saveManualPayment(){
-  if(!currentProfileStudent) return;
-  var amt=parseFloat(document.getElementById('manualPayAmt').value)||0;
-  if(amt<=0){setMsg('manualPayMsg','Amount must be greater than zero.','error');return;}
-  setMsg('manualPayMsg','Saving...','');
-  var r=await sb.from('payments').insert({school_id:SID,student_id:currentProfileStudent.id,amount:amt,type:document.getElementById('manualPayType').value,status:'paid',description:document.getElementById('manualPayNote').value.trim()||null,created_at:document.getElementById('manualPayDate').value+'T12:00:00'});
-  if(r.error){setMsg('manualPayMsg',r.error.message,'error');}
-  else{setMsg('manualPayMsg','Payment recorded!','success');document.getElementById('manualPayAmt').value='0';document.getElementById('manualPayNote').value='';await loadProfilePaymentHistory(currentProfileStudent.id);await loadRevenue();setTimeout(function(){toggleManualPaymentForm();document.getElementById('manualPayMsg').textContent='';},1200);}
+function toggleManualPaymentForm(){
+  var f = document.getElementById('manualPaymentForm');
+  var openNow = f.style.display === 'none';
+  f.style.display = openNow ? 'block' : 'none';
+  document.getElementById('manualPayMsg').textContent = '';
+  if (openNow) {
+    onManualPayTypeChange();
+    document.getElementById('stripeChargeForm').style.display = 'none';
+    if (!document.getElementById('manualPayDate').value) {
+      document.getElementById('manualPayDate').value = new Date().toISOString().split('T')[0];
+    }
+  }
+}
+
+function onManualPayTypeChange() {
+  var type = document.getElementById('manualPayType').value;
+  var field = document.getElementById('manualPayMembershipField');
+  if (type === 'membership') {
+    field.style.display = 'block';
+    populateManualMembershipDropdown();
+  } else {
+    field.style.display = 'none';
+  }
+}
+
+async function populateManualMembershipDropdown() {
+  var sel = document.getElementById('manualPayMembership');
+  if (sel.children.length > 1) return;
+  sel.innerHTML = '<option value="">-- Select Plan --</option>';
+  var mpR = await sb.from('membership_programs').select('membership_id,program_id');
+  var mpData = mpR.data || [];
+  allPrograms.forEach(function(prog) {
+    var progMemIds = mpData.filter(function(x){return x.program_id===prog.id;}).map(function(x){return x.membership_id;});
+    var progMems = allMemberships.filter(function(m){return progMemIds.indexOf(m.id)!==-1;});
+    if (progMems.length) {
+      var optgroup = document.createElement('optgroup');
+      optgroup.label = prog.name;
+      progMems.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        var p = '$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
+        opt.textContent = m.name+' - '+p;
+        optgroup.appendChild(opt);
+      });
+      sel.appendChild(optgroup);
+    }
+  });
+}
+ async function saveManualPayment(){
+  if (!currentProfileStudent) return;
+  var amt = parseFloat(document.getElementById('manualPayAmt').value) || 0;
+  var type = document.getElementById('manualPayType').value;
+  var method = document.getElementById('manualPayMethod').value;
+  var note = document.getElementById('manualPayNote').value.trim();
+  var dateStr = document.getElementById('manualPayDate').value || new Date().toISOString().split('T')[0];
+
+  if (amt <= 0) { setMsg('manualPayMsg', 'Amount must be greater than zero.', 'error'); return; }
+
+  // For membership type, require tier selection
+  var membershipId = null;
+  if (type === 'membership') {
+    membershipId = document.getElementById('manualPayMembership').value;
+    if (!membershipId) { setMsg('manualPayMsg', 'Please select a membership plan.', 'error'); return; }
+  }
+
+  setMsg('manualPayMsg', 'Saving...', '');
+
+  // Build description with method prefix for clarity in payment history
+  var methodLabel = method.charAt(0).toUpperCase() + method.slice(1);
+  var description = methodLabel + (note ? ' - ' + note : '');
+
+  // 1. Record the payment
+  var r = await sb.from('payments').insert({
+    school_id: SID,
+    student_id: currentProfileStudent.id,
+    amount: amt,
+    type: type,
+    status: 'paid',
+    description: description,
+    created_at: dateStr + 'T12:00:00',
+    paid_at: dateStr + 'T12:00:00'
+  });
+
+  if (r.error) { setMsg('manualPayMsg', r.error.message, 'error'); return; }
+
+  // 2. If type=membership, activate the membership (mirrors stripe-webhook DB writes)
+  if (type === 'membership' && membershipId) {
+    var nowIso = new Date().toISOString();
+    var todayDate = nowIso.split('T')[0];
+
+    // Find the program_id for this membership
+    var programId = null;
+    var mpR = await sb.from('membership_programs').select('program_id').eq('membership_id', membershipId).limit(1);
+    if (mpR.data && mpR.data.length) programId = mpR.data[0].program_id;
+
+    // Update student record
+    await sb.from('students').update({
+      status: 'active',
+      membership_id: membershipId
+    }).eq('id', currentProfileStudent.id);
+
+    // Upsert student_memberships record
+    await sb.from('student_memberships').upsert({
+      school_id: SID,
+      student_id: currentProfileStudent.id,
+      membership_id: membershipId,
+      program_id: programId,
+      status: 'active',
+      started_at: nowIso,
+      start_date: todayDate
+    });
+  }
+
+  // Success feedback + refresh
+  setMsg('manualPayMsg', type === 'membership' ? 'Payment recorded and membership activated!' : 'Payment recorded!', 'success');
+  document.getElementById('manualPayAmt').value = '0';
+  document.getElementById('manualPayNote').value = '';
+  await loadProfilePaymentHistory(currentProfileStudent.id);
+  if (type === 'membership') {
+    await loadProfileMemberships(currentProfileStudent.id);
+    await loadStudents();
+  }
+  if (typeof loadRevenue === 'function') await loadRevenue();
+  setTimeout(function(){
+    toggleManualPaymentForm();
+    document.getElementById('manualPayMsg').textContent = '';
+  }, 1500);
 }
 async function cycleStudentStatus(){
   if(!currentProfileStudent) return;
