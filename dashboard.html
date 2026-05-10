@@ -1056,6 +1056,23 @@
         <div id="billingPlanPrice" style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem">$79/month</div>
         <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Change Plan</button>
       </div></div>
+
+      <!-- §SMS-USAGE -->
+      <div class="panel" id="smsUsagePanel" style="margin-bottom:1.5rem;display:none"><div class="panel-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">SMS Usage — <span id="smsUsageMonth">—</span></div>
+            <div id="smsUsageCount" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">0 / 0 used</div>
+            <div id="smsUsageDays" style="font-size:0.78rem;color:var(--muted)">—</div>
+          </div>
+          <div id="smsUsageTier" style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);background:var(--black);border:1px solid var(--border);padding:0.35rem 0.6rem;white-space:nowrap;flex-shrink:0">—</div>
+        </div>
+        <div style="height:8px;background:var(--black);border:1px solid var(--border);overflow:hidden">
+          <div id="smsUsageBar" style="height:100%;width:0%;background:#7DBD7D;transition:width 0.4s ease, background-color 0.2s ease"></div>
+        </div>
+        <div id="smsUsageOverage" style="display:none;margin-top:0.85rem;padding:0.65rem 0.85rem;background:#E0707015;border-left:3px solid #E07070;font-size:0.82rem;color:#E07070"></div>
+      </div></div>
+
       <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-brands fa-stripe" style="margin-right:0.5rem;color:#635BFF"></i>Payment Processing</span></div><div class="panel-body">
         <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Connect your Stripe account to accept membership payments and retail sales directly from your students.</p>
         <div id="stripeConnectStatus"></div>
@@ -6835,12 +6852,70 @@ async function connectStripe(){
       body:JSON.stringify({school_id:SID,return_url:window.location.href})
     });
     var data=await r.json();
-    if(data.url){window.location.href=data.url;}
+   if(data.url){window.location.href=data.url;}
     else{setMsg('stripeConnectMsg',data.error||'Failed to connect Stripe.','error');}
   }catch(e){setMsg('stripeConnectMsg',e.message,'error');}
 }
-// ─────────────────────────────── §UTILS ───────────────────────────────
 
+// §SMS-USAGE — Dashboard SMS usage widget on Billing tab (Phase β.5)
+async function loadSmsUsageWidget(){
+  var panel=document.getElementById('smsUsagePanel'); if(!panel) return;
+  try{
+    var sR=await sb.from('schools')
+      .select('subscription_tier_id, school_subscription_tiers(tier_name, included_sms)')
+      .eq('id',SID).single();
+    var tier = sR.data && sR.data.school_subscription_tiers;
+
+    var uR=await sb.from('sms_usage')
+      .select('period_start, period_end, sms_count, sms_bundle, overage_count, overage_amount_cents')
+      .eq('school_id',SID).gte('period_end',new Date().toISOString())
+      .order('period_start',{ascending:false}).limit(1).maybeSingle();
+    var usage = uR.data;
+
+    var bundle = usage ? usage.sms_bundle : (tier ? tier.included_sms : 0);
+    var count  = usage ? usage.sms_count  : 0;
+    var pct    = bundle>0 ? (count/bundle)*100 : 0;
+
+    var monthSrc = usage ? new Date(usage.period_start) : new Date();
+    document.getElementById('smsUsageMonth').textContent =
+      monthSrc.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+    document.getElementById('smsUsageCount').textContent =
+      count.toLocaleString()+' / '+bundle.toLocaleString()+' used';
+
+    var daysEl=document.getElementById('smsUsageDays');
+    if(usage){
+      var msLeft=new Date(usage.period_end).getTime()-Date.now();
+      var days=Math.max(0,Math.ceil(msLeft/86400000));
+      daysEl.textContent = (days===1?'1 day':days+' days')+' left in this period';
+    }else{
+      daysEl.textContent='No active period — counter starts on first SMS sent';
+    }
+
+    document.getElementById('smsUsageTier').textContent =
+      tier ? tier.tier_name+' plan' : 'Tier not assigned';
+
+    var bar=document.getElementById('smsUsageBar');
+    bar.style.width = Math.min(100,pct)+'%';
+    bar.style.background = pct>=100 ? '#E07070' : pct>=80 ? '#E2A84C' : '#7DBD7D';
+
+    var ovEl=document.getElementById('smsUsageOverage');
+    if(usage && usage.overage_count>0){
+      var dollars=(usage.overage_amount_cents/100).toFixed(2);
+      ovEl.textContent = usage.overage_count.toLocaleString()+' SMS over bundle — $'+dollars+' will be added to next invoice';
+      ovEl.style.display='block';
+    }else{
+      ovEl.style.display='none';
+    }
+
+    panel.style.display='';
+  }catch(e){
+    console.error('[loadSmsUsageWidget]',e);
+    panel.style.display='none';
+  }
+}
+
+// ─────────────────────────────── §UTILS ───────────────────────────────
 // §UTILS — RSVP enrollment badge for calendar pills and class cards
 function enrollBadgeHTML(classId, capacity, style, dateStr) {
   var classMap = enrollmentCounts[classId] || {};
