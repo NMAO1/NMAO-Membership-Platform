@@ -555,6 +555,19 @@
 
   <div class="content">
 
+    <!-- §SMS-WARNING-BANNER -->
+    <div id="smsWarningBanner" style="display:none;margin-bottom:1.5rem">
+      <div id="smsWarningBox" style="background:var(--surface);border:1px solid rgba(226,168,76,0.3);border-left:4px solid #E2A84C;padding:1rem 1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+          <div style="flex:1">
+            <div id="smsWarningHeader" style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:#E2A84C;margin-bottom:0.5rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i><span id="smsWarningTitle">SMS Bundle — 80% Used</span></div>
+            <div id="smsWarningMessage" style="font-size:0.88rem;color:var(--white);line-height:1.5">You have used 80% of your SMS bundle this billing period. Overage rates of $0.03 per SMS apply once you exceed your bundle.</div>
+          </div>
+          <button onclick="dismissSmsBanner()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;flex-shrink:0;padding:0.25rem"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══════════════ §PAGE-HOME ═══════════════ -->
     <div class="page active" id="page-home">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
@@ -2503,6 +2516,7 @@ async function init() {
     loadRevenue();
     await loadStripeConnectStatus();
     await loadSmsUsageWidget();
+    await loadSmsWarningBanner();
     hideLoading();
   } catch(e) {
     console.error('Init error:', e);
@@ -6914,6 +6928,59 @@ async function loadSmsUsageWidget(){
     console.error('[loadSmsUsageWidget]',e);
     panel.style.display='none';
   }
+}
+
+// §SMS-WARNING-BANNER — Threshold banner above page content (Phase β.6)
+async function loadSmsWarningBanner(){
+  var banner=document.getElementById('smsWarningBanner'); if(!banner) return;
+  try{
+    var uR=await sb.from('sms_usage')
+      .select('period_start, sms_count, sms_bundle')
+      .eq('school_id',SID).gte('period_end',new Date().toISOString())
+      .order('period_start',{ascending:false}).limit(1).maybeSingle();
+    var usage = uR.data;
+    if(!usage || !usage.sms_bundle) return;
+
+    var pct = (usage.sms_count / usage.sms_bundle) * 100;
+    if(pct < 80) return;
+
+    var level = pct >= 100 ? 100 : 80;
+    var dismissKey = 'sms_warning_'+usage.period_start+'_'+level+'_dismissed';
+    if(sessionStorage.getItem(dismissKey)) return;
+
+    var box=document.getElementById('smsWarningBox');
+    var headerEl=document.getElementById('smsWarningHeader');
+    var titleEl=document.getElementById('smsWarningTitle');
+    var msgEl=document.getElementById('smsWarningMessage');
+
+    if(level===100){
+      box.style.borderLeftColor='#E07070';
+      box.style.borderColor='rgba(224,112,112,0.3)';
+      headerEl.style.color='#E07070';
+      titleEl.textContent='SMS Bundle — Limit Reached';
+      msgEl.textContent='You have reached your monthly SMS bundle limit. Additional sends are billed at $0.03 per SMS. View your usage on the Billing tab.';
+    }else{
+      box.style.borderLeftColor='#E2A84C';
+      box.style.borderColor='rgba(226,168,76,0.3)';
+      headerEl.style.color='#E2A84C';
+      titleEl.textContent='SMS Bundle — 80% Used';
+      msgEl.textContent='You have used 80% of your SMS bundle this billing period. Overage rates of $0.03 per SMS apply once you exceed your bundle.';
+    }
+
+    banner.dataset.level=level;
+    banner.dataset.period=usage.period_start;
+    banner.style.display='';
+  }catch(e){
+    console.error('[loadSmsWarningBanner]',e);
+  }
+}
+
+function dismissSmsBanner(){
+  var banner=document.getElementById('smsWarningBanner'); if(!banner) return;
+  var level=banner.dataset.level||'80';
+  var period=banner.dataset.period||'';
+  if(period) sessionStorage.setItem('sms_warning_'+period+'_'+level+'_dismissed','1');
+  banner.style.display='none';
 }
 
 // ─────────────────────────────── §UTILS ───────────────────────────────
