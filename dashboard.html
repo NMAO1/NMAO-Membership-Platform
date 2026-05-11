@@ -2325,10 +2325,38 @@
           <div id="posStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:140px;overflow-y:auto;margin-top:0.25rem"></div>
           <div id="posSelectedStudent" style="display:none;margin-top:0.4rem;font-size:0.82rem;color:var(--gold)"></div>
         </div>
-        <button class="btn-gold-full" style="margin-top:0.75rem" onclick="checkoutPOS()"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Checkout</button>
+        <button id="posBtnCardOnFile" class="btn-gold-full" style="margin-top:0.75rem;opacity:0.5;cursor:not-allowed" onclick="checkoutPOS_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Charge Card on File</button>
+        <button id="posBtnPaymentLink" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Send Payment Link</button>
+        <button id="posBtnCash" class="btn-sm" style="margin-top:0.5rem;width:100%;text-align:center" onclick="checkoutPOS_cash()"><i class="fa-solid fa-money-bill-wave" style="margin-right:0.5rem"></i>Cash / Other</button>
         <button class="btn-sm" style="margin-top:0.5rem;width:100%;text-align:center" onclick="clearPOSCart()">Clear Cart</button>
         <p class="form-msg" id="posMsg" style="margin-top:0.5rem"></p>
       </div>
+    </div>
+  </div>
+</div>
+
+  <!-- §MODAL-POS-PAYMENTLINK -->
+<div class="modal-overlay" id="posPaymentLinkModal">
+  <div class="modal" style="width:440px;max-width:95vw;padding:0">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)"><i class="fa-solid fa-mobile-screen-button" style="color:var(--gold);margin-right:0.5rem"></i>Payment Link Ready</div>
+      <button onclick="closePOSPaymentLink()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="padding:1.5rem">
+      <div style="text-align:center;margin-bottom:1.25rem">
+        <img id="posPaymentLinkQR" src="" alt="Payment QR" style="width:200px;height:200px;background:white;padding:0.5rem;display:block;margin:0 auto;border:1px solid var(--border)" />
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">Customer scans this with their phone camera</div>
+        <div id="posPaymentLinkAmount" style="font-size:1.1rem;color:var(--gold);font-family:var(--font-display);margin-top:0.3rem"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <button id="posPaymentLinkSmsBtn" class="btn-gold-full" onclick="sendPOSPaymentLinkSMS()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Open in Messages</button>
+        <button class="btn-sm" onclick="copyPOSPaymentLink()" style="width:100%"><i class="fa-solid fa-copy" style="margin-right:0.5rem"></i>Copy Link</button>
+        <input type="text" id="posPaymentLinkUrl" readonly style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.7rem;padding:0.5rem;margin-top:0.25rem;font-family:monospace" />
+      </div>
+      <div style="margin-top:1rem;padding:0.7rem 0.85rem;background:rgba(201,168,76,0.08);border-left:3px solid var(--gold);font-size:0.78rem;color:var(--muted);line-height:1.4">
+        <i class="fa-solid fa-circle-info" style="color:var(--gold);margin-right:0.3rem"></i>Payment recorded automatically when customer completes checkout.
+      </div>
+      <p class="form-msg" id="posPaymentLinkMsg" style="margin-top:0.75rem;text-align:center"></p>
     </div>
   </div>
 </div>
@@ -5727,7 +5755,7 @@ async function saveProduct(){
 }
 
 // POS
-function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();document.getElementById('posModal').classList.add('active'); }
+function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
 function closePOS(){ document.getElementById('posModal').classList.remove('active'); }
 function buildPOSQuickItems(){
   var quickItems=allProducts.filter(function(p){return p.quick_list&&p.active;});
@@ -5750,29 +5778,215 @@ function updatePOSQty(pid,delta){ var item=posCart.find(function(c){return c.id=
 function renderPOSCart(){
   var el=document.getElementById('posCartList'); var total=posCart.reduce(function(sum,c){return sum+c.price*c.qty;},0);
   document.getElementById('posTotalAmount').textContent='$'+total.toFixed(2);
-  if(!posCart.length){el.innerHTML='<div id="posCartEmpty" style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem 0">Cart is empty</div>';return;}
-  el.innerHTML=posCart.map(function(c){return '<div class="pos-cart-row"><div class="pos-cart-name">'+c.name+(c.type==='pack'?'<span style="font-size:0.6rem;color:var(--gold);margin-left:0.4rem">PACK</span>':'')+'</div><div class="pos-cart-qty"><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',-1)">-</button><span style="font-size:0.85rem;color:var(--white);min-width:16px;text-align:center">'+c.qty+'</span><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',1)">+</button></div><div class="pos-cart-price">$'+(c.price*c.qty).toFixed(2)+'</div></div>';}).join('');
+  if(!posCart.length){el.innerHTML='<div id="posCartEmpty" style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem 0">Cart is empty</div>';}
+  else{el.innerHTML=posCart.map(function(c){return '<div class="pos-cart-row"><div class="pos-cart-name">'+c.name+(c.type==='pack'?'<span style="font-size:0.6rem;color:var(--gold);margin-left:0.4rem">PACK</span>':'')+'</div><div class="pos-cart-qty"><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',-1)">-</button><span style="font-size:0.85rem;color:var(--white);min-width:16px;text-align:center">'+c.qty+'</span><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',1)">+</button></div><div class="pos-cart-price">$'+(c.price*c.qty).toFixed(2)+'</div></div>';}).join('');}
+  updatePOSCheckoutButtons();
 }
 function searchPOSStudent(){ var q=document.getElementById('posStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('posStudentResults'); if(!q||q.length<2){el.style.display='none';return;} var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="selectPOSStudent(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join(''); }
-function selectPOSStudent(sid,name){ posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+name; }
+function selectPOSStudent(sid,name){ posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+name; updatePOSCheckoutButtons(); }
 function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
-async function checkoutPOS(){
-  if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;} setMsg('posMsg','Processing...','');
-  var total=posCart.reduce(function(sum,c){return sum+c.price*c.qty;},0);
-  var inserts=posCart.map(function(c){return{school_id:SID,student_id:posSelectedStudentId||null,amount:c.price*c.qty,status:'paid',type:c.type==='pack'?'session_pack':'retail_sale',description:c.name+(c.qty>1?' x'+c.qty:''),created_at:new Date().toISOString()};});
-  var r=await sb.from('payments').insert(inserts);
-  if(r.error){setMsg('posMsg',r.error.message,'error');}
-  else{
-    // Credit session packs if applicable
-    for(var i=0;i<posCart.length;i++){
-      var item=posCart[i];
-      if(item.type==='pack'&&posSelectedStudentId&&item.pack){
-        var pack=item.pack; var now=new Date();
-        var expiry=null; if(pack.expiry_days){var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);expiry=exp.toISOString().split('T')[0];}
-        for(var q=0;q<item.qty;q++){
-          await sb.from('student_session_packs').insert({school_id:SID,student_id:posSelectedStudentId,session_pack_id:pack.id,sessions_remaining:pack.quantity,sessions_original:pack.quantity,expires_at:expiry?expiry+'T00:00:00':null,status:'active'});
-        }
+// §POS-CHECKOUT — Three payment paths (Phase N, 2026-05-11)
+
+function posCartTotal(){
+  return posCart.reduce(function(sum,c){return sum+c.price*c.qty;},0);
+}
+
+function posCartHasPack(){
+  return posCart.some(function(c){return c.type==='pack';});
+}
+
+function posCartLineItems(){
+  // Format for Stripe EFs — unit_amount in cents
+  return posCart.map(function(c){
+    return {
+      name: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
+      unit_amount: Math.round(c.price * 100),
+      quantity: c.qty,
+      product_id: c.type === 'product' ? c.id : null,
+    };
+  });
+}
+
+function updatePOSCheckoutButtons(){
+  var hasItems = posCart.length > 0;
+  var hasPack = posCartHasPack();
+  var hasStudent = !!posSelectedStudentId;
+
+  var cardBtn = document.getElementById('posBtnCardOnFile');
+  var linkBtn = document.getElementById('posBtnPaymentLink');
+  var cashBtn = document.getElementById('posBtnCash');
+  if(!cardBtn || !linkBtn || !cashBtn) return;
+
+  // Card on File: requires items + student + no packs
+  var cardOK = hasItems && hasStudent && !hasPack;
+  cardBtn.disabled = !cardOK;
+  cardBtn.style.opacity = cardOK ? '1' : '0.5';
+  cardBtn.style.cursor = cardOK ? 'pointer' : 'not-allowed';
+
+  // Payment Link: requires items + no packs
+  var linkOK = hasItems && !hasPack;
+  linkBtn.disabled = !linkOK;
+  linkBtn.style.opacity = linkOK ? '1' : '0.5';
+  linkBtn.style.cursor = linkOK ? 'pointer' : 'not-allowed';
+
+  // Cash: requires items only
+  cashBtn.disabled = !hasItems;
+  cashBtn.style.opacity = hasItems ? '1' : '0.5';
+  cashBtn.style.cursor = hasItems ? 'pointer' : 'not-allowed';
+}
+
+// Cash path — preserves original direct-insert behavior
+async function checkoutPOS_cash(){
+  if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
+  setMsg('posMsg','Processing...','');
+  var total = posCartTotal();
+  var inserts = posCart.map(function(c){
+    return {
+      school_id: SID,
+      student_id: posSelectedStudentId || null,
+      amount: c.price * c.qty,
+      status: 'paid',
+      type: c.type === 'pack' ? 'session_pack' : 'retail_sale',
+      description: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
+      created_at: new Date().toISOString(),
+    };
+  });
+  var r = await sb.from('payments').insert(inserts);
+  if(r.error){setMsg('posMsg',r.error.message,'error');return;}
+
+  // Credit session packs if applicable
+  for(var i=0; i<posCart.length; i++){
+    var item = posCart[i];
+    if(item.type === 'pack' && posSelectedStudentId && item.pack){
+      var pack = item.pack;
+      var expiry = null;
+      if(pack.expiry_days){
+        var exp = new Date();
+        exp.setDate(exp.getDate() + pack.expiry_days);
+        expiry = exp.toISOString().split('T')[0];
       }
+      for(var q=0; q<item.qty; q++){
+        await sb.from('student_session_packs').insert({
+          school_id: SID,
+          student_id: posSelectedStudentId,
+          session_pack_id: pack.id,
+          sessions_remaining: pack.quantity,
+          sessions_original: pack.quantity,
+          expires_at: expiry ? expiry + 'T00:00:00' : null,
+          status: 'active',
+        });
+      }
+    }
+  }
+  setMsg('posMsg','Cash sale complete! $' + total.toFixed(2) + ' recorded.','success');
+  clearPOSCart(); await loadRevenue();
+  setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();}, 2000);
+}
+
+// Card on File path — synchronous Stripe charge against saved PM
+async function checkoutPOS_cardOnFile(){
+  if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
+  if(!posSelectedStudentId){setMsg('posMsg','Select a student first.','error');return;}
+  if(posCartHasPack()){setMsg('posMsg','Session packs require cash payment.','error');return;}
+
+  setMsg('posMsg','Charging card on file...','');
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: posSelectedStudentId,
+        line_items: posCartLineItems(),
+      }),
+    });
+    var data = await r.json();
+    if(data.error){
+      // Friendly error messages for known failure modes
+      if((data.error || '').indexOf('NO_SAVED_CARD') === 0){
+        setMsg('posMsg','No saved card. Use Send Payment Link instead.','error');
+      }else if((data.error || '').indexOf('AUTHENTICATION_REQUIRED') === 0){
+        setMsg('posMsg','Card needs verification. Use Send Payment Link instead.','error');
+      }else{
+        setMsg('posMsg', data.error || 'Charge failed.', 'error');
+      }
+      return;
+    }
+    var displayPM = data.brand && data.last4 
+      ? data.brand.toUpperCase() + ' ••••' + data.last4
+      : data.pm_type === 'link' ? 'Stripe Link' : 'saved card';
+    setMsg('posMsg','Charged ' + displayPM + ' — $' + data.amount.toFixed(2) + ' complete.','success');
+    clearPOSCart(); await loadRevenue();
+    setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();}, 2500);
+  }catch(e){
+    setMsg('posMsg', e.message || 'Network error', 'error');
+  }
+}
+
+// Payment Link path — generates Stripe Checkout URL, displays QR + share options
+async function checkoutPOS_paymentLink(){
+  if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
+  if(posCartHasPack()){setMsg('posMsg','Session packs require cash payment.','error');return;}
+
+  setMsg('posMsg','Generating payment link...','');
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-pos-checkout', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: posSelectedStudentId || null,
+        line_items: posCartLineItems(),
+        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
+        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+      }),
+    });
+    var data = await r.json();
+    if(data.error){setMsg('posMsg', data.error, 'error'); return;}
+
+    // Populate Payment Link modal
+    var total = posCartTotal();
+    document.getElementById('posPaymentLinkUrl').value = data.url;
+    document.getElementById('posPaymentLinkAmount').textContent = '$' + total.toFixed(2);
+    document.getElementById('posPaymentLinkQR').src = 
+      'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.url);
+    document.getElementById('posPaymentLinkMsg').textContent = '';
+
+    // Open Payment Link modal; close POS cart modal
+    document.getElementById('posPaymentLinkModal').classList.add('active');
+    setMsg('posMsg','','');
+    clearPOSCart();
+    // Refresh revenue after a delay (webhook processing)
+    setTimeout(loadRevenue, 8000);
+  }catch(e){
+    setMsg('posMsg', e.message || 'Network error', 'error');
+  }
+}
+
+function closePOSPaymentLink(){
+  document.getElementById('posPaymentLinkModal').classList.remove('active');
+  closePOS();
+}
+
+function copyPOSPaymentLink(){
+  var input = document.getElementById('posPaymentLinkUrl');
+  input.select();
+  try{
+    document.execCommand('copy');
+    setMsg('posPaymentLinkMsg','Link copied!','success');
+    setTimeout(function(){document.getElementById('posPaymentLinkMsg').textContent='';},1500);
+  }catch(e){
+    setMsg('posPaymentLinkMsg','Copy failed — select manually','error');
+  }
+}
+
+function sendPOSPaymentLinkSMS(){
+  var url = document.getElementById('posPaymentLinkUrl').value;
+  if(!url) return;
+  var body = encodeURIComponent('Payment link for your purchase: ' + url);
+  // Opens default SMS app with link pre-filled
+  window.open('sms:?body=' + body, '_blank');
+}
     }
     setMsg('posMsg','Sale complete! $'+total.toFixed(2)+' recorded.','success');
     clearPOSCart();await loadRevenue();
