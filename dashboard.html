@@ -2023,7 +2023,7 @@
     <div class="modal-header"><span class="modal-title" id="bookSessionTitle">Book Session</span><button class="modal-close" onclick="safeClose('bookSessionModal',closeBookSession)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="sessionEditId" value="" />
-      <div class="field"><label>Session Type</label><select id="sessionTypeSelect"><option value="">-- Select Type --</option></select></div>
+      <div class="field"><label>Session Type</label><select id="sessionTypeSelect" onchange="updateBookSessionCheckoutButtons()"><option value="">-- Select Type --</option></select></div>
       <div class="field"><label>Student</label>
         <input type="text" id="sessionStudentSearch" placeholder="Search student..." oninput="searchSessionStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
         <div id="sessionStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
@@ -2032,16 +2032,20 @@
       </div>
       <div class="field"><label>Instructor</label><select id="sessionInstructor"><option value="">-- Select Instructor --</option></select></div>
       <div class="form-row">
-        <div class="field"><label>Date</label><input type="date" id="sessionDate" /></div>
+        <div class="field"><label>Date</label><input type="date" id="sessionDate" onchange="updateBookSessionCheckoutButtons()" /></div>
         <div class="field"><label>Start Time</label><input type="time" id="sessionStartTime" /></div>
       </div>
       <div class="form-row">
         <div class="field"><label>Duration (minutes)</label><input type="number" id="sessionDuration" value="60" min="15" step="15" /></div>
         <div class="field"><label>Status</label><select id="sessionStatus"><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
       </div>
-      <div class="field"><label>Price (optional)</label><input type="number" id="sessionPrice" value="0" min="0" step="0.01" /></div>
+      <div class="field"><label>Price (optional)</label><input type="number" id="sessionPrice" value="0" min="0" step="0.01" oninput="updateBookSessionCheckoutButtons()" /></div>
       <div class="field"><label>Notes</label><textarea id="sessionNotes" rows="3" placeholder="Session goals, focus areas..."></textarea></div>
-      <button class="btn-gold-full" onclick="saveSession()">Save Session</button>
+      <div id="bookSessionCheckoutButtons" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+        <button id="bookSessionBtnCardOnFile" class="btn-gold-full" style="opacity:0.5;cursor:not-allowed" onclick="bookSession_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Save &amp; Charge Card on File</button>
+        <button id="bookSessionBtnPaymentLink" class="btn-gold-full" style="background:transparent;border:1px solid var(--gold);color:var(--gold);opacity:0.5;cursor:not-allowed" onclick="bookSession_paymentLink()" disabled><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Save &amp; Send Payment Link</button>
+        <button id="bookSessionBtnCash" class="btn-sm" style="width:100%;text-align:center" onclick="bookSession_cash()"><i class="fa-solid fa-bookmark" style="margin-right:0.5rem"></i>Save Session (no charge)</button>
+      </div>
       <p class="form-msg" id="sessionMsg"></p>
     </div>
   </div>
@@ -3624,7 +3628,8 @@ async function openBookSession(sid){
       if(s.student_id){var stu=allStudents.find(function(x){return x.id===s.student_id;});if(stu){document.getElementById('sessionStudentId').value=stu.id;document.getElementById('sessionStudentSearch').value=stu.first_name+' '+stu.last_name;document.getElementById('sessionSelectedStudentName').textContent=stu.first_name+' '+stu.last_name;document.getElementById('sessionSelectedStudent').style.display='block';}}
     }
   }
-  document.getElementById('bookSessionModal').classList.add('active');
+document.getElementById('bookSessionModal').classList.add('active');
+  updateBookSessionCheckoutButtons();
 }
 function closeBookSession(){ document.getElementById('bookSessionModal').classList.remove('active'); sessionBookStudentId=null; sessionBookStudentName=null; sessionBookInstructorName=null; }
 function openBookSessionForStudent(){ if(currentProfileStudent){sessionBookStudentId=currentProfileStudent.id;sessionBookStudentName=currentProfileStudent.first_name+' '+currentProfileStudent.last_name;} openBookSession(); }
@@ -3632,17 +3637,217 @@ function openBookSessionForInstructor(){ if(currentInstructorProfile){sessionBoo
 function populateSessionTypeDropdown(){ var sel=document.getElementById('sessionTypeSelect');sel.innerHTML='<option value="">-- Select Type --</option>';allSessionTypes.forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);}); }
 function populateSessionInstructorDropdown(){ var sel=document.getElementById('sessionInstructor');sel.innerHTML='<option value="">-- Select Instructor --</option>';allInstructors.forEach(function(i){var o=document.createElement('option');o.value=i.first_name+' '+i.last_name;o.textContent=i.first_name+' '+i.last_name;sel.appendChild(o);}); }
 function searchSessionStudent(){ var q=document.getElementById('sessionStudentSearch').value.toLowerCase().trim();var el=document.getElementById('sessionStudentResults');if(!q||q.length<2){el.style.display='none';return;}var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6);el.style.display='block';if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No students found.</div>';return;}el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="selectSessionStudent(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join('');}
-function selectSessionStudent(sid,name){ document.getElementById('sessionStudentId').value=sid;document.getElementById('sessionStudentSearch').value=name;document.getElementById('sessionSelectedStudentName').textContent=name;document.getElementById('sessionSelectedStudent').style.display='block';document.getElementById('sessionStudentResults').style.display='none'; }
-function clearSessionStudent(){ document.getElementById('sessionStudentId').value='';document.getElementById('sessionStudentSearch').value='';document.getElementById('sessionSelectedStudent').style.display='none'; }
+function selectSessionStudent(sid,name){ document.getElementById('sessionStudentId').value=sid;document.getElementById('sessionStudentSearch').value=name;document.getElementById('sessionSelectedStudentName').textContent=name;document.getElementById('sessionSelectedStudent').style.display='block';document.getElementById('sessionStudentResults').style.display='none'; updateBookSessionCheckoutButtons(); }
+function clearSessionStudent(){ document.getElementById('sessionStudentId').value='';document.getElementById('sessionStudentSearch').value='';document.getElementById('sessionSelectedStudent').style.display='none'; updateBookSessionCheckoutButtons(); }
+
+// §BOOK-SESSION-CHECKOUT — Three payment paths for session booking (Phase N Block 8, 2026-05-11)
+
+// Refactored — returns {success, session, error} for use by payment handlers
+async function saveSessionRow(){
+  var eid = document.getElementById('sessionEditId').value;
+  var typeId = document.getElementById('sessionTypeSelect').value;
+  var date = document.getElementById('sessionDate').value;
+  if(!typeId || !date) return { success: false, error: 'Session type and date required.' };
+  var payload = {
+    session_type_id: typeId,
+    student_id: document.getElementById('sessionStudentId').value || null,
+    instructor_name: document.getElementById('sessionInstructor').value || null,
+    session_date: date,
+    start_time: document.getElementById('sessionStartTime').value || null,
+    duration_minutes: parseInt(document.getElementById('sessionDuration').value) || 60,
+    status: document.getElementById('sessionStatus').value,
+    price: parseFloat(document.getElementById('sessionPrice').value) || 0,
+    notes: document.getElementById('sessionNotes').value.trim() || null,
+  };
+  var r;
+  if(eid){
+    r = await sb.from('sessions').update(payload).eq('id', eid).select().single();
+  }else{
+    payload.school_id = SID;
+    r = await sb.from('sessions').insert(payload).select().single();
+  }
+  if(r.error) return { success: false, error: r.error.message };
+  return { success: true, session: r.data };
+}
+
+// Build a payments line_item from the current form (Stripe-compatible shape)
+function bookSessionLineItem(){
+  var typeSelect = document.getElementById('sessionTypeSelect');
+  var typeName = (typeSelect.options[typeSelect.selectedIndex] && typeSelect.options[typeSelect.selectedIndex].text) || 'Session';
+  var instructor = document.getElementById('sessionInstructor').value;
+  var date = document.getElementById('sessionDate').value;
+  var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  var name = typeName + (instructor ? ' with ' + instructor : '') + (date ? ' (' + date + ')' : '');
+  return {
+    name: name,
+    unit_amount: Math.round(price * 100),
+    quantity: 1,
+    product_id: null,
+  };
+}
+
+// Button enable/disable + dynamic label logic
+function updateBookSessionCheckoutButtons(){
+  var cardBtn = document.getElementById('bookSessionBtnCardOnFile');
+  var linkBtn = document.getElementById('bookSessionBtnPaymentLink');
+  var cashBtn = document.getElementById('bookSessionBtnCash');
+  if(!cardBtn || !linkBtn || !cashBtn) return;
+  var hasType = !!document.getElementById('sessionTypeSelect').value;
+  var hasDate = !!document.getElementById('sessionDate').value;
+  var hasStudent = !!document.getElementById('sessionStudentId').value;
+  var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  var hasPrice = price > 0;
+  var formValid = hasType && hasDate;
+
+  // Card on File: form valid + student + price > 0
+  var cardOK = formValid && hasStudent && hasPrice;
+  cardBtn.disabled = !cardOK;
+  cardBtn.style.opacity = cardOK ? '1' : '0.5';
+  cardBtn.style.cursor = cardOK ? 'pointer' : 'not-allowed';
+
+  // Payment Link: form valid + student + price > 0
+  var linkOK = formValid && hasStudent && hasPrice;
+  linkBtn.disabled = !linkOK;
+  linkBtn.style.opacity = linkOK ? '1' : '0.5';
+  linkBtn.style.cursor = linkOK ? 'pointer' : 'not-allowed';
+
+  // Cash: form valid; label changes based on whether there's a price to record
+  cashBtn.disabled = !formValid;
+  cashBtn.style.opacity = formValid ? '1' : '0.5';
+  cashBtn.style.cursor = formValid ? 'pointer' : 'not-allowed';
+  cashBtn.innerHTML = hasPrice
+    ? '<i class="fa-solid fa-money-bill-wave" style="margin-right:0.5rem"></i>Save &amp; Record $' + price.toFixed(2) + ' Cash'
+    : '<i class="fa-solid fa-bookmark" style="margin-right:0.5rem"></i>Save Session (no charge)';
+}
+
+// Cash path — saves session + records payment row if price > 0
+async function bookSession_cash(){
+  setMsg('sessionMsg', 'Saving...', '');
+  var saveResult = await saveSessionRow();
+  if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+  var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  var studentId = document.getElementById('sessionStudentId').value;
+  if(price > 0){
+    var lineItem = bookSessionLineItem();
+    var r = await sb.from('payments').insert({
+      school_id: SID,
+      student_id: studentId || null,
+      type: 'session',
+      description: lineItem.name,
+      amount: price,
+      currency: 'usd',
+      status: 'paid',
+      line_items: [lineItem],
+      paid_at: new Date().toISOString(),
+    });
+    if(r.error){setMsg('sessionMsg','Session saved. Cash record failed: '+r.error.message,'error'); return;}
+    setMsg('sessionMsg','Session booked + $'+price.toFixed(2)+' cash recorded.','success');
+  }else{
+    setMsg('sessionMsg','Session booked.','success');
+  }
+  await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+  await loadRevenue();
+  setTimeout(closeBookSession, 1500);
+}
+
+// Card on File path — saves session + charges Stripe saved PaymentMethod
+async function bookSession_cardOnFile(){
+  var studentId = document.getElementById('sessionStudentId').value;
+  var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  if(!studentId){setMsg('sessionMsg','Select a student first.','error'); return;}
+  if(price <= 0){setMsg('sessionMsg','Price must be greater than $0 to charge.','error'); return;}
+
+  setMsg('sessionMsg','Saving session...','');
+  var saveResult = await saveSessionRow();
+  if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+
+  setMsg('sessionMsg','Charging card on file...','');
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({school_id: SID, student_id: studentId, line_items: [bookSessionLineItem()]}),
+    });
+    var data = await r.json();
+    if(data.error){
+      if((data.error||'').indexOf('NO_SAVED_CARD')===0){
+        setMsg('sessionMsg','Session saved. No saved card — use Send Payment Link to collect.','error');
+      }else if((data.error||'').indexOf('AUTHENTICATION_REQUIRED')===0){
+        setMsg('sessionMsg','Session saved. Card needs verification — use Send Payment Link.','error');
+      }else{
+        setMsg('sessionMsg','Session saved. Charge failed: '+data.error,'error');
+      }
+      return;
+    }
+    var displayPM = data.brand && data.last4
+      ? data.brand.toUpperCase()+' ••••'+data.last4
+      : data.pm_type === 'link' ? 'Stripe Link' : 'saved card';
+    setMsg('sessionMsg','Charged '+displayPM+' — $'+data.amount.toFixed(2)+'. Session booked!','success');
+    await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+    await loadRevenue();
+    setTimeout(closeBookSession, 2500);
+  }catch(e){
+    setMsg('sessionMsg','Session saved. Charge error: '+(e.message||'Network error'),'error');
+  }
+}
+
+// Payment Link path — saves session + opens shared Payment Link modal
+async function bookSession_paymentLink(){
+  var studentId = document.getElementById('sessionStudentId').value;
+  var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  if(!studentId){setMsg('sessionMsg','Select a student first.','error'); return;}
+  if(price <= 0){setMsg('sessionMsg','Price must be greater than $0.','error'); return;}
+
+  setMsg('sessionMsg','Saving session...','');
+  var saveResult = await saveSessionRow();
+  if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+
+  setMsg('sessionMsg','Generating payment link...','');
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-pos-checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: studentId,
+        line_items: [bookSessionLineItem()],
+        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
+        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+      }),
+    });
+    var data = await r.json();
+    if(data.error){setMsg('sessionMsg','Session saved. Link gen failed: '+data.error,'error'); return;}
+
+    // Reuse POS Payment Link modal (shared infrastructure)
+    document.getElementById('posPaymentLinkUrl').value = data.url;
+    document.getElementById('posPaymentLinkAmount').textContent = '$'+price.toFixed(2);
+    document.getElementById('posPaymentLinkQR').src =
+      'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.url);
+    document.getElementById('posPaymentLinkMsg').textContent = '';
+    var selStudent = allStudents.find(function(s){return s.id===studentId;});
+    document.getElementById('posPaymentLinkPhone').value = (selStudent && selStudent.phone) ? selStudent.phone : '';
+    document.getElementById('posPaymentLinkModal').classList.add('active');
+
+    // Close Book Session modal in background
+    document.getElementById('bookSessionModal').classList.remove('active');
+    sessionBookStudentId = null; sessionBookStudentName = null; sessionBookInstructorName = null;
+    await loadSessions(); buildCalendar();
+    setTimeout(loadRevenue, 8000);
+  }catch(e){
+    setMsg('sessionMsg','Session saved. Link gen error: '+(e.message||'Network error'),'error');
+  }
+}
+
+// Original saveSession preserved for any other call sites (e.g., if other code calls it directly)
 async function saveSession(){
-  var eid=document.getElementById('sessionEditId').value;
-  var typeId=document.getElementById('sessionTypeSelect').value;
-  var date=document.getElementById('sessionDate').value;
-  if(!typeId||!date){setMsg('sessionMsg','Session type and date required.','error');return;}
   setMsg('sessionMsg','Saving...','');
-  var payload={session_type_id:typeId,student_id:document.getElementById('sessionStudentId').value||null,instructor_name:document.getElementById('sessionInstructor').value||null,session_date:date,start_time:document.getElementById('sessionStartTime').value||null,duration_minutes:parseInt(document.getElementById('sessionDuration').value)||60,status:document.getElementById('sessionStatus').value,price:parseFloat(document.getElementById('sessionPrice').value)||0,notes:document.getElementById('sessionNotes').value.trim()||null};
-  var r; if(eid){r=await sb.from('sessions').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('sessions').insert(payload);}
-  if(r.error){setMsg('sessionMsg',r.error.message,'error');}else{setMsg('sessionMsg','Session saved!','success');await loadSessions();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeBookSession();},1000);}
+  var result = await saveSessionRow();
+  if(!result.success){setMsg('sessionMsg', result.error, 'error'); return;}
+  setMsg('sessionMsg','Session saved!','success');
+  await loadSessions();
+  buildCalendar();
+  if(calView==='month') buildMonthCalendar();
+  setTimeout(closeBookSession, 1000);
 }
 
 // Student pack management
