@@ -6565,6 +6565,319 @@ async function sendSmsReplyInline(){
 }
 function closeSmsThread(){ document.getElementById('smsThreadModal').classList.remove('active'); currentSmsSenderId=null; currentSmsStudentId=null; }
 
+// ─────────────────────────────── §PORTAL-INVITES ───────────────────────────────
+// Phase F.2 — Bulk magic-link invitations for students + family heads.
+// EF: send-portal-invite. Custom-branded email delivery via Resend.
+
+var portalInviteState={
+  loaded:false,
+  type:"student",          // "student" | "family"
+  filter:"all",            // "all" | "never" | "pending" | "onboarded"
+  search:"",
+  recipients:[],           // raw fetched data for current type
+  selected:{}              // {id: true}
+};
+
+async function loadPortalInvitesTab(){
+  if(!portalInviteState.loaded){
+    portalInviteState.loaded=true;
+    portalInviteState.type="student";
+    portalInviteState.filter="all";
+    portalInviteState.search="";
+    portalInviteState.selected={};
+    var si=document.getElementById("pi-search"); if(si)si.value="";
+  }
+  await fetchPortalInviteRecipients();
+}
+
+async function fetchPortalInviteRecipients(){
+  var el=document.getElementById("pi-list");
+  if(el)el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:2rem;text-align:center"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div>';
+  try{
+    var type=portalInviteState.type;
+    var table=type==="family"?"families":"students";
+    var cols=type==="family"
+      ? "id, email, name, portal_invited_at"
+      : "id, email, first_name, last_name, portal_invited_at, portal_onboarded";
+    var r=await sb.from(table).select(cols).eq("school_id",SID).order(type==="family"?"name":"first_name");
+    if(r.error){throw new Error(r.error.message);}
+    portalInviteState.recipients=r.data||[];
+    portalInviteState.selected={};
+    renderPortalInviteList();
+  }catch(e){
+    console.error("fetchPortalInviteRecipients error:",e);
+    if(el)el.innerHTML='<div style="color:#E07070;font-size:0.85rem;padding:1.5rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.5rem"></i>Could not load: '+e.message+'</div>';
+  }
+}
+
+function setPortalInviteType(type){
+  if(portalInviteState.type===type)return;
+  portalInviteState.type=type;
+  document.getElementById("pi-type-student").classList.toggle("selected",type==="student");
+  document.getElementById("pi-type-family").classList.toggle("selected",type==="family");
+  var pendingChip=document.getElementById("pi-filter-pending");
+  var onboardedChip=document.getElementById("pi-filter-onboarded");
+  if(type==="family"){
+    if(pendingChip)pendingChip.style.display="none";
+    if(onboardedChip)onboardedChip.style.display="none";
+    if(portalInviteState.filter==="pending"||portalInviteState.filter==="onboarded"){
+      setPortalInviteFilter("all"); return;
+    }
+  }else{
+    if(pendingChip)pendingChip.style.display="";
+    if(onboardedChip)onboardedChip.style.display="";
+  }
+  portalInviteState.search="";
+  var si=document.getElementById("pi-search"); if(si)si.value="";
+  portalInviteState.selected={};
+  hidePortalInviteConfirm();
+  fetchPortalInviteRecipients();
+}
+
+function setPortalInviteFilter(filter){
+  portalInviteState.filter=filter;
+  var keys=["all","never","pending","onboarded"];
+  for(var i=0;i<keys.length;i++){
+    var btn=document.getElementById("pi-filter-"+keys[i]);
+    if(btn)btn.classList.toggle("selected",keys[i]===filter);
+  }
+  renderPortalInviteList();
+}
+
+function filterPortalInviteList(){
+  var si=document.getElementById("pi-search");
+  portalInviteState.search=si?si.value.trim().toLowerCase():"";
+  renderPortalInviteList();
+}
+
+function applyPortalInviteFilters(recipients){
+  var filter=portalInviteState.filter;
+  var search=portalInviteState.search;
+  var type=portalInviteState.type;
+  return recipients.filter(function(r){
+    if(filter==="never"&&r.portal_invited_at)return false;
+    if(filter==="pending"&&(!r.portal_invited_at||r.portal_onboarded))return false;
+    if(filter==="onboarded"&&!r.portal_onboarded)return false;
+    if(search){
+      var name=type==="family"
+        ? (r.name||"").toLowerCase()
+        : ((r.first_name||"")+" "+(r.last_name||"")).toLowerCase();
+      var email=(r.email||"").toLowerCase();
+      if(name.indexOf(search)===-1&&email.indexOf(search)===-1)return false;
+    }
+    return true;
+  });
+}
+
+function renderPortalInviteList(){
+  var el=document.getElementById("pi-list");
+  if(!el)return;
+  var filtered=applyPortalInviteFilters(portalInviteState.recipients);
+  var totalCount=portalInviteState.recipients.length;
+  var countEl=document.getElementById("pi-count");
+  if(countEl)countEl.textContent=filtered.length+" of "+totalCount+" shown";
+  if(!filtered.length){
+    var noun=portalInviteState.type==="family"?"families":"students";
+    var msg=totalCount?"No matches with current filters.":"No "+noun+" yet.";
+    el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:2rem;text-align:center"><i class="fa-solid fa-magnifying-glass" style="font-size:1.3rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>'+msg+'</div>';
+    syncSelectAllCheckbox(filtered);
+    updatePortalInviteSummary();
+    return;
+  }
+  el.innerHTML=filtered.map(function(r){return renderPortalInviteRow(r);}).join("");
+  syncSelectAllCheckbox(filtered);
+  updatePortalInviteSummary();
+}
+
+function renderPortalInviteRow(r){
+  var type=portalInviteState.type;
+  var name=type==="family"
+    ? (r.name||"(Unnamed family)")
+    : ((r.first_name||"")+" "+(r.last_name||"")).trim();
+  var hasEmail=!!(r.email&&String(r.email).trim());
+  var isSelected=!!portalInviteState.selected[r.id];
+  var statusBadge="";
+  if(r.portal_onboarded){
+    statusBadge='<span style="font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.45rem;border-radius:2px;background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;margin-left:0.5rem">Onboarded</span>';
+  }else if(r.portal_invited_at){
+    var dt=new Date(r.portal_invited_at);
+    var daysAgo=Math.floor((Date.now()-dt.getTime())/86400000);
+    var label=daysAgo===0?"today":daysAgo===1?"1 day ago":daysAgo+" days ago";
+    statusBadge='<span style="font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.45rem;border-radius:2px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);margin-left:0.5rem">Invited '+label+'</span>';
+  }
+  var emailLine=hasEmail
+    ? '<span>'+escapePIHtml(r.email)+'</span>'
+    : '<span style="color:#E07070;font-style:italic">No email \u2014 cannot invite</span>';
+  var rowStyle="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border);"+(hasEmail?"cursor:pointer;":"opacity:0.55;")+(isSelected?"background:rgba(201,168,76,0.08);":"");
+  var rowOnClick=hasEmail?'onclick="togglePortalInviteRow(\''+r.id+'\')"':"";
+  var checkbox=hasEmail
+    ? '<input type="checkbox" '+(isSelected?"checked":"")+' onclick="event.stopPropagation();togglePortalInviteRow(\''+r.id+'\')" style="flex-shrink:0;cursor:pointer" />'
+    : '<div style="width:13px;height:13px;flex-shrink:0;border:1px solid var(--border);background:var(--black)"></div>';
+  return '<div class="pi-row" data-id="'+r.id+'" style="'+rowStyle+'" '+rowOnClick+'>'+
+    checkbox+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:0.88rem;color:var(--white);margin-bottom:0.1rem">'+escapePIHtml(name)+statusBadge+'</div>'+
+      '<div style="font-size:0.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+emailLine+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function escapePIHtml(s){
+  if(s==null)return"";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function togglePortalInviteRow(id){
+  var r=null;
+  for(var i=0;i<portalInviteState.recipients.length;i++){
+    if(portalInviteState.recipients[i].id===id){r=portalInviteState.recipients[i];break;}
+  }
+  if(!r||!r.email)return;
+  if(portalInviteState.selected[id]){delete portalInviteState.selected[id];}
+  else{portalInviteState.selected[id]=true;}
+  renderPortalInviteList();
+  hidePortalInviteConfirm();
+}
+
+function togglePortalInviteAll(){
+  var allCB=document.getElementById("pi-select-all");
+  if(!allCB)return;
+  var filtered=applyPortalInviteFilters(portalInviteState.recipients);
+  var shouldSelect=allCB.checked;
+  filtered.forEach(function(r){
+    if(!r.email)return;
+    if(shouldSelect)portalInviteState.selected[r.id]=true;
+    else delete portalInviteState.selected[r.id];
+  });
+  renderPortalInviteList();
+  hidePortalInviteConfirm();
+}
+
+function syncSelectAllCheckbox(filtered){
+  var allCB=document.getElementById("pi-select-all");
+  if(!allCB)return;
+  var emailable=filtered.filter(function(r){return r.email;});
+  if(!emailable.length){allCB.checked=false;allCB.indeterminate=false;return;}
+  var selectedCount=0;
+  for(var i=0;i<emailable.length;i++){
+    if(portalInviteState.selected[emailable[i].id])selectedCount++;
+  }
+  if(selectedCount===0){allCB.checked=false;allCB.indeterminate=false;}
+  else if(selectedCount===emailable.length){allCB.checked=true;allCB.indeterminate=false;}
+  else{allCB.checked=false;allCB.indeterminate=true;}
+}
+
+function updatePortalInviteSummary(){
+  var summaryEl=document.getElementById("pi-summary");
+  var btn=document.getElementById("pi-send-btn");
+  if(!summaryEl||!btn)return;
+  var n=Object.keys(portalInviteState.selected).length;
+  if(!n){
+    summaryEl.textContent="";
+    btn.disabled=true;
+    btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Portal Invites';
+    return;
+  }
+  var typeLabel=portalInviteState.type==="family"?"family":"student";
+  var typePlural=portalInviteState.type==="family"?"families":"students";
+  var noun=n===1?typeLabel:typePlural;
+  summaryEl.innerHTML='<i class="fa-solid fa-circle-check" style="color:var(--gold);margin-right:0.4rem"></i><strong style="color:var(--white)">'+n+'</strong> '+noun+' selected';
+  btn.disabled=false;
+  btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Portal Invites to '+n+' '+noun;
+}
+
+function confirmPortalInvites(){
+  var selectedIds=Object.keys(portalInviteState.selected);
+  if(!selectedIds.length)return;
+  var selectedRows=portalInviteState.recipients.filter(function(r){return portalInviteState.selected[r.id];});
+  var withEmail=selectedRows.filter(function(r){return r.email;});
+  var priorInvited=withEmail.filter(function(r){return r.portal_invited_at;}).length;
+  var typeLabel=portalInviteState.type==="family"?"family head":"student";
+  var typePlural=portalInviteState.type==="family"?"family heads":"students";
+  var noun=withEmail.length===1?typeLabel:typePlural;
+  var text='Send portal invite to <strong>'+withEmail.length+'</strong> '+noun+'?';
+  if(priorInvited){
+    var verb=priorInvited===1?"has":"have";
+    text+='<br><span style="color:var(--gold);font-size:0.82rem;display:inline-block;margin-top:0.4rem"><i class="fa-solid fa-circle-info" style="margin-right:0.4rem"></i>'+priorInvited+' '+verb+' been invited before \u2014 they will receive a fresh link.</span>';
+  }
+  document.getElementById("pi-confirm-text").innerHTML=text;
+  document.getElementById("pi-confirm-card").style.display="block";
+  var rc=document.getElementById("pi-results-card");
+  if(rc)rc.style.display="none";
+}
+
+function hidePortalInviteConfirm(){
+  var card=document.getElementById("pi-confirm-card");
+  if(card)card.style.display="none";
+}
+
+async function sendPortalInvites(){
+  var selectedIds=Object.keys(portalInviteState.selected);
+  if(!selectedIds.length)return;
+  var goBtn=document.getElementById("pi-confirm-go");
+  var sendBtn=document.getElementById("pi-send-btn");
+  if(goBtn){goBtn.disabled=true;goBtn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Sending...';}
+  if(sendBtn)sendBtn.disabled=true;
+  var msgEl=document.getElementById("pi-msg");
+  if(msgEl)msgEl.textContent="";
+  try{
+    var session=await sb.auth.getSession();
+    var token=session.data&&session.data.session?session.data.session.access_token:null;
+    if(!token)throw new Error("Not signed in");
+    var resp=await fetch(SURL+"/functions/v1/send-portal-invite",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+token,
+        "apikey":SKEY
+      },
+      body:JSON.stringify({
+        school_id:SID,
+        recipient_type:portalInviteState.type,
+        recipient_ids:selectedIds
+      })
+    });
+    var data=await resp.json();
+    showPortalInviteResults(data);
+    portalInviteState.selected={};
+    await fetchPortalInviteRecipients();
+  }catch(e){
+    console.error("sendPortalInvites error:",e);
+    if(msgEl){msgEl.textContent="Send failed: "+e.message;msgEl.className="form-msg error";}
+  }
+  if(goBtn){goBtn.disabled=false;goBtn.innerHTML='<i class="fa-solid fa-check"></i> Confirm &amp; Send';}
+  hidePortalInviteConfirm();
+}
+
+function showPortalInviteResults(data){
+  var rc=document.getElementById("pi-results-card");
+  if(!rc)return;
+  var sent=data.sent||0;
+  var failed=data.failed||0;
+  var skipped=data.skipped||0;
+  var errors=data.errors||[];
+  var topColor=sent>0&&failed===0&&skipped===0?"#5A9A6A":sent>0?"var(--gold)":"#E07070";
+  var icon=sent>0&&failed===0&&skipped===0?"fa-circle-check":sent>0?"fa-circle-exclamation":"fa-triangle-exclamation";
+  var parts=[];
+  parts.push('<i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i><strong>'+sent+'</strong> invite'+(sent!==1?"s":"")+" sent");
+  if(failed)parts.push('<span style="color:#E07070"><i class="fa-solid fa-xmark" style="margin-right:0.3rem"></i><strong>'+failed+'</strong> failed</span>');
+  if(skipped)parts.push('<span style="color:var(--muted2)"><i class="fa-solid fa-forward" style="margin-right:0.3rem"></i><strong>'+skipped+'</strong> skipped</span>');
+  var summary=parts.join(" &nbsp;\u00B7&nbsp; ");
+  var errorDetails="";
+  if(errors.length){
+    var rows="";
+    for(var i=0;i<errors.length;i++){
+      var err=errors[i];
+      var reasonColor=err.reason&&err.reason.indexOf("no email")>=0?"var(--muted2)":"#E07070";
+      var emailBit=err.email?' <span style="color:var(--muted)">\u00B7 '+escapePIHtml(err.email)+'</span>':"";
+      rows+='<div style="padding:0.35rem 0;border-bottom:1px solid var(--border)"><div style="color:var(--white);font-size:0.78rem">'+escapePIHtml(err.name||err.id||"?")+emailBit+'</div><div style="color:'+reasonColor+';font-size:0.72rem;margin-top:0.15rem">'+escapePIHtml(err.reason||"unknown")+'</div></div>';
+    }
+    errorDetails='<details style="margin-top:0.85rem"><summary style="cursor:pointer;font-size:0.82rem;color:var(--muted2)">Show details ('+errors.length+')</summary><div style="margin-top:0.5rem;max-height:240px;overflow-y:auto;font-size:0.78rem;background:var(--black);border:1px solid var(--border);padding:0.75rem">'+rows+'</div></details>';
+  }
+  rc.innerHTML='<div class="panel" style="border-left:3px solid '+topColor+'"><div class="panel-body"><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.5rem"><i class="fa-solid '+icon+'" style="color:'+topColor+';margin-right:0.5rem"></i>'+summary+'</div>'+errorDetails+'</div></div>';
+  rc.style.display="block";
+}
+
 // ─────────────────────────────── §ANALYTICS ───────────────────────────────
 
 function buildAnalytics(){
