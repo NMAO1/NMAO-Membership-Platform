@@ -850,6 +850,7 @@
         <button class="comm-tab"        id="ctab-automations" onclick="switchCommTab('automations')"><i class="fa-solid fa-robot"></i> Automations</button>
         <button class="comm-tab"        id="ctab-alerts"      onclick="switchCommTab('alerts')"><i class="fa-solid fa-bullhorn"></i> Alerts</button>
         <button class="comm-tab"        id="ctab-sms"         onclick="switchCommTab('sms')"><i class="fa-solid fa-comments"></i> SMS Inbox</button>
+        <button class="comm-tab"        id="ctab-portal-invites" onclick="switchCommTab('portal_invites')"><i class="fa-solid fa-link"></i> Portal Invites</button>
       </div>
       <!-- Broadcast -->
       <div id="commTabBroadcast">
@@ -929,6 +930,65 @@
             </div>
           </div>
         </div>
+      </div>
+      <!-- ═══════════════ §PORTAL-INVITES ═══════════════ -->
+      <div id="commTabPortalInvites" style="display:none">
+        <div class="panel"><div class="panel-header"><span class="panel-title">Portal Invites</span></div><div class="panel-body">
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6">Bulk-invite students or family heads to access their member portal via secure magic links. Recipients receive a branded email with a one-tap sign-in button.</p>
+
+          <!-- §PI-TYPE-TOGGLE -->
+          <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Recipient Type</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem">
+            <button class="alert-type-btn selected" id="pi-type-student" onclick="setPortalInviteType('student')"><i class="fa-solid fa-user"></i> Students</button>
+            <button class="alert-type-btn" id="pi-type-family" onclick="setPortalInviteType('family')"><i class="fa-solid fa-users"></i> Families</button>
+          </div>
+
+          <!-- §PI-FILTER-CHIPS -->
+          <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Filter</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem" id="pi-filters">
+            <button class="alert-type-btn selected" id="pi-filter-all" onclick="setPortalInviteFilter('all')">All</button>
+            <button class="alert-type-btn" id="pi-filter-never" onclick="setPortalInviteFilter('never')">Never Invited</button>
+            <button class="alert-type-btn" id="pi-filter-pending" onclick="setPortalInviteFilter('pending')">Invited (Pending)</button>
+            <button class="alert-type-btn" id="pi-filter-onboarded" onclick="setPortalInviteFilter('onboarded')">Onboarded</button>
+          </div>
+
+          <!-- §PI-SEARCH -->
+          <div style="margin-bottom:0.85rem"><input type="text" id="pi-search" placeholder="Search by name or email..." oninput="filterPortalInviteList()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.55rem 0.85rem;outline:none" /></div>
+
+          <!-- §PI-SELECT-ALL-BAR -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-bottom:none">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.78rem;color:var(--muted2)">
+              <input type="checkbox" id="pi-select-all" onchange="togglePortalInviteAll()" />
+              <span>Select all visible</span>
+            </label>
+            <div id="pi-count" style="font-size:0.72rem;color:var(--muted)"></div>
+          </div>
+
+          <!-- §PI-LIST -->
+          <div id="pi-list" style="max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border)">
+            <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:2rem;text-align:center"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div>
+          </div>
+
+          <!-- §PI-ACTION-BAR -->
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+            <div id="pi-summary" style="font-size:0.82rem;color:var(--muted2);margin-bottom:0.75rem;min-height:1.2rem"></div>
+            <button class="panel-action" id="pi-send-btn" onclick="confirmPortalInvites()" disabled><i class="fa-solid fa-paper-plane"></i> Send Portal Invites</button>
+          </div>
+
+          <!-- §PI-CONFIRM-CARD -->
+          <div id="pi-confirm-card" style="display:none;margin-top:1rem;padding:1.1rem 1.35rem;background:var(--surface);border:1px solid var(--gold);border-left:3px solid var(--gold)">
+            <div id="pi-confirm-text" style="font-size:0.88rem;color:var(--white);margin-bottom:0.85rem;line-height:1.6"></div>
+            <div style="display:flex;gap:0.5rem">
+              <button class="panel-action" id="pi-confirm-go" onclick="sendPortalInvites()"><i class="fa-solid fa-check"></i> Confirm &amp; Send</button>
+              <button class="btn-sm" onclick="hidePortalInviteConfirm()">Cancel</button>
+            </div>
+          </div>
+
+          <!-- §PI-RESULTS-CARD -->
+          <div id="pi-results-card" style="display:none;margin-top:1rem"></div>
+
+          <p class="form-msg" id="pi-msg"></p>
+        </div></div>
       </div>
     </div>
 
