@@ -93,18 +93,164 @@
 
 
 <!-- FEATURES -->
-
 <section id="features">
   <p class="section-label">What We Offer</p>
   <h2 class="section-title">Everything Your School Needs</h2>
   <p class="section-body">Purpose-built for martial arts schools. No generic software, no compromises.</p>
-  <div class="feat-grid">
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Management</h3><p class="feat-text">Full student profiles, belt rank tracking, attendance history, and membership status in one roster.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Class Scheduling</h3><p class="feat-text">Build your weekly schedule, manage custom events, and let students RSVP from their portal.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Payment Collection</h3><p class="feat-text">Collect dues, event fees, and memberships automatically. Transparent processing, no surprises.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Student Portal</h3><p class="feat-text">Your students get their own branded app to view their schedule, membership, and connect with the community.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">School Branding</h3><p class="feat-text">Every school gets a fully white-labeled portal in their own colors. Your brand, powered by NMAO.</p></div>
-    <div class="feat-card"><div class="feat-icon">◈</div><h3 class="feat-title">Network Directory</h3><p class="feat-text">Connect with other NMAO schools, share events, and grow your martial arts community nationwide.</p></div>
+
+  <style>
+    .feat-v2-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+      gap:1.5rem;
+      max-width:1200px;
+      margin:4rem auto 0;
+      padding:0 1.5rem;
+    }
+    .feat-v2-card{
+      background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(201,168,76,0.01));
+      border:1px solid rgba(201,168,76,0.18);
+      padding:2rem 1.85rem;
+      display:flex;
+      flex-direction:column;
+      transition:transform 0.25s ease,border-color 0.25s ease,box-shadow 0.25s ease;
+    }
+    .feat-v2-card:hover{
+      border-color:rgba(201,168,76,0.45);
+      transform:translateY(-3px);
+      box-shadow:0 12px 32px rgba(201,168,76,0.08);
+    }
+    .feat-v2-icon{
+      font-size:1.85rem;
+      color:#C9A84C;
+      font-family:'Libre Baskerville',serif;
+      margin-bottom:1.1rem;
+      line-height:1;
+    }
+    .feat-v2-title{
+      font-family:'Libre Baskerville',serif;
+      font-size:1.3rem;
+      color:#F5F0E8;
+      margin:0 0 0.75rem;
+      font-weight:700;
+      line-height:1.25;
+    }
+    .feat-v2-tagline{
+      color:#9A8F80;
+      font-size:0.9rem;
+      line-height:1.6;
+      margin:0 0 1.25rem;
+      padding-bottom:1.25rem;
+      border-bottom:1px solid rgba(201,168,76,0.12);
+    }
+    .feat-v2-bullets{
+      list-style:none;
+      padding:0;
+      margin:0;
+      color:#C2B7A8;
+      font-size:0.82rem;
+      line-height:1.55;
+    }
+    .feat-v2-bullets li{
+      padding:0.3rem 0 0.3rem 1.05rem;
+      position:relative;
+    }
+    .feat-v2-bullets li::before{
+      content:"▪";
+      position:absolute;
+      left:0;
+      color:#C9A84C;
+      font-size:0.85rem;
+      line-height:1.6;
+    }
+  </style>
+
+  <div class="feat-v2-grid">
+
+    <!-- 1: Command Center -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◈</div>
+      <h3 class="feat-v2-title">All-In-One Command Center</h3>
+      <p class="feat-v2-tagline">Members, classes, revenue, and tomorrow's schedule — your morning briefing on one screen.</p>
+      <ul class="feat-v2-bullets">
+        <li>Live KPIs: members, leads, sessions, revenue</li>
+        <li>Week-at-a-glance class calendar with enrollments</li>
+        <li>Today, yesterday, and month-to-date revenue</li>
+        <li>Membership alerts: paused, expiring, attendance gaps</li>
+        <li>Belt Progressions and Belt Tests built in</li>
+      </ul>
+    </div>
+
+    <!-- 2: Kiosk -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◆</div>
+      <h3 class="feat-v2-title">Self-Serve Check-In Kiosk</h3>
+      <p class="feat-v2-tagline">Students check themselves in. Your front desk gets its time back.</p>
+      <ul class="feat-v2-bullets">
+        <li>Type-to-find with autocomplete from your roster</li>
+        <li>Family check-in for siblings — one tap each</li>
+        <li>Auto-deducts from session packs on check-in</li>
+        <li>Belt-color celebration screens for milestones</li>
+        <li>Runs on iPad, tablet, or any browser — no install</li>
+      </ul>
+    </div>
+
+    <!-- 3: Lead Pipeline -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◇</div>
+      <h3 class="feat-v2-title">Lead Pipeline &amp; Public Signup</h3>
+      <p class="feat-v2-tagline">A branded prospect-to-student funnel without the marketing-tech stack.</p>
+      <ul class="feat-v2-bullets">
+        <li>Public signup page on your school's URL</li>
+        <li>YouTube highlight reel, testimonial, and stats above the fold</li>
+        <li>Program-interest dropdown — leads arrive pre-segmented</li>
+        <li>Pipeline stages: New → Contacted → Trial → Converted</li>
+        <li>Follow-up automations included — no Mailchimp wiring</li>
+      </ul>
+    </div>
+
+    <!-- 4: Communications -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◈</div>
+      <h3 class="feat-v2-title">Communications That Send</h3>
+      <p class="feat-v2-tagline">SMS, email, automations, and portal invites — one inbox, one outbox.</p>
+      <ul class="feat-v2-bullets">
+        <li>Two-way SMS thread per student, families merged</li>
+        <li>Broadcast templates: birthdays, promotions, renewals, belt tests</li>
+        <li>Triggered automations for expiring memberships and missed classes</li>
+        <li>Bulk magic-link portal invites for self-service</li>
+        <li>Audience filtering by program, status, and tag</li>
+      </ul>
+    </div>
+
+    <!-- 5: Analytics -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◆</div>
+      <h3 class="feat-v2-title">Analytics &amp; Reports</h3>
+      <p class="feat-v2-tagline">The numbers that actually move a martial arts school — not generic SaaS dashboards.</p>
+      <ul class="feat-v2-bullets">
+        <li>Lead funnel with conversion rates at every stage</li>
+        <li>Instructor comparison: classes, sessions, estimated payroll</li>
+        <li>13 canned reports including Retention Risk and Class Utilization</li>
+        <li>6-month revenue trend with monthly granularity</li>
+        <li>One-click CSV export for taxes and accountants</li>
+      </ul>
+    </div>
+
+    <!-- 6: Belt Progressions & Curriculum -->
+    <div class="feat-v2-card">
+      <div class="feat-v2-icon">◇</div>
+      <h3 class="feat-v2-title">Belt Progressions &amp; Curriculum</h3>
+      <p class="feat-v2-tagline">Track ranks, attach video curriculum per belt, and run testing events from one place.</p>
+      <ul class="feat-v2-bullets">
+        <li>Build any belt system: kids, adults, kickboxing, BJJ stripes</li>
+        <li>YouTube video curriculum attached per belt level</li>
+        <li>"Eligible to Promote" auto-detection by attendance and time</li>
+        <li>Belt test events with rosters and pass/fail tracking</li>
+        <li>Promotion history per student — never lose a record</li>
+      </ul>
+    </div>
+
   </div>
 </section>
 
