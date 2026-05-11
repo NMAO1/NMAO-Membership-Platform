@@ -2335,25 +2335,29 @@
   </div>
 </div>
 
-  <!-- §MODAL-POS-PAYMENTLINK -->
+ <!-- §MODAL-POS-PAYMENTLINK -->
 <div class="modal-overlay" id="posPaymentLinkModal">
-  <div class="modal" style="width:440px;max-width:95vw;padding:0">
+  <div class="modal" style="width:460px;max-width:95vw;padding:0">
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)"><i class="fa-solid fa-mobile-screen-button" style="color:var(--gold);margin-right:0.5rem"></i>Payment Link Ready</div>
+      <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)"><i class="fa-solid fa-mobile-screen-button" style="color:var(--gold);margin-right:0.5rem"></i>Send Payment Link</div>
       <button onclick="closePOSPaymentLink()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:1.5rem">
-      <div style="text-align:center;margin-bottom:1.25rem">
-        <img id="posPaymentLinkQR" src="" alt="Payment QR" style="width:200px;height:200px;background:white;padding:0.5rem;display:block;margin:0 auto;border:1px solid var(--border)" />
-        <div style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">Customer scans this with their phone camera</div>
-        <div id="posPaymentLinkAmount" style="font-size:1.1rem;color:var(--gold);font-family:var(--font-display);margin-top:0.3rem"></div>
+      <div id="posPaymentLinkAmount" style="text-align:center;font-size:1.4rem;color:var(--gold);font-family:var(--font-display);margin-bottom:1.25rem"></div>
+      <!-- Primary: SMS to customer's phone -->
+      <div class="field">
+        <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;display:block">Customer Phone</label>
+        <input type="tel" id="posPaymentLinkPhone" placeholder="(555) 123-4567" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.85rem;outline:none" />
       </div>
-      <div style="display:flex;flex-direction:column;gap:0.5rem">
-        <button id="posPaymentLinkSmsBtn" class="btn-gold-full" onclick="sendPOSPaymentLinkSMS()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Open in Messages</button>
-        <button class="btn-sm" onclick="copyPOSPaymentLink()" style="width:100%"><i class="fa-solid fa-copy" style="margin-right:0.5rem"></i>Copy Link</button>
-        <input type="text" id="posPaymentLinkUrl" readonly style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.7rem;padding:0.5rem;margin-top:0.25rem;font-family:monospace" />
+      <button id="posPaymentLinkSendBtn" class="btn-gold-full" style="width:100%;margin-top:0.5rem" onclick="sendPOSPaymentLinkSMS()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Text</button>
+      <!-- Secondary: QR + copy fallback -->
+      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:0.65rem">Or have customer scan</div>
+        <img id="posPaymentLinkQR" src="" alt="Payment QR" style="width:160px;height:160px;background:white;padding:0.4rem;display:block;margin:0 auto;border:1px solid var(--border)" />
+        <button class="btn-sm" onclick="copyPOSPaymentLink()" style="width:100%;margin-top:0.65rem"><i class="fa-solid fa-copy" style="margin-right:0.5rem"></i>Copy Link</button>
+        <input type="text" id="posPaymentLinkUrl" readonly style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.7rem;padding:0.5rem;margin-top:0.4rem;font-family:monospace" />
       </div>
-      <div style="margin-top:1rem;padding:0.7rem 0.85rem;background:rgba(201,168,76,0.08);border-left:3px solid var(--gold);font-size:0.78rem;color:var(--muted);line-height:1.4">
+      <div style="margin-top:1rem;padding:0.65rem 0.85rem;background:rgba(201,168,76,0.08);border-left:3px solid var(--gold);font-size:0.78rem;color:var(--muted);line-height:1.4">
         <i class="fa-solid fa-circle-info" style="color:var(--gold);margin-right:0.3rem"></i>Payment recorded automatically when customer completes checkout.
       </div>
       <p class="form-msg" id="posPaymentLinkMsg" style="margin-top:0.75rem;text-align:center"></p>
@@ -5980,12 +5984,45 @@ function copyPOSPaymentLink(){
   }
 }
 
-function sendPOSPaymentLinkSMS(){
+async function sendPOSPaymentLinkSMS(){
+  var phone = document.getElementById('posPaymentLinkPhone').value.trim();
+  if(!phone){setMsg('posPaymentLinkMsg','Enter a phone number first.','error');return;}
   var url = document.getElementById('posPaymentLinkUrl').value;
-  if(!url) return;
-  var body = encodeURIComponent('Payment link for your purchase: ' + url);
-  // Opens default SMS app with link pre-filled
-  window.open('sms:?body=' + body, '_blank');
+  if(!url){setMsg('posPaymentLinkMsg','No link available.','error');return;}
+
+  var sendBtn = document.getElementById('posPaymentLinkSendBtn');
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = '0.5';
+  setMsg('posPaymentLinkMsg','Sending...','');
+
+  try{
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        channel: 'sms',
+        body: 'Your payment link: ' + url,
+        recipients: [{phone: phone, first_name: posSelectedStudentName || 'Customer'}],
+      }),
+    });
+    var data = await r.json();
+    if(data.success && data.sms_sent > 0){
+      setMsg('posPaymentLinkMsg','Sent to ' + phone + ' — customer should receive shortly.','success');
+      setTimeout(closePOSPaymentLink, 2500);
+    }else{
+      var errMsg = 'Send failed';
+      if(data.errors && data.errors.length){errMsg = data.errors[0].reason;}
+      else if(data.error){errMsg = data.error;}
+      setMsg('posPaymentLinkMsg', errMsg, 'error');
+      sendBtn.disabled = false;
+      sendBtn.style.opacity = '1';
+    }
+  }catch(e){
+    setMsg('posPaymentLinkMsg', e.message || 'Network error', 'error');
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+  }
 }
     
 
