@@ -5948,13 +5948,16 @@ async function checkoutPOS_paymentLink(){
     var data = await r.json();
     if(data.error){setMsg('posMsg', data.error, 'error'); return;}
 
-    // Populate Payment Link modal
+  // Populate Payment Link modal
     var total = posCartTotal();
     document.getElementById('posPaymentLinkUrl').value = data.url;
     document.getElementById('posPaymentLinkAmount').textContent = '$' + total.toFixed(2);
     document.getElementById('posPaymentLinkQR').src = 
       'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.url);
     document.getElementById('posPaymentLinkMsg').textContent = '';
+    // Auto-fill phone from selected student if available
+    var selStudent = posSelectedStudentId ? allStudents.find(function(s){return s.id===posSelectedStudentId;}) : null;
+    document.getElementById('posPaymentLinkPhone').value = (selStudent && selStudent.phone) ? selStudent.phone : '';
 
     // Open Payment Link modal; close POS cart modal
     document.getElementById('posPaymentLinkModal').classList.add('active');
