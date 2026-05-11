@@ -850,7 +850,7 @@
         <button class="comm-tab"        id="ctab-automations" onclick="switchCommTab('automations')"><i class="fa-solid fa-robot"></i> Automations</button>
         <button class="comm-tab"        id="ctab-alerts"      onclick="switchCommTab('alerts')"><i class="fa-solid fa-bullhorn"></i> Alerts</button>
         <button class="comm-tab"        id="ctab-sms"         onclick="switchCommTab('sms')"><i class="fa-solid fa-comments"></i> SMS Inbox</button>
-        <button class="comm-tab"        id="ctab-portal-invites" onclick="switchCommTab('portal_invites')"><i class="fa-solid fa-link"></i> Portal Invites</button>
+        <button class="comm-tab"        id="ctab-portalInvites" onclick="switchCommTab('portalInvites')"><i class="fa-solid fa-link"></i> Portal Invites</button>
       </div>
       <!-- Broadcast -->
       <div id="commTabBroadcast">
@@ -2906,7 +2906,7 @@ function switchSessionTab(tab){
   });
 }
 function switchCommTab(tab){
-  var tabs=['broadcast','automations','alerts','sms'];
+  var tabs=['broadcast','automations','alerts','sms','portalInvites'];
   tabs.forEach(function(t){
     var panel=document.getElementById('commTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(panel) panel.style.display=t===tab?'block':'none';
@@ -2915,6 +2915,7 @@ function switchCommTab(tab){
   });
   if(tab==='alerts') populateTagDropdowns();
   if(tab==='sms')    loadSmsInbox();
+  if(tab==='portalInvites'&&typeof loadPortalInvitesTab==='function') loadPortalInvitesTab();
 }
 
 // Revenue goal
