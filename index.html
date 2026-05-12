@@ -14,7 +14,7 @@
 <body>
 
   <!-- §FOUNDING-BANNER -->
-<div id="foundingBanner" style="background:linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08));border-bottom:1px solid rgba(201,168,76,0.35);padding:0.85rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;text-align:center;position:relative;z-index:10;">
+<div id="foundingBanner" style="background:linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08));border-bottom:1px solid rgba(201,168,76,0.35);padding:0.85rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;text-align:center;position:fixed;top:0;left:0;right:0;z-index:300;">
   <span style="color:#C9A84C;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;">★ Charter 25 ★</span>
   <span style="color:#F5F0E8;font-size:0.92rem;">
     <strong>NMAO Founding Schools</strong> — <span id="bannerSpots">25</span> spots, 3-year locked pricing, charter-only perks.
@@ -463,7 +463,22 @@
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var sc = supabase.createClient(SURL, SKEY);
+  // §FOUNDING-BANNER-LAYOUT — push nav and hero down by banner height
   // §FOUNDING-BANNER-COUNTER — update banner spots remaining on page load
+(function(){
+  function adjustForBanner(){
+    var banner = document.getElementById('foundingBanner');
+    if (!banner) return;
+    var h = banner.offsetHeight;
+    var nav = document.querySelector('nav');
+    if (nav) nav.style.top = h + 'px';
+    var hero = document.getElementById('hero');
+    if (hero) hero.style.paddingTop = (120 + h) + 'px';
+  }
+  adjustForBanner();
+  window.addEventListener('resize', adjustForBanner);
+  window.addEventListener('load', adjustForBanner);
+})();
 (async function(){
   try {
     var r = await sc.from('schools').select('id', {count:'exact', head:true}).eq('is_founding_member', true);
