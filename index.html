@@ -13,14 +13,7 @@
 </head>
 <body>
 
-  <!-- §FOUNDING-BANNER -->
-<div id="foundingBanner" style="background:linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08));border-bottom:1px solid rgba(201,168,76,0.35);padding:0.85rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;text-align:center;position:fixed;top:0;left:0;right:0;z-index:300;">
-  <span style="color:#C9A84C;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;">★ Charter 25 ★</span>
-  <span style="color:#F5F0E8;font-size:0.92rem;">
-    <strong>NMAO Founding Schools</strong> — <span id="bannerSpots">25</span> spots, 3-year locked pricing, charter-only perks.
-  </span>
-  <a href="founding-schools.html" style="background:#C9A84C;color:#0A0A0A;font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.55rem 1.2rem;text-decoration:none;font-weight:700;white-space:nowrap;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Claim a Spot →</a>
-</div>
+
 
 <!-- NAV -->
 
@@ -285,7 +278,16 @@
     </div>
     <a href="https://nmao.us" target="_blank" style="flex-shrink:0;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:#C9A84C;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.6rem 1.1rem;text-decoration:none;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">Get Accredited →</a>
   </div>
-
+    
+<!-- §FOUNDING-BANNER — Charter 25 promo, lives inside pricing section -->
+<div id="foundingBanner" style="max-width:1000px;margin:0 auto 3rem;background:linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08));border:1px solid rgba(201,168,76,0.45);border-left:4px solid #C9A84C;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:1.25rem;flex-wrap:wrap;text-align:center;">
+  <span style="color:#C9A84C;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;">★ Charter 25 ★</span>
+  <span style="color:#F5F0E8;font-size:0.92rem;">
+    <strong>NMAO Founding Schools</strong> — <span id="bannerSpots">25</span> spots, 3-year locked pricing, charter-only perks.
+  </span>
+  <a href="founding-schools.html" style="background:#C9A84C;color:#0A0A0A;font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.55rem 1.2rem;text-decoration:none;font-weight:700;white-space:nowrap;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Claim a Spot →</a>
+</div>
+    
   <div class="price-grid">
 
     <div class="plan">
@@ -463,22 +465,7 @@
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var sc = supabase.createClient(SURL, SKEY);
-  // §FOUNDING-BANNER-LAYOUT — push nav and hero down by banner height
-  // §FOUNDING-BANNER-COUNTER — update banner spots remaining on page load
-(function(){
-  function adjustForBanner(){
-    var banner = document.getElementById('foundingBanner');
-    if (!banner) return;
-    var h = banner.offsetHeight;
-    var nav = document.querySelector('nav');
-    if (nav) nav.style.top = h + 'px';
-    var hero = document.getElementById('hero');
-    if (hero) hero.style.paddingTop = (120 + h) + 'px';
-  }
-  adjustForBanner();
-  window.addEventListener('resize', adjustForBanner);
-  window.addEventListener('load', adjustForBanner);
-})();
+ 
 (async function(){
   try {
     var r = await sc.from('schools').select('id', {count:'exact', head:true}).eq('is_founding_member', true);
