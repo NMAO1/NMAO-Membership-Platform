@@ -1134,6 +1134,7 @@ async function buildPortal(s){
       if(levels.length){
         var levelIds=levels.map(function(l){return l.id;});
         console.log('===LEVEL IDS===', levelIds);
+        var __noFilter=await sb.from('belt_level_videos').select('*').limit(20); console.log('===VIDEOS NO FILTER===', (__noFilter.data||[]).length, 'rows | error:', __noFilter.error, '| sample:', __noFilter.data&&__noFilter.data[0]);
         var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
         var allVids=vr.data||[];
         console.log('===TWO-STEP=== levels:',levels.length,'videos fetched:',allVids.length);
