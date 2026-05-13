@@ -1516,6 +1516,8 @@ function playCurriculumVideo(div){
 //  §JS: BELT_SECTION
 // ─────────────────────────────────────────────────────────────
 async function buildBeltSection(s,levels){
+  console.log('===BS=== levels:', levels.map(function(l){return l.name+':'+((l.belt_level_videos||[]).length);}));
+  console.log('===BS=== current_belt_id:', s.current_belt_id);
   document.getElementById('beltSection').style.display='block';
   var cb=null;for(var i=0;i<levels.length;i++){if(levels[i].id===s.current_belt_id){cb=levels[i];break;}}
   var ci=cb?levels.indexOf(cb):-1;var nb=levels[ci+1]||null;
