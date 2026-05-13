@@ -2552,7 +2552,8 @@ function paintSessionIdentity(user, school){
   if(avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
 }
 
-window._sessionGuardPromise = initSessionGuard();
+// §SID-READY — single promise gate for any SID-using async loader
+window.SID_READY = initSessionGuard();
 
 var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -2631,8 +2632,8 @@ setTimeout(hideLoading, 3000);
 
 async function init() {
   try {
-    // §INIT — wait for session guard, then trust SID + window.CURRENT_USER
-    if(window._sessionGuardPromise){ await window._sessionGuardPromise; }
+    // §INIT — wait for SID gate, then trust SID + window.CURRENT_USER
+    if(window.SID_READY){ await window.SID_READY; }
     if(!SID || !window.CURRENT_USER){
       console.error('[init] session not verified; aborting');
       hideLoading();
@@ -8257,7 +8258,8 @@ function loadStsTemplate(type){
   };
 
 window.loadEvents = async function(){
-  if (!SID) return;
+  await window.SID_READY;
+  if(!SID) return;
   try {
 var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", true).order("event_date", {ascending: false});      if (r.error) { console.error("loadEvents:", r.error.message); window.allEvents = []; }
       else { window.allEvents = r.data || []; }
@@ -9615,7 +9617,9 @@ window.closeWelcomeModal = async function() {
 
   window.smsUnreadCount = 0;
 
-  window.refreshSmsUnreadBadge = async function(){
+ window.refreshSmsUnreadBadge = async function(){
+    await window.SID_READY;
+    if(!SID) return;
     try {
       var r = await sb.from("sms_inbox")
         .select("id", {count: "exact", head: true})
