@@ -2469,6 +2469,15 @@ var SID = null;
 var ownerEmail = null;    // ← ADD THIS LINE
 var sb   = supabase.createClient(SURL, SKEY);
   // §SESSION-GUARD — Multi-tenant identity verification and display
+// §UTILS — timezone-safe local date string (returns YYYY-MM-DD in viewer local time)
+// Use instead of d.toISOString().split('T')[0] which silently shifts to UTC after 7pm ET
+function localDateStr(d){
+  var y = d.getFullYear();
+  var m = d.getMonth()+1; m = m<10 ? '0'+m : ''+m;
+  var day = d.getDate(); day = day<10 ? '0'+day : ''+day;
+  return y+'-'+m+'-'+day;
+}
+
 async function initSessionGuard(){
   var ur = await sb.auth.getUser();
   if(!ur || !ur.data || !ur.data.user){
