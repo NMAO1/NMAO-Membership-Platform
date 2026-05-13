@@ -8252,8 +8252,7 @@ function loadStsTemplate(type){
 window.loadEvents = async function(){
   if (!SID) return;
   try {
-    var r = await sb.from("events").select("*").eq("school_id", SID).eq("act...
-      if (r.error) { console.error("loadEvents:", r.error.message); window.allEvents = []; }
+var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", true).order("event_date", {ascending: false});      if (r.error) { console.error("loadEvents:", r.error.message); window.allEvents = []; }
       else { window.allEvents = r.data || []; }
       var ids = window.allEvents.map(function(ev){ return ev.id; });
       window.allEventSessions = {};
