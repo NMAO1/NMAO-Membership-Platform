@@ -7464,8 +7464,9 @@ function openReport(key){
   var sab=document.getElementById('reportSelectAllBtn');
   if(sab) sab.innerHTML='<i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Select All';
   var sc=document.getElementById('reportSelectedCount'); if(sc) sc.textContent='0 selected';
-  var rc=document.getElementById('reportResultCount'); if(rc) rc.textContent='';
+var rc=document.getElementById('reportResultCount'); if(rc) rc.textContent='';
   document.getElementById('reportModal').classList.add('active');
+  setTimeout(window.attachFlatpickrGlobally, 50);
 }
 function closeReport(){ document.getElementById('reportModal').classList.remove('active'); currentReportType=null; currentReportDef=null; reportData=[]; }
 function wireReportToolbar(count){
@@ -8031,7 +8032,8 @@ function truncate(str,n){ return str&&str.length>n?str.slice(0,n)+'...':str||'';
 
 // ─────────────────────────────── BOOT ───────────────────────────────
 
-init();
+// §INIT — attach Flatpickr once init finishes and the DOM is populated
+init().then(window.attachFlatpickrGlobally);
 setTimeout(initCalView, 200);
 
 </script>
