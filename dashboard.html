@@ -2489,6 +2489,8 @@ async function initSessionGuard(){
     return;
   }
   
+ SID = school.id;
+  ownerEmail = user.email;
   window.CURRENT_USER = user;
   window.CURRENT_SCHOOL = school;
   paintSessionIdentity(user, school);
@@ -8247,9 +8249,10 @@ function loadStsTemplate(type){
     });
   };
 
-  window.loadEvents = async function(){
-    try {
-      var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", true).order("event_date", {ascending: false});
+window.loadEvents = async function(){
+  if (!SID) return;
+  try {
+    var r = await sb.from("events").select("*").eq("school_id", SID).eq("act...
       if (r.error) { console.error("loadEvents:", r.error.message); window.allEvents = []; }
       else { window.allEvents = r.data || []; }
       var ids = window.allEvents.map(function(ev){ return ev.id; });
