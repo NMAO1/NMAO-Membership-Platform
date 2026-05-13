@@ -1125,7 +1125,12 @@ async function buildPortal(s){
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
-    if(bsid){var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required, belt_level_videos(id, belt_level_id, youtube_url, description, sort_order)').eq('belt_system_id',bsid).order('sort_order');levels=br.data||[];}
+  if(bsid){
+      var __u=await sb.auth.getUser();
+      console.log('===AUTH BEFORE QUERY===', __u && __u.data && __u.data.user ? __u.data.user.email : 'NOT AUTHED');
+      var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required, belt_level_videos(id, belt_level_id, youtube_url, description, sort_order)').eq('belt_system_id',bsid).order('sort_order');
+      levels=br.data||[];
+    }
     if(levels.length)await buildBeltSection(s,levels);
   }
   await buildTracker(s);
