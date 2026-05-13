@@ -2468,6 +2468,78 @@ var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SID = null;
 var ownerEmail = null;    // ← ADD THIS LINE
 var sb   = supabase.createClient(SURL, SKEY);
+  // §SESSION-GUARD — Multi-tenant identity verification and display
+async function initSessionGuard(){
+  var ur = await sb.auth.getUser();
+  if(!ur || !ur.data || !ur.data.user){
+    window.location.href = 'index.html';
+    return;
+  }
+  var user = ur.data.user;
+  
+  var sr = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
+  if(sr.error || !sr.data || !sr.data.length){
+    showSessionError(user, 'no-school');
+    return;
+  }
+  var school = sr.data[0];
+  
+  if(!school.is_active){
+    showSessionError(user, 'inactive', school);
+    return;
+  }
+  
+  window.CURRENT_USER = user;
+  window.CURRENT_SCHOOL = school;
+  paintSessionIdentity(user, school);
+  
+  console.log('[session-guard] verified:', user.email, 'school:', school.name, '('+school.id+')');
+}
+
+function showSessionError(user, reason, school){
+  var email = user && user.email ? user.email : 'unknown';
+  var title, body;
+  if(reason === 'inactive'){
+    title = 'School Account Inactive';
+    body = 'Your school <strong style="color:var(--gold)">'+(school?school.name:'')+'</strong> is currently marked inactive. Contact NMAO support to reactivate.';
+  } else {
+    title = 'Account Not Linked to a School';
+    body = 'You are signed in as <strong style="color:var(--gold)">'+email+'</strong>, but this account is not the owner of any school in our system. This usually means you are logged into a test or secondary account. Sign out and sign back in with your owner account.';
+  }
+  var html = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#080808;font-family:Lato,sans-serif;padding:2rem">';
+  html += '<div style="max-width:540px;border:1px solid #2a2a2a;background:#141414;padding:2.5rem;text-align:center">';
+  html += '<div style="font-size:2.2rem;color:#E07070;margin-bottom:1.25rem">⚠</div>';
+  html += '<h1 style="font-family:\'Libre Baskerville\',serif;font-size:1.45rem;color:#F5F0E8;margin-bottom:1rem;font-weight:700">'+title+'</h1>';
+  html += '<p style="color:#9A8F80;font-size:0.92rem;line-height:1.65;margin-bottom:2rem">'+body+'</p>';
+  html += '<button onclick="guardSignOut()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:#C9A84C;color:#080808;border:none;cursor:pointer;font-weight:700">Sign Out</button>';
+  html += '</div></div>';
+  document.body.innerHTML = html;
+}
+
+function guardSignOut(){
+  sb.auth.signOut().then(function(){ window.location.href = 'index.html'; });
+}
+
+function paintSessionIdentity(user, school){
+  var displayName = user.email;
+  if(user.user_metadata && user.user_metadata.full_name){
+    displayName = user.user_metadata.full_name;
+  }
+  
+  var schoolEl = document.querySelector('.sidebar-school');
+  if(schoolEl) schoolEl.textContent = school.name;
+  
+  var nameEl = document.querySelector('.user-name');
+  if(nameEl) nameEl.textContent = displayName;
+  
+  var roleEl = document.querySelector('.user-role');
+  if(roleEl) roleEl.textContent = user.email;
+  
+  var avatarEl = document.querySelector('.user-avatar');
+  if(avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
+}
+
+initSessionGuard();
 
 var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
