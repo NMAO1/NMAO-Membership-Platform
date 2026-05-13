@@ -122,6 +122,80 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .milestone-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.8s ease;}
 .att-row{display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem;}
 .video-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold-dk);margin-bottom:0.5rem;}
+/* §CSS-CURRICULUM — accordion for belt curriculum at-or-below */
+.curriculum-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+.curriculum-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+}
+.curriculum-header:hover { background: rgba(255,255,255,0.03); }
+.curriculum-swatch {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+.curriculum-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+.curriculum-count { font-size: 0.75rem; color: var(--muted); }
+.curriculum-chev { color: var(--muted); font-size: 0.85rem; margin-left: 0.4rem; }
+.curriculum-body {
+  padding: 0.5rem 0.9rem 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.curriculum-video { margin-bottom: 0.85rem; }
+.curriculum-video:last-child { margin-bottom: 0; }
+.curriculum-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.curriculum-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.curriculum-thumb iframe { width: 100%; height: 100%; border: 0; }
+.curriculum-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  color: white;
+  font-size: 2.5rem;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+.curriculum-thumb:hover .curriculum-play { opacity: 1; }
+.curriculum-vdesc {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--white);
+}
 .class-schedule-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;transition:border-color 0.2s;}
 .class-schedule-card.enrolled{border-left:3px solid var(--gold);}
 .class-time-badge{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);min-width:75px;flex-shrink:0;}
@@ -1344,6 +1418,100 @@ async function buildAnnouncements(){
   }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
 }
 
+
+  // §CURRICULUM — utility: extract YouTube video ID from common URL shapes
+function ytVideoIdFromUrl(url){
+  if(!url) return null;
+  var m = url.match(/[?&]v=([^&]+)/);
+  if(m) return m[1];
+  m = url.match(/youtu\.be\/([^?&\/]+)/);
+  if(m) return m[1];
+  m = url.match(/\/embed\/([^?&\/]+)/);
+  if(m) return m[1];
+  return null;
+}
+
+// §CURRICULUM — render accordion of all belt levels at-or-below current rank
+// levels: array pre-sorted ascending by sort_order, with belt_level_videos joined
+// currentBeltId: id of student current_belt_id
+// containerId: DOM id of the wrapper where the accordion HTML will be written
+function renderCurriculumAccordion(levels, currentBeltId, containerId){
+  var container = document.getElementById(containerId);
+  if(!container) return;
+  if(!levels || !levels.length || !currentBeltId){
+    container.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:0.5rem 0">No curriculum available yet.</div>';
+    return;
+  }
+  var ci = -1;
+  for(var i=0; i<levels.length; i++){ if(levels[i].id === currentBeltId){ ci = i; break; } }
+  if(ci < 0){
+    container.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:0.5rem 0">No curriculum available yet.</div>';
+    return;
+  }
+  var atOrBelow = levels.slice(0, ci+1).reverse();
+  var html = '';
+  atOrBelow.forEach(function(level){
+    var isCurrent = (level.id === currentBeltId);
+    var videos = (level.belt_level_videos || []).slice();
+    videos.sort(function(a,b){ return (a.sort_order||0) - (b.sort_order||0); });
+    var countText = videos.length + (videos.length === 1 ? ' video' : ' videos');
+    var color = level.color_hex || '#888888';
+    html += '<div class="curriculum-card">';
+    html += '<button type="button" class="curriculum-header" onclick="toggleCurriculumLevel(this)">';
+    html += '<span class="curriculum-swatch" style="background:'+color+'"></span>';
+    html += '<span class="curriculum-name">'+level.name+'</span>';
+    html += '<span class="curriculum-count">'+countText+'</span>';
+    html += '<i class="fa-solid fa-chevron-'+(isCurrent?'up':'down')+' curriculum-chev"></i>';
+    html += '</button>';
+    html += '<div class="curriculum-body" style="display:'+(isCurrent?'block':'none')+'">';
+    if(!videos.length){
+      html += '<div style="color:var(--muted);font-style:italic;padding:0.5rem 0;font-size:0.85rem">No videos for this rank yet.</div>';
+    } else {
+      videos.forEach(function(v){
+        var vid = ytVideoIdFromUrl(v.youtube_url);
+        if(!vid){
+          html += '<div class="curriculum-video"><a href="'+v.youtube_url+'" target="_blank" rel="noopener" style="color:var(--gold);font-size:0.9rem">'+(v.description || 'Watch video')+'</a></div>';
+        } else {
+          var thumbUrl = 'https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';
+          html += '<div class="curriculum-video">';
+          html += '<div class="curriculum-thumb" data-yt-id="'+vid+'" onclick="playCurriculumVideo(this)">';
+          html += '<img src="'+thumbUrl+'" loading="lazy" alt="" />';
+          html += '<div class="curriculum-play"><i class="fa-solid fa-play"></i></div>';
+          html += '</div>';
+          if(v.description){
+            html += '<div class="curriculum-vdesc">'+v.description+'</div>';
+          }
+          html += '</div>';
+        }
+      });
+    }
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+// §CURRICULUM — onclick handler for accordion headers
+function toggleCurriculumLevel(btn){
+  var body = btn.nextElementSibling;
+  var icon = btn.querySelector('.curriculum-chev');
+  if(!body) return;
+  var isOpen = (body.style.display !== 'none');
+  body.style.display = isOpen ? 'none' : 'block';
+  if(icon){
+    icon.classList.remove(isOpen ? 'fa-chevron-up' : 'fa-chevron-down');
+    icon.classList.add(isOpen ? 'fa-chevron-down' : 'fa-chevron-up');
+  }
+}
+
+// §CURRICULUM — onclick handler for thumbnail: swap to autoplay iframe
+function playCurriculumVideo(div){
+  var vid = div.getAttribute('data-yt-id');
+  if(!vid) return;
+  var src = 'https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&rel=0';
+  div.innerHTML = '<iframe src="'+src+'" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';
+  div.style.cursor = 'default';
+  div.onclick = null;
+}
 // ─────────────────────────────────────────────────────────────
 //  §JS: BELT_SECTION
 // ─────────────────────────────────────────────────────────────
@@ -1374,9 +1542,12 @@ async function buildBeltSection(s,levels){
   levels.forEach(function(b){var isc=cb&&b.id===cb.id;html+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,5)+'</div></div>';});
   html+='</div>';
   document.getElementById('beltCard').innerHTML=html;
-  if(cb&&cb.belt_level_videos&&cb.belt_level_videos.length){
+ if(cb){
     document.getElementById('curriculumSection').style.display='block';
-    document.getElementById('curriculumList').innerHTML=cb.belt_level_videos.map(function(v){return '<div class="video-item"><div style="color:var(--gold);font-size:1rem;flex-shrink:0;padding-top:0.1rem"><i class="fa-solid fa-play"></i></div><div><a href="'+v.youtube_url+'" target="_blank" style="color:var(--gold);font-size:0.88rem;text-decoration:none;display:block;margin-bottom:0.2rem">'+(v.description||'View Video')+'</a><div style="font-size:0.72rem;color:var(--muted);word-break:break-all">'+v.youtube_url+'</div></div></div>';}).join('');}
+    renderCurriculumAccordion(levels, cb.id, 'curriculumList');
+  } else {
+    document.getElementById('curriculumSection').style.display='none';
+  }
 }
 
 async function getClassesSincePromotion(s){
