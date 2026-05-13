@@ -1126,10 +1126,20 @@ async function buildPortal(s){
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
   if(bsid){
-      var __u=await sb.auth.getUser();
-      console.log('===AUTH BEFORE QUERY===', __u && __u.data && __u.data.user ? __u.data.user.email : 'NOT AUTHED');
-      var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required, belt_level_videos(id, belt_level_id, youtube_url, description, sort_order)').eq('belt_system_id',bsid).order('sort_order');
+      // Two-step: fetch levels and their videos separately, then merge.
+      // The embed mechanism silently returns empty arrays in this code path
+      // even though direct queries to both tables succeed.
+      var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required').eq('belt_system_id',bsid).order('sort_order');
       levels=br.data||[];
+      if(levels.length){
+        var levelIds=levels.map(function(l){return l.id;});
+        var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
+        var allVids=vr.data||[];
+        console.log('===TWO-STEP=== levels:',levels.length,'videos fetched:',allVids.length);
+        levels.forEach(function(l){
+          l.belt_level_videos=allVids.filter(function(v){return v.belt_level_id===l.id;});
+        });
+      }
     }
     if(levels.length)await buildBeltSection(s,levels);
   }
