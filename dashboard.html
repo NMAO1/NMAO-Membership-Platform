@@ -1697,9 +1697,9 @@
   </div>
 </div>
 
-<!-- §MODAL-BELTLEVEL-EDIT -->
+<!-- §MODAL-BELTLEVEL-EDIT (extended with curriculum videos) -->
 <div class="modal-overlay" id="editBeltLevelModal">
-  <div class="modal" style="width:500px;max-width:95vw">
+  <div class="modal" style="width:540px;max-width:95vw">
     <div class="modal-header"><span class="modal-title">Edit Belt Level</span><button class="modal-close" onclick="closeEditBeltLevel()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="editBlId" value="" />
@@ -1711,7 +1711,10 @@
         <div class="field"><label>Promotion Fee</label><input type="number" id="editBlFee" value="0" min="0" step="0.01" /></div>
         <div class="field"><label>Classes Required</label><input type="number" id="editBlClassesRequired" value="0" min="0" /></div>
       </div>
-      <button class="btn-gold-full" onclick="saveEditBeltLevel()">Save Changes</button>
+      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.5rem">Curriculum Videos</div>
+      <div id="editBlVideoRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem"></div>
+      <button class="btn-sm" onclick="addEditVideoRow()"><i class="fa-solid fa-plus"></i> Add Video</button>
+      <button class="btn-gold-full" style="margin-top:1rem" onclick="saveEditBeltLevel()">Save Changes</button>
       <p class="form-msg" id="editBeltLevelMsg"></p>
     </div>
   </div>
@@ -5556,14 +5559,101 @@ async function refreshBeltSystemLevels(){
   el.innerHTML=html;
 }
 function toggleBeltExpand(id){ var el=document.getElementById(id); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
-function openEditBeltLevel(lid){ sb.from('belt_levels').select('*').eq('id',lid).single().then(function(r){if(r.error||!r.data)return;var l=r.data;document.getElementById('editBlId').value=l.id;document.getElementById('editBlName').value=l.name||'';document.getElementById('editBlColor').value=l.color_hex||'#FFFFFF';document.getElementById('editBlColorHex').value=l.color_hex||'#FFFFFF';document.getElementById('editBlFee').value=l.promotion_fee||0;document.getElementById('editBlClassesRequired').value=l.classes_required||0;document.getElementById('editBeltLevelMsg').textContent='';document.getElementById('editBeltLevelModal').classList.add('active');}); }
+function openEditBeltLevel(lid){
+  sb.from('belt_levels').select('*, belt_level_videos(*)').eq('id',lid).single().then(function(r){
+    if(r.error||!r.data) return;
+    var l=r.data;
+    document.getElementById('editBlId').value=l.id;
+    document.getElementById('editBlName').value=l.name||'';
+    document.getElementById('editBlColor').value=l.color_hex||'#FFFFFF';
+    document.getElementById('editBlColorHex').value=l.color_hex||'#FFFFFF';
+    document.getElementById('editBlFee').value=l.promotion_fee||0;
+    document.getElementById('editBlClassesRequired').value=l.classes_required||0;
+    document.getElementById('editBeltLevelMsg').textContent='';
+    var container=document.getElementById('editBlVideoRows');
+    container.innerHTML='';
+    var vids=(l.belt_level_videos||[]).slice().sort(function(a,b){return (a.sort_order||0)-(b.sort_order||0);});
+    for(var i=0;i<vids.length;i++){ buildEditVideoRow(vids[i]); }
+    document.getElementById('editBeltLevelModal').classList.add('active');
+  });
+}
 function syncEditBeltColor(){ var h=document.getElementById('editBlColorHex').value; if(/^#[0-9A-Fa-f]{6}$/.test(h)) document.getElementById('editBlColor').value=h; }
 function closeEditBeltLevel(){ document.getElementById('editBeltLevelModal').classList.remove('active'); }
 async function saveEditBeltLevel(){
-  var id=document.getElementById('editBlId').value; var name=document.getElementById('editBlName').value.trim();
-  if(!id||!name){setMsg('editBeltLevelMsg','Name required.','error');return;} setMsg('editBeltLevelMsg','Saving...','');
-  var r=await sb.from('belt_levels').update({name:name,color_hex:document.getElementById('editBlColor').value,promotion_fee:parseFloat(document.getElementById('editBlFee').value)||0,classes_required:parseInt(document.getElementById('editBlClassesRequired').value)||0}).eq('id',id);
-  if(r.error){setMsg('editBeltLevelMsg',r.error.message,'error');}else{setMsg('editBeltLevelMsg','Saved!','success');closeEditBeltLevel();await refreshBeltSystemLevels();}
+  var id=document.getElementById('editBlId').value;
+  var name=document.getElementById('editBlName').value.trim();
+  if(!id||!name){setMsg('editBeltLevelMsg','Name required.','error');return;}
+  setMsg('editBeltLevelMsg','Saving...','');
+  // 1. Update belt_levels row
+  var r=await sb.from('belt_levels').update({
+    name:name,
+    color_hex:document.getElementById('editBlColor').value,
+    promotion_fee:parseFloat(document.getElementById('editBlFee').value)||0,
+    classes_required:parseInt(document.getElementById('editBlClassesRequired').value)||0
+  }).eq('id',id);
+  if(r.error){setMsg('editBeltLevelMsg',r.error.message,'error');return;}
+  // 2. Diff video rows: collect DELETE / UPDATE / INSERT lists
+  var rows=document.querySelectorAll('#editBlVideoRows .edit-video-row');
+  var toDelete=[], toUpdate=[], toInsert=[];
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];
+    var vid=row.getAttribute('data-vid');
+    var deleted=row.getAttribute('data-deleted')==='true';
+    var urlInput=row.querySelector('.vrow-url');
+    var descInput=row.querySelector('.vrow-desc');
+    var url=urlInput?urlInput.value.trim():'';
+    var desc=descInput?descInput.value.trim():'';
+    if(deleted && vid){
+      toDelete.push(vid);
+    } else if(!deleted && vid && url){
+      toUpdate.push({id:vid,youtube_url:url,description:desc,sort_order:i});
+    } else if(!deleted && !vid && url){
+      toInsert.push({belt_level_id:id,youtube_url:url,description:desc,sort_order:i});
+    }
+  }
+  // 3. Execute video sync
+  var vErr=null;
+  if(toDelete.length){
+    var dr=await sb.from('belt_level_videos').delete().in('id',toDelete);
+    if(dr.error) vErr=dr.error;
+  }
+  if(!vErr && toUpdate.length){
+    for(var u=0;u<toUpdate.length;u++){
+      var v=toUpdate[u];
+      var ur=await sb.from('belt_level_videos').update({youtube_url:v.youtube_url,description:v.description,sort_order:v.sort_order}).eq('id',v.id);
+      if(ur.error){vErr=ur.error;break;}
+    }
+  }
+  if(!vErr && toInsert.length){
+    var ir=await sb.from('belt_level_videos').insert(toInsert);
+    if(ir.error) vErr=ir.error;
+  }
+  if(vErr){
+    setMsg('editBeltLevelMsg','Belt saved, but video sync error: '+vErr.message,'error');
+  } else {
+    setMsg('editBeltLevelMsg','Saved!','success');
+    closeEditBeltLevel();
+    await refreshBeltSystemLevels();
+  }
+}
+  function buildEditVideoRow(v){
+  var row=document.createElement('div');
+  row.className='edit-video-row';
+  row.setAttribute('data-vid', v && v.id ? v.id : '');
+  row.setAttribute('data-deleted','false');
+  row.style.cssText='display:flex;align-items:flex-start;gap:0.4rem;padding:0.6rem;background:var(--black);border:1px solid var(--border)';
+  var url=v&&v.youtube_url?v.youtube_url.replace(/"/g,'&quot;'):'';
+  var desc=v&&v.description?v.description.replace(/"/g,'&quot;'):'';
+  row.innerHTML='<div style="flex:1;display:flex;flex-direction:column;gap:0.4rem"><input type="text" class="vrow-url" placeholder="YouTube URL" value="'+url+'" style="background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.6rem" /><input type="text" class="vrow-desc" placeholder="Description..." value="'+desc+'" style="background:transparent;border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.6rem" /></div><button onclick="removeEditVideoRow(this)" style="background:none;border:1px solid var(--border);color:#E07070;cursor:pointer;padding:0.45rem 0.6rem;font-size:0.78rem;flex-shrink:0"><i class="fa-solid fa-xmark"></i></button>';
+  document.getElementById('editBlVideoRows').appendChild(row);
+}
+function addEditVideoRow(){ buildEditVideoRow(null); }
+function removeEditVideoRow(btn){
+  var row=btn.closest('.edit-video-row');
+  if(!row) return;
+  var vid=row.getAttribute('data-vid');
+  if(vid){ row.setAttribute('data-deleted','true'); row.style.display='none'; }
+  else { row.parentNode.removeChild(row); }
 }
 async function deleteBeltLevel(lid){
   var check=await sb.from('students').select('id',{count:'exact',head:true}).eq('current_belt_id',lid);
