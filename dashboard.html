@@ -2473,31 +2473,42 @@ async function initSessionGuard(){
   var ur = await sb.auth.getUser();
   if(!ur || !ur.data || !ur.data.user){
     window.location.href = 'index.html';
-    return;
+    return false;
   }
   var user = ur.data.user;
-  
+
+  // §SESSION-GUARD — single source of truth for auth + SID
+  // Primary path: school owner
   var sr = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
-  if(sr.error || !sr.data || !sr.data.length){
-    showSessionError(user, 'no-school');
-    return;
+  var school = null;
+
+  if(!sr.error && sr.data && sr.data.length){
+    school = sr.data[0];
+    if(!school.is_active){
+      showSessionError(user, 'inactive', school);
+      return false;
+    }
+    SID = school.id;
+  } else {
+    // Fallback path: instructor seat (legacy support for staff hitting dashboard.html)
+    var instrCheck = await sb.from('instructors').select('id,school_id').eq('email', user.email).eq('active', true).single();
+    if(instrCheck.error || !instrCheck.data){
+      showSessionError(user, 'no-school');
+      return false;
+    }
+    SID = instrCheck.data.school_id;
+    var s2 = await sb.from('schools').select('id,name,email,is_active').eq('id', SID).single();
+    if(s2.data) school = s2.data;
   }
-  var school = sr.data[0];
-  
-  if(!school.is_active){
-    showSessionError(user, 'inactive', school);
-    return;
-  }
-  
- SID = school.id;
+
   ownerEmail = user.email;
   window.CURRENT_USER = user;
   window.CURRENT_SCHOOL = school;
-  paintSessionIdentity(user, school);
-  
-  console.log('[session-guard] verified:', user.email, 'school:', school.name, '('+school.id+')');
-}
+  if(school) paintSessionIdentity(user, school);
 
+  console.log('[session-guard] verified:', user.email, 'school:', school ? school.name : '(unknown)', '('+SID+')');
+  return true;
+}
 function showSessionError(user, reason, school){
   var email = user && user.email ? user.email : 'unknown';
   var title, body;
@@ -2541,7 +2552,7 @@ function paintSessionIdentity(user, school){
   if(avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
 }
 
-initSessionGuard();
+window._sessionGuardPromise = initSessionGuard();
 
 var DAYS       = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -2620,18 +2631,14 @@ setTimeout(hideLoading, 3000);
 
 async function init() {
   try {
-    var r = await sb.auth.getSession();
-    if (!r.data || !r.data.session) { window.location.href='index.html'; return; }
-    var user = r.data.session.user;
-    ownerEmail = user.email;    
-    var ownerCheck = await sb.from('schools').select('id').eq('owner_id',user.id).single();
-    if (!ownerCheck.error && ownerCheck.data) {
-      SID = ownerCheck.data.id;
-    } else {
-      var instrCheck = await sb.from('instructors').select('id,school_id').eq('email',user.email).eq('active',true).single();
-      if (instrCheck.error || !instrCheck.data) { await sb.auth.signOut(); window.location.href='index.html'; return; }
-      SID = instrCheck.data.school_id;
+    // §INIT — wait for session guard, then trust SID + window.CURRENT_USER
+    if(window._sessionGuardPromise){ await window._sessionGuardPromise; }
+    if(!SID || !window.CURRENT_USER){
+      console.error('[init] session not verified; aborting');
+      hideLoading();
+      return;
     }
+    var user = window.CURRENT_USER;
     var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email.split('@')[0];
     document.getElementById('userName').textContent    = name;
     document.getElementById('userInitial').textContent = name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();
