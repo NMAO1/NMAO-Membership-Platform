@@ -1133,6 +1133,7 @@ async function buildPortal(s){
       levels=br.data||[];
       if(levels.length){
         var levelIds=levels.map(function(l){return l.id;});
+        console.log('===LEVEL IDS===', levelIds);
         var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
         var allVids=vr.data||[];
         console.log('===TWO-STEP=== levels:',levels.length,'videos fetched:',allVids.length);
