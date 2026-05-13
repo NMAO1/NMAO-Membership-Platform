@@ -2470,7 +2470,7 @@ var ownerEmail = null;    // ← ADD THIS LINE
 var sb   = supabase.createClient(SURL, SKEY);
   // §SESSION-GUARD — Multi-tenant identity verification and display
 // §UTILS — timezone-safe local date string (returns YYYY-MM-DD in viewer local time)
-// Use instead of d.toISOString().split('T')[0] which silently shifts to UTC after 7pm ET
+// Use instead of localDateStr(d) which silently shifts to UTC after 7pm ET
 function localDateStr(d){
   var y = d.getFullYear();
   var m = d.getMonth()+1; m = m<10 ? '0'+m : ''+m;
@@ -3022,7 +3022,7 @@ async function loadRevenueGoal(){
 async function updateRevenueGoalWidget(goal){
   var widget=document.getElementById('revenueGoalWidget'); if(!widget) return;
   try{
-    var now=new Date(); var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+    var now=new Date(); var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
     var rm=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',monthStart+'T00:00:00').eq('status','paid');
     var current=(rm.data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
     var pct=Math.min(100,Math.round((current/goal)*100));
@@ -3122,15 +3122,15 @@ function buildCalendar(){
   var now=new Date(); var start=new Date(now); start.setDate(now.getDate()-now.getDay()+(calWeekOffset*7));
   var end=new Date(start); end.setDate(start.getDate()+6);
   document.getElementById('weekRangeLabel').textContent=start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' - '+end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  var todayStr=now.toISOString().split('T')[0];
+  var todayStr=localDateStr(now);
   for(var i=0;i<7;i++){
     var d=new Date(start); d.setDate(start.getDate()+i);
-    var dayEl=document.getElementById('calDay'+i); var dStr=d.toISOString().split('T')[0];
+    var dayEl=document.getElementById('calDay'+i); var dStr=localDateStr(d);
     dayEl.className='cal-day'+(dStr===todayStr?' today':'');
     var html='<div class="cal-day-num">'+d.getDate()+'</div>';
     var dn=DAYS[d.getDay()];
     var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-    dayClasses.forEach(function(c){var cname=(c.name||c.title||'Class').replace(/'/g,'');html+='<div class="cal-event class-event" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dStr+'\')" style="display:flex;align-items:center;gap:0.2rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+cname+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill',d.toISOString().split('T')[0])+'</div>';});
+    dayClasses.forEach(function(c){var cname=(c.name||c.title||'Class').replace(/'/g,'');html+='<div class="cal-event class-event" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dStr+'\')" style="display:flex;align-items:center;gap:0.2rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+cname+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill',localDateStr(d))+'</div>';});
     var daySessions=allSessions.filter(function(s){return s.session_date===dStr;});
     daySessions.forEach(function(s){var st=allSessionTypes.find(function(t){return t.id===s.session_type_id;});var typeName=(st?st.name:'Session').replace(/'/g,'');html+='<div class="cal-event session-event" onclick="openBookSession(\''+s.id+'\')">'+fmtTime(s.start_time)+' '+typeName+'</div>';});
     allStudents.forEach(function(s){if(!s.date_of_birth)return;var dob=new Date(s.date_of_birth+'T00:00:00');if(dob.getMonth()===d.getMonth()&&dob.getDate()===d.getDate()){html+='<div class="cal-event birthday-event">\uD83C\uDF82 '+s.first_name+'</div>';}});
@@ -3143,7 +3143,7 @@ function buildMonthCalendar(){
   document.getElementById('monthLabel').textContent=MONTHS[target.getMonth()]+' '+target.getFullYear();
   var firstDay=target.getDay(); var daysInMonth=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();
   var prevDays=new Date(target.getFullYear(),target.getMonth(),0).getDate();
-  var todayStr=now.toISOString().split('T')[0]; var cells=[];
+  var todayStr=localDateStr(now); var cells=[];
   for(var i=firstDay-1;i>=0;i--){cells.push({day:prevDays-i,month:'prev'});}
   for(var d=1;d<=daysInMonth;d++){cells.push({day:d,month:'current'});}
   var remaining=42-cells.length; for(var n=1;n<=remaining;n++){cells.push({day:n,month:'next'});}
@@ -3151,7 +3151,7 @@ function buildMonthCalendar(){
   cells.forEach(function(cell){
     var isCurrent=cell.month==='current';
     var cellDate=new Date(target.getFullYear(),target.getMonth()+(cell.month==='prev'?-1:cell.month==='next'?1:0),cell.day);
-    var cellStr=cellDate.toISOString().split('T')[0]; var isToday=cellStr===todayStr;
+    var cellStr=localDateStr(cellDate); var isToday=cellStr===todayStr;
     var dn=DAYS[cellDate.getDay()];
     var dayClasses=isCurrent?allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}):[];
     var birthdays=isCurrent?allStudents.filter(function(s){if(!s.date_of_birth)return false;var dob=new Date(s.date_of_birth+'T00:00:00');return dob.getMonth()===cellDate.getMonth()&&dob.getDate()===cellDate.getDate();}):[];
@@ -3338,7 +3338,7 @@ function buildWeekGrid(){
     var d=new Date(ws); d.setDate(ws.getDate()+i); var dn=DAYS[i];
     var dc=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
     html+='<div class="week-day '+(i===cur?'today':'')+'"><div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
-    html+=dc.map(function(c){return '<div class="week-class-pill" onclick="openClassRosterFromCal(\''+c.id+'\',\''+d.toISOString().split('T')[0]+'\')" style="display:flex;align-items:center;gap:0.25rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';}).join('');
+    html+=dc.map(function(c){return '<div class="week-class-pill" onclick="openClassRosterFromCal(\''+c.id+'\',\''+localDateStr(d)+'\')" style="display:flex;align-items:center;gap:0.25rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';}).join('');
     html+='</div>';
   }
   document.getElementById('weekGrid').innerHTML=html;
@@ -3421,7 +3421,7 @@ function populateInstructorDropdown(){
 
 // Attendance — single roster modal for all entry points
 function openAttendance(classId,ct){
-  var today=new Date().toISOString().split('T')[0];
+  var today=localDateStr(new Date());
   openClassRosterFromCal(classId,today);
 }
 function closeAttendance(){ closeClassRoster(); }
@@ -3432,7 +3432,7 @@ function closeAttendance(){ closeClassRoster(); }
     var dismissed=sessionStorage.getItem('nmao_membership_banner_dismissed');
     if(dismissed) return;
     var now=new Date(); var in30=new Date(); in30.setDate(now.getDate()+30);
-    var nowStr=now.toISOString().split('T')[0]; var in30Str=in30.toISOString().split('T')[0];
+    var nowStr=localDateStr(now); var in30Str=localDateStr(in30);
     var expiring=allStudents.filter(function(s){
       if(s.status!=='active'||!s.membership_end_date) return false;
       return s.membership_end_date>=nowStr&&s.membership_end_date<=in30Str;
@@ -3479,7 +3479,7 @@ function buildHomeStats(){
   var paused=allStudents.filter(function(s){return s.status==='paused';}).length;
   var expiringSoon=allStudents.filter(function(s){if(!s.membership_end_date)return false;var d=new Date(s.membership_end_date);var diff=(d-new Date())/(1000*60*60*24);return diff>=0&&diff<=30;}).length;
   var newLeads=allLeads.filter(function(l){return l.status==='new';}).length;
-  var upcomingTests=allBeltTests.filter(function(t){return t.test_date>=new Date().toISOString().split('T')[0];}).length;
+  var upcomingTests=allBeltTests.filter(function(t){return t.test_date>=localDateStr(new Date());}).length;
   var html='<div class="home-stat-card" onclick="navigate(\'members\',null)"><div class="home-stat-num">'+allStudents.length+'</div><div class="home-stat-label">Total Members</div><div class="home-stat-sub">'+active+' active, '+trial+' trial'+(paused?' · '+paused+' paused':'')+'</div></div>';
   html+='<div class="home-stat-card" onclick="navigate(\'members\',null)"><div class="home-stat-num">'+active+'</div><div class="home-stat-label">Active Members</div></div>';
   html+='<div class="home-stat-card" onclick="navigate(\'leads\',null)"><div class="home-stat-num">'+allLeads.length+'</div><div class="home-stat-label">Total Leads</div><div class="home-stat-sub">'+newLeads+' new</div></div>';
@@ -3514,9 +3514,9 @@ function buildBirthdays(){
 // Revenue
 async function loadRevenue(){
   try{
-    var now=new Date(); var todayStr=now.toISOString().split('T')[0];
-    var yest=new Date(now); yest.setDate(now.getDate()-1); var yesterdayStr=yest.toISOString().split('T')[0];
-    var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+    var now=new Date(); var todayStr=localDateStr(now);
+    var yest=new Date(now); yest.setDate(now.getDate()-1); var yesterdayStr=localDateStr(yest);
+    var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
     var rt=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',todayStr+'T00:00:00').eq('status','paid');
     var ry=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',yesterdayStr+'T00:00:00').lt('created_at',todayStr+'T00:00:00').eq('status','paid');
     var rm=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',monthStart+'T00:00:00').eq('status','paid');
@@ -3534,9 +3534,9 @@ async function openRevenueBreakdown(period){
   document.getElementById('revBreakdownPeriodLabel').textContent=titles[period];
   document.getElementById('revenueBreakdownModal').classList.add('active');
   var start,end;
-  if(period==='today'){start=now.toISOString().split('T')[0]+'T00:00:00';end=now.toISOString().split('T')[0]+'T23:59:59';}
-  else if(period==='yesterday'){var y=new Date(now);y.setDate(now.getDate()-1);start=y.toISOString().split('T')[0]+'T00:00:00';end=y.toISOString().split('T')[0]+'T23:59:59';}
-  else{start=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0]+'T00:00:00';end=now.toISOString().split('T')[0]+'T23:59:59';}
+  if(period==='today'){start=localDateStr(now)+'T00:00:00';end=localDateStr(now)+'T23:59:59';}
+  else if(period==='yesterday'){var y=new Date(now);y.setDate(now.getDate()-1);start=localDateStr(y)+'T00:00:00';end=localDateStr(y)+'T23:59:59';}
+  else{start=localDateStr(new Date(now.getFullYear(),now.getMonth(),1))+'T00:00:00';end=localDateStr(now)+'T23:59:59';}
   var r=await sb.from('payments').select('*,students(first_name,last_name)').eq('school_id',SID).gte('created_at',start).lte('created_at',end).eq('status','paid').order('created_at',{ascending:false});
   var data=r.data||[];
   var total=data.reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
@@ -3755,7 +3755,7 @@ async function openBookSession(sid){
   document.getElementById('sessionStudentId').value='';
   document.getElementById('sessionSelectedStudent').style.display='none';
   document.getElementById('sessionStudentResults').style.display='none';
-  document.getElementById('sessionDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('sessionDate').value=localDateStr(new Date());
   document.getElementById('sessionStartTime').value='';
   document.getElementById('sessionDuration').value='60';
   document.getElementById('sessionStatus').value='scheduled';
@@ -4016,7 +4016,7 @@ async function savePackToStudent(){
   setMsg('addPackMsg','Adding...','');
   var pack=allSessionPacks.find(function(p){return p.id===packId;});
   var expiry=document.getElementById('addPackExpiry').value||null;
-  if(!expiry&&pack&&pack.expiry_days){var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);expiry=exp.toISOString().split('T')[0];}
+  if(!expiry&&pack&&pack.expiry_days){var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);expiry=localDateStr(exp);}
   var r=await sb.from('student_session_packs').insert({school_id:SID,student_id:currentProfileStudent.id,session_pack_id:packId,sessions_remaining:qty,sessions_original:qty,expires_at:expiry?expiry+'T00:00:00':null,notes:document.getElementById('addPackNote').value.trim()||null,status:'active'});
   if(r.error){setMsg('addPackMsg',r.error.message,'error');}else{setMsg('addPackMsg','Pack added!','success');await loadProfilePacks(currentProfileStudent.id);setTimeout(closeAddPackToStudent,800);}
 }
@@ -4100,7 +4100,7 @@ function renderMembersTableFiltered(list) {
 
 // Add / Edit Student
 function openAddStudent() {
-  var today = new Date().toISOString().split('T')[0];
+  var today = localDateStr(new Date());
   document.getElementById('addStudentTitle').textContent = 'Add New Student';
   document.getElementById('stuEditId').value    = '';
   document.getElementById('stuFirst').value     = '';
@@ -4164,7 +4164,7 @@ async function saveStudent() {
     membership_id:mid,
     plan_type:'membership',
     status:document.getElementById('stuStatus').value,
-    start_date:document.getElementById('stuStartDate').value||new Date().toISOString().split('T')[0],
+    start_date:document.getElementById('stuStartDate').value||localDateStr(new Date()),
     notes:document.getElementById('stuNotes').value.trim()||null
   };
 
@@ -4240,7 +4240,7 @@ async function openStudentProfile(sid) {
   await loadProfilePaymentHistory(sid);
   await loadStudentSessions(sid);
   await loadProfilePacks(sid);
-  document.getElementById('manualPayDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('manualPayDate').value = localDateStr(new Date());
 }
 function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
 
@@ -4344,7 +4344,7 @@ async function saveChangeMembership() {
   var mid=val; var pid=null; if(val.includes('|')){var parts=val.split('|');mid=parts[0];pid=parts[1];}
   var title=document.getElementById('profileMembershipChangeTitle').textContent;
   if(title==='Comp Plan'){
-    var r=await sb.from('student_memberships').insert({school_id:SID,student_id:currentProfileStudent.id,membership_id:mid,program_id:pid,status:'active',start_date:new Date().toISOString().split('T')[0]});
+    var r=await sb.from('student_memberships').insert({school_id:SID,student_id:currentProfileStudent.id,membership_id:mid,program_id:pid,status:'active',start_date:localDateStr(new Date())});
     if(r.error){setMsg('changeMembershipMsg',r.error.message,'error');}else{setMsg('changeMembershipMsg','Added!','success');await loadProfileMemberships(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMembershipChangeBox').style.display='none';},800);}
   }else{
     var r2=await sb.from('students').update({membership_id:mid,program_id:pid||currentProfileStudent.program_id}).eq('id',currentProfileStudent.id);
@@ -4410,7 +4410,7 @@ async function openPromoteModal() {
   document.getElementById('promoteFromName').textContent=from.name;
   document.getElementById('promoteToSwatch').style.background=to.color_hex;
   document.getElementById('promoteToName').textContent=to.name;
-  document.getElementById('promotionDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('promotionDate').value=localDateStr(new Date());
   document.getElementById('promotionFee').value=to.promotion_fee||0;
   document.getElementById('promotionFeePaid').checked=false;
   document.getElementById('promotionNotes').value='';
@@ -4564,7 +4564,7 @@ function toggleManualPaymentForm(){
     onManualPayTypeChange();
     document.getElementById('stripeChargeForm').style.display = 'none';
     if (!document.getElementById('manualPayDate').value) {
-      document.getElementById('manualPayDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('manualPayDate').value = localDateStr(new Date());
     }
   }
 }
@@ -4609,7 +4609,7 @@ async function populateManualMembershipDropdown() {
   var type = document.getElementById('manualPayType').value;
   var method = document.getElementById('manualPayMethod').value;
   var note = document.getElementById('manualPayNote').value.trim();
-  var dateStr = document.getElementById('manualPayDate').value || new Date().toISOString().split('T')[0];
+  var dateStr = document.getElementById('manualPayDate').value || localDateStr(new Date());
 
   if (amt <= 0) { setMsg('manualPayMsg', 'Amount must be greater than zero.', 'error'); return; }
 
@@ -4814,7 +4814,7 @@ async function runImport(){
     if(!first||!last){errors.push({row:i+1,msg:'Missing name',status:'skip'});skipped++;continue;}
     var email=getMappedField('email')?row[getMappedField('email')]:'';
     if(email&&allStudents.some(function(s){return s.email===email;})){errors.push({row:i+1,msg:first+' '+last+' - duplicate email',status:'skip'});skipped++;continue;}
-    var payload={school_id:SID,first_name:first,last_name:last,email:email||null,phone:getMappedField('phone')?row[getMappedField('phone')]:null,date_of_birth:getMappedField('date_of_birth')?row[getMappedField('date_of_birth')]||null:null,status:getMappedField('status')?row[getMappedField('status')]||'active':'active',program_id:defaultProgId,membership_id:defaultMemId,plan_type:'membership',start_date:new Date().toISOString().split('T')[0]};
+    var payload={school_id:SID,first_name:first,last_name:last,email:email||null,phone:getMappedField('phone')?row[getMappedField('phone')]:null,date_of_birth:getMappedField('date_of_birth')?row[getMappedField('date_of_birth')]||null:null,status:getMappedField('status')?row[getMappedField('status')]||'active':'active',program_id:defaultProgId,membership_id:defaultMemId,plan_type:'membership',start_date:localDateStr(new Date())};
     var r=await sb.from('students').insert(payload);
     if(r.error){errors.push({row:i+1,msg:first+' '+last+' - '+r.error.message,status:'warn'});}
     else{errors.push({row:i+1,msg:first+' '+last+' - imported',status:'ok'});imported++;}
@@ -5072,7 +5072,7 @@ function convertLeadToStudent(){
   document.getElementById('stuEmail').value=l.email||'';
   document.getElementById('stuPhone').value=l.phone||'';
   document.getElementById('stuNotes').value=l.notes||'';
-  document.getElementById('stuStartDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('stuStartDate').value=localDateStr(new Date());
   document.getElementById('stuStatus').value='active';
   document.getElementById('studentMsg').textContent='';
   populateStudentProgramDropdown();
@@ -5430,7 +5430,7 @@ async function renderInstrSessions(instr){
 async function calcInstructorPayroll(instr){
   var el=document.getElementById('instrPayrollThisMonth'); if(!el) return;
   try{
-    var now=new Date(); var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+    var now=new Date(); var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
     var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
     var rate=parseFloat(instr.payroll_rate||0); var type=instr.payroll_type||'per_class';
     var total=0;
@@ -5786,7 +5786,7 @@ async function loadBeltTests(){
   try{var r=await sb.from('belt_tests').select('*').eq('school_id',SID).order('test_date');allBeltTests=r.data||[];renderBeltTests();}catch(e){allBeltTests=[];}
 }
 function renderBeltTests(){
-  var now=new Date().toISOString().split('T')[0];
+  var now=localDateStr(new Date());
   var upcoming=allBeltTests.filter(function(t){return t.test_date>=now;});
   var past=allBeltTests.filter(function(t){return t.test_date<now;});
   var upEl=document.getElementById('beltTestsUpcomingList'); var pastEl=document.getElementById('beltTestsPastList');
@@ -6314,7 +6314,7 @@ async function checkoutPOS_cash(){
       if(pack.expiry_days){
         var exp = new Date();
         exp.setDate(exp.getDate() + pack.expiry_days);
-        expiry = exp.toISOString().split('T')[0];
+        expiry = localDateStr(exp);
       }
       for(var q=0; q<item.qty; q++){
         await sb.from('student_session_packs').insert({
@@ -7076,8 +7076,8 @@ async function loadRevenueChart(){
     for(var i=5;i>=0;i--){
       var d=new Date(now.getFullYear(),now.getMonth()-i,1);
       labels.push(MONTHS[d.getMonth()].slice(0,3));
-      var start=new Date(d.getFullYear(),d.getMonth(),1).toISOString().split('T')[0];
-      var end=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0];
+      var start=localDateStr(new Date(d.getFullYear(),d.getMonth(),1));
+      var end=localDateStr(new Date(d.getFullYear(),d.getMonth()+1,0));
       var r=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',start+'T00:00:00').lte('created_at',end+'T23:59:59').eq('status','paid');
       var sum=(r.data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
       values.push(sum); total+=sum;
@@ -7110,7 +7110,7 @@ async function buildInstructorComparison(){
   var el=document.getElementById('instrCompareList'); if(!el) return;
   if(!allInstructors.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No instructors yet.</div>';return;}
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div>';
-  var now=new Date(); var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  var now=new Date(); var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
   var rows=[];
   for(var i=0;i<allInstructors.length;i++){
     var instr=allInstructors[i]; var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
@@ -7253,7 +7253,7 @@ var REPORT_DEFS = [
     table:'students', join:'memberships(name),programs(name)', dateField:'created_at',
     customQuery:async function(sb,SID){
       var now=new Date(); var in30=new Date(); in30.setDate(now.getDate()+30);
-      var r=await sb.from('students').select('*,memberships(name),programs(name)').eq('school_id',SID).eq('status','active').gte('membership_end_date',now.toISOString().split('T')[0]).lte('membership_end_date',in30.toISOString().split('T')[0]).order('membership_end_date');
+      var r=await sb.from('students').select('*,memberships(name),programs(name)').eq('school_id',SID).eq('status','active').gte('membership_end_date',localDateStr(now)).lte('membership_end_date',localDateStr(in30)).order('membership_end_date');
       return r;
     },
     actionable:true,
@@ -7346,7 +7346,7 @@ var REPORT_DEFS = [
       return r;
     },
     customFilter:async function(data){
-      var now=new Date(); var monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+      var now=new Date(); var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
       var results=[];
       for(var i=0;i<data.length;i++){
         var c=data[i];
@@ -7853,7 +7853,7 @@ function exportReportCSV(){
   var csv=cols.map(function(c){return c.label;}).join(',')+'\n';
   csv+=reportData.map(function(row){return cols.map(function(col){var v=col.compute?col.compute(row):(row[col.key]||'');return '"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
   var blob=new Blob([csv],{type:'text/csv'}); var url=URL.createObjectURL(blob);
-  var a=document.createElement('a'); a.href=url; a.download=def.key+'_report_'+new Date().toISOString().split('T')[0]+'.csv'; a.click(); URL.revokeObjectURL(url);
+  var a=document.createElement('a'); a.href=url; a.download=def.key+'_report_'+localDateStr(new Date())+'.csv'; a.click(); URL.revokeObjectURL(url);
 }
 function exportReportPDF(){ window.print(); }
 
@@ -8298,7 +8298,7 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
   };
 
   window.renderEvents = function(){
-    var todayStr = new Date().toISOString().split("T")[0];
+    var todayStr = localDateStr(new Date());
     var upcoming = []; var past = [];
     window.allEvents.forEach(function(ev){
       var sessions = window.allEventSessions[ev.id] || [];
@@ -9121,7 +9121,7 @@ window.closeWelcomeModal = async function() {
     for (var i = 0; i < 7; i++) {
       var d = new Date(start);
       d.setDate(start.getDate() + i);
-      var dStr = d.toISOString().split("T")[0];
+      var dStr = localDateStr(d);
       var cell = document.getElementById("calDay" + i);
       if (!cell) continue;
       cell.querySelectorAll("[data-event-pill=\"1\"]").forEach(function(p){ p.remove(); });
@@ -9157,7 +9157,7 @@ window.closeWelcomeModal = async function() {
       var info = cells[idx];
       if (info.month !== "current") continue;
       var cellDate = new Date(target.getFullYear(), target.getMonth(), info.day);
-      var cellStr = cellDate.toISOString().split("T")[0];
+      var cellStr = localDateStr(cellDate);
       var dot = window.getEventMonthDot(cellStr);
       if (!dot) continue;
       var dotsContainer = cell.querySelector(".month-day-dots");
