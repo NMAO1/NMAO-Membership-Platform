@@ -8033,7 +8033,9 @@ function truncate(str,n){ return str&&str.length>n?str.slice(0,n)+'...':str||'';
 // ─────────────────────────────── BOOT ───────────────────────────────
 
 // §INIT — attach Flatpickr once init finishes and the DOM is populated
-init().then(window.attachFlatpickrGlobally);
+init().then(function(){
+  if(window.attachFlatpickrGlobally) window.attachFlatpickrGlobally();
+});
 setTimeout(initCalView, 200);
 
 </script>
