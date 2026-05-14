@@ -1808,7 +1808,7 @@ async function buildPacks(s){
               '<div class="pack-buy-meta">'+pk.quantity+' sessions &bull; '+expNote+'</div>'+
             '</div>'+
             '<div class="pack-buy-price">$'+parseFloat(pk.price||0).toFixed(2)+'</div>'+
-            '<button class="btn-buy-pack" id="pkbtn-'+pk.id+'" onclick="showPackConfirm(\''+pk.id+'\',\''+pk.name.replace(/'/g,"\\'")+'\',$'+parseFloat(pk.price||0).toFixed(2)+')">Purchase</button>'+
+            '<button class="btn-buy-pack" id="pkbtn-'+pk.id+'" onclick="showPackConfirm(\''+pk.id+'\',\''+pk.name.replace(/'/g,"\\'")+'\','+parseFloat(pk.price||0).toFixed(2)+')">Purchase</button>'+
           '</div>'+
           '<div class="pack-confirm-row" id="pkconfirm-'+pk.id+'">'+
             '<div class="pack-confirm-text"><i class="fa-solid fa-circle-info" style="margin-right:0.35rem;color:var(--gold)"></i>Confirm purchase of <strong>'+pk.name+'</strong> for <strong>$'+parseFloat(pk.price||0).toFixed(2)+'</strong>?</div>'+
