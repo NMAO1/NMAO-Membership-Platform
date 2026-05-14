@@ -96,11 +96,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
    NOTE: portal-tabs now scrolls horizontally
    to support 8 tabs without cramping.
 ══════════════════════════════════════════ */
-.portal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.portal-tabs{display:flex;align-items:stretch;border-bottom:1px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .portal-tabs::-webkit-scrollbar{display:none;}
-.portal-tab{flex-shrink:0;padding:0.9rem 0.75rem;text-align:center;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap;}
+.portal-tab{flex-shrink:0;display:flex;align-items:center;justify-content:center;height:48px;padding:0 0.75rem;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;white-space:nowrap;line-height:1;}
 .portal-tab.active{color:var(--gold);border-color:var(--gold);}
-.portal-tab i{margin-right:0.4rem;}
+.portal-tab i{margin-right:0.4rem;line-height:1;font-size:0.78rem;}
 .profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
 .hero-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;}
 .hero-avatar:hover .avatar-overlay{opacity:1;}
