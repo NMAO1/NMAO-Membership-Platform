@@ -234,6 +234,25 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-get-started{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;margin-top:1.25rem;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
 .btn-get-started:hover{opacity:0.9;}
 
+/* §CSS-ONBOARD-FIX — narrow-viewport layout for onboarding cards */
+.onboard-step {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.onboard-step-label {
+  min-width: 0;
+  flex: 1 1 60%;
+}
+.onboard-step-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .onboard-step-btn {
+    flex: 1 1 100%;
+    margin-top: 0.5rem;
+  }
+}
 /* ══════════════════════════════════════════
    §CSS: FAMILY_PORTAL
 ══════════════════════════════════════════ */
