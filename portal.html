@@ -1126,6 +1126,7 @@ function showStudentPortal(student){
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
   buildPortal(student);
+  handlePackReturnParams();
 }
 
 async function buildPortal(s){
@@ -1848,45 +1849,43 @@ function hidePackConfirm(packId){
 }
 
 async function executePurchasePack(packId){
-  if(!currentStudent)return;
+  if(!currentStudent) return;
   var confirmRow=document.getElementById('pkconfirm-'+packId);
-  if(confirmRow){confirmRow.innerHTML='<div style="font-size:0.82rem;color:var(--muted)"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...</div>';}
+  if(confirmRow){
+    confirmRow.innerHTML='<div style="font-size:0.82rem;color:var(--muted)"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Creating checkout...</div>';
+  }
 
   try{
-    var pkR=await sb.from('session_packs').select('*').eq('id',packId).single();
-    if(pkR.error||!pkR.data){throw new Error('Pack not found');}
+    var pkR=await sb.from('session_packs').select('id, name, price').eq('id',packId).single();
+    if(pkR.error||!pkR.data) throw new Error('Pack not found');
     var pack=pkR.data;
+    if(!pack.price||pack.price<=0) throw new Error('This pack has no price set');
 
-    // Calculate expiry
-    var expiresAt=null;
-    if(pack.expiry_days){
-      var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);
-      expiresAt=exp.toISOString();
-    }
+    var baseUrl=window.location.origin+window.location.pathname;
+    var successUrl=baseUrl+'?pack_success=1';
+    var cancelUrl=baseUrl+'?pack_cancel=1';
 
-    // Insert payment record
-    await sb.from('payments').insert({
-      school_id:SID,
-      student_id:currentStudent.id,
-      amount:pack.price,
-      type:'session_pack',
-      status:'paid',
-      description:'Session Pack: '+pack.name
-    });
-
-    // Credit student pack balance
-      await sb.from('student_session_packs').insert({
+    var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({
         school_id:SID,
         student_id:currentStudent.id,
-        session_pack_id:packId,
-        sessions_remaining:pack.quantity,
-        sessions_original:pack.quantity,
-        expires_at:expiresAt,
-        status:'active'
-      });
+        line_items:[{
+          name:pack.name,
+          unit_amount:Math.round(pack.price*100),
+          quantity:1,
+          product_id:pack.id,
+          item_type:'session_pack'
+        }],
+        success_url:successUrl,
+        cancel_url:cancelUrl
+      })
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.url) throw new Error(data.error||'Failed to create checkout');
 
-    // Reload packs to reflect new balance
-    await buildPacks(currentStudent);
+    window.location.href=data.url;
   }catch(e){
     if(confirmRow){
       confirmRow.innerHTML='<div style="color:#E07070;font-size:0.82rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Purchase failed: '+e.message+'</div>';
@@ -2331,6 +2330,44 @@ function fmtTime(t){
 }
 
 async function portalSignOut(){await sb.auth.signOut();window.location.reload();}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: STRIPE_RETURN
+//  Handles ?pack_success=1 / ?pack_cancel=1 after Stripe redirect
+// ─────────────────────────────────────────────────────────────
+function handlePackReturnParams(){
+  var params=new URLSearchParams(window.location.search);
+  var success=params.get('pack_success');
+  var cancel=params.get('pack_cancel');
+  if(!success && !cancel) return;
+  // Strip the params so refreshes don't re-trigger
+  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
+  window.history.replaceState({}, '', cleanUrl);
+  // Switch to Packs tab so the user sees the new balance (or the offer they cancelled from)
+  if(typeof switchPortalTab==='function') switchPortalTab('packs');
+  if(success){
+    // Webhook may need a couple seconds to credit the pack — refresh after a beat
+    setTimeout(function(){
+      if(currentStudent) buildPacks(currentStudent);
+    }, 1500);
+    showPortalToast('Purchase complete! Your sessions have been added.', 'success');
+  } else if(cancel){
+    showPortalToast('Purchase cancelled. No charge was made.', 'info');
+  }
+}
+
+function showPortalToast(msg, kind){
+  var existing=document.getElementById('portalToast');
+  if(existing) existing.remove();
+  var bg=kind==='success'?'#5A9A6A':kind==='error'?'#E07070':'var(--gold)';
+  var color=kind==='success'||kind==='error'?'#fff':'var(--black)';
+  var t=document.createElement('div');
+  t.id='portalToast';
+  t.style.cssText='position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:'+bg+';color:'+color+';padding:0.85rem 1.2rem;border-radius:8px;font-family:var(--font-ui);font-size:0.92rem;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,0.4);max-width:90vw;text-align:center';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.remove(); }, 4500);
+}
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: BOOT
