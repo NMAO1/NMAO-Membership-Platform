@@ -701,11 +701,16 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
           <div class="belt-card" id="familyChildBelt"></div>
         </div>
+          <div id="familyCurriculumSection" style="display:none;margin-top:1rem">
+  <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white);margin-bottom:0.6rem"><i class="fa-solid fa-graduation-cap" style="color:var(--gold);margin-right:0.4rem"></i>Curriculum</div>
+  <div id="familyCurriculumList"></div>
+</div>
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
           <div class="info-card" id="familyChildMembership"></div>
         </div>
       </div>
+    
 
       <div id="familyTabSchedule" style="display:none">
         <div class="portal-section">
@@ -1126,21 +1131,15 @@ async function buildPortal(s){
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
 if(bsid){
-      // Force JWT refresh before queries — RLS denies belt_level_videos
-      // during portal-load context unless auth is fully re-bound.
-      await sb.auth.refreshSession();
-      // Two-step: fetch levels and their videos separately, then merge.
-      // The embed mechanism silently returns empty arrays in this code path
-      // even though direct queries to both tables succeed.
+      if(bsid){
+      // Two-step fetch: belt_levels with their videos joined manually.
+      // (Avoids PostgREST embed quirks; explicit and predictable.)
       var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required').eq('belt_system_id',bsid).order('sort_order');
       levels=br.data||[];
       if(levels.length){
         var levelIds=levels.map(function(l){return l.id;});
-        console.log('===LEVEL IDS===', levelIds);
-        var __noFilter=await sb.from('belt_level_videos').select('*').limit(20); console.log('===VIDEOS NO FILTER===', (__noFilter.data||[]).length, 'rows | error:', __noFilter.error, '| sample:', __noFilter.data&&__noFilter.data[0]);
         var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
         var allVids=vr.data||[];
-        console.log('===TWO-STEP=== levels:',levels.length,'videos fetched:',allVids.length);
         levels.forEach(function(l){
           l.belt_level_videos=allVids.filter(function(v){return v.belt_level_id===l.id;});
         });
@@ -1536,8 +1535,6 @@ function playCurriculumVideo(div){
 //  §JS: BELT_SECTION
 // ─────────────────────────────────────────────────────────────
 async function buildBeltSection(s,levels){
-  console.log('===BS=== levels:', levels.map(function(l){return l.name+':'+((l.belt_level_videos||[]).length);}));
-  console.log('===BS=== current_belt_id:', s.current_belt_id);
   document.getElementById('beltSection').style.display='block';
   var cb=null;for(var i=0;i<levels.length;i++){if(levels[i].id===s.current_belt_id){cb=levels[i];break;}}
   var ci=cb?levels.indexOf(cb):-1;var nb=levels[ci+1]||null;
@@ -1999,10 +1996,20 @@ async function loadFamilyChildView(child){
     nm?'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"><i class="fa-solid fa-flag" style="margin-right:0.3rem"></i>'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.75rem;color:var(--gold);margin-top:0.25rem"><i class="fa-solid fa-trophy" style="margin-right:0.3rem"></i>All milestones reached!</div>'
   ].join('');
 
-  document.getElementById('familyBeltSection').style.display='none';
+ document.getElementById('familyBeltSection').style.display='none';
+  var familyCurr=document.getElementById('familyCurriculumSection');
+  if(familyCurr) familyCurr.style.display='none';
   if(prog&&prog.belt_system==='Belt Progression'&&prog.belt_system_id){
-    var br=await sb.from('belt_levels').select('*').eq('belt_system_id',prog.belt_system_id).order('sort_order');
+    var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required').eq('belt_system_id',prog.belt_system_id).order('sort_order');
     var levels=br.data||[];
+    if(levels.length){
+      var levelIds=levels.map(function(l){return l.id;});
+      var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
+      var allVids=vr.data||[];
+      levels.forEach(function(l){
+        l.belt_level_videos=allVids.filter(function(v){return v.belt_level_id===l.id;});
+      });
+    }
     if(levels.length){
       var cb=levels.find(function(l){return l.id===child.current_belt_id;})||null;
       var ci=cb?levels.indexOf(cb):-1;var nb=levels[ci+1]||null;
@@ -2018,7 +2025,11 @@ async function loadFamilyChildView(child){
       bHtml+='<div style="display:flex;flex-wrap:wrap;gap:0.35rem">';
       levels.forEach(function(b){var isc=cb&&b.id===cb.id;bHtml+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,4)+'</div></div>';});
       bHtml+='</div>';
-      document.getElementById('familyChildBelt').innerHTML=bHtml;
+     document.getElementById('familyChildBelt').innerHTML=bHtml;
+      if(cb && familyCurr){
+        familyCurr.style.display='block';
+        renderCurriculumAccordion(levels, cb.id, 'familyCurriculumList');
+      }
     }
   }
 
