@@ -2041,7 +2041,9 @@
   <div class="modal" style="width:580px;max-width:95vw">
     <div class="modal-header"><span class="modal-title" id="addProductTitle">Add Product</span><button class="modal-close" onclick="safeClose('addProductModal',closeAddProduct)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <input type="hidden" id="productEditId" value="" />
+<input type="hidden" id="productEditId" value="" />
+      <input type="file" id="productImageInput" accept="image/*" style="display:none" onchange="handleProductPhotoUpload(event)" />
+      <div class="field"><label>Product Photo</label><div style="display:flex;gap:1rem;align-items:center"><div id="productImagePreview" onclick="document.getElementById('productImageInput').click()" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-box"></i></div><button type="button" class="panel-action" onclick="document.getElementById('productImageInput').click()"><i class="fa-solid fa-upload"></i> Upload Photo</button></div></div>
       <div class="field"><label>Product Name</label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
       <div class="form-row">
         <div class="field"><label>Category</label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div>
