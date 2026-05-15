@@ -6276,13 +6276,18 @@ function posCartHasPack(){
 }
 
 function posCartLineItems(){
-  // Format for Stripe EFs — unit_amount in cents
+  // Format for Stripe EFs - unit_amount in cents.
+  // item_type drives downstream handling on payment success:
+  //   'product'      -> inventory decrement (create-pos-charge inline, or stripe-webhook for hosted checkout)
+  //   'session_pack' -> pack credit into student_session_packs (same two paths)
+  // product_id is the entity id: products.id for retail items, session_packs.id for pack templates.
   return posCart.map(function(c){
     return {
       name: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
       unit_amount: Math.round(c.price * 100),
       quantity: c.qty,
-      product_id: c.type === 'product' ? c.id : null,
+      product_id: c.id,
+      item_type: c.type === 'pack' ? 'session_pack' : 'product',
     };
   });
 }
@@ -6297,14 +6302,14 @@ function updatePOSCheckoutButtons(){
   var cashBtn = document.getElementById('posBtnCash');
   if(!cardBtn || !linkBtn || !cashBtn) return;
 
-  // Card on File: requires items + student + no packs
-  var cardOK = hasItems && hasStudent && !hasPack;
+  // Card on File: requires items + student. Packs now flow via create-pos-charge pack-credit block.
+  var cardOK = hasItems && hasStudent;
   cardBtn.disabled = !cardOK;
   cardBtn.style.opacity = cardOK ? '1' : '0.5';
   cardBtn.style.cursor = cardOK ? 'pointer' : 'not-allowed';
 
-  // Payment Link: requires items + no packs
-  var linkOK = hasItems && !hasPack;
+  // Payment Link: requires items. If any pack is in cart, student also required (webhook pack credit needs payment.student_id).
+  var linkOK = hasItems && (!hasPack || hasStudent);
   linkBtn.disabled = !linkOK;
   linkBtn.style.opacity = linkOK ? '1' : '0.5';
   linkBtn.style.cursor = linkOK ? 'pointer' : 'not-allowed';
@@ -6367,7 +6372,6 @@ async function checkoutPOS_cash(){
 async function checkoutPOS_cardOnFile(){
   if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
   if(!posSelectedStudentId){setMsg('posMsg','Select a student first.','error');return;}
-  if(posCartHasPack()){setMsg('posMsg','Session packs require cash payment.','error');return;}
 
   setMsg('posMsg','Charging card on file...','');
   try{
@@ -6406,7 +6410,7 @@ async function checkoutPOS_cardOnFile(){
 // Payment Link path — generates Stripe Checkout URL, displays QR + share options
 async function checkoutPOS_paymentLink(){
   if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
-  if(posCartHasPack()){setMsg('posMsg','Session packs require cash payment.','error');return;}
+  if(posCartHasPack() && !posSelectedStudentId){setMsg('posMsg','Select a student first - session packs need an owner.','error');return;}
 
   setMsg('posMsg','Generating payment link...','');
   try{
