@@ -6205,7 +6205,8 @@ function renderProducts(){
     if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
     var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';
     var badgeTag=p.badge_style&&p.badge_text?'<div class="product-badge-tag badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';
-    return '<div class="product-card" onclick="openEditProduct(\''+p.id+'\')" style="position:relative">'+badgeTag+imgHtml+'<div class="product-body"><div class="product-name">'+p.name+'</div><div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem">'+p.category+(p.subcategory?' / '+p.subcategory:'')+'</div><div class="product-price">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div><div class="product-badges">'+badges+'</div></div></div>';
+    var delBtn='<button onclick="event.stopPropagation();deleteProduct(\''+p.id+'\')" style="position:absolute;top:0.4rem;left:0.4rem;width:28px;height:28px;background:rgba(0,0,0,0.7);border:1px solid rgba(224,112,112,0.5);color:#E07070;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2" title="Delete product"><i class="fa-solid fa-trash" style="font-size:0.72rem"></i></button>';
+    return '<div class="product-card" onclick="openEditProduct(\''+p.id+'\')" style="position:relative">'+delBtn+badgeTag+imgHtml+'
   }).join('');
 }
 function filterProducts(){ renderProducts(); }
@@ -6221,6 +6222,16 @@ async function saveProduct(){
   var payload={name:name,category:document.getElementById('productCategory').value,subcategory:document.getElementById('productSubcategory').value.trim()||null,retail_price:parseFloat(document.getElementById('productRetailPrice').value)||0,wholesale_price:parseFloat(document.getElementById('productWholesalePrice').value)||0,description:getQuillContent('productDescEditor'),track_inventory:document.getElementById('productTrackInventory').checked,inventory_qty:parseInt(document.getElementById('productInventoryQty').value)||0,reorder_qty:parseInt(document.getElementById('productReorderQty').value)||0,featured:document.getElementById('productFeatured').checked,quick_list:document.getElementById('productQuickList').checked,member_app:document.getElementById('productMemberApp').checked,badge_style:selectedBadgeStyle||null,badge_text:document.getElementById('productBadgeText').value.trim().toUpperCase()||null,image_url:window._pendingProductImageUrl||null,active:true};
   var r; if(eid){r=await sb.from('products').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('products').insert(payload);}
   if(r.error){setMsg('productMsg',r.error.message,'error');}else{setMsg('productMsg',name+(eid?' updated!':' added!'),'success');await loadProducts();setTimeout(closeAddProduct,1000);}
+}
+
+// §PRODUCT-DELETE — Soft delete a product (hides from catalog, preserves payment history)
+async function deleteProduct(pid){
+  var p=allProducts.find(function(x){return x.id===pid;});
+  var nm=p?p.name:'this product';
+  if(!confirm('Delete '+nm+'? It will be hidden from the catalog. Past sales records stay intact.')) return;
+  var r=await sb.from('products').update({active:false}).eq('id',pid);
+  if(r.error){alert('Error: '+r.error.message);return;}
+  await loadProducts();
 }
 
 // POS
