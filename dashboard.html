@@ -6350,13 +6350,15 @@ async function checkoutPOS_cash(){
         exp.setDate(exp.getDate() + pack.expiry_days);
         expiry = localDateStr(exp);
       }
-      for(var q=0; q<item.qty; q++){
+     for(var q=0; q<item.qty; q++){
         await sb.from('student_session_packs').insert({
           school_id: SID,
           student_id: posSelectedStudentId,
           session_pack_id: pack.id,
+          session_type_id: pack.session_type_id || null,
+          name: pack.name,
           sessions_remaining: pack.quantity,
-          sessions_original: pack.quantity,
+          sessions_total: pack.quantity,
           expires_at: expiry ? expiry + 'T00:00:00' : null,
           status: 'active',
         });
