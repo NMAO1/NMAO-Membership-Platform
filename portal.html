@@ -1849,7 +1849,7 @@ async function buildPacks(s){
       balEl.innerHTML=balances.map(function(b){
         var pk=b.session_packs||{};
         var expStr=b.expires_at?new Date(b.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No expiry';
-        var orig=b.sessions_original||pk.quantity||'?';
+var orig=b.sessions_total||pk.quantity||'?';
         return '<div class="pack-balance-card">'+
           '<div class="pack-count-big">'+b.sessions_remaining+'</div>'+
           '<div class="pack-balance-info">'+
