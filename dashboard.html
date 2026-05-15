@@ -4019,7 +4019,9 @@ async function savePackToStudent(){
   var pack=allSessionPacks.find(function(p){return p.id===packId;});
   var expiry=document.getElementById('addPackExpiry').value||null;
   if(!expiry&&pack&&pack.expiry_days){var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);expiry=localDateStr(exp);}
-  var r=await sb.from('student_session_packs').insert({school_id:SID,student_id:currentProfileStudent.id,session_pack_id:packId,sessions_remaining:qty,sessions_original:qty,expires_at:expiry?expiry+'T00:00:00':null,notes:document.getElementById('addPackNote').value.trim()||null,status:'active'});
+var pkR=await sb.from('session_packs').select('name,session_type_id').eq('id',packId).single();
+    var pk=pkR.data||{};
+    var r=await sb.from('student_session_packs').insert({school_id:SID,student_id:currentProfileStudent.id,session_pack_id:packId,session_type_id:pk.session_type_id||null,name:pk.name||null,sessions_remaining:qty,sessions_total:qty,expires_at:expiry?expiry+'T00:00:00':null,notes:document.getElementById('addPackNote').value.trim()||null,status:'active'});
   if(r.error){setMsg('addPackMsg',r.error.message,'error');}else{setMsg('addPackMsg','Pack added!','success');await loadProfilePacks(currentProfileStudent.id);setTimeout(closeAddPackToStudent,800);}
 }
 async function loadProfilePacks(sid){
@@ -7338,7 +7340,7 @@ var REPORT_DEFS = [
       {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
       {key:'pack_name',label:'Pack',compute:function(r){return r.session_packs?r.session_packs.name:'--';}},
       {key:'sessions_remaining',label:'Remaining'},
-      {key:'sessions_original',label:'Original'},
+      {key:'sessions_total',label:'Original'},
       {key:'status',label:'Status'},
       {key:'expires_at',label:'Expires',compute:function(r){return r.expires_at?new Date(r.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No expiry';}}
     ],
