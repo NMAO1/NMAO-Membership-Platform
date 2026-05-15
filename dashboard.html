@@ -9558,7 +9558,7 @@ window.closeWelcomeModal = async function() {
         .eq('school_id', SID)
         .eq('status', 'paid')
         .is('fulfilled_at', null)
-        .contains('line_items', [{item_type: 'product'}])
+        .filter('line_items', 'cs', '[{"item_type":"product"}]')
         .order('paid_at', {ascending: false});
       if (r.error) {
         console.error('loadFulfillmentQueue error:', r.error);
