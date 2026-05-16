@@ -458,8 +458,8 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-clear-cart{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.55rem 0.9rem;cursor:pointer;flex-shrink:0;}
 .btn-clear-cart:hover{border-color:#E07070;color:#E07070;}
 
-/* §CSS: SHOP_BADGE_NOTIF — notification dot on Shop tab */
-.shop-badge-notif{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#E07070;color:white;font-size:0.6rem;font-weight:700;border-radius:9px;margin-left:0.35rem;line-height:1;}
+/* §CSS: TAB_BADGE_NOTIF — shared notification dot for Shop and Updates tabs */
+.shop-badge-notif,.tab-badge-notif{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#E07070;color:white;font-size:0.6rem;font-weight:700;border-radius:9px;margin-left:0.35rem;line-height:1;}
 
   </style>
 </head>
@@ -592,7 +592,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       ════════════════════════════════════ -->
       <div class="portal-tabs">
         <div class="portal-tab active" id="ptab-schedule"    onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
-        <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+        <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates<span class="tab-badge-notif" id="updatesBadgeNotif" style="display:none">0</span></div>
         <div class="portal-tab"        id="ptab-profile"     onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
         <div class="portal-tab"        id="ptab-progress"    onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
         <div class="portal-tab"        id="ptab-attendance"  onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
@@ -773,7 +773,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       <div class="family-tabs">
         <div class="family-tab active" id="ftab-overview"  onclick="switchFamilyTab('overview')"><i class="fa-solid fa-user"></i> Overview</div>
         <div class="family-tab"        id="ftab-schedule"  onclick="switchFamilyTab('schedule')"><i class="fa-solid fa-calendar-week"></i> Schedule</div>
-        <div class="family-tab"        id="ftab-updates"   onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates</div>
+        <div class="family-tab"        id="ftab-updates"   onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates<span class="tab-badge-notif" id="familyUpdatesBadgeNotif" style="display:none">0</span></div>
       </div>
 
       <div id="familyTabOverview">
@@ -1204,8 +1204,9 @@ function showStudentPortal(student){
 async function buildPortal(s){
   // Reset lazy-load flags each time portal builds
   sessionsLoaded=false;packsLoaded=false;bookLoaded=false;shopLoaded=false;
-  // Fire badge check (non-blocking, completes after portal loads)
+  // Fire badge checks (non-blocking, complete after portal loads)
   checkShopUpdates();
+  checkUpdatesNotif();
 
   var ini=((s.first_name?s.first_name[0]:'')+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var av=document.getElementById('heroAvatar');
@@ -1551,7 +1552,50 @@ async function buildAnnouncements(){
       var cta=(a.cta_label&&a.cta_url)?'<a href="'+a.cta_url+'" target="_blank" class="announcement-cta"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.4rem"></i>'+a.cta_label+'</a>':'';
       return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+label+'</div><div class="announcement-subject">'+a.subject+'</div>'+images+'<div class="announcement-body">'+a.body.replace(/\n/g,'<br>')+'</div>'+cta+'<div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
     }).join('');
-  }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
+ }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
+}
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: UPDATES_BADGE_NOTIF — count of announcements sent since
+//  the student last viewed the Updates tab.
+//  Mirrors the §JS: SHOP_TAB badge pattern (checkShopUpdates / clearShopBadge).
+//  Key: nmao_updates_last_viewed_<studentId> — ISO timestamp.
+// ─────────────────────────────────────────────────────────────
+async function checkUpdatesNotif(){
+  if(!currentStudent) return;
+  var key='nmao_updates_last_viewed_'+currentStudent.id;
+  var lastViewed=localStorage.getItem(key);
+  if(!lastViewed){
+    // First-ever load — set baseline so badge only reflects future announcements
+    localStorage.setItem(key,new Date().toISOString());
+    return;
+  }
+  try{
+    var r=await sb.from('school_announcements')
+      .select('id',{count:'exact',head:true})
+      .eq('school_id',SID)
+      .eq('status','sent')
+      .gt('sent_at',lastViewed);
+    var count=r.count||0;
+    var badge=document.getElementById('updatesBadgeNotif');
+    if(!badge) return;
+    if(count>0){
+      badge.textContent=count>9?'9+':String(count);
+      badge.style.display='inline-flex';
+    }else{
+      badge.style.display='none';
+    }
+  }catch(e){
+    console.warn('checkUpdatesNotif error:',e);
+  }
+}
+
+function clearUpdatesBadge(){
+  if(!currentStudent) return;
+  var key='nmao_updates_last_viewed_'+currentStudent.id;
+  localStorage.setItem(key,new Date().toISOString());
+  var badge=document.getElementById('updatesBadgeNotif');
+  if(badge) badge.style.display='none';
 }
 
 
@@ -1790,6 +1834,7 @@ function switchPortalTab(tab){
   if(tab==='book'&&!bookLoaded){bookLoaded=true;buildBook();}
   if(tab==='shop'&&!shopLoaded){shopLoaded=true;buildShop();}
   if(tab==='shop'){clearShopBadge();}
+  if(tab==='updates'){clearUpdatesBadge();}
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2374,6 +2419,8 @@ function clearShopBadge(){
 async function showFamilyPortal(family){
   hideAllScreens();
   document.getElementById('familyPortalScreen').style.display='block';
+  // Fire badge check (non-blocking, completes after portal loads)
+  checkFamilyUpdatesNotif();
   var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).order('first_name');
   familyChildren=r.data||[];
   if(!familyChildren.length){
@@ -2672,6 +2719,49 @@ async function buildFamilyAnnouncements(){
   }catch(e){document.getElementById('familyAnnouncementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
 }
 
+// ─────────────────────────────────────────────────────────────
+//  §JS: FAMILY_UPDATES_BADGE_NOTIF — count of announcements sent
+//  since the family last viewed the Updates tab.
+//  Mirrors §JS: UPDATES_BADGE_NOTIF but keys on currentFamily.id.
+//  Key: nmao_family_updates_last_viewed_<familyId> — ISO timestamp.
+// ─────────────────────────────────────────────────────────────
+async function checkFamilyUpdatesNotif(){
+  if(!currentFamily) return;
+  var key='nmao_family_updates_last_viewed_'+currentFamily.id;
+  var lastViewed=localStorage.getItem(key);
+  if(!lastViewed){
+    // First-ever load — set baseline so badge only reflects future announcements
+    localStorage.setItem(key,new Date().toISOString());
+    return;
+  }
+  try{
+    var r=await sb.from('school_announcements')
+      .select('id',{count:'exact',head:true})
+      .eq('school_id',SID)
+      .eq('status','sent')
+      .gt('sent_at',lastViewed);
+    var count=r.count||0;
+    var badge=document.getElementById('familyUpdatesBadgeNotif');
+    if(!badge) return;
+    if(count>0){
+      badge.textContent=count>9?'9+':String(count);
+      badge.style.display='inline-flex';
+    }else{
+      badge.style.display='none';
+    }
+  }catch(e){
+    console.warn('checkFamilyUpdatesNotif error:',e);
+  }
+}
+
+function clearFamilyUpdatesBadge(){
+  if(!currentFamily) return;
+  var key='nmao_family_updates_last_viewed_'+currentFamily.id;
+  localStorage.setItem(key,new Date().toISOString());
+  var badge=document.getElementById('familyUpdatesBadgeNotif');
+  if(badge) badge.style.display='none';
+}
+
 function switchFamilyTab(tab){
   var tabs=['overview','schedule','updates'];
   tabs.forEach(function(t){
@@ -2681,6 +2771,7 @@ function switchFamilyTab(tab){
     if(btn)btn.classList.toggle('active',t===tab);
   });
   if(tab==='schedule')buildFamilySchedule();
+  if(tab==='updates')clearFamilyUpdatesBadge();
 }
 
 // ─────────────────────────────────────────────────────────────
