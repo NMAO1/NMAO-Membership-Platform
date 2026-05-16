@@ -605,10 +605,16 @@ if(currentClass){
   showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and stays open until 90 minutes after class starts.');
   if(callback)callback();return;
 }
-    // §KIOSK: WEEKLY_LIMIT_CHECK
-    // Rolling 7-day limit for per_week memberships
-    if(student.membership_id){
-      var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',student.membership_id).single();
+   // §KIOSK: WEEKLY_LIMIT_CHECK
+    // Rolling 7-day limit for per_week memberships.
+    // Resolves the active membership through the student_memberships junction
+    // rather than the denormalized students.membership_id FK, which is known
+    // to drift. If a student has no row in student_memberships with
+    // status=active, no cap applies here (front desk will see the discrepancy).
+    var smR=await sb.from('student_memberships').select('membership_id').eq('student_id',student.id).eq('status','active').order('created_at',{ascending:false}).limit(1);
+    var activeMembershipId=(smR.data&&smR.data.length)?smR.data[0].membership_id:null;
+    if(activeMembershipId){
+      var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',activeMembershipId).single();
       var mem=memR.data||null;
       if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
         var limit=parseInt(mem.class_limit_count)||0;
