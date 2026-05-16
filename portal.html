@@ -1132,7 +1132,11 @@ async function handleOnboardPhotoUpload(event){
   var ur=await sb.storage.from('student-photos').upload(path,file,{upsert:true});
   if(ur.error){alert('Upload failed: '+ur.error.message);return;}
   var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;
-  await sb.from('students').update({photo_url:pub}).eq('id',currentStudent.id);
+  var upd=await sb.from('students').update({photo_url:pub}).eq('id',currentStudent.id).select();
+  if(upd.error||!upd.data||!upd.data.length){
+    alert('Photo upload succeeded but could not be saved to your profile. Please contact your school.');
+    return;
+  }
   currentStudent.photo_url=pub;
   refreshOnboardingSteps(currentStudent);
 }
@@ -1802,7 +1806,11 @@ async function handlePortalPhotoUpload(event){
   var ur=await sb.storage.from('student-photos').upload(path,file,{upsert:true});
   if(ur.error){alert('Upload failed: '+ur.error.message);return;}
   var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;
-  await sb.from('students').update({photo_url:pub}).eq('id',currentStudent.id);
+  var upd=await sb.from('students').update({photo_url:pub}).eq('id',currentStudent.id).select();
+  if(upd.error||!upd.data||!upd.data.length){
+    showPortalToast('Photo upload succeeded but could not be saved to your profile. Please contact your school.','error');
+    return;
+  }
   currentStudent.photo_url=pub;
   var av=document.getElementById('heroAvatar');
   av.innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /><div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>';
