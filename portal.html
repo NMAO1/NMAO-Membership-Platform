@@ -934,6 +934,7 @@ var todayAttendance=[];
 var existingReservations={};
 var scheduleByDay={};
 var scheduleViewDay=0;
+var enrollmentCounts={};
 // lazy-load flags for new tabs — reset in buildPortal
 var sessionsLoaded=false;
 var packsLoaded=false;
@@ -1320,6 +1321,14 @@ async function buildSchedule(s){
       enrolledClasses[e.class_id+'_'+e.session_date]=true;
     });
 
+    // Live counts: union of RSVPs (class_enrollments) + check-ins (class_attendance)
+    try{
+      enrollmentCounts=await fetchEnrollmentCounts(now.toISOString().split('T')[0],weekEnd.toISOString().split('T')[0]);
+    }catch(ecErr){
+      console.warn('fetchEnrollmentCounts failed:',ecErr);
+      enrollmentCounts={};
+    }
+
     scheduleViewDay=diffs[0];
     renderScheduleDay();
 
@@ -1355,13 +1364,28 @@ function renderScheduleDay(){
     html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes this day.</div>';
   }else{
     html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
-    dayClasses.forEach(function(c){
+   dayClasses.forEach(function(c){
       var enrollKey=c.id+'_'+viewDateStr;
       var isEnrolled=!!enrolledClasses[enrollKey];
       var cn=c.name||c.title||'Class';
       var tags=[]; if(c.style)tags.push(c.style); if(c.level)tags.push(c.level); if(c.age_group)tags.push(c.age_group);
-      html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+tags.join(' &bull; ')+(c.capacity?' &bull; Max '+c.capacity:'')+'</div></div>';
-      html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'" onclick="toggleRSVP(\''+c.id+'\',\''+viewDateStr+'\',this)">'+(isEnrolled?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP')+'</button></div>';
+      var liveCount=(enrollmentCounts[c.id]&&enrollmentCounts[c.id][viewDateStr])||0;
+      var cap=c.capacity||0;
+      var isFull=cap>0&&liveCount>=cap;
+      var badge=enrollBadgeHTML(liveCount,cap);
+      var metaParts=[]; if(tags.length)metaParts.push(tags.join(' &bull; ')); if(badge)metaParts.push(badge);
+      var metaHtml=metaParts.join(' &bull; ');
+      var btnLabel,btnDisabled='';
+      if(isEnrolled){
+        btnLabel='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
+      }else if(isFull){
+        btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Full';
+        btnDisabled=' disabled';
+      }else{
+        btnLabel='RSVP';
+      }
+      html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+metaHtml+'</div></div>';
+      html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'"'+btnDisabled+' onclick="toggleRSVP(\''+c.id+'\',\''+viewDateStr+'\',this)">'+btnLabel+'</button></div>';
     });
   }
   el.innerHTML=html;
@@ -1390,9 +1414,10 @@ async function toggleRSVP(classId,sessionDate,btn){
         .eq('school_id',SID);
       if(del.error) throw new Error(del.error.message);
       delete enrolledClasses[enrollKey];
-      btn.innerHTML='RSVP';
-      btn.classList.remove('enrolled');
-      btn.closest('.class-schedule-card').classList.remove('enrolled');
+      // Decrement live count
+      if(enrollmentCounts[classId]&&enrollmentCounts[classId][sessionDate]){
+        enrollmentCounts[classId][sessionDate]=Math.max(0,enrollmentCounts[classId][sessionDate]-1);
+      }
     }else{
       var ins=await sb.from('class_enrollments').insert({
         school_id:SID,
@@ -1403,22 +1428,22 @@ async function toggleRSVP(classId,sessionDate,btn){
       });
       if(ins.error) throw new Error(ins.error.message);
       enrolledClasses[enrollKey]=true;
-      btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
-      btn.classList.add('enrolled');
-      btn.closest('.class-schedule-card').classList.add('enrolled');
+      // Increment live count
+      if(!enrollmentCounts[classId])enrollmentCounts[classId]={};
+      enrollmentCounts[classId][sessionDate]=(enrollmentCounts[classId][sessionDate]||0)+1;
     }
+    // Re-render so pill, button state, and card border all update consistently
+    renderScheduleDay();
   }catch(e){
     console.error('RSVP error:',e);
     btn.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>Error';
     btn.style.background='#E07070';
     setTimeout(function(){
-      btn.innerHTML=enrolledClasses[enrollKey]?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d':'RSVP';
       btn.style.background='';
       btn.disabled=false;
+      renderScheduleDay();
     },2000);
-    return;
   }
-  btn.disabled=false;
 }
 
   
@@ -2705,8 +2730,63 @@ async function buildInstructorTodayClasses(){
     var nowMins=now.getHours()*60+now.getMinutes();
     if(nowMins-startMins>90)return "completed";
   }
-  return "in_progress";
+ return "in_progress";
 }
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: ENROLLMENT-COUNTS — union of class_enrollments + class_attendance
+// ─────────────────────────────────────────────────────────────
+async function fetchEnrollmentCounts(startDate,endDate){
+  var queries=await Promise.all([
+    sb.from('class_enrollments')
+      .select('class_id,session_date,student_id,status')
+      .eq('school_id',SID)
+      .gte('session_date',startDate)
+      .lte('session_date',endDate)
+      .in('status',['enrolled','attended']),
+    sb.from('class_sessions')
+      .select('id,class_id,session_date,class_attendance(student_id)')
+      .eq('school_id',SID)
+      .gte('session_date',startDate)
+      .lte('session_date',endDate)
+  ]);
+  var er=queries[0];var sr=queries[1];
+  var counts={};
+  var seen={};
+  (er.data||[]).forEach(function(e){
+    var k=e.class_id+'|'+e.session_date+'|'+e.student_id;
+    if(seen[k])return;
+    seen[k]=true;
+    if(!counts[e.class_id])counts[e.class_id]={};
+    counts[e.class_id][e.session_date]=(counts[e.class_id][e.session_date]||0)+1;
+  });
+  (sr.data||[]).forEach(function(s){
+    (s.class_attendance||[]).forEach(function(a){
+      var k=s.class_id+'|'+s.session_date+'|'+a.student_id;
+      if(seen[k])return;
+      seen[k]=true;
+      if(!counts[s.class_id])counts[s.class_id]={};
+      counts[s.class_id][s.session_date]=(counts[s.class_id][s.session_date]||0)+1;
+    });
+  });
+  return counts;
+}
+
+function enrollBadgeHTML(count,capacity){
+  var c=count||0;
+  var cap=capacity||0;
+  if(cap===0){
+    return c>0?'<span style="color:var(--gold);font-weight:600">'+c+' enrolled</span>':'';
+  }
+  if(c>=cap){
+    return '<span style="color:#E07070;font-weight:600"><i class="fa-solid fa-lock" style="margin-right:0.25rem;font-size:0.7rem"></i>'+c+'/'+cap+' FULL</span>';
+  }
+  var pct=c/cap;
+  var color='#7DBD7D';
+  if(pct>=0.8)color='var(--gold)';
+  return '<span style="color:'+color+';font-weight:600">'+c+'/'+cap+'</span>';
+}
+
 // ─────────────────────────────────────────────────────────────
 //  §JS: UTILITIES
 // ─────────────────────────────────────────────────────────────
