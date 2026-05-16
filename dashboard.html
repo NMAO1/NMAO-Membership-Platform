@@ -1589,9 +1589,13 @@
     <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
     <select id="profileMemSelect" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;margin-bottom:0.5rem"><option value="">Loading...</option></select>
     <div style="display:flex;gap:0.5rem"><button class="panel-action" onclick="saveChangeMembership()">Save</button><button class="btn-sm" onclick="cancelChangeMembership()">Cancel</button></div>
-    <p class="form-msg" id="changeMembershipMsg"></p>
+ <p class="form-msg" id="changeMembershipMsg"></p>
   </div>
 </div>
+        <div>
+          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Card on File</div>
+          <div id="profileCardOnFile" style="font-size:0.82rem;color:var(--muted);font-style:italic">Loading...</div>
+        </div>
         <div>
           <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Billing Day Override</div>
           <select id="profileAutopayDay" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;width:100%"><option value="">Use Membership Default</option><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select>
@@ -1654,6 +1658,34 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- §MODAL-SEND-UPDATE-CARD-LINK (Phase K.1) -->
+<div class="modal-overlay" id="sendUpdateCardModal">
+  <div class="modal" style="width:480px;max-width:96vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)">Send Update Card Link</div>
+      <button onclick="closeSendUpdateCardLink()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="sendUpdateCardStudent" style="font-size:0.85rem;color:var(--gold);margin-bottom:1rem"></div>
+    <div style="background:var(--black);border:1px solid var(--border);padding:1rem;display:flex;flex-direction:column;align-items:center;margin-bottom:1rem">
+      <img id="sendUpdateCardQR" src="" style="width:200px;height:200px;background:white;padding:0.5rem;margin-bottom:0.75rem" alt="QR code" />
+      <div style="font-size:0.72rem;color:var(--muted);text-align:center">Customer scans this code to update their card</div>
+    </div>
+    <div class="field">
+      <label>Update Link</label>
+      <input type="text" id="sendUpdateCardUrl" readonly style="background:var(--surface);font-size:0.72rem" />
+    </div>
+    <div class="field">
+      <label>Phone Number (for SMS)</label>
+      <input type="text" id="sendUpdateCardPhone" placeholder="+15555551234" />
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <button class="btn-sm" onclick="copySendUpdateCardLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+      <button class="panel-action" id="sendUpdateCardSendBtn" onclick="sendUpdateCardLinkSMS()"><i class="fa-solid fa-message"></i> Send via SMS</button>
+    </div>
+    <p class="form-msg" id="sendUpdateCardMsg"></p>
   </div>
 </div>
 
@@ -4054,6 +4086,206 @@ async function loadProfilePacks(sid){
     }).join('');
   }catch(e){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Pack history unavailable.</div>';}
 }
+
+// §JS:CARD-ON-FILE (Phase K.1) — Card on File section in student profile + Send Update Card Link modal
+
+async function loadProfileCardOnFile(sid){
+  var el = document.getElementById('profileCardOnFile');
+  if(!el) return;
+  el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading...';
+  try{
+    var r = await fetch(SURL + '/functions/v1/get-student-card', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({school_id: SID, student_id: sid}),
+    });
+    var data = await r.json();
+    if(data.error){
+      el.innerHTML = '<div style="color:var(--muted);font-size:0.78rem">' + data.error + '</div>';
+      return;
+    }
+    if(!data.has_card){
+      el.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.6rem">No card on file</div>' +
+        '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
+          '<button class="panel-action" style="font-size:0.72rem" onclick="replaceStudentCard(\'' + sid + '\')"><i class="fa-solid fa-credit-card"></i> Add Card</button>' +
+          '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
+        '</div>';
+      return;
+    }
+    var brand = (data.brand || 'card').toUpperCase();
+    var last4 = data.last4 || '????';
+    var exp = data.exp_month && data.exp_year ? (String(data.exp_month).padStart(2,'0') + '/' + String(data.exp_year).slice(-2)) : '--';
+    el.innerHTML = '<div style="background:var(--black);border:1px solid var(--border);padding:0.65rem 0.85rem;margin-bottom:0.6rem">' +
+      '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' \u2022\u2022\u2022\u2022' + last4 + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Exp ' + exp + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
+        '<button class="btn-sm" style="font-size:0.72rem" onclick="replaceStudentCard(\'' + sid + '\')"><i class="fa-solid fa-rotate"></i> Replace</button>' +
+        '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
+        '<button class="btn-sm" style="font-size:0.72rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\')"><i class="fa-solid fa-trash"></i> Remove</button>' +
+      '</div>';
+  }catch(e){
+    el.innerHTML = '<div style="color:#E07070;font-size:0.78rem">Could not load card info.</div>';
+  }
+}
+
+async function replaceStudentCard(sid){
+  var el = document.getElementById('profileCardOnFile');
+  var origHtml = el.innerHTML;
+  el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Opening secure card page...';
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-card-update-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: sid,
+        success_url: window.location.origin + window.location.pathname + '?card_updated=1',
+        cancel_url: window.location.origin + window.location.pathname + '?card_update_cancelled=1',
+      }),
+    });
+    var data = await r.json();
+    if(data.error || !data.url){
+      el.innerHTML = origHtml;
+      alert('Could not generate card update link: ' + (data.error || 'unknown error'));
+      return;
+    }
+    window.open(data.url, '_blank');
+    el.innerHTML = '<div style="color:var(--gold);font-size:0.78rem;margin-bottom:0.5rem"><i class="fa-solid fa-up-right-from-square" style="margin-right:0.3rem"></i>Card update page opened in new tab. After the customer completes it, click Refresh below.</div>' +
+      '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Refresh now</button>';
+  }catch(e){
+    el.innerHTML = origHtml;
+    alert('Network error: ' + (e.message || ''));
+  }
+}
+
+async function removeStudentCard(sid){
+  if(!confirm('Remove the card on file? Future card-on-file charges will fail until a new card is added. Recurring memberships will not be affected until their next billing cycle.')) return;
+  var el = document.getElementById('profileCardOnFile');
+  el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Removing card...';
+  try{
+    var r = await fetch(SURL + '/functions/v1/remove-student-card', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({school_id: SID, student_id: sid}),
+    });
+    var data = await r.json();
+    if(data.error){
+      el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">' + data.error + '</div>' +
+        '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
+      return;
+    }
+    await loadProfileCardOnFile(sid);
+  }catch(e){
+    el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">Network error removing card.</div>' +
+      '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
+  }
+}
+
+async function openSendUpdateCardLink(sid){
+  document.getElementById('sendUpdateCardModal').classList.add('active');
+  document.getElementById('sendUpdateCardMsg').textContent = '';
+  document.getElementById('sendUpdateCardUrl').value = 'Generating...';
+  document.getElementById('sendUpdateCardQR').src = '';
+  var student = null;
+  if(currentProfileStudent && currentProfileStudent.id === sid){
+    student = currentProfileStudent;
+  }else{
+    var sr = await sb.from('students').select('id, first_name, last_name, phone').eq('id', sid).single();
+    student = sr.data || null;
+  }
+  if(student){
+    document.getElementById('sendUpdateCardStudent').textContent = student.first_name + ' ' + student.last_name;
+    document.getElementById('sendUpdateCardPhone').value = student.phone || '';
+  }
+  document.getElementById('sendUpdateCardModal').dataset.studentId = sid;
+  try{
+    var r = await fetch(SURL + '/functions/v1/create-card-update-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        student_id: sid,
+        success_url: window.location.origin + window.location.pathname + '?card_updated=1',
+        cancel_url: window.location.origin + window.location.pathname + '?card_update_cancelled=1',
+      }),
+    });
+    var data = await r.json();
+    if(data.error || !data.url){
+      setMsg('sendUpdateCardMsg', data.error || 'Could not generate link.', 'error');
+      return;
+    }
+    document.getElementById('sendUpdateCardUrl').value = data.url;
+    document.getElementById('sendUpdateCardQR').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.url);
+  }catch(e){
+    setMsg('sendUpdateCardMsg', e.message || 'Network error.', 'error');
+  }
+}
+
+function closeSendUpdateCardLink(){
+  document.getElementById('sendUpdateCardModal').classList.remove('active');
+}
+
+function copySendUpdateCardLink(){
+  var input = document.getElementById('sendUpdateCardUrl');
+  input.select();
+  try{
+    document.execCommand('copy');
+    setMsg('sendUpdateCardMsg', 'Link copied!', 'success');
+    setTimeout(function(){ document.getElementById('sendUpdateCardMsg').textContent = ''; }, 1500);
+  }catch(e){
+    setMsg('sendUpdateCardMsg', 'Copy failed - select manually.', 'error');
+  }
+}
+
+async function sendUpdateCardLinkSMS(){
+  var phone = document.getElementById('sendUpdateCardPhone').value.trim();
+  if(!phone){ setMsg('sendUpdateCardMsg', 'Enter a phone number first.', 'error'); return; }
+  var url = document.getElementById('sendUpdateCardUrl').value;
+  if(!url || url === 'Generating...'){ setMsg('sendUpdateCardMsg', 'No link available.', 'error'); return; }
+  var sid = document.getElementById('sendUpdateCardModal').dataset.studentId;
+  var sendBtn = document.getElementById('sendUpdateCardSendBtn');
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = '0.5';
+  setMsg('sendUpdateCardMsg', 'Sending...', '');
+  var firstName = 'there';
+  if(currentProfileStudent && currentProfileStudent.id === sid){
+    firstName = currentProfileStudent.first_name || 'there';
+  }else{
+    var sr = await sb.from('students').select('first_name').eq('id', sid).single();
+    if(sr.data && sr.data.first_name) firstName = sr.data.first_name;
+  }
+  try{
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      body: JSON.stringify({
+        school_id: SID,
+        channel: 'sms',
+        body: 'Hi ' + firstName + ', please tap to update your card on file: ' + url,
+        recipients: [{phone: phone, first_name: firstName}],
+      }),
+    });
+    var data = await r.json();
+    if(data.success && data.sms_sent > 0){
+      setMsg('sendUpdateCardMsg', 'Sent to ' + phone, 'success');
+      setTimeout(closeSendUpdateCardLink, 2000);
+    }else{
+      var errMsg = 'Send failed';
+      if(data.errors && data.errors.length){ errMsg = data.errors[0].reason; }
+      else if(data.error){ errMsg = data.error; }
+      setMsg('sendUpdateCardMsg', errMsg, 'error');
+      sendBtn.disabled = false;
+      sendBtn.style.opacity = '1';
+    }
+  }catch(e){
+    setMsg('sendUpdateCardMsg', e.message || 'Network error.', 'error');
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+  }
+}
+
+async function loadProfileAttendance(sid){
 // ─────────────────────────────── §MEMBERS ───────────────────────────────
 
 async function loadStudents() {
@@ -4259,6 +4491,7 @@ async function openStudentProfile(sid) {
   await loadProfilePaymentHistory(sid);
   await loadStudentSessions(sid);
   await loadProfilePacks(sid);
+  await loadProfileCardOnFile(sid);
   document.getElementById('manualPayDate').value = localDateStr(new Date());
 }
 function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
@@ -6405,11 +6638,18 @@ async function checkoutPOS_cardOnFile(){
     });
     var data = await r.json();
     if(data.error){
-      // Friendly error messages for known failure modes
-      if((data.error || '').indexOf('NO_SAVED_CARD') === 0){
-        setMsg('posMsg','No saved card. Use Send Payment Link instead.','error');
-      }else if((data.error || '').indexOf('AUTHENTICATION_REQUIRED') === 0){
-        setMsg('posMsg','Card needs verification. Use Send Payment Link instead.','error');
+      // Friendly error messages for known failure modes, with dual recovery buttons (Phase K.1)
+      var isNoCard = (data.error || '').indexOf('NO_SAVED_CARD') === 0;
+      var isAuthReq = (data.error || '').indexOf('AUTHENTICATION_REQUIRED') === 0;
+      if(isNoCard || isAuthReq){
+        var label = isNoCard ? 'No saved card on file.' : 'Card needs verification (3D Secure).';
+        var msgEl = document.getElementById('posMsg');
+        msgEl.className = 'form-msg error';
+        msgEl.innerHTML = '<div style="margin-bottom:0.5rem">' + label + '</div>' +
+          '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">' +
+            '<button class="btn-sm" onclick="openSendUpdateCardLink(\'' + posSelectedStudentId + '\')"><i class="fa-solid fa-message"></i> Send Update Link</button>' +
+            '<button class="panel-action" style="font-size:0.72rem" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-link"></i> Use Payment Link Instead</button>' +
+          '</div>';
       }else{
         setMsg('posMsg', data.error || 'Charge failed.', 'error');
       }
