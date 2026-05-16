@@ -781,8 +781,12 @@ async function buildTodayTab(){
   var todayStr=now.toISOString().split('T')[0];
   var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
   document.getElementById('qsClasses').textContent=todayClasses.length;
+  // Live counts: union of RSVPs (class_enrollments) + check-ins (class_attendance)
+  var counts=await fetchEnrollmentCounts(todayStr,todayStr);
   var totalExpected=0;
-  todayClasses.forEach(function(c){totalExpected+=c.enrolled_count||0;});
+  todayClasses.forEach(function(c){
+    totalExpected+=(counts[c.id]&&counts[c.id][todayStr])||0;
+  });
   document.getElementById('qsExpected').textContent=totalExpected||'—';
   var attR=await sb.from('class_attendance').select('student_id,session_id').eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
   var checkedInToday=(attR.data||[]).length;
@@ -795,15 +799,13 @@ async function buildTodayTab(){
   }
   var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
   var sessMap={};(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;});
-  var attCountMap={};
-  var sessIdToClassId={};
-  Object.keys(sessMap).forEach(function(cid){sessIdToClassId[sessMap[cid]]=cid;});
-  (attR.data||[]).forEach(function(a){if(a.session_id&&sessIdToClassId[a.session_id]){var cid=sessIdToClassId[a.session_id];attCountMap[cid]=(attCountMap[cid]||0)+1;}});
   el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
     var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
     var hasSess=!!sessMap[c.id];
-    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">'+'<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+'<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+'<div class="class-row-meta"><span style="font-family:var(--font-display);font-size:1.1rem;color:var(--gold);line-height:1">'+(attCountMap[c.id]||0)+'<span style="color:var(--muted);font-size:0.72rem">/'+(c.enrolled_count||0)+'</span></span>'+(hasSess?'<span style="font-size:0.55rem;color:#7DBD7D">Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+'</div>';
+    var liveCount=(counts[c.id]&&counts[c.id][todayStr])||0;
+    var cap=c.capacity||c.max_students||c.enrolled_count||0;
+    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">'+'<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+'<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+'<div class="class-row-meta">'+enrollBadgeHTML(liveCount,cap)+(hasSess?'<span style="font-size:0.55rem;color:#7DBD7D">Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+'</div>';
   }).join('');
   document.getElementById('psTodayClasses').textContent=todayClasses.length;
 }
@@ -847,9 +849,15 @@ function showMembershipAlerts(){
 // ─────────────────────────────────────────────────────────────
 //  CLASSES TAB
 // ─────────────────────────────────────────────────────────────
-function buildClassesTab(){
+async function buildClassesTab(){
   var el=document.getElementById('classesWeekList');
-  var now=new Date();var todayStr=now.toISOString().split('T')[0];
+  var now=new Date();
+  var todayStr=now.toISOString().split('T')[0];
+  // 7-day window
+  var end=new Date(now);end.setDate(now.getDate()+6);
+  var endStr=end.toISOString().split('T')[0];
+  // Live counts across the whole week
+  var counts=await fetchEnrollmentCounts(todayStr,endStr);
   var html='';var hasAny=false;
 
   for(var i=0;i<7;i++){
@@ -864,11 +872,14 @@ function buildClassesTab(){
     hasAny=true;
     html+='<div class="day-block"><div class="day-label">'+dayLabel+'</div>';
     dayClasses.forEach(function(c){
-      var cn=c.name||c.title||'Class';var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
-      html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">' +
+      var cn=c.name||c.title||'Class';
+      var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+      var liveCount=(counts[c.id]&&counts[c.id][dateStr])||0;
+      var cap=c.capacity||c.max_students||c.enrolled_count||0;
+      html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">'+
         '<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+
         '<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+
-        '<div class="class-row-meta"><i class="fa-solid fa-chevron-right class-chevron"></i></div>'+
+        '<div class="class-row-meta">'+enrollBadgeHTML(liveCount,cap)+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+
       '</div>';
     });
     html+='</div>';
@@ -941,8 +952,12 @@ async function openClassView(classId,dateStr){
 }
 function closeClassView(){
   document.getElementById('classView').classList.remove('open');
-  // Re-render today stats
-  if(currentClassData)buildTodayTab();
+  if(!currentClassData)return;
+  // Refresh today stats and pills (qsExpected, qsCheckedIn, today rows)
+  buildTodayTab();
+  // Also refresh classes tab if it is currently visible
+  var classesPanel=document.getElementById('tabClasses');
+  if(classesPanel&&classesPanel.classList.contains('active'))buildClassesTab();
 }
 
 // ── All Students ──
@@ -1377,8 +1392,63 @@ function switchTab(name){
     var nowMins=now.getHours()*60+now.getMinutes();
     if(nowMins-startMins>90)return "completed";
   }
-  return "in_progress";
+return "in_progress";
 }
+
+// ─────────────────────────────────────────────────────────────
+//  §ENROLLMENT-COUNTS — union of class_enrollments + class_attendance
+// ─────────────────────────────────────────────────────────────
+async function fetchEnrollmentCounts(startDate,endDate){
+  var queries=await Promise.all([
+    sb.from('class_enrollments')
+      .select('class_id,session_date,student_id,status')
+      .eq('school_id',SID)
+      .gte('session_date',startDate)
+      .lte('session_date',endDate)
+      .in('status',['enrolled','attended']),
+    sb.from('class_sessions')
+      .select('id,class_id,session_date,class_attendance(student_id)')
+      .eq('school_id',SID)
+      .gte('session_date',startDate)
+      .lte('session_date',endDate)
+  ]);
+  var er=queries[0];var sr=queries[1];
+  var counts={};
+  var seen={};
+  (er.data||[]).forEach(function(e){
+    var k=e.class_id+'|'+e.session_date+'|'+e.student_id;
+    if(seen[k])return;
+    seen[k]=true;
+    if(!counts[e.class_id])counts[e.class_id]={};
+    counts[e.class_id][e.session_date]=(counts[e.class_id][e.session_date]||0)+1;
+  });
+  (sr.data||[]).forEach(function(s){
+    (s.class_attendance||[]).forEach(function(a){
+      var k=s.class_id+'|'+s.session_date+'|'+a.student_id;
+      if(seen[k])return;
+      seen[k]=true;
+      if(!counts[s.class_id])counts[s.class_id]={};
+      counts[s.class_id][s.session_date]=(counts[s.class_id][s.session_date]||0)+1;
+    });
+  });
+  return counts;
+}
+
+function enrollBadgeHTML(count,capacity){
+  var c=count||0;
+  var cap=capacity||0;
+  if(cap>0&&c>=cap){
+    return '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:var(--font-display);font-size:1rem;color:#C07070;line-height:1"><i class="fa-solid fa-lock" style="font-size:0.65rem"></i>'+c+'<span style="color:#C07070;font-size:0.72rem;opacity:0.7;font-family:var(--font-ui)">/'+cap+'</span></span>';
+  }
+  var color='var(--gold)';
+  if(cap>0){
+    var pct=c/cap;
+    if(pct<0.8)color='#7DBD7D';
+  }
+  var capPart=cap>0?'<span style="color:var(--muted);font-size:0.72rem;font-family:var(--font-ui)">/'+cap+'</span>':'';
+  return '<span style="font-family:var(--font-display);font-size:1.1rem;color:'+color+';line-height:1">'+c+capPart+'</span>';
+}
+
 // ─────────────────────────────────────────────────────────────
 //  UTILITIES
 // ─────────────────────────────────────────────────────────────
