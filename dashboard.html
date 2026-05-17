@@ -1377,11 +1377,38 @@
       </div>
       <div class="field"><label>Pricing Tier</label><select id="evRegTier" onchange="onEvRegTierChange()"></select></div>
       <div id="evRegSessionsBox"></div>
-      <div class="form-row">
-        <div class="field"><label>Amount</label><input type="number" id="evRegAmount" value="0" min="0" step="0.01" /></div>
-        <div class="field" style="display:flex;align-items:flex-end;padding-bottom:0.25rem"><label class="check-item"><input type="checkbox" id="evRegPaid" /><span class="check-item-label">Paid</span></label></div>
+      <div class="field"><label>Amount</label><input type="number" id="evRegAmount" value="0" min="0" step="0.01" /></div>
+
+      <!-- §EVREG-FORM-PANEL — default view: CHECKOUT button -->
+      <div id="evRegFormPanel">
+        <button class="btn-gold-full" type="button" onclick="openCheckoutSubview()">CHECKOUT</button>
       </div>
-      <button class="btn-gold-full" onclick="saveRegistration()">Add Registration</button>
+
+      <!-- §EVREG-CHECKOUT-PANEL — sub-view: payment method picker (in-modal swap) -->
+      <div id="evRegCheckoutPanel" style="display:none">
+        <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--gold);letter-spacing:0.08em;text-align:center;margin-bottom:1rem">
+          Checkout &mdash; <span id="evRegCheckoutAmount">$0.00</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:0.9rem">
+          <button type="button" onclick="completeRegistration_cash()" style="padding:1.1rem 0.5rem;background:var(--surface);border:2px solid var(--border);color:var(--white);cursor:pointer;font-family:var(--font-ui);text-align:center;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.6rem;line-height:1;margin-bottom:0.35rem">&#128181;</div>
+            <div style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">CASH</div>
+            <div style="font-size:0.68rem;color:var(--muted)">Mark paid</div>
+          </button>
+          <button type="button" onclick="completeRegistration_card()" style="padding:1.1rem 0.5rem;background:var(--surface);border:2px solid var(--border);color:var(--white);cursor:pointer;font-family:var(--font-ui);text-align:center;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.6rem;line-height:1;margin-bottom:0.35rem">&#128179;</div>
+            <div style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">CARD</div>
+            <div style="font-size:0.68rem;color:var(--muted)">Stripe Checkout</div>
+          </button>
+          <button type="button" onclick="completeRegistration_bill()" style="padding:1.1rem 0.5rem;background:var(--surface);border:2px solid var(--border);color:var(--white);cursor:pointer;font-family:var(--font-ui);text-align:center;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.6rem;line-height:1;margin-bottom:0.35rem">&#128203;</div>
+            <div style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">BILL</div>
+            <div style="font-size:0.68rem;color:var(--muted)">Save unpaid</div>
+          </button>
+        </div>
+        <button type="button" class="btn-sm" onclick="closeCheckoutSubview()" style="width:100%"><i class="fa-solid fa-arrow-left" style="margin-right:0.3rem"></i>Back to registration</button>
+      </div>
+
       <p class="form-msg" id="addRegistrationMsg"></p>
     </div>
   </div>
@@ -8998,14 +9025,15 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     if (sel) sel.style.display = "none";
   };
 
-  window.saveRegistration = async function(){
-    if (!window.currentEventId) return;
-    var msg = document.getElementById("addRegistrationMsg");
+// §EVREG-HYBRID-POS — Hybrid checkout: cash / card / bill flows
+  // Shared validate-and-build helper. Returns {payload, sessionIds, error}.
+  function buildRegistrationPayload(){
+    if (!window.currentEventId) return {error: "No event selected."};
     var sid = window.evRegSelectedStudentId;
     var guestName = "";
     var gnEl = document.getElementById("evRegGuestName");
     if (gnEl) guestName = (gnEl.value || "").trim();
-    if (!sid && !guestName) { if (msg) { msg.textContent = "Select a student or enter a guest name."; msg.style.color = "#E07070"; } return; }
+    if (!sid && !guestName) return {error: "Select a student or enter a guest name."};
     var tierSel = document.getElementById("evRegTier");
     var tierId = tierSel && tierSel.value ? tierSel.value : null;
     var tierLabel = tierSel && tierSel.selectedOptions.length ? tierSel.selectedOptions[0].textContent.split(" - ")[0] : null;
@@ -9017,39 +9045,190 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     } else {
       document.querySelectorAll(".ev-reg-session:checked").forEach(function(cb){ pickedSessionIds.push(cb.value); });
       if (pickedSessionIds.length !== required) {
-        if (msg) { msg.textContent = "Pick exactly " + required + " session" + (required !== 1 ? "s" : "") + " for this tier."; msg.style.color = "#E07070"; }
-        return;
+        return {error: "Pick exactly " + required + " session" + (required !== 1 ? "s" : "") + " for this tier."};
       }
     }
-    if (msg) { msg.textContent = "Saving..."; msg.style.color = "var(--muted)"; }
     var amtEl = document.getElementById("evRegAmount");
-    var paidEl = document.getElementById("evRegPaid");
     var geEl = document.getElementById("evRegGuestEmail");
     var gpEl = document.getElementById("evRegGuestPhone");
     var payload = {
-      school_id: SID, event_id: window.currentEventId,
+      school_id: SID,
+      event_id: window.currentEventId,
       student_id: sid || null,
       guest_name: sid ? null : (guestName || null),
       guest_email: (geEl && !sid) ? ((geEl.value || "").trim() || null) : null,
       guest_phone: (gpEl && !sid) ? ((gpEl.value || "").trim() || null) : null,
       amount: amtEl ? (parseFloat(amtEl.value) || 0) : 0,
-      paid: paidEl ? paidEl.checked : false,
-      price_tier_id: tierId, tier_label: tierLabel,
+      price_tier_id: tierId,
+      tier_label: tierLabel,
       registered_at: new Date().toISOString()
     };
-    if (payload.paid) payload.paid_at = new Date().toISOString();
+    return {payload: payload, sessionIds: pickedSessionIds, error: null};
+  }
+
+  // Inserts the registration row + session links. Best-effort orphan cleanup on session-link failure.
+  // Note: a server-side RPC would be safer; this two-step works because event_registrations
+  // is the parent row and registration_sessions failure is rare in normal use.
+  async function insertRegistrationWithSessions(payload, sessionIds){
     var r = await sb.from("event_registrations").insert(payload).select().single();
-    if (r.error) { if (msg) { msg.textContent = r.error.message; msg.style.color = "#E07070"; } return; }
+    if (r.error) return {error: r.error.message};
     var regId = r.data.id;
-    if (pickedSessionIds.length) {
-      var sessLinks = pickedSessionIds.map(function(esid){ return {school_id: SID, registration_id: regId, event_session_id: esid}; });
+    if (sessionIds.length) {
+      var sessLinks = sessionIds.map(function(esid){
+        return {school_id: SID, registration_id: regId, event_session_id: esid};
+      });
       var sessRes = await sb.from("registration_sessions").insert(sessLinks);
-      if (sessRes.error) { if (msg) { msg.textContent = "Sessions: " + sessRes.error.message; msg.style.color = "#E07070"; } return; }
+      if (sessRes.error) {
+        await sb.from("event_registrations").delete().eq("id", regId);
+        return {error: "Sessions: " + sessRes.error.message};
+      }
     }
-    if (msg) { msg.textContent = "Registered!"; msg.style.color = "#7DBD7D"; }
-    await window.loadEventRegistrations();
-    setTimeout(window.closeAddRegistration, 800);
+    return {regId: regId, error: null};
+  }
+
+  // Open the sub-view (in-modal swap). Validates first so we never show the picker for a bad form.
+  window.openCheckoutSubview = function(){
+    var built = buildRegistrationPayload();
+    var msg = document.getElementById("addRegistrationMsg");
+    if (built.error) {
+      if (msg) { msg.textContent = built.error; msg.style.color = "#E07070"; }
+      return;
+    }
+    if (msg) msg.textContent = "";
+    document.getElementById("evRegCheckoutAmount").textContent = "$" + parseFloat(built.payload.amount).toFixed(2);
+    document.getElementById("evRegFormPanel").style.display = "none";
+    document.getElementById("evRegCheckoutPanel").style.display = "block";
   };
+
+  window.closeCheckoutSubview = function(){
+    document.getElementById("evRegCheckoutPanel").style.display = "none";
+    document.getElementById("evRegFormPanel").style.display = "";
+    var msg = document.getElementById("addRegistrationMsg");
+    if (msg) msg.textContent = "";
+  };
+
+  // CASH — paid:true, payment_method:cash, paid_at:now()
+  window.completeRegistration_cash = async function(){
+    var built = buildRegistrationPayload();
+    var msg = document.getElementById("addRegistrationMsg");
+    if (built.error) { if (msg) { msg.textContent = built.error; msg.style.color = "#E07070"; } return; }
+    if (msg) { msg.textContent = "Saving..."; msg.style.color = "var(--muted)"; }
+    built.payload.paid = true;
+    built.payload.payment_method = "cash";
+    built.payload.paid_at = new Date().toISOString();
+    var res = await insertRegistrationWithSessions(built.payload, built.sessionIds);
+    if (res.error) { if (msg) { msg.textContent = res.error; msg.style.color = "#E07070"; } return; }
+    if (typeof showToast === "function") showToast("Registration confirmed.");
+    await window.loadEventRegistrations();
+    window.closeAddRegistration();
+  };
+
+  // BILL — paid:false, payment_method:bill
+  window.completeRegistration_bill = async function(){
+    var built = buildRegistrationPayload();
+    var msg = document.getElementById("addRegistrationMsg");
+    if (built.error) { if (msg) { msg.textContent = built.error; msg.style.color = "#E07070"; } return; }
+    if (msg) { msg.textContent = "Saving..."; msg.style.color = "var(--muted)"; }
+    built.payload.paid = false;
+    built.payload.payment_method = "bill";
+    var res = await insertRegistrationWithSessions(built.payload, built.sessionIds);
+    if (res.error) { if (msg) { msg.textContent = res.error; msg.style.color = "#E07070"; } return; }
+    if (typeof showToast === "function") showToast("Saved unpaid \u2014 send invoice from the registrations list when ready.");
+    await window.loadEventRegistrations();
+    window.closeAddRegistration();
+  };
+
+  // CARD — insert unpaid row first so webhook has a target, then call EF and open hosted checkout in new tab.
+  window.completeRegistration_card = async function(){
+    var built = buildRegistrationPayload();
+    var msg = document.getElementById("addRegistrationMsg");
+    if (built.error) { if (msg) { msg.textContent = built.error; msg.style.color = "#E07070"; } return; }
+    if (parseFloat(built.payload.amount) <= 0) {
+      if (msg) { msg.textContent = "Amount must be greater than $0 for card checkout."; msg.style.color = "#E07070"; }
+      return;
+    }
+    if (msg) { msg.textContent = "Generating Stripe Checkout..."; msg.style.color = "var(--muted)"; }
+    built.payload.paid = false;
+    built.payload.payment_method = "stripe";
+    var res = await insertRegistrationWithSessions(built.payload, built.sessionIds);
+    if (res.error) { if (msg) { msg.textContent = res.error; msg.style.color = "#E07070"; } return; }
+    try {
+      // §EVREG-EF-REQUEST — stripe-create-checkout expects this shape for kind=event_registration:
+      //   {kind, school_id, event_registration_id, event_id, student_id, guest_name, guest_email,
+      //    amount_cents, tier_label, success_url, cancel_url}
+      // EF response: {url} or {error}.
+      // EF responsibility:
+      //   1. Create Stripe Checkout Session (mode=payment) on the school Connect account
+      //   2. line_item: name = "<event title> \u2014 <tier_label>", unit_amount = amount_cents
+      //   3. application_fee_amount = round(amount_cents * 0.015)  (NMAO 1.5% platform fee)
+      //   4. metadata: {kind:"event_registration", event_registration_id, school_id}
+      //   5. UPDATE event_registrations SET stripe_checkout_session_id = session.id WHERE id = event_registration_id
+      //   6. Return {url: session.url}
+      // Webhook on checkout.session.completed when metadata.kind === "event_registration":
+      //   UPDATE event_registrations SET paid=true, paid_at=now() WHERE stripe_checkout_session_id = session.id
+      var r = await fetch(SURL + "/functions/v1/stripe-create-checkout", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
+        body: JSON.stringify({
+          kind: "event_registration",
+          school_id: SID,
+          event_registration_id: res.regId,
+          event_id: window.currentEventId,
+          student_id: built.payload.student_id,
+          guest_name: built.payload.guest_name,
+          guest_email: built.payload.guest_email,
+          amount_cents: Math.round(parseFloat(built.payload.amount) * 100),
+          tier_label: built.payload.tier_label,
+          success_url: window.location.origin + window.location.pathname + "?event_paid=1",
+          cancel_url: window.location.origin + window.location.pathname + "?event_cancelled=1"
+        })
+      });
+      var data = await r.json();
+      if (!r.ok || data.error || !data.url) {
+        // EF failed but the row exists as unpaid \u2014 staff can recover via Bill flow on the list or retry
+        if (msg) {
+          msg.textContent = "Checkout failed: " + (data.error || "no URL returned") + ". Registration saved as unpaid; retry or use Bill.";
+          msg.style.color = "#E07070";
+        }
+        await window.loadEventRegistrations();
+        return;
+      }
+      window.open(data.url, "_blank");
+      if (typeof showToast === "function") showToast("Stripe Checkout opened \u2014 registration confirms automatically once paid.");
+      await window.loadEventRegistrations();
+      window.closeAddRegistration();
+    } catch(e) {
+      if (msg) {
+        msg.textContent = "Network error: " + (e.message || e) + ". Registration saved as unpaid.";
+        msg.style.color = "#E07070";
+      }
+      await window.loadEventRegistrations();
+    }
+  };
+
+  // Make sure the panel state resets on open/close (idempotent wraps)
+  var prevCloseAddRegHybrid = window.closeAddRegistration;
+  window.closeAddRegistration = function(){
+    var formPanel = document.getElementById("evRegFormPanel");
+    var checkoutPanel = document.getElementById("evRegCheckoutPanel");
+    if (formPanel) formPanel.style.display = "";
+    if (checkoutPanel) checkoutPanel.style.display = "none";
+    var msg = document.getElementById("addRegistrationMsg");
+    if (msg) msg.textContent = "";
+    if (typeof prevCloseAddRegHybrid === "function") prevCloseAddRegHybrid();
+  };
+
+  var prevOpenAddRegHybrid = window.openAddRegistration;
+  window.openAddRegistration = function(){
+    if (typeof prevOpenAddRegHybrid === "function") prevOpenAddRegHybrid();
+    var formPanel = document.getElementById("evRegFormPanel");
+    var checkoutPanel = document.getElementById("evRegCheckoutPanel");
+    if (formPanel) formPanel.style.display = "";
+    if (checkoutPanel) checkoutPanel.style.display = "none";
+  };
+
+  // Backward-compat shim: anything still calling saveRegistration() now opens the picker.
+  window.saveRegistration = function(){ window.openCheckoutSubview(); };
 
   window.openEventInvite = function(){
     if (!window.currentEventId) return;
