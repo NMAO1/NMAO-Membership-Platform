@@ -9896,5 +9896,42 @@ window.closeWelcomeModal = async function() {
 
 })();
 </script>
+  <script>
+// §DIAG — Bulletproof override of searchEvRegStudent with full instrumentation
+(function(){
+  window.searchEvRegStudent = function(){
+    var inp = document.getElementById("evRegStudentSearch");
+    var el  = document.getElementById("evRegStudentResults");
+    var q   = (inp && inp.value ? inp.value : "").toLowerCase().trim();
+    var pool = window.allStudents || [];
+    console.log("[diag] fired. q=", q, " inp=", inp, " el=", el, " pool size=", pool.length);
+    if (!el) { console.warn("[diag] results container missing"); return; }
+    if (!q || q.length < 2) { el.innerHTML = ""; return; }
+    var filtered = pool.filter(function(s){
+      return ((s.first_name || "") + " " + (s.last_name || "")).toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 6);
+    console.log("[diag] filtered=", filtered.length, filtered.map(function(s){return s.first_name+" "+s.last_name;}));
+    if (!filtered.length) {
+      el.innerHTML = "<div style=\"font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic\">No students found.</div>";
+      return;
+    }
+    try {
+      var html = filtered.map(function(s){
+        var name = ((s.first_name || "") + " " + (s.last_name || ""))
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        var nameAttr = name.replace(/"/g, "&quot;");
+        return "<div style=\"padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)\" onclick=\"selectEvRegStudent(&quot;" + s.id + "&quot;,&quot;" + nameAttr + "&quot;)\">" + name + "</div>";
+      }).join("");
+      el.innerHTML = html;
+      console.log("[diag] render OK, html length=", html.length);
+    } catch (e) {
+      console.error("[diag] render threw:", e);
+    }
+  };
+  console.log("[diag] searchEvRegStudent override installed");
+})();
+</script>
 </body>
 </html>
