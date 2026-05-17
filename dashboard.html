@@ -9140,7 +9140,7 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
   };
 
   // CARD — insert unpaid row first so webhook has a target, then call EF and open hosted checkout in new tab.
-  window.completeRegistration_card = async function(){
+ window.completeRegistration_card = async function(){
     var built = buildRegistrationPayload();
     var msg = document.getElementById("addRegistrationMsg");
     if (built.error) { if (msg) { msg.textContent = built.error; msg.style.color = "#E07070"; } return; }
@@ -9148,25 +9148,26 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
       if (msg) { msg.textContent = "Amount must be greater than $0 for card checkout."; msg.style.color = "#E07070"; }
       return;
     }
-    if (msg) { msg.textContent = "Generating Stripe Checkout..."; msg.style.color = "var(--muted)"; }
+
+    var saveCardEl = document.getElementById("evRegSaveCard");
+    var saveCard = saveCardEl ? !!saveCardEl.checked : false;
+
+    if (msg) { msg.textContent = "Processing card..."; msg.style.color = "var(--muted)"; }
+
+    var tiles = document.querySelectorAll("#evRegCheckoutPanel button");
+    var i;
+    for (i = 0; i < tiles.length; i++) tiles[i].disabled = true;
+
     built.payload.paid = false;
     built.payload.payment_method = "stripe";
     var res = await insertRegistrationWithSessions(built.payload, built.sessionIds);
-    if (res.error) { if (msg) { msg.textContent = res.error; msg.style.color = "#E07070"; } return; }
+    if (res.error) {
+      for (i = 0; i < tiles.length; i++) tiles[i].disabled = false;
+      if (msg) { msg.textContent = res.error; msg.style.color = "#E07070"; }
+      return;
+    }
+
     try {
-      // §EVREG-EF-REQUEST — stripe-create-checkout expects this shape for kind=event_registration:
-      //   {kind, school_id, event_registration_id, event_id, student_id, guest_name, guest_email,
-      //    amount_cents, tier_label, success_url, cancel_url}
-      // EF response: {url} or {error}.
-      // EF responsibility:
-      //   1. Create Stripe Checkout Session (mode=payment) on the school Connect account
-      //   2. line_item: name = "<event title> \u2014 <tier_label>", unit_amount = amount_cents
-      //   3. application_fee_amount = round(amount_cents * 0.015)  (NMAO 1.5% platform fee)
-      //   4. metadata: {kind:"event_registration", event_registration_id, school_id}
-      //   5. UPDATE event_registrations SET stripe_checkout_session_id = session.id WHERE id = event_registration_id
-      //   6. Return {url: session.url}
-      // Webhook on checkout.session.completed when metadata.kind === "event_registration":
-      //   UPDATE event_registrations SET paid=true, paid_at=now() WHERE stripe_checkout_session_id = session.id
       var r = await fetch(SURL + "/functions/v1/stripe-create-checkout", {
         method: "POST",
         headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
@@ -9180,25 +9181,52 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
           guest_email: built.payload.guest_email,
           amount_cents: Math.round(parseFloat(built.payload.amount) * 100),
           tier_label: built.payload.tier_label,
+          save_card: saveCard,
           success_url: window.location.origin + window.location.pathname + "?event_paid=1",
           cancel_url: window.location.origin + window.location.pathname + "?event_cancelled=1"
         })
       });
       var data = await r.json();
-      if (!r.ok || data.error || !data.url) {
-        // EF failed but the row exists as unpaid \u2014 staff can recover via Bill flow on the list or retry
+      for (i = 0; i < tiles.length; i++) tiles[i].disabled = false;
+
+      if (!r.ok || data.error) {
         if (msg) {
-          msg.textContent = "Checkout failed: " + (data.error || "no URL returned") + ". Registration saved as unpaid; retry or use Bill.";
+          msg.textContent = "Checkout failed: " + (data.error || "no response") + ". Registration saved as unpaid; retry or use Bill.";
           msg.style.color = "#E07070";
         }
         await window.loadEventRegistrations();
         return;
       }
-      window.open(data.url, "_blank");
-      if (typeof showToast === "function") showToast("Stripe Checkout opened \u2014 registration confirms automatically once paid.");
+
+      // Path A \u2014 direct off-session charge succeeded, row already flipped to paid in EF
+      if (data.flow === "charged") {
+        var amtStr = "$" + (data.amount_cents / 100).toFixed(2);
+        var last4Str = data.last4 ? " card ending " + data.last4 : " card on file";
+        if (typeof showToast === "function") showToast("Charged " + amtStr + " to" + last4Str + ".");
+        await window.loadEventRegistrations();
+        window.closeAddRegistration();
+        return;
+      }
+
+      // Path B \u2014 hosted Stripe Checkout opened in new tab, webhook flips paid
+      if (data.flow === "checkout" && data.url) {
+        window.open(data.url, "_blank");
+        var toastMsg = saveCard
+          ? "Stripe Checkout opened \u2014 card will be saved on file once payment completes."
+          : "Stripe Checkout opened \u2014 registration confirms automatically once paid.";
+        if (typeof showToast === "function") showToast(toastMsg);
+        await window.loadEventRegistrations();
+        window.closeAddRegistration();
+        return;
+      }
+
+      if (msg) {
+        msg.textContent = "Unexpected response from checkout. Registration saved as unpaid; retry or use Bill.";
+        msg.style.color = "#E07070";
+      }
       await window.loadEventRegistrations();
-      window.closeAddRegistration();
     } catch(e) {
+      for (i = 0; i < tiles.length; i++) tiles[i].disabled = false;
       if (msg) {
         msg.textContent = "Network error: " + (e.message || e) + ". Registration saved as unpaid.";
         msg.style.color = "#E07070";
