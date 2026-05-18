@@ -2218,7 +2218,8 @@
   <div class="modal" style="width:480px;max-width:95vw">
     <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <input type="hidden" id="sessPackEditId" value="" />
+<input type="hidden" id="sessPackEditId" value="" />
+      <div class="field"><label>Pack Type</label><div style="display:flex;gap:1.5rem;margin-top:0.4rem"><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="class" checked style="cursor:pointer" /><span>Class Pack</span></label><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="session" style="cursor:pointer" /><span>Session Pack</span></label></div></div>
       <div class="field"><label>Pack Name</label><input type="text" id="spName" placeholder="e.g. 10-Class Pack" /></div>
       <div class="form-row">
         <div class="field"><label>Number of Sessions</label><input type="number" id="spQuantity" value="10" min="1" /></div>
@@ -3303,12 +3304,39 @@ async function openClassRosterFromCal(classId,dateStr){
   currentRosterTab='rsvp';
   switchRosterTab('rsvp');
 }
+// §JS: DASHBOARD-CAP-CHECK — membership cap enforcement for roster check-ins.
+// Reads active membership via student_memberships junction (drift-immune).
+// Pack inventory is NEVER consulted here — domain separation rule (memberships only).
+async function attendanceCapCheck(studentId){
+  try{
+    var smR=await sb.from('student_memberships').select('membership_id,memberships(class_limit_type,class_limit_count)').eq('student_id',studentId).eq('status','active').order('created_at',{ascending:false}).limit(1);
+    var rows=smR.data||[];
+    if(!rows.length) return null;
+    var mem=rows[0].memberships;
+    if(!mem||mem.class_limit_type!=='per_week'||!mem.class_limit_count) return null;
+    var limit=parseInt(mem.class_limit_count)||0;
+    if(limit<=0) return null;
+    var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+    var cutoff=sevenDaysAgo.toISOString().split('T')[0]+'T00:00:00';
+    var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
+    var weekCount=countR.count||0;
+    if(weekCount>=limit){return {atCap:true,current:weekCount,max:limit};}
+    return null;
+  }catch(e){console.error('attendanceCapCheck error:',e);return null;}
+}
+
 async function toggleRosterAttendance(sid){
   if(rosterAttendance[sid]){
     var del=await sb.from('class_attendance').delete().eq('id',rosterAttendance[sid]);
     if(!del.error){ delete rosterAttendance[sid]; }
   }else{
     if(!currentRosterSessionId) return;
+    var capStatus=await attendanceCapCheck(sid);
+    if(capStatus&&capStatus.atCap){
+      var student=currentRosterStudents.find(function(s){return s.id===sid;});
+      var nm=student?(student.first_name+' '+student.last_name):'This student';
+      if(!confirm(nm+' has reached their weekly attendance limit ('+capStatus.current+' of '+capStatus.max+' this week). Check in anyway?'))return;
+    }
     var ins=await sb.from('class_attendance').insert({session_id:currentRosterSessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()}).select().single();
     if(!ins.error){ rosterAttendance[sid]=ins.data.id; }
   }
@@ -3756,14 +3784,22 @@ async function loadSessionPacks(){
     populateSessionPackDropdowns();
   }catch(e){allSessionPacks=[];}
 }
+function packTemplateRowHTML(p){
+  var st=p.session_types; var typeName=st?st.name:'Any Type';
+  var expiry=p.expiry_days?p.expiry_days+' day expiry':'No expiry';
+  return '<div class="pack-template-card"><div><div class="pack-template-name">'+p.name+'</div><div class="pack-template-meta">'+p.quantity+' session'+(p.quantity!==1?'s':'')+' \u00B7 '+typeName+' \u00B7 '+expiry+(p.active?' \u00B7 Active':' \u00B7 Inactive')+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">$'+parseFloat(p.price||0).toFixed(2)+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditSessionPack(\''+p.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" onclick="deleteSessionPack(\''+p.id+'\')">Delete</button></div></div></div>';
+}
+
 function renderSessionPacks(){
   var el=document.getElementById('sessionPacksList'); if(!el) return;
   if(!allSessionPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session packs yet.</div>';return;}
-  el.innerHTML=allSessionPacks.map(function(p){
-    var st=p.session_types; var typeName=st?st.name:'Any Type';
-    var expiry=p.expiry_days?p.expiry_days+' day expiry':'No expiry';
-    return '<div class="pack-template-card"><div><div class="pack-template-name">'+p.name+'</div><div class="pack-template-meta">'+p.quantity+' session'+(p.quantity!==1?'s':'')+' \u00B7 '+typeName+' \u00B7 '+expiry+(p.active?' \u00B7 Active':' \u00B7 Inactive')+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">$'+parseFloat(p.price||0).toFixed(2)+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditSessionPack(\''+p.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" onclick="deleteSessionPack(\''+p.id+'\')">Delete</button></div></div></div>';
-  }).join('');
+  var classPacks=allSessionPacks.filter(function(p){return (p.kind||'class')==='class';});
+  var sessionPacks=allSessionPacks.filter(function(p){return p.kind==='session';});
+  var hStyle='font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin:1.1rem 0 0.5rem 0;padding-bottom:0.3rem;border-bottom:1px solid var(--border)';
+  var html='';
+  if(classPacks.length){html+='<div style="'+hStyle+'">Class Packs</div>'+classPacks.map(packTemplateRowHTML).join('');}
+  if(sessionPacks.length){html+='<div style="'+hStyle+'">Session Packs</div>'+sessionPacks.map(packTemplateRowHTML).join('');}
+  el.innerHTML=html;
 }
 function populateSessionPackDropdowns(){
   // POS packs grid
@@ -3798,6 +3834,8 @@ function openEditSessionPack(pid){
   var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return;
   document.getElementById('addSessionPackTitle').textContent='Edit Session Pack';
   document.getElementById('sessPackEditId').value=p.id;
+  var kindRadio=document.querySelector('input[name=spKind][value='+(p.kind||'class')+']');
+  if(kindRadio)kindRadio.checked=true;
   document.getElementById('spName').value=p.name||'';
   document.getElementById('spQuantity').value=p.quantity||10;
   document.getElementById('spPrice').value=p.price||0;
@@ -3816,7 +3854,9 @@ async function saveSessionPack(){
   var name=document.getElementById('spName').value.trim();
   if(!name){setMsg('sessPackMsg','Name required.','error');return;}
   setMsg('sessPackMsg','Saving...','');
-  var payload={name:name,quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:document.getElementById('spSessionType').value||null,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
+  var kindEl=document.querySelector('input[name=spKind]:checked');
+  var kind=kindEl?kindEl.value:'class';
+  var payload={name:name,kind:kind,quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:document.getElementById('spSessionType').value||null,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
   var r; if(eid){r=await sb.from('session_packs').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('session_packs').insert(payload);}
   if(r.error){setMsg('sessPackMsg',r.error.message,'error');}else{setMsg('sessPackMsg','Saved!','success');await loadSessionPacks();setTimeout(closeAddSessionPack,800);}
 }
@@ -4093,9 +4133,9 @@ async function savePackToStudent(){
   var pack=allSessionPacks.find(function(p){return p.id===packId;});
   var expiry=document.getElementById('addPackExpiry').value||null;
   if(!expiry&&pack&&pack.expiry_days){var exp=new Date();exp.setDate(exp.getDate()+pack.expiry_days);expiry=localDateStr(exp);}
-var pkR=await sb.from('session_packs').select('name,session_type_id').eq('id',packId).single();
+var pkR=await sb.from('session_packs').select('name,session_type_id,kind').eq('id',packId).single();
     var pk=pkR.data||{};
-    var r=await sb.from('student_session_packs').insert({school_id:SID,student_id:currentProfileStudent.id,session_pack_id:packId,session_type_id:pk.session_type_id||null,name:pk.name||null,sessions_remaining:qty,sessions_total:qty,expires_at:expiry?expiry+'T00:00:00':null,notes:document.getElementById('addPackNote').value.trim()||null,status:'active'});
+    var r=await sb.from('student_session_packs').insert({school_id:SID,student_id:currentProfileStudent.id,session_pack_id:packId,session_type_id:pk.session_type_id||null,name:pk.name||null,sessions_remaining:qty,sessions_total:qty,expires_at:expiry?expiry+'T00:00:00':null,notes:document.getElementById('addPackNote').value.trim()||null,pack_kind:pk.kind,status:'active'});
   if(r.error){setMsg('addPackMsg',r.error.message,'error');}else{setMsg('addPackMsg','Pack added!','success');await loadProfilePacks(currentProfileStudent.id);setTimeout(closeAddPackToStudent,800);}
 }
 async function loadProfilePacks(sid){
@@ -6628,7 +6668,7 @@ async function checkoutPOS_cash(){
         expiry = localDateStr(exp);
       }
      for(var q=0; q<item.qty; q++){
-        await sb.from('student_session_packs').insert({
+       await sb.from('student_session_packs').insert({
           school_id: SID,
           student_id: posSelectedStudentId,
           session_pack_id: pack.id,
@@ -6637,6 +6677,7 @@ async function checkoutPOS_cash(){
           sessions_remaining: pack.quantity,
           sessions_total: pack.quantity,
           expires_at: expiry ? expiry + 'T00:00:00' : null,
+          pack_kind: pack.kind,
           status: 'active',
         });
       }
