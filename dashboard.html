@@ -777,10 +777,11 @@
       </div>
     </div>
 
-    <!-- ═══════════════ §PAGE-MEMBERSHIPS ═══════════════ -->
+   <!-- ═══════════════ §PAGE-MEMBERSHIPS ═══════════════ -->
     <div class="page" id="page-memberships">
       <div class="content-heading"><h2>Memberships</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddMembership()"><i class="fa-solid fa-plus"></i> Add Membership</button></div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Membership Plans</span></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Programs</th><th>Type</th><th>Price</th><th>Class Access</th><th>Autopay Day</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="membershipsTableBody"></tbody></table></div></div>
+      <div class="panel" style="margin-top:1.5rem"><div class="panel-header"><span class="panel-title">Class Packs</span><button class="panel-action" onclick="openAddClassPack()"><i class="fa-solid fa-plus"></i> New Class Pack</button></div><div class="panel-body"><p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Class pack templates define credit-based access to group classes. Sold via POS or granted from member profiles.</p><div id="classPacksList"></div></div></div>
     </div>
 
     <!-- ═══════════════ §PAGE-MEMBERS ═══════════════ -->
@@ -2219,7 +2220,7 @@
     <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
 <input type="hidden" id="sessPackEditId" value="" />
-      <div class="field"><label>Pack Type</label><div style="display:flex;gap:1.5rem;margin-top:0.4rem"><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="class" checked style="cursor:pointer" /><span>Class Pack</span></label><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="session" style="cursor:pointer" /><span>Session Pack</span></label></div></div>
+<div class="field" id="spKindField" style="display:none"><label>Pack Type</label><div style="display:flex;gap:1.5rem;margin-top:0.4rem"><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="class" checked style="cursor:pointer" /><span>Class Pack</span></label><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="session" style="cursor:pointer" /><span>Session Pack</span></label></div></div>
       <div class="field"><label>Pack Name</label><input type="text" id="spName" placeholder="e.g. 10-Class Pack" /></div>
       <div class="form-row">
         <div class="field"><label>Number of Sessions</label><input type="number" id="spQuantity" value="10" min="1" /></div>
@@ -3053,7 +3054,8 @@ function navigate(page,el){
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
-  if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
+if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
+  if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='communications') { loadSmsInbox(); }
@@ -3781,6 +3783,7 @@ async function loadSessionPacks(){
     var r=await sb.from('session_packs').select('*, session_types(name)').eq('school_id',SID).order('name');
     allSessionPacks=r.data||[];
     renderSessionPacks();
+    renderClassPacks();
     populateSessionPackDropdowns();
   }catch(e){allSessionPacks=[];}
 }
@@ -3792,14 +3795,16 @@ function packTemplateRowHTML(p){
 
 function renderSessionPacks(){
   var el=document.getElementById('sessionPacksList'); if(!el) return;
-  if(!allSessionPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session packs yet.</div>';return;}
-  var classPacks=allSessionPacks.filter(function(p){return (p.kind||'class')==='class';});
   var sessionPacks=allSessionPacks.filter(function(p){return p.kind==='session';});
-  var hStyle='font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin:1.1rem 0 0.5rem 0;padding-bottom:0.3rem;border-bottom:1px solid var(--border)';
-  var html='';
-  if(classPacks.length){html+='<div style="'+hStyle+'">Class Packs</div>'+classPacks.map(packTemplateRowHTML).join('');}
-  if(sessionPacks.length){html+='<div style="'+hStyle+'">Session Packs</div>'+sessionPacks.map(packTemplateRowHTML).join('');}
-  el.innerHTML=html;
+  if(!sessionPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session packs yet.</div>';return;}
+  el.innerHTML=sessionPacks.map(packTemplateRowHTML).join('');
+}
+
+function renderClassPacks(){
+  var el=document.getElementById('classPacksList'); if(!el) return;
+  var classPacks=allSessionPacks.filter(function(p){return (p.kind||'class')==='class';});
+  if(!classPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No class packs yet.</div>';return;}
+  el.innerHTML=classPacks.map(packTemplateRowHTML).join('');
 }
 function populateSessionPackDropdowns(){
   // POS packs grid
@@ -3827,14 +3832,34 @@ function openAddSessionPack(){
   document.getElementById('spActive').checked=true;
   document.getElementById('spShowPortal').checked=true;
   document.getElementById('sessPackMsg').textContent='';
+  var sessionRadio=document.querySelector('input[name=spKind][value=session]');
+  if(sessionRadio)sessionRadio.checked=true;
+  populateSessionPackDropdowns();
+  document.getElementById('addSessionPackModal').classList.add('active');
+}
+
+function openAddClassPack(){
+  document.getElementById('addSessionPackTitle').textContent='New Class Pack';
+  document.getElementById('sessPackEditId').value='';
+  document.getElementById('spName').value='';
+  document.getElementById('spQuantity').value='10';
+  document.getElementById('spPrice').value='0';
+  document.getElementById('spExpiryDays').value='';
+  document.getElementById('spDescription').value='';
+  document.getElementById('spActive').checked=true;
+  document.getElementById('spShowPortal').checked=true;
+  document.getElementById('sessPackMsg').textContent='';
+  var classRadio=document.querySelector('input[name=spKind][value=class]');
+  if(classRadio)classRadio.checked=true;
   populateSessionPackDropdowns();
   document.getElementById('addSessionPackModal').classList.add('active');
 }
 function openEditSessionPack(pid){
   var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return;
-  document.getElementById('addSessionPackTitle').textContent='Edit Session Pack';
+  var pk=p.kind||'class';
+  document.getElementById('addSessionPackTitle').textContent=pk==='session'?'Edit Session Pack':'Edit Class Pack';
   document.getElementById('sessPackEditId').value=p.id;
-  var kindRadio=document.querySelector('input[name=spKind][value='+(p.kind||'class')+']');
+  var kindRadio=document.querySelector('input[name=spKind][value='+pk+']');
   if(kindRadio)kindRadio.checked=true;
   document.getElementById('spName').value=p.name||'';
   document.getElementById('spQuantity').value=p.quantity||10;
