@@ -2180,13 +2180,32 @@
         <div class="field"><label>Status</label><select id="sessionStatus"><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
       </div>
       <div class="field"><label>Price (optional)</label><input type="number" id="sessionPrice" value="0" min="0" step="0.01" oninput="updateBookSessionCheckoutButtons()" /></div>
-      <div class="field"><label>Notes</label><textarea id="sessionNotes" rows="3" placeholder="Session goals, focus areas..."></textarea></div>
+<div class="field"><label>Notes</label><textarea id="sessionNotes" rows="3" placeholder="Session goals, focus areas..."></textarea></div>
+      <!-- §SESSION-PACK-BANNER — shows when an active matching pack is detected -->
+      <div id="bookSessionPackBanner" style="display:none;background:linear-gradient(135deg,rgba(118,187,64,0.15),rgba(118,187,64,0.05));border:1px solid rgba(118,187,64,0.4);padding:0.75rem 1rem;margin-bottom:0.5rem;border-radius:4px;font-size:0.85rem">
+        <div style="display:flex;align-items:start;gap:0.65rem">
+          <i class="fa-solid fa-ticket" style="color:#76bb40;font-size:1.1rem;margin-top:0.1rem"></i>
+          <div style="flex:1">
+            <div style="font-weight:600;color:#76bb40;margin-bottom:0.15rem">Pack credit will be used</div>
+            <div id="bookSessionPackBannerDetail" style="color:var(--muted);font-size:0.78rem">Loading...</div>
+          </div>
+        </div>
+      </div>
       <div id="bookSessionCheckoutButtons" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
-        <button id="bookSessionBtnCardOnFile" class="btn-gold-full" style="opacity:0.5;cursor:not-allowed" onclick="bookSession_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Save &amp; Charge Card on File</button>
+        <button id="bookSessionBtnUsePack" class="btn-gold-full" style="display:none" onclick="bookSession_usePack()"><i class="fa-solid fa-ticket" style="margin-right:0.5rem"></i>Confirm Booking with Pack Credit</button>
+      <button id="bookSessionBtnCardOnFile" class="btn-gold-full" style="opacity:0.5;cursor:not-allowed" onclick="bookSession_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Save &amp; Charge Card on File</button>
         <button id="bookSessionBtnPaymentLink" class="btn-gold-full" style="background:transparent;border:1px solid var(--gold);color:var(--gold);opacity:0.5;cursor:not-allowed" onclick="bookSession_paymentLink()" disabled><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Save &amp; Send Payment Link</button>
         <button id="bookSessionBtnCash" class="btn-sm" style="width:100%;text-align:center" onclick="bookSession_cash()"><i class="fa-solid fa-bookmark" style="margin-right:0.5rem"></i>Save Session (no charge)</button>
       </div>
       <p class="form-msg" id="sessionMsg"></p>
+      <!-- §SESSION-SUCCESS-PANEL — persistent confirmation, replaces form on save -->
+      <div id="bookSessionSuccessPanel" style="display:none;text-align:center;padding:1.5rem 0">
+        <div style="font-size:2.5rem;color:var(--gold);margin-bottom:0.5rem"><i class="fa-solid fa-circle-check"></i></div>
+        <div style="font-size:1.15rem;font-weight:600;color:var(--white);margin-bottom:0.5rem">Session Booked</div>
+        <div id="bookSessionSuccessDetail" style="color:var(--muted);font-size:0.85rem;margin-bottom:0.25rem"></div>
+        <div id="bookSessionSuccessPayment" style="color:var(--gold);font-size:0.9rem;margin-bottom:1.25rem;font-weight:500"></div>
+        <button class="btn-gold-full" style="max-width:200px;margin:0 auto" onclick="closeBookSession()">Done</button>
+      </div>
     </div>
   </div>
 </div>
