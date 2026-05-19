@@ -3802,9 +3802,15 @@ function renderSessionPacks(){
 
 function renderClassPacks(){
   var el=document.getElementById('classPacksList'); if(!el) return;
-  var classPacks=allSessionPacks.filter(function(p){return (p.kind||'class')==='class';});
+  var classPacks=allMemberships.filter(function(m){return m.class_limit_type==='class_pack';});
   if(!classPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No class packs yet.</div>';return;}
-  el.innerHTML=classPacks.map(packTemplateRowHTML).join('');
+  el.innerHTML=classPacks.map(function(m){
+    var count=m.class_limit_count||0;
+    var classLabel=count+' class'+(count!==1?'es':'');
+    var statusLabel=m.active?'Active':'Inactive';
+    var price='$'+parseFloat(m.price||0).toFixed(2);
+    return '<div class="pack-template-card"><div><div class="pack-template-name">'+m.name+'</div><div class="pack-template-meta">'+classLabel+' \u00B7 '+statusLabel+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">'+price+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div></div>';
+  }).join('');
 }
 function populateSessionPackDropdowns(){
   // POS packs grid
@@ -6471,9 +6477,10 @@ async function loadMemberships(){
 }
 async function renderMemberships(){
   var tb=document.getElementById('membershipsTableBody');
-  if(!allMemberships.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}
+  var nonClassPack=allMemberships.filter(function(m){return m.class_limit_type!=='class_pack';});
+  if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}
   var mpR=await sb.from('membership_programs').select('membership_id,program_id'); var mpData=mpR.data||[];
-  tb.innerHTML=allMemberships.map(function(m){
+  tb.innerHTML=nonClassPack.map(function(m){
     var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
     var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
     var limit=m.class_limit_type==='unlimited'?'Unlimited':(m.class_limit_count||'?')+'/'+(m.class_limit_type==='per_week'?'wk':'mo');
