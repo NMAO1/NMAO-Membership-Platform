@@ -3783,7 +3783,6 @@ async function loadSessionPacks(){
     var r=await sb.from('session_packs').select('*, session_types(name)').eq('school_id',SID).order('name');
     allSessionPacks=r.data||[];
     renderSessionPacks();
-    renderClassPacks();
     populateSessionPackDropdowns();
   }catch(e){allSessionPacks=[];}
 }
@@ -3845,20 +3844,29 @@ function openAddSessionPack(){
 }
 
 function openAddClassPack(){
-  document.getElementById('addSessionPackTitle').textContent='New Class Pack';
-  document.getElementById('sessPackEditId').value='';
-  document.getElementById('spName').value='';
-  document.getElementById('spQuantity').value='10';
-  document.getElementById('spPrice').value='0';
-  document.getElementById('spExpiryDays').value='';
-  document.getElementById('spDescription').value='';
-  document.getElementById('spActive').checked=true;
-  document.getElementById('spShowPortal').checked=true;
-  document.getElementById('sessPackMsg').textContent='';
-  var classRadio=document.querySelector('input[name=spKind][value=class]');
-  if(classRadio)classRadio.checked=true;
-  populateSessionPackDropdowns();
-  document.getElementById('addSessionPackModal').classList.add('active');
+  document.getElementById('addMembershipTitle').textContent='New Class Pack';
+  document.getElementById('memEditId').value='';
+  document.getElementById('memName').value='';
+  document.getElementById('memType').value='class_pack';
+  document.getElementById('memLength').value='1';
+  document.getElementById('memUnit').value='months';
+  document.getElementById('memPrice').value='';
+  document.getElementById('memSignup').value='0';
+  document.getElementById('memLimitType').value='class_pack';
+  document.getElementById('memLimitCount').value='';
+  document.getElementById('memAutopayDay').value='anniversary';
+  document.getElementById('memCustomDayField').style.display='none';
+  document.getElementById('memVisibility').value='public';
+  document.getElementById('memAutoRenew').checked=false;
+  document.getElementById('memAutopay').checked=false;
+  document.getElementById('memFeatured').checked=false;
+  document.getElementById('memTrial').checked=false;
+  document.getElementById('memClassReservation').checked=false;
+  document.getElementById('classLimitField').style.display='block';
+  document.getElementById('membershipMsg').textContent='';
+  populateProgramCheckboxes([]);
+  setTimeout(function(){if(quillEditors['memDescEditor'])quillEditors['memDescEditor'].setText('');},50);
+  document.getElementById('addMembershipModal').classList.add('active');
 }
 function openEditSessionPack(pid){
   var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return;
@@ -6474,6 +6482,7 @@ async function loadMemberships(){
   var r=await sb.from('memberships').select('*').eq('school_id',SID).eq('active',true).order('name');
   allMemberships=r.data||[];
   renderMemberships();
+  renderClassPacks();
 }
 async function renderMemberships(){
   var tb=document.getElementById('membershipsTableBody');
