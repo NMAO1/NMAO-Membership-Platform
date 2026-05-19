@@ -2219,8 +2219,7 @@
   <div class="modal" style="width:480px;max-width:95vw">
     <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-<input type="hidden" id="sessPackEditId" value="" />
-<div class="field" id="spKindField" style="display:none"><label>Pack Type</label><div style="display:flex;gap:1.5rem;margin-top:0.4rem"><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="class" checked style="cursor:pointer" /><span>Class Pack</span></label><label style="display:flex;align-items:center;gap:0.45rem;cursor:pointer;font-size:0.9rem;color:var(--white)"><input type="radio" name="spKind" value="session" style="cursor:pointer" /><span>Session Pack</span></label></div></div>
+    <input type="hidden" id="sessPackEditId" value="" />
       <div class="field"><label>Pack Name</label><input type="text" id="spName" placeholder="e.g. 10-Class Pack" /></div>
       <div class="form-row">
         <div class="field"><label>Number of Sessions</label><input type="number" id="spQuantity" value="10" min="1" /></div>
@@ -3893,9 +3892,7 @@ async function saveSessionPack(){
   var name=document.getElementById('spName').value.trim();
   if(!name){setMsg('sessPackMsg','Name required.','error');return;}
   setMsg('sessPackMsg','Saving...','');
-  var kindEl=document.querySelector('input[name=spKind]:checked');
-  var kind=kindEl?kindEl.value:'class';
-  var payload={name:name,kind:kind,quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:document.getElementById('spSessionType').value||null,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
+  var payload={name:name,kind:'session',quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:document.getElementById('spSessionType').value||null,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
   var r; if(eid){r=await sb.from('session_packs').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('session_packs').insert(payload);}
   if(r.error){setMsg('sessPackMsg',r.error.message,'error');}else{setMsg('sessPackMsg','Saved!','success');await loadSessionPacks();setTimeout(closeAddSessionPack,800);}
 }
