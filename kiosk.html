@@ -641,18 +641,26 @@ async function doCheckinForStudent(student,callback){  try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
 
-// §KIOSK: CLASS_WINDOW_CHECK + SESSION_FALLBACK
-    // Try class check-in first. If class is denied (no program, mismatched program,
+// §KIOSK: CLASS_WINDOW_CHECK + SESSION_FALLBACK + MULTI_PROGRAM_MATCH
+    // Try class check-in first. If class is denied (no membership, no program coverage,
     // or no class in window), check for a scheduled session in the kiosk window
     // before denying. Session check-in completes the session and deducts the pack.
     if(currentClass){
-      // §KIOSK: PROGRAM_MATCH
-      if(!student.program_id){
+      // §KIOSK: PROGRAM_MATCH — checks if ANY active membership covers the class's program
+      // via the membership_programs junction. Replaces the single-FK student.program_id check.
+      var smRP=await sb.from('student_memberships').select('membership_id').eq('student_id',student.id).eq('status','active');
+      var activeMembershipIds=(smRP.data||[]).map(function(r){return r.membership_id;});
+      if(activeMembershipIds.length===0){
         if(await tryKioskSessionCheckin(student,callback)) return;
         showKioskDenial('Please see the front desk to set up your membership before checking in.');
         if(callback)callback();return;
       }
-      if(student.program_id!==currentClass.program_id){
+      var mpR=await sb.from('membership_programs')
+        .select('program_id')
+        .in('membership_id',activeMembershipIds)
+        .eq('program_id',currentClass.program_id)
+        .limit(1);
+      if(!mpR.data||mpR.data.length===0){
         if(await tryKioskSessionCheckin(student,callback)) return;
         showKioskDenial('This class is not part of your enrolled program. Please see the front desk.');
         if(callback)callback();return;
