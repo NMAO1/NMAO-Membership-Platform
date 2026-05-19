@@ -4087,8 +4087,11 @@ async function showBookSessionSuccess(paymentMode){
   if(paymentMode === 'pack'){
     var studentId = document.getElementById('sessionStudentId').value;
     var typeId = document.getElementById('sessionTypeSelect').value;
-    var pack = await detectBookSessionPack(studentId, typeId);
-    var remaining = pack ? pack.sessions_remaining : 0;
+var pack = await detectBookSessionPack(studentId, typeId);
+    // Subtract 1 to reflect post-consumption count. The trigger hasn't fired yet
+    // (it runs on status='completed'), but the user just committed to using one,
+    // so the projected count is what makes sense in this UX moment.
+    var remaining = pack ? Math.max(0, pack.sessions_remaining - 1) : 0;
     payment.innerHTML = '<i class="fa-solid fa-ticket" style="margin-right:0.4rem"></i>Paid with pack credit \u00b7 ' + remaining + ' credit' + (remaining !== 1 ? 's' : '') + ' remaining';
   }else if(paymentMode === 'card'){
     payment.innerHTML = '<i class="fa-solid fa-credit-card" style="margin-right:0.4rem"></i>Charged to card on file';
