@@ -781,7 +781,7 @@
     <div class="page" id="page-memberships">
       <div class="content-heading"><h2>Memberships</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddMembership()"><i class="fa-solid fa-plus"></i> Add Membership</button></div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Membership Plans</span></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Programs</th><th>Type</th><th>Price</th><th>Class Access</th><th>Autopay Day</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="membershipsTableBody"></tbody></table></div></div>
-      <div class="panel" style="margin-top:1.5rem"><div class="panel-header"><span class="panel-title">Class Packs</span><button class="panel-action" onclick="openAddClassPack()"><i class="fa-solid fa-plus"></i> New Class Pack</button></div><div class="panel-body"><p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Class pack templates define credit-based access to group classes. Sold via POS or granted from member profiles.</p><div id="classPacksList"></div></div></div>
+      <div class="panel" style="margin-top:1.5rem"><div class="panel-header"><span class="panel-title">Class Packs</span><button class="panel-action" onclick="openAddClassPack()"><i class="fa-solid fa-plus"></i> New Class Pack</button></div><div class="panel-body"><p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Class pack memberships grant a fixed number of group classes. Assign to students through the profile membership flow.</p><div id="classPacksList"></div></div></div>
     </div>
 
     <!-- ═══════════════ §PAGE-MEMBERS ═══════════════ -->
@@ -3812,16 +3812,16 @@ function renderClassPacks(){
   }).join('');
 }
 function populateSessionPackDropdowns(){
-  // POS packs grid
+  // POS packs grid - session-kind only (class packs live in Memberships)
   var posPacksGrid=document.getElementById('posPacksGrid');
   if(posPacksGrid){
-    var activePacks=allSessionPacks.filter(function(p){return p.active;});
+    var activePacks=allSessionPacks.filter(function(p){return p.active&&p.kind==='session';});
     if(!activePacks.length){posPacksGrid.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.82rem;grid-column:1/-1">No session packs configured.</div>';return;}
     posPacksGrid.innerHTML=activePacks.map(function(p){return '<div class="pos-quick-item" onclick="addPackToPOSCart(\''+p.id+'\')"><div class="pos-quick-name">'+p.name+'</div><div class="pos-quick-price">$'+parseFloat(p.price||0).toFixed(2)+'</div><div style="font-size:0.62rem;color:var(--muted);margin-top:0.1rem">'+p.quantity+' sessions</div></div>';}).join('');
   }
-  // Add pack to student modal
+  // Add pack to student modal - session-kind only
   var addPackSel=document.getElementById('addPackSelect');
-  if(addPackSel){addPackSel.innerHTML='<option value="">-- Select Pack --</option>';allSessionPacks.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.quantity+' sessions)';addPackSel.appendChild(o);});}
+  if(addPackSel){addPackSel.innerHTML='<option value="">-- Select Pack --</option>';allSessionPacks.filter(function(p){return p.kind==='session';}).forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.quantity+' sessions)';addPackSel.appendChild(o);});}
   // Session pack modal dropdown
   var spSel=document.getElementById('spSessionType');
   if(spSel){spSel.innerHTML='<option value="">Any Type</option>';allSessionTypes.forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name;spSel.appendChild(o);});}
