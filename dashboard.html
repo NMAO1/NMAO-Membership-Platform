@@ -3308,20 +3308,31 @@ async function openClassRosterFromCal(classId,dateStr){
 // §JS: DASHBOARD-CAP-CHECK — membership cap enforcement for roster check-ins.
 // Reads active membership via student_memberships junction (drift-immune).
 // Pack inventory is NEVER consulted here — domain separation rule (memberships only).
+// Handles both per_week (rolling 7-day count vs class_attendance) and class_pack
+// (lifetime classes_used on the membership row, populated by trigger).
 async function attendanceCapCheck(studentId){
   try{
-    var smR=await sb.from('student_memberships').select('membership_id,memberships(class_limit_type,class_limit_count)').eq('student_id',studentId).eq('status','active').order('created_at',{ascending:false}).limit(1);
+    var smR=await sb.from('student_memberships').select('membership_id,classes_used,memberships(class_limit_type,class_limit_count)').eq('student_id',studentId).eq('status','active').order('created_at',{ascending:false}).limit(1);
     var rows=smR.data||[];
     if(!rows.length) return null;
-    var mem=rows[0].memberships;
-    if(!mem||mem.class_limit_type!=='per_week'||!mem.class_limit_count) return null;
+    var row=rows[0];
+    var mem=row.memberships;
+    if(!mem||!mem.class_limit_count) return null;
     var limit=parseInt(mem.class_limit_count)||0;
     if(limit<=0) return null;
-    var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
-    var cutoff=sevenDaysAgo.toISOString().split('T')[0]+'T00:00:00';
-    var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
-    var weekCount=countR.count||0;
-    if(weekCount>=limit){return {atCap:true,current:weekCount,max:limit};}
+    if(mem.class_limit_type==='class_pack'){
+      var used=parseInt(row.classes_used)||0;
+      if(used>=limit){return {atCap:true,current:used,max:limit,capType:'class_pack'};}
+      return null;
+    }
+    if(mem.class_limit_type==='per_week'){
+      var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+      var cutoff=sevenDaysAgo.toISOString().split('T')[0]+'T00:00:00';
+      var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
+      var weekCount=countR.count||0;
+      if(weekCount>=limit){return {atCap:true,current:weekCount,max:limit,capType:'per_week'};}
+      return null;
+    }
     return null;
   }catch(e){console.error('attendanceCapCheck error:',e);return null;}
 }
@@ -3336,7 +3347,13 @@ async function toggleRosterAttendance(sid){
     if(capStatus&&capStatus.atCap){
       var student=currentRosterStudents.find(function(s){return s.id===sid;});
       var nm=student?(student.first_name+' '+student.last_name):'This student';
-      if(!confirm(nm+' has reached their weekly attendance limit ('+capStatus.current+' of '+capStatus.max+' this week). Check in anyway?'))return;
+      var msg;
+      if(capStatus.capType==='class_pack'){
+        msg=nm+' has used all classes on their class pack ('+capStatus.current+' of '+capStatus.max+'). Check in anyway?';
+      }else{
+        msg=nm+' has reached their weekly attendance limit ('+capStatus.current+' of '+capStatus.max+' this week). Check in anyway?';
+      }
+      if(!confirm(msg))return;
     }
     var ins=await sb.from('class_attendance').insert({session_id:currentRosterSessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()}).select().single();
     if(!ins.error){ rosterAttendance[sid]=ins.data.id; }
@@ -3836,8 +3853,6 @@ function openAddSessionPack(){
   document.getElementById('spActive').checked=true;
   document.getElementById('spShowPortal').checked=true;
   document.getElementById('sessPackMsg').textContent='';
-  var sessionRadio=document.querySelector('input[name=spKind][value=session]');
-  if(sessionRadio)sessionRadio.checked=true;
   populateSessionPackDropdowns();
   document.getElementById('addSessionPackModal').classList.add('active');
 }
@@ -3869,11 +3884,8 @@ function openAddClassPack(){
 }
 function openEditSessionPack(pid){
   var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return;
-  var pk=p.kind||'class';
-  document.getElementById('addSessionPackTitle').textContent=pk==='session'?'Edit Session Pack':'Edit Class Pack';
+  document.getElementById('addSessionPackTitle').textContent='Edit Session Pack';
   document.getElementById('sessPackEditId').value=p.id;
-  var kindRadio=document.querySelector('input[name=spKind][value='+pk+']');
-  if(kindRadio)kindRadio.checked=true;
   document.getElementById('spName').value=p.name||'';
   document.getElementById('spQuantity').value=p.quantity||10;
   document.getElementById('spPrice').value=p.price||0;
