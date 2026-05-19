@@ -4067,8 +4067,15 @@ function updateBookSessionCheckoutButtons(){
 // Cash path — saves session + records payment row if price > 0
 async function bookSession_cash(){
   setMsg('sessionMsg', 'Saving...', '');
-  var saveResult = await saveSessionRow();
+var saveResult = await saveSessionRow();
   if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+  // Pack credit auto-linked → no payment recorded; consumption happens at completion
+  if(saveResult.session && saveResult.session.student_session_pack_id){
+    setMsg('sessionMsg', 'Session booked — paid with pack credit.', 'success');
+    await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+    setTimeout(closeBookSession, 1500);
+    return;
+  }
   var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
   var studentId = document.getElementById('sessionStudentId').value;
   if(price > 0){
@@ -4102,8 +4109,16 @@ async function bookSession_cardOnFile(){
   if(price <= 0){setMsg('sessionMsg','Price must be greater than $0 to charge.','error'); return;}
 
   setMsg('sessionMsg','Saving session...','');
-  var saveResult = await saveSessionRow();
+var saveResult = await saveSessionRow();
   if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+
+  // Pack credit auto-linked → skip card charge; consumption happens at completion
+  if(saveResult.session && saveResult.session.student_session_pack_id){
+    setMsg('sessionMsg', 'Session booked — paid with pack credit.', 'success');
+    await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+    setTimeout(closeBookSession, 1500);
+    return;
+  }
 
   setMsg('sessionMsg','Charging card on file...','');
   try{
@@ -4145,6 +4160,14 @@ async function bookSession_paymentLink(){
   setMsg('sessionMsg','Saving session...','');
   var saveResult = await saveSessionRow();
   if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+
+  // Pack credit auto-linked → skip payment link; consumption happens at completion
+  if(saveResult.session && saveResult.session.student_session_pack_id){
+    setMsg('sessionMsg', 'Session booked — paid with pack credit.', 'success');
+    await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+    setTimeout(closeBookSession, 1500);
+    return;
+  }
 
   setMsg('sessionMsg','Generating payment link...','');
   try{
