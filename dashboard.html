@@ -3985,8 +3985,29 @@ async function saveSessionRow(){
   var r;
   if(eid){
     r = await sb.from('sessions').update(payload).eq('id', eid).select().single();
-  }else{
+ }else{
     payload.school_id = SID;
+    // §JS: AUTO-LINK-PACK — Tier 3.3a — mirrors confirm-session FIFO logic.
+    // Best-effort attachment: silent no-op if student or session_type missing,
+    // or if no matching active pack with credits + valid expiry.
+    if(payload.student_id && payload.session_type_id){
+      try{
+        var nowIso = new Date().toISOString();
+        var pkLookup = await sb.from('student_session_packs')
+          .select('id')
+          .eq('student_id', payload.student_id)
+          .eq('session_type_id', payload.session_type_id)
+          .eq('pack_kind', 'session')
+          .eq('status', 'active')
+          .gt('sessions_remaining', 0)
+          .or('expires_at.is.null,expires_at.gt.' + nowIso)
+          .order('purchased_at', { ascending: true })
+          .limit(1);
+        if(!pkLookup.error && pkLookup.data && pkLookup.data.length > 0){
+          payload.student_session_pack_id = pkLookup.data[0].id;
+        }
+      }catch(e){ console.error('auto-link pack lookup failed:', e); }
+    }
     r = await sb.from('sessions').insert(payload).select().single();
   }
   if(r.error) return { success: false, error: r.error.message };
