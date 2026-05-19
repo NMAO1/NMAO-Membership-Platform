@@ -641,26 +641,26 @@ async function doCheckinForStudent(student,callback){  try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
 
-// §KIOSK: CLASS_WINDOW_CHECK + SESSION_FALLBACK + MULTI_PROGRAM_MATCH
-    // Try class check-in first. If class is denied (no membership, no program coverage,
-    // or no class in window), check for a scheduled session in the kiosk window
-    // before denying. Session check-in completes the session and deducts the pack.
+// §KIOSK: MEMBERSHIP_FETCH — single RPC call (SECURITY DEFINER, anon-callable).
+    // Returns active memberships with program coverage + prefetched attendance counts.
+    // Bypasses RLS that would silently block direct reads of student_memberships from anon.
+    var memR=await sb.rpc('get_student_membership_for_kiosk',{p_student_id:student.id});
+    var activeMemberships=memR.data||[];
+    if(memR.error) console.error('Kiosk membership RPC error:',memR.error);
+
+    // §KIOSK: CLASS_WINDOW_CHECK + SESSION_FALLBACK + MULTI_PROGRAM_MATCH
     if(currentClass){
-      // §KIOSK: PROGRAM_MATCH — checks if ANY active membership covers the class's program
-      // via the membership_programs junction. Replaces the single-FK student.program_id check.
-      var smRP=await sb.from('student_memberships').select('membership_id').eq('student_id',student.id).eq('status','active');
-      var activeMembershipIds=(smRP.data||[]).map(function(r){return r.membership_id;});
-      if(activeMembershipIds.length===0){
+      if(activeMemberships.length===0){
         if(await tryKioskSessionCheckin(student,callback)) return;
         showKioskDenial('Please see the front desk to set up your membership before checking in.');
         if(callback)callback();return;
       }
-      var mpR=await sb.from('membership_programs')
-        .select('program_id')
-        .in('membership_id',activeMembershipIds)
-        .eq('program_id',currentClass.program_id)
-        .limit(1);
-      if(!mpR.data||mpR.data.length===0){
+      var programCovered=false;
+      for(var iMem=0;iMem<activeMemberships.length;iMem++){
+        var progs=activeMemberships[iMem].program_ids||[];
+        if(progs.indexOf(currentClass.program_id)!==-1){programCovered=true;break;}
+      }
+      if(!programCovered){
         if(await tryKioskSessionCheckin(student,callback)) return;
         showKioskDenial('This class is not part of your enrolled program. Please see the front desk.');
         if(callback)callback();return;
@@ -670,35 +670,41 @@ async function doCheckinForStudent(student,callback){  try{
       showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and stays open until 90 minutes after class starts.');
       if(callback)callback();return;
     }
-// §KIOSK: CAP_CHECK
-    // Three-branch enforcement: class_pack / per_week / per_month.
-    // Resolves active membership via student_memberships junction (drift-immune).
-    // Kiosk denial is HARD (no override) — students must see front desk to override.
-    var smR=await sb.from('student_memberships').select('id,classes_used,memberships(class_limit_type,class_limit_count)').eq('student_id',student.id).eq('status','active').order('created_at',{ascending:false}).limit(1);
-    var smRows=smR.data||[];
-    if(smRows.length){
-      var smRow=smRows[0];
-      var mem=smRow.memberships;
-      if(mem&&mem.class_limit_count){
-        var limit=parseInt(mem.class_limit_count)||0;
-        if(limit>0){
-          if(mem.class_limit_type==='class_pack'){
-            var used=parseInt(smRow.classes_used)||0;
-            if(used>=limit){
-              showKioskDenial('Class pack used up — '+used+' of '+limit+' classes used. Please see the front desk to renew.');
-              if(callback)callback();return;
-            }
-          }else if(mem.class_limit_type==='per_week'||mem.class_limit_type==='per_month'){
-            var windowDays=mem.class_limit_type==='per_week'?7:30;
-            var cutoff=new Date();cutoff.setDate(cutoff.getDate()-windowDays);
-            var cutoffStr=cutoff.toISOString().split('T')[0];
-            var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',cutoffStr+'T00:00:00');
-            var periodCount=countR.count||0;
-            if(periodCount>=limit){
-              var periodLabel=mem.class_limit_type==='per_week'?'this week':'this month';
-              showKioskDenial((mem.class_limit_type==='per_week'?'Weekly':'Monthly')+' limit reached — '+periodCount+' of '+limit+' classes used '+periodLabel+'.');
-              if(callback)callback();return;
-            }
+
+    // §KIOSK: CAP_CHECK — three-branch using prefetched data and covering membership.
+    // Picks the most recent active membership that covers the current class's program.
+    // Memberships not covering this class's program are ignored (e.g., a yoga pack
+    // doesn't constrain karate attendance). Kiosk denial is HARD (no override).
+    var primary=null;
+    if(currentClass){
+      for(var iCap=0;iCap<activeMemberships.length;iCap++){
+        var progsCap=activeMemberships[iCap].program_ids||[];
+        if(progsCap.indexOf(currentClass.program_id)!==-1){
+          primary=activeMemberships[iCap];
+          break;
+        }
+      }
+    }
+    if(primary&&primary.class_limit_count){
+      var limit=parseInt(primary.class_limit_count)||0;
+      if(limit>0){
+        if(primary.class_limit_type==='class_pack'){
+          var used=parseInt(primary.classes_used)||0;
+          if(used>=limit){
+            showKioskDenial('Class pack used up — '+used+' of '+limit+' classes used. Please see the front desk to renew.');
+            if(callback)callback();return;
+          }
+        }else if(primary.class_limit_type==='per_week'){
+          var weekCount=parseInt(primary.attendance_last_7)||0;
+          if(weekCount>=limit){
+            showKioskDenial('Weekly limit reached — '+weekCount+' of '+limit+' classes used this week.');
+            if(callback)callback();return;
+          }
+        }else if(primary.class_limit_type==='per_month'){
+          var monthCount=parseInt(primary.attendance_last_30)||0;
+          if(monthCount>=limit){
+            showKioskDenial('Monthly limit reached — '+monthCount+' of '+limit+' classes used this month.');
+            if(callback)callback();return;
           }
         }
       }
