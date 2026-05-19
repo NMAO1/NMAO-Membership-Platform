@@ -3308,8 +3308,10 @@ async function openClassRosterFromCal(classId,dateStr){
 // §JS: DASHBOARD-CAP-CHECK — membership cap enforcement for roster check-ins.
 // Reads active membership via student_memberships junction (drift-immune).
 // Pack inventory is NEVER consulted here — domain separation rule (memberships only).
-// Handles both per_week (rolling 7-day count vs class_attendance) and class_pack
-// (lifetime classes_used on the membership row, populated by trigger).
+// Handles three class_limit_type values:
+//   class_pack — lifetime classes_used on membership row, populated by trigger
+//   per_week   — rolling 7-day count vs class_attendance
+//   per_month  — rolling 30-day count vs class_attendance
 async function attendanceCapCheck(studentId){
   try{
     var smR=await sb.from('student_memberships').select('membership_id,classes_used,memberships(class_limit_type,class_limit_count)').eq('student_id',studentId).eq('status','active').order('created_at',{ascending:false}).limit(1);
@@ -3325,6 +3327,18 @@ async function attendanceCapCheck(studentId){
       if(used>=limit){return {atCap:true,current:used,max:limit,capType:'class_pack'};}
       return null;
     }
+    if(mem.class_limit_type==='per_week'||mem.class_limit_type==='per_month'){
+      var windowDays=mem.class_limit_type==='per_week'?7:30;
+      var cutoffDate=new Date();cutoffDate.setDate(cutoffDate.getDate()-windowDays);
+      var cutoff=cutoffDate.toISOString().split('T')[0]+'T00:00:00';
+      var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
+      var periodCount=countR.count||0;
+      if(periodCount>=limit){return {atCap:true,current:periodCount,max:limit,capType:mem.class_limit_type};}
+      return null;
+    }
+    return null;
+  }catch(e){console.error('attendanceCapCheck error:',e);return null;}
+}
     if(mem.class_limit_type==='per_week'){
       var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
       var cutoff=sevenDaysAgo.toISOString().split('T')[0]+'T00:00:00';
@@ -3350,6 +3364,8 @@ async function toggleRosterAttendance(sid){
       var msg;
       if(capStatus.capType==='class_pack'){
         msg=nm+' has used all classes on their class pack ('+capStatus.current+' of '+capStatus.max+'). Check in anyway?';
+      }else if(capStatus.capType==='per_month'){
+        msg=nm+' has reached their monthly attendance limit ('+capStatus.current+' of '+capStatus.max+' this month). Check in anyway?';
       }else{
         msg=nm+' has reached their weekly attendance limit ('+capStatus.current+' of '+capStatus.max+' this week). Check in anyway?';
       }
