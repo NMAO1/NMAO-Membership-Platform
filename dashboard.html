@@ -2725,6 +2725,7 @@ var selectedBadgeStyle      = '';
 var classFieldSettings      = [];
 var pendingCloseModal       = null;
 var sessionBookStudentId    = null, sessionBookStudentName = null;
+var bookSessionPackCheckId = 0;
 var sessionBookInstructorName = null;
 var currentRevPeriod        = null; var selectedReportRecipients = [];
 var importCSVData           = [], importHeaders = [];
@@ -3935,6 +3936,7 @@ async function deleteSessionPack(pid){ if(!confirm('Delete this pack template?')
 
 // Book Session modal
 async function openBookSession(sid){
+  resetBookSessionSuccessState();
   sessionBookStudentId=null; sessionBookStudentName=null;
   document.getElementById('sessionEditId').value='';
   document.getElementById('bookSessionTitle').textContent='Book Session';
@@ -4049,38 +4051,148 @@ function bookSessionLineItem(){
   };
 }
 
-// Button enable/disable + dynamic label logic
-function updateBookSessionCheckoutButtons(){
+// §JS: BOOK-SESSION-PACK-DETECT — async FIFO lookup mirroring saveSessionRow's auto-link.
+async function detectBookSessionPack(studentId, sessionTypeId){
+  if(!studentId || !sessionTypeId) return null;
+  try{
+    var nowIso = new Date().toISOString();
+    var pkLookup = await sb.from('student_session_packs')
+      .select('id,sessions_remaining,expires_at,session_pack_id')
+      .eq('student_id', studentId)
+      .eq('session_type_id', sessionTypeId)
+      .eq('pack_kind', 'session')
+      .eq('status', 'active')
+      .gt('sessions_remaining', 0)
+      .or('expires_at.is.null,expires_at.gt.' + nowIso)
+      .order('purchased_at', { ascending: true })
+      .limit(1);
+    if(pkLookup.error || !pkLookup.data || pkLookup.data.length === 0) return null;
+    return pkLookup.data[0];
+  }catch(e){ console.error('detectBookSessionPack error:', e); return null; }
+}
+
+// §JS: BOOK-SESSION-SUCCESS — populate + show the persistent success panel
+async function showBookSessionSuccess(paymentMode){
+  var form = document.querySelector('#bookSessionModal .modal-body');
+  var panel = document.getElementById('bookSessionSuccessPanel');
+  var detail = document.getElementById('bookSessionSuccessDetail');
+  var payment = document.getElementById('bookSessionSuccessPayment');
+  if(!form || !panel || !detail || !payment) return;
+  var typeSelect = document.getElementById('sessionTypeSelect');
+  var typeName = (typeSelect && typeSelect.options[typeSelect.selectedIndex] && typeSelect.options[typeSelect.selectedIndex].text) || 'Session';
+  var date = document.getElementById('sessionDate').value || '';
+  var time = document.getElementById('sessionStartTime').value || '';
+  var studentName = document.getElementById('sessionStudentSearch').value || '';
+  detail.textContent = (studentName ? studentName + ' \u00b7 ' : '') + typeName + (date ? ' \u00b7 ' + date : '') + (time ? ' at ' + time : '');
+  if(paymentMode === 'pack'){
+    var studentId = document.getElementById('sessionStudentId').value;
+    var typeId = document.getElementById('sessionTypeSelect').value;
+    var pack = await detectBookSessionPack(studentId, typeId);
+    var remaining = pack ? pack.sessions_remaining : 0;
+    payment.innerHTML = '<i class="fa-solid fa-ticket" style="margin-right:0.4rem"></i>Paid with pack credit \u00b7 ' + remaining + ' credit' + (remaining !== 1 ? 's' : '') + ' remaining';
+  }else if(paymentMode === 'card'){
+    payment.innerHTML = '<i class="fa-solid fa-credit-card" style="margin-right:0.4rem"></i>Charged to card on file';
+  }else if(paymentMode === 'cash'){
+    payment.innerHTML = '<i class="fa-solid fa-money-bill-wave" style="margin-right:0.4rem"></i>Cash payment recorded';
+  }else{
+    payment.innerHTML = '<i class="fa-solid fa-bookmark" style="margin-right:0.4rem"></i>Session saved';
+  }
+  var children = form.children;
+  for(var i = 0; i < children.length; i++){
+    if(children[i].id !== 'bookSessionSuccessPanel') children[i].style.display = 'none';
+  }
+  panel.style.display = '';
+}
+
+// §JS: BOOK-SESSION-RESET — restore form visibility, hide success panel
+function resetBookSessionSuccessState(){
+  var form = document.querySelector('#bookSessionModal .modal-body');
+  var panel = document.getElementById('bookSessionSuccessPanel');
+  if(!form || !panel) return;
+  panel.style.display = 'none';
+  var children = form.children;
+  for(var i = 0; i < children.length; i++){
+    if(children[i].id !== 'bookSessionSuccessPanel') children[i].style.display = '';
+  }
+}
+
+// Pack credit path — saves session, shows success panel (no payment processing)
+async function bookSession_usePack(){
+  setMsg('sessionMsg', 'Saving...', '');
+  var saveResult = await saveSessionRow();
+  if(!saveResult.success){setMsg('sessionMsg', saveResult.error, 'error'); return;}
+  await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+  await showBookSessionSuccess('pack');
+}
+
+// Button enable/disable + dynamic label logic + async pack detection (Tier 3.3 UX)
+async function updateBookSessionCheckoutButtons(){
   var cardBtn = document.getElementById('bookSessionBtnCardOnFile');
   var linkBtn = document.getElementById('bookSessionBtnPaymentLink');
   var cashBtn = document.getElementById('bookSessionBtnCash');
+  var packBtn = document.getElementById('bookSessionBtnUsePack');
+  var banner = document.getElementById('bookSessionPackBanner');
+  var bannerDetail = document.getElementById('bookSessionPackBannerDetail');
   if(!cardBtn || !linkBtn || !cashBtn) return;
   var hasType = !!document.getElementById('sessionTypeSelect').value;
   var hasDate = !!document.getElementById('sessionDate').value;
-  var hasStudent = !!document.getElementById('sessionStudentId').value;
+  var studentId = document.getElementById('sessionStudentId').value;
+  var typeId = document.getElementById('sessionTypeSelect').value;
+  var hasStudent = !!studentId;
   var price = parseFloat(document.getElementById('sessionPrice').value) || 0;
   var hasPrice = price > 0;
   var formValid = hasType && hasDate;
 
-  // Card on File: form valid + student + price > 0
+  // Default: no-pack mode (sync portion)
+  if(banner) banner.style.display = 'none';
+  if(packBtn) packBtn.style.display = 'none';
+  cardBtn.style.display = '';
+  linkBtn.style.display = '';
+  cashBtn.style.display = '';
+
   var cardOK = formValid && hasStudent && hasPrice;
   cardBtn.disabled = !cardOK;
   cardBtn.style.opacity = cardOK ? '1' : '0.5';
   cardBtn.style.cursor = cardOK ? 'pointer' : 'not-allowed';
 
-  // Payment Link: form valid + student + price > 0
   var linkOK = formValid && hasStudent && hasPrice;
   linkBtn.disabled = !linkOK;
   linkBtn.style.opacity = linkOK ? '1' : '0.5';
   linkBtn.style.cursor = linkOK ? 'pointer' : 'not-allowed';
 
-  // Cash: form valid; label changes based on whether there's a price to record
   cashBtn.disabled = !formValid;
   cashBtn.style.opacity = formValid ? '1' : '0.5';
   cashBtn.style.cursor = formValid ? 'pointer' : 'not-allowed';
   cashBtn.innerHTML = hasPrice
     ? '<i class="fa-solid fa-money-bill-wave" style="margin-right:0.5rem"></i>Save &amp; Record $' + price.toFixed(2) + ' Cash'
     : '<i class="fa-solid fa-bookmark" style="margin-right:0.5rem"></i>Save Session (no charge)';
+
+  // Async pack detect — only when student + session_type both selected
+  if(hasStudent && hasType && formValid && banner && packBtn && bannerDetail){
+    var thisCheckId = (++bookSessionPackCheckId);
+    var pack = await detectBookSessionPack(studentId, typeId);
+    if(thisCheckId !== bookSessionPackCheckId) return;
+    if(pack){
+      var remaining = pack.sessions_remaining;
+      var msg = remaining + ' credit' + (remaining !== 1 ? 's' : '') + ' available';
+      if(pack.expires_at){
+        var exp = new Date(pack.expires_at);
+        msg += ' \u00b7 expires ' + exp.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      }else{
+        msg += ' \u00b7 no expiration';
+      }
+      msg += '. No card charge.';
+      bannerDetail.textContent = msg;
+      banner.style.display = '';
+      cardBtn.style.display = 'none';
+      linkBtn.style.display = 'none';
+      cashBtn.style.display = 'none';
+      packBtn.style.display = '';
+      packBtn.disabled = false;
+      packBtn.style.opacity = '1';
+      packBtn.style.cursor = 'pointer';
+    }
+  }
 }
 
 // Cash path — saves session + records payment row if price > 0
@@ -4110,14 +4222,11 @@ var saveResult = await saveSessionRow();
       line_items: [lineItem],
       paid_at: new Date().toISOString(),
     });
-    if(r.error){setMsg('sessionMsg','Session saved. Cash record failed: '+r.error.message,'error'); return;}
-    setMsg('sessionMsg','Session booked + $'+price.toFixed(2)+' cash recorded.','success');
-  }else{
-    setMsg('sessionMsg','Session booked.','success');
+  if(r.error){setMsg('sessionMsg','Session saved. Cash record failed: '+r.error.message,'error'); return;}
   }
   await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
   await loadRevenue();
-  setTimeout(closeBookSession, 1500);
+  await showBookSessionSuccess(price > 0 ? 'cash' : 'free');
 }
 
 // Card on File path — saves session + charges Stripe saved PaymentMethod
@@ -4160,10 +4269,9 @@ var saveResult = await saveSessionRow();
     var displayPM = data.brand && data.last4
       ? data.brand.toUpperCase()+' ••••'+data.last4
       : data.pm_type === 'link' ? 'Stripe Link' : 'saved card';
-    setMsg('sessionMsg','Charged '+displayPM+' — $'+data.amount.toFixed(2)+'. Session booked!','success');
-    await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
+  await loadSessions(); buildCalendar(); if(calView==='month') buildMonthCalendar();
     await loadRevenue();
-    setTimeout(closeBookSession, 2500);
+    await showBookSessionSuccess('card');
   }catch(e){
     setMsg('sessionMsg','Session saved. Charge error: '+(e.message||'Network error'),'error');
   }
