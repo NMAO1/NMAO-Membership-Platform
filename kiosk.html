@@ -582,50 +582,115 @@ async function confirmCheckin(){
 //  §JS: CHECKIN_VALIDATION
 //  Checks: class window, program match, weekly limit, duplicate
 // ─────────────────────────────────────────────────────────────
-async function doCheckinForStudent(student,callback){
+// §KIOSK: SESSION_FALLBACK — called when class check fails. Looks for a scheduled
+// session within the kiosk window (60min pre / 90min post). If found, completes
+// the session (trigger fires pack deduction via student_session_pack_id FK) and
+// records class_attendance matching the confirm-session autoCheckIn pattern.
+async function tryKioskSessionCheckin(student,callback){
   try{
+    var today=new Date().toISOString().split('T')[0];
+    var sessionR=await sb.from('sessions')
+      .select('id,start_time,session_type_id,status')
+      .eq('school_id',SID)
+      .eq('student_id',student.id)
+      .eq('session_date',today)
+      .eq('status','scheduled')
+      .order('start_time',{ascending:true});
+    if(sessionR.error||!sessionR.data||sessionR.data.length===0) return false;
+    var nowMs=Date.now();
+    var matchingSession=null;
+    for(var i=0;i<sessionR.data.length;i++){
+      var s=sessionR.data[i];
+      if(!s.start_time) continue;
+      var sessStartMs=new Date(today+'T'+s.start_time).getTime();
+      var diffMin=(sessStartMs-nowMs)/(60*1000);
+      // Kiosk session window: 60 min pre, 90 min post (same as class window)
+      if(diffMin<=60&&diffMin>=-90){
+        matchingSession=s;
+        break;
+      }
+    }
+    if(!matchingSession) return false;
+    // Complete the session — handle_session_pack_deduction trigger fires on UPDATE
+    // and decrements the linked pack via student_session_pack_id FK.
+    var upd=await sb.from('sessions').update({status:'completed'}).eq('id',matchingSession.id);
+    if(upd.error){
+      console.error('Kiosk session completion failed:',upd.error);
+      return false;
+    }
+    // Record class_attendance row (matches confirm-session autoCheckIn pattern)
+    await sb.from('class_attendance').insert({
+      student_id:student.id,
+      school_id:SID,
+      session_id:matchingSession.id,
+      status:'present',
+      noted_at:new Date().toISOString()
+    });
+    // Show celebration (same UI as class check-in)
+    var totalCount=await getStudentAttendanceCount(student.id);
+    var beltColor=await getStudentBeltColor(student);
+    showCelebration(student,totalCount,beltColor,callback);
+    return true;
+  }catch(e){
+    console.error('tryKioskSessionCheckin error:',e);
+    return false;
+  }
+}
+
+async function doCheckinForStudent(student,callback){  try{
     var today=new Date().toISOString().split('T')[0];
     var sid=currentSessionId;
 
-    // §KIOSK: CLASS_WINDOW_CHECK
-// Block if no class is active within the detection window
-if(currentClass){
-  // §KIOSK: PROGRAM_MATCH
-  // Strict UUID-based program matching. Student must have program_id
-  // (i.e., must have an active membership) AND it must match the class.
-  if(!student.program_id){
-    showKioskDenial('Please see the front desk to set up your membership before checking in.');
-    if(callback)callback();return;
-  }
-  if(student.program_id!==currentClass.program_id){
-    showKioskDenial('This class is not part of your enrolled program. Please see the front desk.');
-    if(callback)callback();return;
-  }
-}else{
-  showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and stays open until 90 minutes after class starts.');
-  if(callback)callback();return;
-}
-// §KIOSK: WEEKLY_LIMIT_CHECK
-    // Rolling 7-day limit for per_week memberships.
-    // Resolves the active membership through the student_memberships junction
-    // rather than the denormalized students.membership_id FK, which is known
-    // to drift. If a student has no row in student_memberships with
-    // status=active, no cap applies here (front desk will see the discrepancy).
-    var smR=await sb.from('student_memberships').select('membership_id').eq('student_id',student.id).eq('status','active').limit(1);
-    var activeMembershipId=(smR.data&&smR.data.length)?smR.data[0].membership_id:null;
-    if(activeMembershipId){
-      var memR=await sb.from('memberships').select('class_limit_type,class_limit_count').eq('id',activeMembershipId).single();
-      var mem=memR.data||null;
-      if(mem&&mem.class_limit_type==='per_week'&&mem.class_limit_count){
+// §KIOSK: CLASS_WINDOW_CHECK + SESSION_FALLBACK
+    // Try class check-in first. If class is denied (no program, mismatched program,
+    // or no class in window), check for a scheduled session in the kiosk window
+    // before denying. Session check-in completes the session and deducts the pack.
+    if(currentClass){
+      // §KIOSK: PROGRAM_MATCH
+      if(!student.program_id){
+        if(await tryKioskSessionCheckin(student,callback)) return;
+        showKioskDenial('Please see the front desk to set up your membership before checking in.');
+        if(callback)callback();return;
+      }
+      if(student.program_id!==currentClass.program_id){
+        if(await tryKioskSessionCheckin(student,callback)) return;
+        showKioskDenial('This class is not part of your enrolled program. Please see the front desk.');
+        if(callback)callback();return;
+      }
+    }else{
+      if(await tryKioskSessionCheckin(student,callback)) return;
+      showKioskDenial('No class is currently in session. Check-in opens 60 minutes before class and stays open until 90 minutes after class starts.');
+      if(callback)callback();return;
+    }
+// §KIOSK: CAP_CHECK
+    // Three-branch enforcement: class_pack / per_week / per_month.
+    // Resolves active membership via student_memberships junction (drift-immune).
+    // Kiosk denial is HARD (no override) — students must see front desk to override.
+    var smR=await sb.from('student_memberships').select('id,classes_used,memberships(class_limit_type,class_limit_count)').eq('student_id',student.id).eq('status','active').order('created_at',{ascending:false}).limit(1);
+    var smRows=smR.data||[];
+    if(smRows.length){
+      var smRow=smRows[0];
+      var mem=smRow.memberships;
+      if(mem&&mem.class_limit_count){
         var limit=parseInt(mem.class_limit_count)||0;
         if(limit>0){
-          var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
-          var sevenDaysAgoStr=sevenDaysAgo.toISOString().split('T')[0];
-          var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',sevenDaysAgoStr+'T00:00:00');
-          var weekCount=countR.count||0;
-          if(weekCount>=limit){
-            showKioskDenial('Weekly limit reached — '+weekCount+' of '+limit+' classes used this week.');
-            if(callback)callback();return;
+          if(mem.class_limit_type==='class_pack'){
+            var used=parseInt(smRow.classes_used)||0;
+            if(used>=limit){
+              showKioskDenial('Class pack used up — '+used+' of '+limit+' classes used. Please see the front desk to renew.');
+              if(callback)callback();return;
+            }
+          }else if(mem.class_limit_type==='per_week'||mem.class_limit_type==='per_month'){
+            var windowDays=mem.class_limit_type==='per_week'?7:30;
+            var cutoff=new Date();cutoff.setDate(cutoff.getDate()-windowDays);
+            var cutoffStr=cutoff.toISOString().split('T')[0];
+            var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',student.id).gte('noted_at',cutoffStr+'T00:00:00');
+            var periodCount=countR.count||0;
+            if(periodCount>=limit){
+              var periodLabel=mem.class_limit_type==='per_week'?'this week':'this month';
+              showKioskDenial((mem.class_limit_type==='per_week'?'Weekly':'Monthly')+' limit reached — '+periodCount+' of '+limit+' classes used '+periodLabel+'.');
+              if(callback)callback();return;
+            }
           }
         }
       }
