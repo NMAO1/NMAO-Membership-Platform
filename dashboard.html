@@ -3339,18 +3339,6 @@ async function attendanceCapCheck(studentId){
     return null;
   }catch(e){console.error('attendanceCapCheck error:',e);return null;}
 }
-    if(mem.class_limit_type==='per_week'){
-      var sevenDaysAgo=new Date();sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
-      var cutoff=sevenDaysAgo.toISOString().split('T')[0]+'T00:00:00';
-      var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
-      var weekCount=countR.count||0;
-      if(weekCount>=limit){return {atCap:true,current:weekCount,max:limit,capType:'per_week'};}
-      return null;
-    }
-    return null;
-  }catch(e){console.error('attendanceCapCheck error:',e);return null;}
-}
-
 async function toggleRosterAttendance(sid){
   if(rosterAttendance[sid]){
     var del=await sb.from('class_attendance').delete().eq('id',rosterAttendance[sid]);
