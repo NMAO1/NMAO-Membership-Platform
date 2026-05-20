@@ -426,6 +426,13 @@ async function detectCurrentClass(){
     var newClassId=active[0].id;
     var prevClassId=currentClass?currentClass.id:null;
     if(newClassId!==prevClassId)currentSessionId=null;
+// P2-6: invalidate cached session_id when the active class changes.
+    // Without this, a stale currentSessionId from a previous class window
+    // would survive into the next class, causing DUPLICATE_CHECK to compare
+    // against the wrong session and attendance to land on the wrong session_id.
+    var newClassId=active[0].id;
+    var prevClassId=currentClass?currentClass.id:null;
+    if(newClassId!==prevClassId)currentSessionId=null;
     currentClass=active[0];
     document.getElementById('kioskCurrentClass').style.display='block';
     document.getElementById('kioskCurrentClassName').textContent=(currentClass.name||currentClass.title||'Class')+' \u00b7 '+fmtTime(currentClass.start_time);
