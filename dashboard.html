@@ -2246,7 +2246,7 @@
       </div>
       <div class="form-row">
         <div class="field"><label>Expiry (days, blank = no expiry)</label><input type="number" id="spExpiryDays" placeholder="e.g. 90" min="1" /></div>
-        <div class="field"><label>Session Type (optional)</label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">Any Type</option></select></div>
+<div class="field"><label>Session Type</label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Session Type --</option></select></div>
       </div>
       <div class="check-group">
         <label class="check-item"><input type="checkbox" id="spActive" checked /><span class="check-item-label">Active (available for purchase)</span></label>
@@ -3912,8 +3912,8 @@ function populateSessionPackDropdowns(){
   var addPackSel=document.getElementById('addPackSelect');
   if(addPackSel){addPackSel.innerHTML='<option value="">-- Select Pack --</option>';allSessionPacks.filter(function(p){return p.kind==='session';}).forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.quantity+' sessions)';addPackSel.appendChild(o);});}
   // Session pack modal dropdown
-  var spSel=document.getElementById('spSessionType');
-  if(spSel){spSel.innerHTML='<option value="">Any Type</option>';allSessionTypes.forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name;spSel.appendChild(o);});}
+var spSel=document.getElementById('spSessionType');
+  if(spSel){spSel.innerHTML='<option value="">-- Select Session Type --</option>';allSessionTypes.filter(function(t){return t.active!==false;}).forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.name;spSel.appendChild(o);});}
 }
 function openAddSessionPack(){
   document.getElementById('addSessionPackTitle').textContent='New Session Pack';
@@ -3975,9 +3975,11 @@ function closeAddSessionPack(){ document.getElementById('addSessionPackModal').c
 async function saveSessionPack(){
   var eid=document.getElementById('sessPackEditId').value;
   var name=document.getElementById('spName').value.trim();
+  var stid=document.getElementById('spSessionType').value;
   if(!name){setMsg('sessPackMsg','Name required.','error');return;}
+  if(!stid){setMsg('sessPackMsg','Session Type required.','error');return;}
   setMsg('sessPackMsg','Saving...','');
-  var payload={name:name,kind:'session',quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:document.getElementById('spSessionType').value||null,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
+  var payload={name:name,kind:'session',quantity:parseInt(document.getElementById('spQuantity').value)||10,price:parseFloat(document.getElementById('spPrice').value)||0,expiry_days:document.getElementById('spExpiryDays').value?parseInt(document.getElementById('spExpiryDays').value):null,session_type_id:stid,description:document.getElementById('spDescription').value.trim()||null,active:document.getElementById('spActive').checked,show_in_portal:document.getElementById('spShowPortal').checked};
   var r; if(eid){r=await sb.from('session_packs').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('session_packs').insert(payload);}
   if(r.error){setMsg('sessPackMsg',r.error.message,'error');}else{setMsg('sessPackMsg','Saved!','success');await loadSessionPacks();setTimeout(closeAddSessionPack,800);}
 }
