@@ -3326,34 +3326,46 @@ async function openClassRosterFromCal(classId,dateStr){
   switchRosterTab('rsvp');
 }
 // §JS: DASHBOARD-CAP-CHECK — membership cap enforcement for roster check-ins.
-// Reads active membership via student_memberships junction (drift-immune).
-// Pack inventory is NEVER consulted here — domain separation rule (memberships only).
+// Uses SECURITY DEFINER RPC get_student_membership_for_kiosk for unified data access.
+// Picks the most recent active membership that COVERS the class's program. Memberships
+// not covering this class's program are ignored entirely (e.g., a yoga pack does not
+// constrain karate attendance). Pack inventory is NEVER consulted here — domain
+// separation rule (memberships only).
 // Handles three class_limit_type values:
-//   class_pack — lifetime classes_used on membership row, populated by trigger
-//   per_week   — rolling 7-day count vs class_attendance
-//   per_month  — rolling 30-day count vs class_attendance
-async function attendanceCapCheck(studentId){
+//   class_pack — classes_used on membership row, populated by trigger
+//   per_week   — prefetched attendance_last_7 from RPC
+//   per_month  — prefetched attendance_last_30 from RPC
+async function attendanceCapCheck(studentId,programId){
   try{
-    var smR=await sb.from('student_memberships').select('membership_id,classes_used,memberships(class_limit_type,class_limit_count)').eq('student_id',studentId).eq('status','active').order('created_at',{ascending:false}).limit(1);
-    var rows=smR.data||[];
-    if(!rows.length) return null;
-    var row=rows[0];
-    var mem=row.memberships;
-    if(!mem||!mem.class_limit_count) return null;
-    var limit=parseInt(mem.class_limit_count)||0;
+    var memR=await sb.rpc('get_student_membership_for_kiosk',{p_student_id:studentId});
+    var activeMemberships=memR.data||[];
+    if(memR.error) console.error('attendanceCapCheck RPC error:',memR.error);
+    var primary=null;
+    if(programId){
+      for(var iCap=0;iCap<activeMemberships.length;iCap++){
+        var progsCap=activeMemberships[iCap].program_ids||[];
+        if(progsCap.indexOf(programId)!==-1){
+          primary=activeMemberships[iCap];
+          break;
+        }
+      }
+    }
+    if(!primary||!primary.class_limit_count) return null;
+    var limit=parseInt(primary.class_limit_count)||0;
     if(limit<=0) return null;
-    if(mem.class_limit_type==='class_pack'){
-      var used=parseInt(row.classes_used)||0;
-      if(used>=limit){return {atCap:true,current:used,max:limit,capType:'class_pack'};}
+    if(primary.class_limit_type==='class_pack'){
+      var used=parseInt(primary.classes_used)||0;
+      if(used>=limit) return {atCap:true,current:used,max:limit,capType:'class_pack'};
       return null;
     }
-    if(mem.class_limit_type==='per_week'||mem.class_limit_type==='per_month'){
-      var windowDays=mem.class_limit_type==='per_week'?7:30;
-      var cutoffDate=new Date();cutoffDate.setDate(cutoffDate.getDate()-windowDays);
-      var cutoff=cutoffDate.toISOString().split('T')[0]+'T00:00:00';
-      var countR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',studentId).gte('noted_at',cutoff);
-      var periodCount=countR.count||0;
-      if(periodCount>=limit){return {atCap:true,current:periodCount,max:limit,capType:mem.class_limit_type};}
+    if(primary.class_limit_type==='per_week'){
+      var weekCount=parseInt(primary.attendance_last_7)||0;
+      if(weekCount>=limit) return {atCap:true,current:weekCount,max:limit,capType:'per_week'};
+      return null;
+    }
+    if(primary.class_limit_type==='per_month'){
+      var monthCount=parseInt(primary.attendance_last_30)||0;
+      if(monthCount>=limit) return {atCap:true,current:monthCount,max:limit,capType:'per_month'};
       return null;
     }
     return null;
@@ -3365,7 +3377,9 @@ async function toggleRosterAttendance(sid){
     if(!del.error){ delete rosterAttendance[sid]; }
   }else{
     if(!currentRosterSessionId) return;
-    var capStatus=await attendanceCapCheck(sid);
+    var cls=allClasses.find(function(c){return c.id===currentRosterClassId;});
+    var programIdForCap=cls?cls.program_id:null;
+    var capStatus=await attendanceCapCheck(sid,programIdForCap);
     if(capStatus&&capStatus.atCap){
       var student=currentRosterStudents.find(function(s){return s.id===sid;});
       var nm=student?(student.first_name+' '+student.last_name):'This student';
