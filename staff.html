@@ -1110,7 +1110,54 @@ async function toggleCheckin(studentId,event){
     }
     checkedInIds.delete(studentId);
     showToast('Check-in removed','warn');
-  }else{
+ }else{
+    // §STAFF: CAP_CHECK — soft override using SECURITY DEFINER RPC.
+    // Picks the most recent active membership that covers the current class's program.
+    // If at cap, shows a confirm() dialog allowing staff to override. Memberships not
+    // covering this class's program are ignored entirely (e.g., a yoga pack does not
+    // constrain karate attendance). Mirrors kiosk's CAP_CHECK shape but with override
+    // capability since staff have judgment authority.
+    try{
+      var memR=await sb.rpc('get_student_membership_for_kiosk',{p_student_id:studentId});
+      var activeMemberships=memR.data||[];
+      if(memR.error) console.error('Staff cap-check RPC error:',memR.error);
+      var primary=null;
+      if(currentClassData&&currentClassData.program_id){
+        for(var iCap=0;iCap<activeMemberships.length;iCap++){
+          var progsCap=activeMemberships[iCap].program_ids||[];
+          if(progsCap.indexOf(currentClassData.program_id)!==-1){
+            primary=activeMemberships[iCap];
+            break;
+          }
+        }
+      }
+      if(primary&&primary.class_limit_count){
+        var capLimit=parseInt(primary.class_limit_count)||0;
+        if(capLimit>0){
+          var capMsg=null;
+          if(primary.class_limit_type==='class_pack'){
+            var capUsed=parseInt(primary.classes_used)||0;
+            if(capUsed>=capLimit) capMsg='Class pack used up — '+capUsed+' of '+capLimit+' classes used.';
+          }else if(primary.class_limit_type==='per_week'){
+            var capWeek=parseInt(primary.attendance_last_7)||0;
+            if(capWeek>=capLimit) capMsg='Weekly limit reached — '+capWeek+' of '+capLimit+' classes used this week.';
+          }else if(primary.class_limit_type==='per_month'){
+            var capMonth=parseInt(primary.attendance_last_30)||0;
+            if(capMonth>=capLimit) capMsg='Monthly limit reached — '+capMonth+' of '+capLimit+' classes used this month.';
+          }
+          if(capMsg){
+            if(!confirm(capMsg+'\n\nCheck in anyway?')){
+              if(btn){btn.classList.remove('loading');btn.disabled=false;}
+              return;
+            }
+          }
+        }
+      }
+    }catch(e){
+      console.error('Staff cap-check error:',e);
+      // Fail open: allow check-in to proceed if RPC errors
+    }
+
    // Get/create session
 if(!classSessionId){
   var sessStatus=computeSessionStatus(currentClassData.start_time,currentClassData.end_time,new Date());
