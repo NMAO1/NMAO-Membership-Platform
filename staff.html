@@ -654,6 +654,7 @@ var rsvpStudentIds=new Set();// student IDs RSVPd via class_enrollments for curr
 var cvActiveTab='rsvp';
 var promoteData=null;
 var eligibleStudentIds=new Set();// walk-in candidates: not RSVPd and not checked in
+var coveringStudentIds=new Set();// students whose active memberships cover the current class's program
 var membershipAlerts=[];   // students with inactive memberships who checked in today
 
 // ─────────────────────────────────────────────────────────────
@@ -898,6 +899,16 @@ async function openClassView(classId,dateStr){
   checkedInIds=new Set();
   rsvpStudentIds=new Set();
   eligibleStudentIds=new Set();
+  coveringStudentIds=new Set();
+  // §STAFF-ELIGIBLE-COVERAGE — fetch students whose active memberships cover
+  // this class's program. Used by recomputeEligible to filter the Eligible tab.
+  if(currentClassData.program_id){
+    try{
+      var coverR=await sb.rpc('get_students_covering_program',{p_school_id:SID,p_program_id:currentClassData.program_id});
+      (coverR.data||[]).forEach(function(r){ coveringStudentIds.add(r.student_id); });
+      if(coverR.error) console.error('Staff eligible coverage RPC error:',coverR.error);
+    }catch(e){ console.error('Staff eligible coverage error:',e); }
+  }
 
   // Show overlay
   document.getElementById('classView').classList.add('open');
@@ -1056,10 +1067,10 @@ function renderStudentRow(s,showCheckin){
   '</div>';
 }
 
-  function recomputeEligible(){
+function recomputeEligible(){
   eligibleStudentIds=new Set();
   allStudents.forEach(function(s){
-    if(!checkedInIds.has(s.id)&&!rsvpStudentIds.has(s.id)){
+    if(!checkedInIds.has(s.id)&&!rsvpStudentIds.has(s.id)&&coveringStudentIds.has(s.id)){
       eligibleStudentIds.add(s.id);
     }
   });
