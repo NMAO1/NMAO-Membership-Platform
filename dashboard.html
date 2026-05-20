@@ -2715,6 +2715,7 @@ var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSe
 var rosterAttendance        = {};
 var currentRosterTab = 'all';
 var currentRosterStudents = [];
+var rosterCoveringIds = new Set();
 var milestoneSettings       = {}, calWeekOffset = 0, calMonthOffset = 0, calView = 'week';
 var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
 var automationSettings      = {}, selectedAlertType = 'announcement', currentPlan = 'professional';
@@ -3303,8 +3304,18 @@ function closeDayPopover() { document.getElementById('dayPopover').style.display
 
 // Roster from calendar
 async function openClassRosterFromCal(classId,dateStr){
-  currentRosterClassId=classId; currentRosterSessionId=null; rosterAttendance={}; rosterRsvpIds={};
+  currentRosterClassId=classId; currentRosterSessionId=null; rosterAttendance={}; rosterRsvpIds={}; rosterCoveringIds=new Set();
   var cls=allClasses.find(function(c){return c.id===classId;}); if(!cls) return;
+  // §DASHBOARD-ELIGIBLE-COVERAGE — fetch students whose active memberships cover
+  // this class's program. Used by the Eligible tab filter (renderRosterList) to
+  // hide students without covering memberships. Falls back gracefully on error.
+  if(cls.program_id){
+    try{
+      var coverR=await sb.rpc('get_students_covering_program',{p_school_id:SID,p_program_id:cls.program_id});
+      (coverR.data||[]).forEach(function(r){ rosterCoveringIds.add(r.student_id); });
+      if(coverR.error) console.error('Eligible coverage RPC error:',coverR.error);
+    }catch(e){ console.error('Eligible coverage error:',e); }
+  }
   var cname=cls.name||cls.title||'Class';
   document.getElementById('classRosterTitle').textContent=cname;
   document.getElementById('classRosterMeta').textContent=new Date(dateStr+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+' '+fmtTime(cls.start_time)+(cls.instructor_name?' - '+cls.instructor_name:'');
@@ -3430,7 +3441,7 @@ function renderRosterList() {
   var filtered;
   if (tab === 'rsvp')          filtered = students.filter(function(s){ return !!rosterRsvpIds[s.id]; });
   else if (tab === 'checked')  filtered = students.filter(function(s){ return !!rosterAttendance[s.id]; });
-  else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id] && !rosterRsvpIds[s.id]; });
+  else if (tab === 'eligible') filtered = students.filter(function(s){ return !rosterAttendance[s.id] && !rosterRsvpIds[s.id] && rosterCoveringIds.has(s.id); });
   else                         filtered = students;
   if (tab === 'eligible' || tab === 'all') {
     var qEl = document.getElementById('rosterSearchInput');
