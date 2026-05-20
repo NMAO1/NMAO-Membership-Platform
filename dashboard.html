@@ -710,7 +710,7 @@
         <div class="no-show-policy-box">
           <div class="policy-section-title"><i class="fa-solid fa-user-slash" style="margin-right:0.4rem"></i>No-Show Policy</div>
           <div class="form-row" style="margin-bottom:1rem">
-            <div class="field"><label>No-Show Window (hours before)</label><input type="number" id="noShowHours" value="1" min="0" /></div>
+          <div class="field"><label>Auto-Complete Grace Period (hours)</label><input type="number" id="noShowHours" value="1" min="0" /></div>
             <div class="field"><label>Action</label><select id="noShowAction" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="none">No Action</option><option value="deduct">Deduct Session</option><option value="charge">Charge Fee</option></select></div>
           </div>
           <div class="field"><label>Grace Period (free no-shows before enforcement)</label><input type="number" id="noShowGrace" value="2" min="0" /></div>
@@ -2848,7 +2848,7 @@ async function loadSchool() {
     if (d.referral_reward_value)   document.getElementById('referralRewardValue').value   = d.referral_reward_value;
     if (d.referral_reward_trigger) document.getElementById('referralRewardTrigger').value = d.referral_reward_trigger;
     // Session policy
-    if (d.no_show_hours)       document.getElementById('noShowHours').value       = d.no_show_hours;
+if (d.no_show_hours)       document.getElementById('noShowHours').value       = d.no_show_hours;
     if (d.no_show_policy)      document.getElementById('noShowAction').value      = d.no_show_policy;
     if (d.grace_period_count)  document.getElementById('noShowGrace').value       = d.grace_period_count;
     if (d.late_cancel_hours)   document.getElementById('lateCancelHours').value   = d.late_cancel_hours;
@@ -2856,6 +2856,30 @@ async function loadSchool() {
     if (d.late_cancel_fee)     document.getElementById('lateCancelFee').value     = d.late_cancel_fee;
     if (d.session_pack_low_threshold) document.getElementById('packLowThreshold').value = d.session_pack_low_threshold;
     if (d.late_cancel_action === 'charge') document.getElementById('lateCancelFeeField').style.display = 'block';
+    // P2-2: session_settings is the canonical write target for these
+    // policy fields (saveSessionSettings writes here, not to schools).
+    // If a session_settings row exists for this school, its values
+    // override the schools reads above so the UI reflects what was saved.
+    // Schools reads remain as fallback for rows that pre-date session_settings.
+    // Column-name maps:
+    //   schools.no_show_hours              -> session_settings.no_show_window_hours
+    //   schools.no_show_policy             -> session_settings.no_show_action
+    //   schools.session_pack_low_threshold -> session_settings.low_pack_threshold
+    // The deeper consolidation (one canonical table) is logged separately.
+    var ssR = await sb.from('session_settings').select('*').eq('school_id', SID).maybeSingle();
+    if (ssR.data) {
+      var ss = ssR.data;
+      if (ss.no_show_window_hours) document.getElementById('noShowHours').value = ss.no_show_window_hours;
+      if (ss.no_show_action) document.getElementById('noShowAction').value = ss.no_show_action;
+      if (ss.grace_period_count) document.getElementById('noShowGrace').value = ss.grace_period_count;
+      if (ss.late_cancel_hours) document.getElementById('lateCancelHours').value = ss.late_cancel_hours;
+      if (ss.late_cancel_action) document.getElementById('lateCancelAction').value = ss.late_cancel_action;
+      if (ss.late_cancel_fee) document.getElementById('lateCancelFee').value = ss.late_cancel_fee;
+      if (ss.low_pack_threshold) document.getElementById('packLowThreshold').value = ss.low_pack_threshold;
+      // Recompute the fee-field visibility against the final action value,
+      // not just the schools-side check above.
+      document.getElementById('lateCancelFeeField').style.display = (document.getElementById('lateCancelAction').value === 'charge') ? 'block' : 'none';
+    }
 
     try {
       var wr = await sb.from('waivers').select('*').eq('school_id',SID).eq('active',true).limit(1);
