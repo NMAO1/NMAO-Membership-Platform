@@ -3385,9 +3385,19 @@ async function attendanceCapCheck(studentId,programId){
         }
       }
     }
-    if(!primary||!primary.class_limit_count) return null;
+  if(!primary||!primary.class_limit_count) return null;
     var limit=parseInt(primary.class_limit_count)||0;
     if(limit<=0) return null;
+    // Phase 11.B: bucket-aware path. Prefer classes_remaining when populated;
+    // fall back to legacy classes_used / rolling-window when null.
+    if(primary.classes_remaining!==null&&primary.classes_remaining!==undefined){
+      var bucketRem=parseInt(primary.classes_remaining)||0;
+      if(bucketRem<=0){
+        var bucketTotal=(parseInt(primary.cycle_allowance)||0)+(parseInt(primary.rollover_balance)||0);
+        return {atCap:true,current:bucketTotal-bucketRem,max:bucketTotal,capType:primary.class_limit_type};
+      }
+      return null;
+    }
     if(primary.class_limit_type==='class_pack'){
       var used=parseInt(primary.classes_used)||0;
       if(used>=limit) return {atCap:true,current:used,max:limit,capType:'class_pack'};
