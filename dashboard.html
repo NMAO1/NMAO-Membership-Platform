@@ -3385,10 +3385,11 @@ async function openClassRosterFromCal(classId,dateStr){
 }
 // §JS: DASHBOARD-CAP-CHECK — membership cap enforcement for roster check-ins.
 // Uses SECURITY DEFINER RPC get_student_membership_for_kiosk for unified data access.
-// Picks the most recent active membership that COVERS the class's program. Memberships
-// not covering this class's program are ignored entirely (e.g., a yoga pack does not
-// constrain karate attendance). Pack inventory is NEVER consulted here — domain
-// separation rule (memberships only).
+// Picks the OLDEST active membership that COVERS the class's program (Phase 11.E: FIFO,
+// oldest credits used first; was most-recent prior to 11.E). Memberships not covering
+// this class's program are ignored entirely (e.g., a yoga pack does not constrain
+// karate attendance). Pack inventory is NEVER consulted here — domain separation
+// rule (memberships only).
 // Handles three class_limit_type values:
 //   class_pack — classes_used on membership row, populated by trigger
 //   per_week   — prefetched attendance_last_7 from RPC
