@@ -1902,9 +1902,10 @@
         <div class="field"><label>Price</label><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
         <div class="field"><label>Signup Fee</label><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
       </div>
-      <div class="field"><label>Class Access</label><select id="memLimitType" onchange="toggleClassLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option><option value="class_pack">Class Pack</option></select></div>
-      <div class="field" id="classLimitField" style="display:none"><label>Number of Classes</label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" /></div>
-      <div class="field"><label>Autopay Billing Day</label><select id="memAutopayDay" onchange="toggleMemCustomDay()"><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select></div>
+<div class="field"><label>Class Access</label><select id="memLimitType" onchange="toggleClassLimit()"><option value="unlimited">Unlimited</option><option value="per_day">Per Day</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option><option value="per_year">Per Year</option><option value="class_pack">Class Pack</option></select></div>
+<div class="field" id="classLimitField" style="display:none"><label>Number of Classes</label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" /></div>
+      <div class="field" id="cycleOverrideField" style="display:none"><label>Custom Cycle (Optional)</label><div style="display:flex;gap:0.5rem"><input type="number" id="memCycleLength" placeholder="e.g. 2" min="1" style="width:80px" /><select id="memCycleUnit"><option value="">— Use Default —</option><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.35rem">Leave blank to use the default cycle for this membership type. Set both fields for custom periods like biweekly (2 weeks) or quarterly (3 months). Changes apply at next cycle reset for current subscribers.</div></div>
+      <div class="field"><label>Autopay Billing Day</label><select id="memAutopayDay" onchange="toggleMemCustomDay()">
       <div class="field" id="memCustomDayField" style="display:none"><label>Day of Month (1-28)</label><input type="number" id="memCustomDay" min="1" max="28" placeholder="e.g. 20" /></div>
       <div class="field"><label>Visibility</label><select id="memVisibility"><option value="public">Public</option><option value="widget_only">Widget Only</option><option value="hidden">Hidden</option></select></div>
       <div class="check-group">
@@ -1913,7 +1914,6 @@
         <label class="check-item"><input type="checkbox" id="memFeatured" /><span class="check-item-label">Featured</span></label>
         <label class="check-item"><input type="checkbox" id="memTrial" /><span class="check-item-label">Trial</span></label>
         <label class="check-item"><input type="checkbox" id="memRolloverEnabled" /><span class="check-item-label">Allow Rollover</span></label>
-        <label class="check-item"><input type="checkbox" id="memClassReservation" /><span class="check-item-label">Class Reservation Eligible</span></label>
         <label class="check-item"><input type="checkbox" id="memClassReservation" /><span class="check-item-label">Class Reservation Eligible</span></label>
       </div>
       <button class="btn-gold-full" onclick="saveMembership()">Save Membership</button>
@@ -3983,8 +3983,11 @@ function openAddClassPack(){
   document.getElementById('memFeatured').checked=false;
   document.getElementById('memTrial').checked=false;
   document.getElementById('memClassReservation').checked=false;
-  document.getElementById('memRolloverEnabled').checked=false;
+document.getElementById('memRolloverEnabled').checked=false;
+  document.getElementById('memCycleLength').value='';
+  document.getElementById('memCycleUnit').value='';
   document.getElementById('classLimitField').style.display='block';
+  document.getElementById('cycleOverrideField').style.display='none';
   document.getElementById('membershipMsg').textContent='';
   populateProgramCheckboxes([]);
   setTimeout(function(){if(quillEditors['memDescEditor'])quillEditors['memDescEditor'].setText('');},50);
@@ -6779,11 +6782,11 @@ function populateProgramCheckboxes(currentIds){
   if(!allPrograms.length){c.innerHTML='<div style="color:var(--muted);font-size:0.85rem;font-style:italic">No programs yet.</div>';return;}
   c.innerHTML=allPrograms.map(function(p){var checked=currentIds&&currentIds.includes(p.id)?'checked':'';return '<label class="check-item"><input type="checkbox" class="mem-prog-check" value="'+p.id+'" '+checked+'/><span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.4rem"></span><span class="check-item-label">'+p.name+'</span></label>';}).join('');
 }
-function openAddMembership(){ document.getElementById('addMembershipTitle').textContent='Add New Membership';document.getElementById('memEditId').value='';document.getElementById('memName').value='';document.getElementById('memType').value='monthly';document.getElementById('memLength').value='1';document.getElementById('memUnit').value='months';document.getElementById('memPrice').value='';document.getElementById('memSignup').value='0';document.getElementById('memLimitType').value='unlimited';document.getElementById('memLimitCount').value='';document.getElementById('memAutopayDay').value='anniversary';document.getElementById('memCustomDayField').style.display='none';document.getElementById('memVisibility').value='public';document.getElementById('memAutoRenew').checked=true;document.getElementById('memAutopay').checked=true;document.getElementById('memFeatured').checked=false;document.getElementById('memTrial').checked=false;document.getElementById('memClassReservation').checked=false;document.getElementById('memRolloverEnabled').checked=false;document.getElementById('classLimitField').style.display='none';document.getElementById('membershipMsg').textContent='';populateProgramCheckboxes([]);setTimeout(function(){if(quillEditors['memDescEditor'])quillEditors['memDescEditor'].setText('');},50);document.getElementById('addMembershipModal').classList.add('active'); }
+function openAddMembership(){ document.getElementById('addMembershipTitle').textContent='Add New Membership';document.getElementById('memEditId').value='';document.getElementById('memName').value='';document.getElementById('memType').value='monthly';document.getElementById('memLength').value='1';document.getElementById('memUnit').value='months';document.getElementById('memPrice').value='';document.getElementById('memSignup').value='0';document.getElementById('memLimitType').value='unlimited';document.getElementById('memLimitCount').value='';document.getElementById('memAutopayDay').value='anniversary';document.getElementById('memCustomDayField').style.display='none';document.getElementById('memVisibility').value='public';document.getElementById('memAutoRenew').checked=true;document.getElementById('memAutopay').checked=true;document.getElementById('memFeatured').checked=false;document.getElementById('memTrial').checked=false;document.getElementById('memClassReservation').checked=false;document.getElementById('memRolloverEnabled').checked=false;document.getElementById('memCycleLength').value='';document.getElementById('memCycleUnit').value='';document.getElementById('classLimitField').style.display='none';document.getElementById('cycleOverrideField').style.display='none';document.getElementById('membershipMsg').textContent='';populateProgramCheckboxes([]);setTimeout(function(){if(quillEditors['memDescEditor'])quillEditors['memDescEditor'].setText('');},50);document.getElementById('addMembershipModal').classList.add('active'); }
 async function openEditMembership(mid){
   var m=allMemberships.find(function(x){return x.id===mid;}); if(!m) return;
   document.getElementById('addMembershipTitle').textContent='Edit Membership';
-  document.getElementById('memEditId').value=m.id;document.getElementById('memName').value=m.name||'';document.getElementById('memType').value=m.billing_type||'monthly';document.getElementById('memLength').value=m.billing_length||1;document.getElementById('memUnit').value=m.billing_unit||'months';document.getElementById('memPrice').value=m.price||'';document.getElementById('memSignup').value=m.signup_fee||0;document.getElementById('memLimitType').value=m.class_limit_type||'unlimited';document.getElementById('memLimitCount').value=m.class_limit_count||'';document.getElementById('classLimitField').style.display=m.class_limit_type==='unlimited'?'none':'block';document.getElementById('memAutopayDay').value=m.autopay_day||'anniversary';document.getElementById('memCustomDayField').style.display=m.autopay_day==='custom'?'block':'none';document.getElementById('memVisibility').value=m.visibility||'public';document.getElementById('memAutoRenew').checked=!!m.auto_renew;document.getElementById('memAutopay').checked=!!m.autopay;document.getElementById('memFeatured').checked=!!m.featured;document.getElementById('memTrial').checked=!!m.trial;document.getElementById('memClassReservation').checked=!!m.class_reservation_eligible;document.getElementById('memRolloverEnabled').checked=!!m.rollover_enabled;document.getElementById('membershipMsg').textContent='';
+  document.getElementById('memEditId').value=m.id;document.getElementById('memName').value=m.name||'';document.getElementById('memType').value=m.billing_type||'monthly';document.getElementById('memLength').value=m.billing_length||1;document.getElementById('memUnit').value=m.billing_unit||'months';document.getElementById('memPrice').value=m.price||'';document.getElementById('memSignup').value=m.signup_fee||0;document.getElementById('memLimitType').value=m.class_limit_type||'unlimited';document.getElementById('memLimitCount').value=m.class_limit_count||'';document.getElementById('memCycleLength').value=m.cycle_length||'';document.getElementById('memCycleUnit').value=m.cycle_unit||'';document.getElementById('classLimitField').style.display=m.class_limit_type==='unlimited'?'none':'block';document.getElementById('cycleOverrideField').style.display=(m.class_limit_type==='per_day'||m.class_limit_type==='per_week'||m.class_limit_type==='per_month'||m.class_limit_type==='per_year')?'block':'none';document.getElementById('memAutopayDay').value=m.autopay_day||'anniversary';document.getElementById('memCustomDayField').style.display=m.autopay_day==='custom'?'block':'none';document.getElementById('memVisibility').value=m.visibility||'public';document.getElementById('memAutoRenew').checked=!!m.auto_renew;document.getElementById('memAutopay').checked=!!m.autopay;document.getElementById('memFeatured').checked=!!m.featured;document.getElementById('memTrial').checked=!!m.trial;document.getElementById('memClassReservation').checked=!!m.class_reservation_eligible;document.getElementById('memRolloverEnabled').checked=!!m.rollover_enabled;document.getElementById('membershipMsg').textContent='';
   var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',mid);
   var currentProgIds=(mpR.data||[]).map(function(x){return x.program_id;});
   populateProgramCheckboxes(currentProgIds);
@@ -6791,8 +6794,8 @@ async function openEditMembership(mid){
   document.getElementById('addMembershipModal').classList.add('active');
 }
 function closeAddMembership(){ document.getElementById('addMembershipModal').classList.remove('active'); }
-function toggleClassLimit(){ document.getElementById('classLimitField').style.display=document.getElementById('memLimitType').value==='unlimited'?'none':'block'; }
-function toggleMemType(){ if(document.getElementById('memType').value==='class_pack'){document.getElementById('memLimitType').value='class_pack';document.getElementById('classLimitField').style.display='block';} }
+function toggleClassLimit(){ var lt=document.getElementById('memLimitType').value; document.getElementById('classLimitField').style.display=lt==='unlimited'?'none':'block'; var showCycle=(lt==='per_day'||lt==='per_week'||lt==='per_month'||lt==='per_year'); document.getElementById('cycleOverrideField').style.display=showCycle?'block':'none'; }
+function toggleMemType(){ if(document.getElementById('memType').value==='class_pack'){document.getElementById('memLimitType').value='class_pack';document.getElementById('classLimitField').style.display='block';document.getElementById('cycleOverrideField').style.display='none';} }
 function toggleMemCustomDay(){ document.getElementById('memCustomDayField').style.display=document.getElementById('memAutopayDay').value==='custom'?'block':'none'; }
 async function saveMembership(){
   var eid=document.getElementById('memEditId').value;
@@ -6808,6 +6811,13 @@ async function saveMembership(){
   if(autopayDay==='custom') autopayDay=document.getElementById('memCustomDay').value||'anniversary';
   var lt=document.getElementById('memLimitType').value;
   var lc=document.getElementById('memLimitCount').value;
+  // Phase 11.G: cycle override pair validation
+  var cycleLengthRaw=document.getElementById('memCycleLength').value;
+  var cycleUnit=document.getElementById('memCycleUnit').value;
+  var cycleLength=cycleLengthRaw?parseInt(cycleLengthRaw):null;
+  if(!cycleUnit) cycleUnit=null;
+  if((cycleLength!==null)!==(cycleUnit!==null)){setMsg('membershipMsg','Cycle Length and Cycle Unit must both be set or both blank.','error');return;}
+  if(cycleLength!==null&&cycleLength<1){setMsg('membershipMsg','Cycle Length must be 1 or greater.','error');return;}
   // Phase 11.D: single atomic RPC replaces former 2-or-3-call sequence
   var r=await sb.rpc('save_membership_with_programs',{
     p_eid:eid||null,
@@ -6830,6 +6840,8 @@ async function saveMembership(){
     p_class_reservation_eligible:document.getElementById('memClassReservation').checked,
     p_active:true,
     p_rollover_enabled:document.getElementById('memRolloverEnabled').checked,
+    p_cycle_length:cycleLength,
+    p_cycle_unit:cycleUnit,
     p_program_ids:sp
   });
   if(r.error){setMsg('membershipMsg',r.error.message,'error');}else{setMsg('membershipMsg','Saved!','success');await loadMemberships();setTimeout(closeAddMembership,1000);}
