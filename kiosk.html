@@ -708,10 +708,30 @@ async function doCheckinForStudent(student,callback){  try{
         }
       }
     }
-    if(primary&&primary.class_limit_count){
+   if(primary&&primary.class_limit_count){
       var limit=parseInt(primary.class_limit_count)||0;
       if(limit>0){
-        if(primary.class_limit_type==='class_pack'){
+        // Phase 11.B: bucket-aware path. Prefer classes_remaining when populated;
+        // fall back to legacy classes_used / rolling-window when null.
+        if(primary.classes_remaining!==null&&primary.classes_remaining!==undefined){
+          var bucketRem=parseInt(primary.classes_remaining)||0;
+          if(bucketRem<=0){
+            var bucketTotal=(parseInt(primary.cycle_allowance)||0)+(parseInt(primary.rollover_balance)||0);
+            var bucketUsed=bucketTotal-bucketRem;
+            var bucketMsg;
+            if(primary.class_limit_type==='class_pack'){
+              bucketMsg='Class pack used up — '+bucketUsed+' of '+bucketTotal+' classes used. Please see the front desk to renew.';
+            }else if(primary.class_limit_type==='per_week'){
+              bucketMsg='Weekly limit reached — '+bucketUsed+' of '+bucketTotal+' classes used this week.';
+            }else if(primary.class_limit_type==='per_month'){
+              bucketMsg='Monthly limit reached — '+bucketUsed+' of '+bucketTotal+' classes used this month.';
+            }else{
+              bucketMsg='Class limit reached — '+bucketUsed+' of '+bucketTotal+' classes used.';
+            }
+            showKioskDenial(bucketMsg);
+            if(callback)callback();return;
+          }
+        }else if(primary.class_limit_type==='class_pack'){
           var used=parseInt(primary.classes_used)||0;
           if(used>=limit){
             showKioskDenial('Class pack used up — '+used+' of '+limit+' classes used. Please see the front desk to renew.');
