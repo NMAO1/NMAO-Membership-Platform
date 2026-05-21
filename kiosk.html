@@ -694,8 +694,9 @@ async function doCheckinForStudent(student,callback){  try{
       if(callback)callback();return;
     }
 
-    // §KIOSK: CAP_CHECK — three-branch using prefetched data and covering membership.
-    // Picks the most recent active membership that covers the current class's program.
+   // §KIOSK: CAP_CHECK — three-branch using prefetched data and covering membership.
+    // Picks the OLDEST active membership that covers the current class's program
+    // (Phase 11.E: FIFO, oldest credits used first; was most-recent prior to 11.E).
     // Memberships not covering this class's program are ignored (e.g., a yoga pack
     // doesn't constrain karate attendance). Kiosk denial is HARD (no override).
     var primary=null;
