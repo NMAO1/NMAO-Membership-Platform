@@ -1122,8 +1122,9 @@ async function toggleCheckin(studentId,event){
     checkedInIds.delete(studentId);
     showToast('Check-in removed','warn');
  }else{
-    // §STAFF: CAP_CHECK — soft override using SECURITY DEFINER RPC.
-    // Picks the most recent active membership that covers the current class's program.
+// §STAFF: CAP_CHECK — soft override using SECURITY DEFINER RPC.
+    // Picks the OLDEST active membership that covers the current class's program
+    // (Phase 11.E: FIFO, oldest credits used first; was most-recent prior to 11.E).
     // If at cap, shows a confirm() dialog allowing staff to override. Memberships not
     // covering this class's program are ignored entirely (e.g., a yoga pack does not
     // constrain karate attendance). Mirrors kiosk's CAP_CHECK shape but with override
