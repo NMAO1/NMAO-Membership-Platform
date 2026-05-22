@@ -211,8 +211,46 @@
     .badge-gold  { background: var(--gold); color: var(--black); }
     .badge-green { background: #2A5A3A; color: #90D4A0; }
     .badge-blue  { background: #2A3A5A; color: #90B4D4; }
-    .badge-black { background: #000; color: var(--gold); border: 1px solid var(--gold); }
+.badge-black { background: #000; color: var(--gold); border: 1px solid var(--gold); }
 
+    /* NMAO branded badge — replaces plan-tier text in topbar */
+    .nmao-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 8px;
+      background: linear-gradient(180deg, #1A1A1A 0%, #050505 100%);
+      border: 1px solid #B8862C;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,169,61,0.1);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .nmao-badge:hover {
+      border-color: #F5D462;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,212,98,0.3), 0 0 12px rgba(212,169,61,0.2);
+      transform: translateY(-1px);
+    }
+    .nmao-badge:active { transform: translateY(0); }
+    .nmao-badge-logo {
+      height: 28px;
+      width: 28px;
+      display: block;
+      flex-shrink: 0;
+    }
+    .nmao-badge-text {
+      font-family: var(--font-ui), -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.16em;
+      background: linear-gradient(180deg, #F5D462 0%, #D4A93D 50%, #B8862C 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      line-height: 1;
+    }
     /* §CSS-FULFILLMENT */
     .fulfillment-panel { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1.1rem 1.35rem; margin-bottom: 1.5rem; }
     .fulfillment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; }
@@ -557,7 +595,10 @@
           <div class="quick-add-item" onclick="closeQuickAdd();navigate('communications',null)"><span class="quick-add-icon"><i class="fa-solid fa-bullhorn"></i></span> Send Alert</div>
         </div>
       </div>
-      <span class="badge-gold" id="planBadge" onclick="openPlanModal()" style="cursor:pointer">Professional</span>
+      <div class="nmao-badge" id="planBadge" onclick="openPlanModal()" title="Manage subscription">
+        <img src="nmao_logo.png" alt="NMAO" class="nmao-badge-logo" />
+        <span class="nmao-badge-text">NMAO</span>
+      </div>
     </div>
   </div>
 
@@ -2998,7 +3039,6 @@ function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').s
 function updatePlanBadge(plan) {
   var labels={starter:'Starter',professional:'Professional',elite:'Elite'};
   var prices={starter:'$59/month',professional:'$79/month',elite:'$99/month'};
-  var badge=document.getElementById('planBadge'); if(badge) badge.textContent=labels[plan]||plan;
   document.getElementById('billingPlanName').textContent=labels[plan]||plan;
   document.getElementById('billingPlanPrice').textContent=prices[plan]||'';
   document.querySelectorAll('.plan-card').forEach(function(c){c.classList.remove('current');});
