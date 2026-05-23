@@ -61,7 +61,22 @@
     .panel-action:hover { background: rgba(201,168,76,0.1); }
     .content-heading .panel-action { margin-left: auto; }
 
-    /* §CSS-TABS */
+.alert-delete-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.72rem;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+.alert-delete-btn:hover {
+  border-color: #E07070;
+  color: #E07070;
+}
+
+/* §CSS-TABS */
     .profile-tab {
       font-family: var(--font-ui); font-size: 0.75rem; letter-spacing: 0.12em;
       text-transform: uppercase; padding: 0.65rem 1rem; background: none;
@@ -936,9 +951,14 @@
         <button class="panel-action" style="margin-top:1rem" onclick="saveAutomations()"><i class="fa-solid fa-floppy-disk"></i> Save Automation Settings</button>
         <p class="form-msg" id="automationsMsg"></p>
       </div>
-      <!-- Alerts -->
-      <div id="commTabAlerts" style="display:none">
-        <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Create Alert</span></div><div class="panel-body">
+ <!-- Alerts -->
+<div id="commTabAlerts" style="display:none">
+  <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Alert Settings</span></div><div class="panel-body" style="max-width:500px">
+    <div class="field"><label>Auto-Expire Alerts After</label><div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem"><input type="number" id="settingAlertExpireDays" min="0" placeholder="30" style="max-width:120px" /><span style="color:var(--muted);font-size:0.85rem">days</span></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">New alerts will automatically be hidden from member portals after this many days. Leave blank to disable auto-expiry (alerts visible until manually deleted).</div></div>
+    <button class="panel-action" style="margin-top:0.75rem" onclick="saveAlertSettings()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    <p class="form-msg" id="alertSettingsMsg"></p>
+  </div></div>
+  <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Create Alert</span></div>
           <div class="field" style="margin-bottom:1rem"><label>Alert Type</label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem">
             <button class="alert-type-btn selected" onclick="selectAlertType('announcement',this)"><i class="fa-solid fa-bullhorn"></i> Announcement</button>
             <button class="alert-type-btn" onclick="selectAlertType('event',this)"><i class="fa-solid fa-calendar-star"></i> Event</button>
@@ -2897,12 +2917,18 @@ async function loadSchool() {
     milestoneSettings = d.milestone_messages || {};
     buildMilestonesEditor();
     if (d.pass_fees_to_students) document.getElementById('passFeesToggle').checked = true;
-    // Phase 11.D: school-wide rollover cap (NULL = no cap)
-    if (d.max_rollover_balance !== null && d.max_rollover_balance !== undefined) {
-      document.getElementById('settingMaxRollover').value = d.max_rollover_balance;
-    } else {
-      document.getElementById('settingMaxRollover').value = '';
-    }
+   // Phase 11.D: school-wide rollover cap (NULL = no cap)
+if (d.max_rollover_balance !== null && d.max_rollover_balance !== undefined) {
+  document.getElementById('settingMaxRollover').value = d.max_rollover_balance;
+} else {
+  document.getElementById('settingMaxRollover').value = '';
+}
+
+// Alert auto-expire days (NULL = no auto-expiry)
+var alertExpEl = document.getElementById('settingAlertExpireDays');
+if (alertExpEl) {
+  alertExpEl.value = (d.alert_auto_expire_days !== null && d.alert_auto_expire_days !== undefined) ? d.alert_auto_expire_days : '';
+}
     if (d.plan) { currentPlan=d.plan; updatePlanBadge(d.plan); }
     // Referral settings
     if (d.referral_reward_type)    document.getElementById('referralRewardType').value    = d.referral_reward_type;
@@ -2999,6 +3025,17 @@ async function saveMembershipSettings(){
   setMsg('membershipSettingsMsg','Saving...','');
   var r=await sb.from('schools').update({max_rollover_balance:maxRollover}).eq('id',SID);
   if(r.error){setMsg('membershipSettingsMsg',r.error.message,'error');}else{setMsg('membershipSettingsMsg','Saved!','success');}
+}
+
+async function saveAlertSettings(){
+  var v=document.getElementById('settingAlertExpireDays').value;
+  var days=v===''?null:parseInt(v);
+  if(days!==null&&isNaN(days)){setMsg('alertSettingsMsg','Must be a number.','error');return;}
+  if(days!==null&&days<0){setMsg('alertSettingsMsg','Days must be 0 or higher.','error');return;}
+  setMsg('alertSettingsMsg','Saving...','');
+  var r=await sb.from('schools').update({alert_auto_expire_days:days}).eq('id',SID);
+  if(r.error){setMsg('alertSettingsMsg',r.error.message,'error');}
+  else{setMsg('alertSettingsMsg','Saved!','success');setTimeout(function(){document.getElementById('alertSettingsMsg').textContent='';},3000);}
 }
 async function saveBrandSettings() {
   setMsg('brandMsg','Saving...','');
@@ -7357,13 +7394,45 @@ async function sendCommunication(){
 // Alerts
 var ALERT_TYPES=['announcement','warning','event','promotion'];
 function selectAlertType(type,btn){ selectedAlertType=type; document.querySelectorAll('.alert-type-btn').forEach(function(b){b.classList.remove('selected');}); if(btn)btn.classList.add('selected'); }
+async function softDeleteAlert(alertId){
+  if(!confirm('Delete this alert? It will be removed from member portals but the record will be retained.')) return;
+  try{
+    var r=await sb.from('school_announcements').update({deleted_at:new Date().toISOString()}).eq('id',alertId);
+    if(r.error){setMsg('alertMsg','Delete failed: '+r.error.message,'error');return;}
+    setMsg('alertMsg','Alert deleted.','success');
+    await loadAlertHistory();
+    setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);
+  }catch(e){setMsg('alertMsg','Delete failed: '+e.message,'error');}
+}
+
 async function loadAlertHistory(){
   try{
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).order('created_at',{ascending:false}).limit(20);
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).is('deleted_at',null).order('created_at',{ascending:false}).limit(20);
     var el=document.getElementById('alertHistory'); if(!el) return;
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No alerts sent yet.</div>';return;}
-    el.innerHTML=data.map(function(a){var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem"><div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><div style="font-size:0.85rem;color:var(--white)">'+a.subject+'</div><div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div></div><div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div></div>';}).join('');
+    var nowIso=new Date().toISOString();
+    el.innerHTML=data.map(function(a){
+      var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var isExpired=a.expires_at && a.expires_at < nowIso;
+      var expNote='';
+      if(a.expires_at){
+        var expDt=new Date(a.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        expNote=isExpired
+          ? ' <span style="color:#E07070;font-size:0.7rem"><i class="fa-solid fa-clock-rotate-left"></i> Expired '+expDt+'</span>'
+          : ' <span style="color:var(--muted);font-size:0.7rem"><i class="fa-solid fa-clock"></i> Expires '+expDt+'</span>';
+      }
+      return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid '+(isExpired?'var(--muted)':'var(--gold)')+';margin-bottom:0.4rem;'+(isExpired?'opacity:0.6;':'')+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem;gap:0.5rem">'+
+          '<div style="font-size:0.85rem;color:var(--white);flex:1">'+a.subject+expNote+'</div>'+
+          '<div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">'+
+            '<div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div>'+
+            '<button class="alert-delete-btn" onclick="softDeleteAlert(\''+a.id+'\')" title="Delete alert"><i class="fa-solid fa-trash"></i></button>'+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div>'+
+      '</div>';
+    }).join('');
   }catch(e){}
 }
   async function saveAutomations(){
@@ -7412,7 +7481,16 @@ async function sendAlert(){
   var audience=document.getElementById('alertAudience').value;
   if(!subject||!body){setMsg('alertMsg','Subject and body required.','error');return;}
   setMsg('alertMsg','Sending...','');
-  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString()});
+  // Compute expires_at from school's alert_auto_expire_days setting
+  var expiresAt=null;
+  try{
+    var schoolRes=await sb.from('schools').select('alert_auto_expire_days').eq('id',SID).maybeSingle();
+    var days=schoolRes.data && schoolRes.data.alert_auto_expire_days;
+    if(days && days > 0){
+      expiresAt=new Date(Date.now() + days*24*60*60*1000).toISOString();
+    }
+  }catch(e){}
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),expires_at:expiresAt});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
   else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
