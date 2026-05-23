@@ -207,6 +207,48 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; }
 
+   /* ── SMS Consent ── */
+    .consent-block {
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.9rem 1rem;
+      margin: 0.5rem 0 0.9rem;
+    }
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      cursor: pointer;
+    }
+    .consent-checkbox {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--gold);
+    }
+    .consent-text {
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .consent-text strong {
+      color: var(--white);
+      font-weight: 600;
+    }
+    .consent-text a {
+      color: var(--gold);
+      text-decoration: underline;
+    }
+    .consent-text a:hover {
+      color: var(--white);
+    }
+    #consentSchoolName {
+      color: var(--white);
+      font-weight: 600;
+    }
+
     /* ── Misc ── */
     .form-msg { font-size: 0.78rem; margin-top: 0.5rem; min-height: 1rem; }
     .form-msg.error   { color: var(--red); }
@@ -369,14 +411,29 @@
           <label>Email <span style="color:var(--red)">*</span></label>
           <input type="email" id="bookEmail" placeholder="your@email.com" autocomplete="email" />
         </div>
-        <div class="field">
-          <label>Phone (optional)</label>
-          <input type="tel" id="bookPhone" placeholder="(555) 555-5555" autocomplete="tel" />
-        </div>
-        <div class="field">
-          <label>Goals or Notes (optional)</label>
-          <textarea id="bookNotes" placeholder="What would you like to focus on?"></textarea>
-        </div>
+       <div class="field">
+      <label>Phone (optional)</label>
+      <input type="tel" id="bookPhone" placeholder="(555) 555-5555" autocomplete="tel" />
+    </div>
+
+    <div class="consent-block">
+      <label class="consent-row">
+        <input type="checkbox" id="bookSmsConsent" class="consent-checkbox" />
+        <span class="consent-text">
+          I agree to receive SMS text messages from <span id="consentSchoolName">my school</span>
+          regarding class confirmations, reminders, payment receipts, and other account
+          notifications. Message frequency varies. Message and data rates may apply.
+          Reply <strong>HELP</strong> for help, <strong>STOP</strong> to opt out.
+          See our <a href="https://app.nmao.us/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+          and <a href="https://app.nmao.us/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.
+        </span>
+      </label>
+    </div>
+
+    <div class="field">
+      <label>Goals or Notes (optional)</label>
+      <textarea id="bookNotes" placeholder="What would you like to focus on?"></textarea>
+    </div>
         <p class="form-msg" id="s4Msg"></p>
         <button class="btn-primary" id="bookBtn" onclick="submitBooking()">
           <i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking
@@ -481,10 +538,12 @@
           .eq('id', instructor.school_id)
           .maybeSingle();
 
-        if (sRes.data) {
+          if (sRes.data) {
           var s = sRes.data;
           document.title = 'Book a Session — ' + s.name;
           document.getElementById('schoolLogoText').textContent = s.name;
+          var consentSchoolEl = document.getElementById('consentSchoolName');
+          if (consentSchoolEl) consentSchoolEl.textContent = s.name;
           if (s.logo_url) {
             document.getElementById('schoolLogoImg').src = s.logo_url;
             document.getElementById('schoolLogoImg').style.display = 'block';
@@ -952,6 +1011,12 @@
         return;
       }
 
+      var smsConsent = document.getElementById('bookSmsConsent').checked;
+      if (smsConsent && !phone) {
+        setMsg('s4Msg', 'Please enter a phone number to receive SMS messages, or uncheck the SMS box.', 'error');
+        return;
+      }
+
       var btn = document.getElementById('bookBtn');
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Booking...';
@@ -1007,7 +1072,7 @@
               phone:      phone || null,
               source:     'instructor_booking',
               status:     'trial',
-              notes:      'Booked session with ' + instrName + ' on ' + formatDate(selectedDate) + ' at ' + fmtTime(selectedTime)
+              notes:      'Booked session with ' + instrName + ' on ' + formatDate(selectedDate) + ' at ' + fmtTime(selectedTime) + (smsConsent ? ' | SMS consent: granted ' + new Date().toISOString() : '')
             });
           } catch(e) {}
         }
