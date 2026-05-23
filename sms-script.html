@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SMS Verbal Opt-In Script — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #B8862C;
+      --gold-light: #D4A93D;
+      --gold-bright: #F5D462;
+      --ink: #1a1a1a;
+      --ink-soft: #3d3d3d;
+      --paper: #faf7f0;
+      --paper-soft: #f1ebdb;
+      --rule: #d9cfb6;
+      --font-display: 'Libre Baskerville', Georgia, serif;
+      --font-body: 'Source Serif Pro', Charter, Georgia, serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      background: #0a0a0a;
+      padding: 1.5rem 2rem;
+      border-bottom: 2px solid var(--gold);
+    }
+    .header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header img { height: 36px; width: 36px; }
+    .header-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 2rem 6rem;
+    }
+    .doc-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+    .doc-meta {
+      font-style: italic;
+      color: var(--ink-soft);
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      color: var(--ink);
+      letter-spacing: -0.005em;
+    }
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+      color: var(--ink-soft);
+    }
+    p { margin-bottom: 1.1rem; color: var(--ink-soft); }
+    ul, ol {
+      margin: 0 0 1.1rem 1.5rem;
+      color: var(--ink-soft);
+    }
+    li { margin-bottom: 0.5rem; }
+    a {
+      color: var(--gold);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+    a:hover { color: var(--ink); }
+    strong { color: var(--ink); font-weight: 600; }
+    .callout {
+      background: var(--paper-soft);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    .script-block {
+      background: #fffef9;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 1.5rem 1.75rem;
+      margin: 1.5rem 0;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--ink);
+      position: relative;
+    }
+    .script-block::before {
+      content: "Read aloud";
+      position: absolute;
+      top: -10px;
+      left: 14px;
+      background: var(--paper);
+      padding: 0 8px;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .script-block p { color: var(--ink); margin-bottom: 0.9rem; }
+    .script-block p:last-child { margin-bottom: 0; }
+    .script-block em {
+      color: var(--ink-soft);
+      font-style: italic;
+      font-size: 0.92rem;
+    }
+    .response-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0 1.5rem;
+    }
+    .response-card {
+      border: 1px solid var(--rule);
+      background: var(--paper-soft);
+      padding: 1rem 1.25rem;
+    }
+    .response-label {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .response-card p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+      padding: 0;
+    }
+    .checklist li {
+      padding-left: 1.75rem;
+      position: relative;
+      margin-bottom: 0.6rem;
+    }
+    .checklist li::before {
+      content: "☐";
+      position: absolute;
+      left: 0;
+      top: -2px;
+      color: var(--gold);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .footer {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--rule);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+    @media (max-width: 600px) {
+      .doc-title { font-size: 1.85rem; }
+      .container { padding: 2.5rem 1.5rem 4rem; }
+      body { font-size: 16px; }
+      .response-block { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .header, .footer { display: none; }
+      body { background: white; font-size: 13pt; }
+      .container { padding: 0.5in; max-width: none; }
+      .script-block { background: white; border: 2px solid #000; }
+      a { color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <img src="nmao_logo.png" alt="NMAO" />
+      <span class="header-text">NMAO</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 class="doc-title">SMS Verbal Opt-In Script</h1>
+    <p class="doc-meta">Internal staff SOP &nbsp;·&nbsp; Last updated: May 22, 2026</p>
+
+    <h2>Purpose</h2>
+    <p>This script is for school staff to use when verbally obtaining a member's or prospective member's consent to receive SMS text messages from the school via the NMAO platform. Use this script at in-person enrollment, over the phone, or whenever you are entering a phone number into NMAO on behalf of a customer without them filling out the online web form themselves.</p>
+    <p>The script meets the requirements of the Twilio 10DLC Customer Care campaign registration and aligns with the SMS terms disclosed in the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>. Follow it consistently — TCR audits may require evidence that verbal consent was obtained per the documented script.</p>
+
+    <h2>Before You Begin</h2>
+    <p>Have ready:</p>
+    <ul>
+      <li>The customer's full name and the phone number being added;</li>
+      <li>The name of your school (you'll say it aloud);</li>
+      <li>A pen and the enrollment paperwork (or NMAO open in a browser) so you can log the consent immediately after.</li>
+    </ul>
+
+    <h2>The Script</h2>
+    <p>Read the following aloud to the customer. You may adapt phrasing slightly to sound natural, but you must cover all numbered points and obtain an explicit "yes" before adding the phone number for SMS use.</p>
+
+    <div class="script-block">
+      <p>"As part of your enrollment at <strong>[School Name]</strong>, we'd like to send you text messages about your classes and account. These would include things like class confirmations and reminders, attendance check-ins, payment receipts, billing reminders, belt test notifications, and other account updates.</p>
+      <p>Message frequency depends on your activity — usually a few per month, sometimes more during events. <em>Message and data rates from your wireless carrier may apply.</em> You can reply <strong>HELP</strong> to any message for assistance, or <strong>STOP</strong> at any time to opt out — opt-out is immediate.</p>
+      <p>Our Terms of Service and Privacy Policy are available at <strong>app.nmao.us/terms.html</strong> and <strong>app.nmao.us/privacy.html</strong>. I can email those links to you if you'd like to review them first.</p>
+      <p>Do you agree to receive these text messages at <strong>[phone number]</strong>? Yes or no?"</p>
+    </div>
+
+    <h3>Customer's response</h3>
+    <div class="response-block">
+      <div class="response-card">
+        <div class="response-label">If "Yes"</div>
+        <p>"Great, thank you. I'll add your phone number to our messaging list now. You're all set — you'll see your first message when your next class is scheduled."</p>
+      </div>
+      <div class="response-card">
+        <div class="response-label">If "No" or "Not sure"</div>
+        <p>"No problem at all. We'll still send all your important account information by email. You can opt in to text messages any time later by letting us know or updating your portal."</p>
+      </div>
+    </div>
+
+    <h2>After the Conversation — Required Logging</h2>
+    <p>Within the same NMAO session, log the consent. Currently this is captured via the customer's note record in their profile. Add the following line to the student or lead notes field:</p>
+    <div class="callout">
+      <code>SMS consent: granted verbally [YYYY-MM-DD HH:MM] by [staff initials] — phone [last 4 digits only]</code>
+    </div>
+    <p>If consent was declined, no note is required, and you must <strong>not</strong> opt the phone number into SMS in the system.</p>
+
+    <h2>Common Questions and How to Answer</h2>
+
+    <h3>"What kinds of messages will I get?"</h3>
+    <p>Operational messages only: class reminders, attendance confirmations, payment receipts and reminders, account updates, belt test scheduling, and event notifications. We do not send promotional or marketing messages without a separate opt-in.</p>
+
+    <h3>"How often will I get messages?"</h3>
+    <p>It varies with your activity. Typically a few messages per month. More during busy periods like belt test weeks or events.</p>
+
+    <h3>"Will I be charged?"</h3>
+    <p>The school doesn't charge you for messages, but your wireless carrier may apply standard message and data rates depending on your plan. Most plans include unlimited texting.</p>
+
+    <h3>"How do I stop the messages?"</h3>
+    <p>Reply STOP to any message at any time. Opt-out is immediate. You can also ask any staff member to remove your number, or update your preferences in your member portal.</p>
+
+    <h3>"What if I have a question or need help?"</h3>
+    <p>Reply HELP to any message, or contact the school directly. For questions about how we handle your information, see our Privacy Policy at app.nmao.us/privacy.html.</p>
+
+    <h3>"Will my number be shared with anyone?"</h3>
+    <p>No. Your phone number is used only by your school to send you these account-related messages, delivered through our SMS service provider (Twilio). We do not sell or share your contact information with third parties for marketing.</p>
+
+    <h2>Quick Reference Checklist</h2>
+    <p>Before adding any phone number for SMS, confirm you have:</p>
+    <ul class="checklist">
+      <li>Described the type of messages they will receive</li>
+      <li>Stated that message frequency varies</li>
+      <li>Disclosed that message and data rates may apply</li>
+      <li>Explained HELP and STOP keywords</li>
+      <li>Mentioned the Terms of Service and Privacy Policy (and offered to share links)</li>
+      <li>Asked for and received an explicit "yes"</li>
+      <li>Logged the verbal consent in the customer's notes</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>Questions about this script or SMS compliance? Contact NMAO at:</p>
+    <div class="callout">
+      NMAO Inc.<br/>
+      376 South Bayview Avenue<br/>
+      Freeport, NY 11520<br/>
+      Email: <a href="mailto:support@nmao.us">support@nmao.us</a><br/>
+      Web: <a href="https://nmao.us">nmao.us</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2026 NMAO Inc. All rights reserved. &nbsp;·&nbsp; <a href="terms.html">Terms of Service</a> &nbsp;·&nbsp; <a href="privacy.html">Privacy Policy</a>
+  </footer>
+</body>
+</html>
