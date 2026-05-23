@@ -1543,7 +1543,8 @@ async function processAutoCheckIn(){
 // ─────────────────────────────────────────────────────────────
 async function buildAnnouncements(){
   try{
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').order('sent_at',{ascending:false}).limit(10);
+    var nowIsoP1=new Date().toISOString();
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIsoP1).order('sent_at',{ascending:false}).limit(10);
     var el=document.getElementById('announcementsList');
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-bullhorn" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';return;}
@@ -1575,11 +1576,14 @@ async function checkUpdatesNotif(){
     return;
   }
   try{
-    var r=await sb.from('school_announcements')
-      .select('id',{count:'exact',head:true})
-      .eq('school_id',SID)
-      .eq('status','sent')
-      .gt('sent_at',lastViewed);
+  var nowIso=new Date().toISOString();
+      var r=await sb.from('school_announcements')
+        .select('id',{count:'exact',head:true})
+        .eq('school_id',SID)
+        .eq('status','sent')
+        .is('deleted_at',null)
+        .or('expires_at.is.null,expires_at.gt.'+nowIso)
+        .gt('sent_at',lastViewed);
     var count=r.count||0;
     var badge=document.getElementById('updatesBadgeNotif');
     if(!badge) return;
@@ -2714,7 +2718,8 @@ async function confirmFamilySelections(){
 
 async function buildFamilyAnnouncements(){
   try{
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').order('sent_at',{ascending:false}).limit(5);
+    var nowIsoP2=new Date().toISOString();
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIsoP2).order('sent_at',{ascending:false}).limit(5);
     var el=document.getElementById('familyAnnouncementsList');
     var data=r.data||[];
     if(!data.length){el.innerHTML=emptyState('fa-bullhorn','No announcements yet.');return;}
@@ -2743,11 +2748,8 @@ async function checkFamilyUpdatesNotif(){
     return;
   }
   try{
-    var r=await sb.from('school_announcements')
-      .select('id',{count:'exact',head:true})
-      .eq('school_id',SID)
-      .eq('status','sent')
-      .gt('sent_at',lastViewed);
+   var nowIso=new Date().toISOString();
+    var r=await sb.from('school_announcements').select('id',{count:'exact',head:true}).eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIso).gt('sent_at',lastViewed);
     var count=r.count||0;
     var badge=document.getElementById('familyUpdatesBadgeNotif');
     if(!badge) return;
