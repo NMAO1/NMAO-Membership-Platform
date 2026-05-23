@@ -108,8 +108,85 @@
     .type-dot  { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.45rem; vertical-align: middle; }
     .type-name { font-size: 0.92rem; color: var(--white); margin-bottom: 0.15rem; }
     .type-meta { font-size: 0.7rem; color: var(--muted); }
-    .type-price { font-family: var(--font-display); font-size: 1.15rem; color: var(--gold); margin-left: 1rem; flex-shrink: 0; }
+.type-price { font-family: var(--font-display); font-size: 1.15rem; color: var(--gold); margin-left: 1rem; flex-shrink: 0; }
 
+    /* ── Returning Member / Credit Lookup ── */
+    .returning-member-bar {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .returning-label {
+      display: block;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .returning-member-bar input {
+      width: 100%;
+      background: var(--black);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      padding: 0.5rem 0.75rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .returning-member-bar input:focus { border-color: var(--gold); }
+    .returning-status {
+      font-size: 0.72rem;
+      margin-top: 0.4rem;
+      min-height: 1rem;
+      font-family: var(--font-ui);
+    }
+    .returning-status .fa-spin { margin-right: 0.35rem; color: var(--gold); }
+    .returning-status .ok { color: #F5D462; }
+    .returning-status .none { color: var(--muted); }
+    .returning-status .err { color: var(--red); }
+
+    /* ── Credit Section Label ── */
+    .type-section-label {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0.5rem 0 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .type-section-label:not(:first-child) { margin-top: 1.1rem; }
+
+    /* ── Credit Option Card ── */
+    .type-option-credit {
+      border-left: 3px solid #F5D462;
+      background: rgba(245,212,98,0.04);
+    }
+    .type-option-credit:hover {
+      border-color: #F5D462;
+      background: rgba(245,212,98,0.08);
+    }
+    .type-option-credit.selected {
+      border-color: #F5D462;
+      background: rgba(245,212,98,0.12);
+    }
+    .type-credit-badge {
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: #F5D462;
+      background: rgba(245,212,98,0.1);
+      border: 1px solid #F5D462;
+      padding: 0.35rem 0.7rem;
+      margin-left: 1rem;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
     /* ── Calendar ── */
     .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; }
     .cal-nav-btn {
@@ -319,7 +396,12 @@
         <div class="card-title">What type of session?</div>
         <div class="card-sub">Choose a session to book with this instructor</div>
       </div>
-      <div class="card-body">
+    <div class="card-body">
+        <div class="returning-member-bar">
+          <label class="returning-label" for="step1Email">Already a member? Enter email to use credits</label>
+          <input type="email" id="step1Email" placeholder="your@email.com" autocomplete="email" onblur="lookupCreditsForEmail()" />
+          <div id="step1EmailStatus" class="returning-status"></div>
+        </div>
         <div id="typesList"></div>
         <p class="form-msg" id="s1Msg"></p>
         <button class="btn-primary" id="s1Next" onclick="goToStep(2)" disabled>
@@ -497,6 +579,9 @@
     var calExceptions   = {};   // {'YYYY-MM-DD': {is_blocked, start_time, end_time}}
 
     var selectedSetting = null; // selected normalized setting
+    var selectedPack = null;       // selected pack object if user chose to use credit
+    var eligiblePacks = [];        // packs matched against email entered at Step 1
+    var emailLookupStudentId = null;
     var selectedDate    = null; // 'YYYY-MM-DD'
     var selectedTime    = null; // 'HH:MM:SS'
     var currentStep     = 1;
@@ -716,6 +801,84 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+ // ── Step 1: Credit lookup by email ───────────────────────
+    async function lookupCreditsForEmail() {
+      var emailInput = document.getElementById('step1Email');
+      var statusEl   = document.getElementById('step1EmailStatus');
+      var email      = emailInput.value.trim().toLowerCase();
+
+      if (!email) {
+        eligiblePacks = [];
+        emailLookupStudentId = null;
+        if (selectedPack) { selectedPack = null; selectedSetting = null; }
+        statusEl.innerHTML = '';
+        renderTypesList();
+        return;
+      }
+      if (!validateEmail(email)) {
+        statusEl.innerHTML = '<span class="none">Invalid email format</span>';
+        eligiblePacks = [];
+        emailLookupStudentId = null;
+        if (selectedPack) { selectedPack = null; selectedSetting = null; }
+        renderTypesList();
+        return;
+      }
+
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking...';
+
+      try {
+        var stuRes = await sb.from('students')
+          .select('id')
+          .eq('school_id', instructor.school_id)
+          .eq('email', email)
+          .limit(1);
+
+        if (!stuRes.data || !stuRes.data.length) {
+          eligiblePacks = [];
+          emailLookupStudentId = null;
+          if (selectedPack) { selectedPack = null; selectedSetting = null; }
+          statusEl.innerHTML = '<span class="none">No account found at this school</span>';
+          renderTypesList();
+          return;
+        }
+
+        emailLookupStudentId = stuRes.data[0].id;
+        var sessionTypeIds = bookingSettings.map(function(b) { return b.session_type_id; });
+
+        var packRes = await sb.from('student_session_packs')
+          .select('id, student_id, session_type_id, name, sessions_remaining, sessions_total, expires_at')
+          .eq('student_id', emailLookupStudentId)
+          .eq('pack_kind', 'session')
+          .eq('status', 'active')
+          .gt('sessions_remaining', 0)
+          .in('session_type_id', sessionTypeIds)
+          .order('purchased_at', { ascending: true });
+
+        var nowIso = new Date().toISOString();
+        eligiblePacks = (packRes.data || []).filter(function(p) {
+          return !p.expires_at || p.expires_at > nowIso;
+        });
+
+        if (eligiblePacks.length > 0) {
+          statusEl.innerHTML = '<span class="ok"><i class="fa-solid fa-check"></i> Found ' + eligiblePacks.length + ' credit ' + (eligiblePacks.length === 1 ? 'pack' : 'packs') + ' you can use</span>';
+        } else {
+          statusEl.innerHTML = '<span class="none">No active credits found for this instructor</span>';
+        }
+
+        if (selectedPack && !eligiblePacks.find(function(p) { return p.id === selectedPack.id; })) {
+          selectedPack = null;
+          selectedSetting = null;
+        }
+        renderTypesList();
+      } catch(e) {
+        statusEl.innerHTML = '<span class="err">Lookup failed — try again</span>';
+        eligiblePacks = [];
+        emailLookupStudentId = null;
+        if (selectedPack) { selectedPack = null; selectedSetting = null; }
+        renderTypesList();
+      }
+    }
+
     // ── Step 1: Session Types ────────────────────────────────
     function renderTypesList() {
       var el = document.getElementById('typesList');
@@ -723,8 +886,38 @@
         el.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.5rem 0">No session types available.</div>';
         return;
       }
-      el.innerHTML = bookingSettings.map(function(b) {
-        var isSel   = selectedSetting && selectedSetting.id === b.id;
+
+      var html = '';
+
+      // Credit section — only if eligible packs match available session types
+      var creditCards = [];
+      bookingSettings.forEach(function(b) {
+        var matchingPack = eligiblePacks.find(function(p) { return p.session_type_id === b.session_type_id; });
+        if (matchingPack) {
+          var isSel = selectedPack && selectedPack.id === matchingPack.id;
+          creditCards.push(
+            '<div class="type-option type-option-credit' + (isSel ? ' selected' : '') + '" ' +
+              'onclick="selectType(\'' + b.id + '\', \'' + matchingPack.id + '\')" ' +
+              'id="credit-' + matchingPack.id + '">' +
+              '<div>' +
+                '<div class="type-name"><span class="type-dot" style="background:' + b.color + '"></span>' + b.name + '</div>' +
+                '<div class="type-meta">' + b.duration_minutes + ' min \u00B7 Use 1 credit (' + matchingPack.sessions_remaining + ' remaining)</div>' +
+              '</div>' +
+              '<div class="type-credit-badge">USE CREDIT</div>' +
+            '</div>'
+          );
+        }
+      });
+
+      if (creditCards.length > 0) {
+        html += '<div class="type-section-label">Your Credits</div>';
+        html += creditCards.join('');
+        html += '<div class="type-section-label">Pay for Session</div>';
+      }
+
+      // Paid section — always rendered
+      html += bookingSettings.map(function(b) {
+        var isSel   = selectedSetting && selectedSetting.id === b.id && !selectedPack;
         var freeTag = b.price <= 0 ? ' \u00B7 Included with membership' : '';
         return '<div class="type-option' + (isSel ? ' selected' : '') + '" onclick="selectType(\'' + b.id + '\')" id="type-' + b.id + '">' +
           '<div>' +
@@ -734,15 +927,18 @@
           (b.price > 0 ? '<div class="type-price">$' + b.price.toFixed(2) + '</div>' : '') +
           '</div>';
       }).join('');
+
+      el.innerHTML = html;
       document.getElementById('s1Next').disabled = !selectedSetting;
     }
 
-    function selectType(settingId) {
+   function selectType(settingId, packId) {
       selectedSetting = bookingSettings.find(function(b) { return b.id === settingId; }) || null;
+      selectedPack    = packId ? (eligiblePacks.find(function(p) { return p.id === packId; }) || null) : null;
       selectedDate = null;
       selectedTime = null;
       document.querySelectorAll('.type-option').forEach(function(el) { el.classList.remove('selected'); });
-      var sel = document.getElementById('type-' + settingId);
+      var sel = document.getElementById(packId ? 'credit-' + packId : 'type-' + settingId);
       if (sel) sel.classList.add('selected');
       document.getElementById('s1Next').disabled = !selectedSetting;
     }
@@ -1034,6 +1230,15 @@
           if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
         } catch(e) {}
 
+        // Credit safety check: if user chose a pack credit, the Step 4 email
+        // must resolve to the same student that owns the pack.
+        if (selectedPack && studentId !== selectedPack.student_id) {
+          setMsg('s4Msg', 'The email entered does not match the account associated with the selected credit. Please use the same email as Step 1, or go back and pick a paid option.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
+          return;
+        }
+
         var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
         var sessionNotes = notes || null;
 
@@ -1045,17 +1250,18 @@
 
         // Create session record
         var sessPayload = {
-          school_id:           instructor.school_id,
-          student_id:          studentId,
-          instructor_name:     instrName,
-          session_type_id:     selectedSetting.session_type_id,
-          session_date:        selectedDate,
-          start_time:          selectedTime,
-          duration_minutes:    selectedSetting.duration_minutes,
-          status:              'scheduled',
-          confirmation_status: 'pending',
-          price:               selectedSetting.price,
-          notes:               sessionNotes
+          school_id:               instructor.school_id,
+          student_id:              studentId,
+          instructor_name:         instrName,
+          session_type_id:         selectedSetting.session_type_id,
+          session_date:            selectedDate,
+          start_time:              selectedTime,
+          duration_minutes:        selectedSetting.duration_minutes,
+          status:                  'scheduled',
+          confirmation_status:     'pending',
+          price:                   selectedPack ? 0 : selectedSetting.price,
+          notes:                   sessionNotes,
+          student_session_pack_id: selectedPack ? selectedPack.id : null
         };
 
         var sessRes = await sb.from('sessions').insert(sessPayload).select().maybeSingle();
