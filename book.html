@@ -110,6 +110,45 @@
     .type-meta { font-size: 0.7rem; color: var(--muted); }
 .type-price { font-family: var(--font-display); font-size: 1.15rem; color: var(--gold); margin-left: 1rem; flex-shrink: 0; }
 
+    /* ── Credit Section Label ── */
+    .type-section-label {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0.5rem 0 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .type-section-label:not(:first-child) { margin-top: 1.1rem; }
+
+    /* ── Credit Option Card ── */
+    .type-option-credit {
+      border-left: 3px solid #F5D462;
+      background: rgba(245,212,98,0.04);
+    }
+    .type-option-credit:hover {
+      border-color: #F5D462;
+      background: rgba(245,212,98,0.08);
+    }
+    .type-option-credit.selected {
+      border-color: #F5D462;
+      background: rgba(245,212,98,0.12);
+    }
+    .type-credit-badge {
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: #F5D462;
+      background: rgba(245,212,98,0.1);
+      border: 1px solid #F5D462;
+      padding: 0.35rem 0.7rem;
+      margin-left: 1rem;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
     /* ── Returning Member / Credit Lookup ── */
     .returning-member-bar {
       background: rgba(0,0,0,0.3);
@@ -390,23 +429,41 @@
       </div>
     </div>
 
-    <!-- ── STEP 1: Session Type ── -->
+   <!-- ── STEP 1: Identity (Phase A) + Session Type (Phase B) ── -->
     <div class="card" id="step1" style="display:none">
-      <div class="card-header">
-        <div class="card-title">What type of session?</div>
-        <div class="card-sub">Choose a session to book with this instructor</div>
-      </div>
-    <div class="card-body">
-        <div class="returning-member-bar">
-          <label class="returning-label" for="step1Email">Already a member? Enter email to use credits</label>
-          <input type="email" id="step1Email" placeholder="your@email.com" autocomplete="email" onblur="lookupCreditsForEmail()" />
-          <div id="step1EmailStatus" class="returning-status"></div>
+      <!-- Phase A: Email entry -->
+      <div id="step1PhaseA">
+        <div class="card-header">
+          <div class="card-title">What's your email?</div>
+          <div class="card-sub">We'll use it to apply any credits you have and confirm your booking.</div>
         </div>
-        <div id="typesList"></div>
-        <p class="form-msg" id="s1Msg"></p>
-        <button class="btn-primary" id="s1Next" onclick="goToStep(2)" disabled>
-          Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
-        </button>
+        <div class="card-body">
+          <div class="field">
+            <label>Email <span style="color:var(--red)">*</span></label>
+            <input type="email" id="step1Email" placeholder="your@email.com" autocomplete="email" oninput="updateStep1AContinue()" />
+          </div>
+          <p class="form-msg" id="s1aMsg"></p>
+          <button class="btn-primary" id="s1aNext" onclick="proceedToTypeSelection()" disabled>
+            Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
+          </button>
+        </div>
+      </div>
+      <!-- Phase B: Session type selection -->
+      <div id="step1PhaseB" style="display:none">
+        <div class="card-header">
+          <div class="card-title" id="step1bTitle">What type of session?</div>
+          <div class="card-sub" id="step1bSub">Choose a session to book with this instructor</div>
+        </div>
+        <div class="card-body">
+          <div id="typesList"></div>
+          <p class="form-msg" id="s1Msg"></p>
+          <button class="btn-primary" id="s1Next" onclick="goToStep(2)" disabled>
+            Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>
+          </button>
+          <button class="btn-back" onclick="backToEmailEntry()" style="margin-top:0.5rem">
+            <i class="fa-solid fa-arrow-left" style="margin-right:0.3rem"></i> Change email
+          </button>
+        </div>
       </div>
     </div>
 
@@ -579,9 +636,10 @@
     var calExceptions   = {};   // {'YYYY-MM-DD': {is_blocked, start_time, end_time}}
 
     var selectedSetting = null; // selected normalized setting
-    var selectedPack = null;       // selected pack object if user chose to use credit
-    var eligiblePacks = [];        // packs matched against email entered at Step 1
-    var emailLookupStudentId = null;
+    var selectedPack = null;    // pack object if user chose to use credit
+    var eligiblePacks = [];     // packs matched against email entered at Phase A
+    var lookupStudent = null;   // student record found by email lookup (null = new user)
+    var lookupEmail = '';       // the email entered at Phase A
     var selectedDate    = null; // 'YYYY-MM-DD'
     var selectedTime    = null; // 'HH:MM:SS'
     var currentStep     = 1;
@@ -877,6 +935,118 @@
         if (selectedPack) { selectedPack = null; selectedSetting = null; }
         renderTypesList();
       }
+    }
+
+   // ── Step 1 Phase A: Email validation gates Continue button ───
+    function updateStep1AContinue() {
+      var email = document.getElementById('step1Email').value.trim();
+      document.getElementById('s1aNext').disabled = !validateEmail(email);
+    }
+
+    // ── Step 1 Phase A → Phase B transition ──────────────────────
+    async function proceedToTypeSelection() {
+      var email = document.getElementById('step1Email').value.trim().toLowerCase();
+      if (!validateEmail(email)) {
+        setMsg('s1aMsg', 'Please enter a valid email address.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('s1aNext');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Looking up your account...';
+      setMsg('s1aMsg', '', '');
+
+      try {
+        lookupEmail = email;
+
+        // Look up student
+        var stuRes = await sb.from('students')
+          .select('id, first_name, last_name, email, phone')
+          .eq('school_id', instructor.school_id)
+          .eq('email', email)
+          .limit(1);
+
+        lookupStudent = (stuRes.data && stuRes.data.length) ? stuRes.data[0] : null;
+
+        // Look up matching active packs (only for existing students)
+        if (lookupStudent) {
+          var sessionTypeIds = bookingSettings.map(function(b) { return b.session_type_id; });
+          var packRes = await sb.from('student_session_packs')
+            .select('id, student_id, session_type_id, name, sessions_remaining, sessions_total, expires_at')
+            .eq('student_id', lookupStudent.id)
+            .eq('pack_kind', 'session')
+            .eq('status', 'active')
+            .gt('sessions_remaining', 0)
+            .in('session_type_id', sessionTypeIds)
+            .order('purchased_at', { ascending: true });
+
+          var nowIso = new Date().toISOString();
+          eligiblePacks = (packRes.data || []).filter(function(p) {
+            return !p.expires_at || p.expires_at > nowIso;
+          });
+        } else {
+          eligiblePacks = [];
+        }
+
+        // Personalize Phase B header
+        var titleEl = document.getElementById('step1bTitle');
+        var subEl   = document.getElementById('step1bSub');
+        if (lookupStudent) {
+          titleEl.textContent = 'Welcome back, ' + (lookupStudent.first_name || 'member') + '!';
+          if (eligiblePacks.length > 0) {
+            subEl.textContent = 'You have credits available. Use a credit or pay for a session below.';
+          } else {
+            subEl.textContent = 'Choose a session to book with ' + (instructor.first_name || 'this instructor') + '.';
+          }
+        } else {
+          titleEl.textContent = 'What type of session?';
+          subEl.textContent = 'Choose a session to book with this instructor.';
+        }
+
+        // Pre-fill Step 4 fields from student record (or just email for new users)
+        var f4 = document.getElementById('bookFirst');
+        var l4 = document.getElementById('bookLast');
+        var e4 = document.getElementById('bookEmail');
+        var p4 = document.getElementById('bookPhone');
+        if (lookupStudent) {
+          if (f4) f4.value = lookupStudent.first_name || '';
+          if (l4) l4.value = lookupStudent.last_name  || '';
+          if (e4) e4.value = lookupStudent.email      || email;
+          if (p4) p4.value = lookupStudent.phone      || '';
+        } else {
+          if (e4) e4.value = email;
+        }
+
+        // Update consent text school name if not already populated
+        var consentSchoolEl = document.getElementById('consentSchoolName');
+        if (consentSchoolEl && consentSchoolEl.textContent === 'my school' && lookupStudent) {
+          // No-op — school name is set elsewhere in loadPage. This is just a safety check.
+        }
+
+        // Transition to Phase B
+        document.getElementById('step1PhaseA').style.display = 'none';
+        document.getElementById('step1PhaseB').style.display = 'block';
+        renderTypesList();
+
+      } catch (e) {
+        setMsg('s1aMsg', 'Could not look up your account. Please check your email and try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>';
+      }
+    }
+
+    // ── Back from Phase B to Phase A (re-enter email) ────────────
+    function backToEmailEntry() {
+      document.getElementById('step1PhaseB').style.display = 'none';
+      document.getElementById('step1PhaseA').style.display = 'block';
+      // Clear all selection state so re-lookup starts clean
+      selectedSetting = null;
+      selectedPack = null;
+      selectedDate = null;
+      selectedTime = null;
+      var btn = document.getElementById('s1aNext');
+      btn.disabled = !validateEmail(document.getElementById('step1Email').value.trim());
+      btn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>';
     }
 
     // ── Step 1: Session Types ────────────────────────────────
@@ -1218,22 +1388,25 @@
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Booking...';
       setMsg('s4Msg', '', '');
 
-      try {
-        // Look up existing student by email
-        var studentId = null;
-        try {
-          var stuRes = await sb.from('students')
-            .select('id')
-            .eq('school_id', instructor.school_id)
-            .eq('email', email.toLowerCase())
-            .limit(1);
-          if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
-        } catch(e) {}
+ try {
+        // Resolve student id. Phase A may have already identified the student
+        // by email; if so, prefer that. Otherwise look up by Step 4 email.
+        var studentId = lookupStudent ? lookupStudent.id : null;
+        if (!studentId) {
+          try {
+            var stuRes = await sb.from('students')
+              .select('id')
+              .eq('school_id', instructor.school_id)
+              .eq('email', email.toLowerCase())
+              .limit(1);
+            if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
+          } catch(e) {}
+        }
 
-        // Credit safety check: if user chose a pack credit, the Step 4 email
-        // must resolve to the same student that owns the pack.
+        // Credit safety check: if user picked a pack credit, the resolved
+        // student must own that pack.
         if (selectedPack && studentId !== selectedPack.student_id) {
-          setMsg('s4Msg', 'The email entered does not match the account associated with the selected credit. Please use the same email as Step 1, or go back and pick a paid option.', 'error');
+          setMsg('s4Msg', 'The email entered does not match the account associated with the selected credit. Please go back and re-enter your email, or pick a paid option.', 'error');
           btn.disabled = false;
           btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
           return;
