@@ -643,22 +643,22 @@
           return;
         }
 
-        if (res.status === 'already_confirmed') {
-          sessionData = res.session;
-          showAlreadyConfirmed(res.session);
-          return;
-        }
-
-        sessionData = res.session;
+  sessionData = res.session;
         packInfo = res.pack_info || [];
         availablePacks = res.available_packs || [];
 
-        // Load school name
+        // Load school name (populated by confirm-session lookup response)
         if (res.school_name) {
           document.getElementById('schoolLogoText').textContent = res.school_name;
         }
 
-        // Check if already cancelled
+        // Check if session is already finalized.
+        // Note: lookup returns 'status: ok' regardless — only confirmation_status
+        // tells us whether the session has been actioned previously.
+        if (res.confirmation_status === 'confirmed') {
+          showAlreadyConfirmed(res.session);
+          return;
+        }
         if (res.confirmation_status === 'cancelled') {
           showState('cancelled');
           document.getElementById('cancelledSub').textContent =
@@ -666,8 +666,9 @@
           return;
         }
 
-        // Check late cancel window
-        isLateCancelWindow = checkLateCancelWindow(res.session);
+       // Check late cancel window using school's configured threshold
+        var lateCancelHours = res.late_cancel_hours || 24;
+        isLateCancelWindow = checkLateCancelWindow(res.session, lateCancelHours);
 
         renderConfirmState(res, justPurchased, purchasedPackId, warningMsg);
 
@@ -1040,11 +1041,11 @@
       showState('error');
     }
 
-    function checkLateCancelWindow(session) {
+  function checkLateCancelWindow(session, hours) {
       if (!session || !session.session_date || !session.start_time) return false;
       var sessionDateTime = new Date(session.session_date + 'T' + session.start_time);
       var hoursUntil = (sessionDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
-      return hoursUntil < 24; // default 24hr window — matches school setting
+      return hoursUntil < (hours || 24);
     }
 
     function detailRow(icon, label, value) {
