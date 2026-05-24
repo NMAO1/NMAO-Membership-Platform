@@ -7468,9 +7468,11 @@ async function saveAlertDraft(){
   var subject=document.getElementById('alertSubject').value.trim();
   var body=getQuillContent('alertBodyEditor');
   var audience=document.getElementById('alertAudience').value;
+  var ctaLabel=document.getElementById('alertCtaLabel').value.trim();
+  var ctaUrl=document.getElementById('alertCtaUrl').value.trim();
   if(!subject&&!body){setMsg('alertMsg','Nothing to save.','error');return;}
   setMsg('alertMsg','Saving draft...','');
-  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject||'(no subject)',body:body,audience:audience,status:'draft',sent_at:null});
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject||'(no subject)',body:body,audience:audience,status:'draft',sent_at:null,cta_label:ctaLabel||null,cta_url:ctaUrl||null});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
   else{setMsg('alertMsg','Draft saved!','success');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
@@ -7479,6 +7481,8 @@ async function sendAlert(){
   var subject=document.getElementById('alertSubject').value.trim();
   var body=getQuillContent('alertBodyEditor');
   var audience=document.getElementById('alertAudience').value;
+  var ctaLabel=document.getElementById('alertCtaLabel').value.trim();
+  var ctaUrl=document.getElementById('alertCtaUrl').value.trim();
   if(!subject||!body){setMsg('alertMsg','Subject and body required.','error');return;}
   setMsg('alertMsg','Sending...','');
   // Compute expires_at from school's alert_auto_expire_days setting
@@ -7490,9 +7494,9 @@ async function sendAlert(){
       expiresAt=new Date(Date.now() + days*24*60*60*1000).toISOString();
     }
   }catch(e){}
-  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),expires_at:expiresAt});
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),expires_at:expiresAt,cta_label:ctaLabel||null,cta_url:ctaUrl||null});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
-  else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
+else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';document.getElementById('alertCtaLabel').value='';document.getElementById('alertCtaUrl').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
 
 // SMS Inbox
