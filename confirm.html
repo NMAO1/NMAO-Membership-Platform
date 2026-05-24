@@ -597,7 +597,7 @@
     var SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
     var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
     var CONFIRM_URL = SUPABASE_URL + '/functions/v1/confirm-session';
-    var CHECKOUT_URL = SUPABASE_URL + '/functions/v1/stripe-create-checkout';
+    var CHECKOUT_URL = SUPABASE_URL + '/functions/v1/create-pos-checkout';
     var PORTAL_URL = 'portal.html';
 
     var token = null;
@@ -606,6 +606,7 @@
     var availablePacks = [];
     var selectedPackId = null;
     var isLateCancelWindow = false;
+    var schoolId = null;
 
     // ── Init ──────────────────────────────────────────────────
 
@@ -643,9 +644,10 @@
           return;
         }
 
-  sessionData = res.session;
+      sessionData = res.session;
         packInfo = res.pack_info || [];
         availablePacks = res.available_packs || [];
+        schoolId = res.school_id || null;
 
         // Load school name (populated by confirm-session lookup response)
         if (res.school_name) {
@@ -816,8 +818,11 @@
       setMsg('buyMsg', '', '');
 
       try {
-        var pack = availablePacks.find(function(p) { return p.id === selectedPackId; });
+  var pack = availablePacks.find(function(p) { return p.id === selectedPackId; });
         if (!pack) throw new Error('Pack not found');
+        if (!schoolId || !studentData || !studentData.id) {
+          throw new Error('Missing student or school info. Please refresh and try again.');
+        }
 
         // Build return URL with token so we come back here after payment
         var returnUrl = window.location.origin + window.location.pathname +
@@ -825,6 +830,7 @@
         var cancelUrl = window.location.origin + window.location.pathname +
           '?token=' + token + '&stripe=cancel';
 
+        // Call create-pos-checkout (matches portal.html executePurchasePack pattern)
         var res = await fetch(CHECKOUT_URL, {
           method: 'POST',
           headers: {
@@ -832,17 +838,17 @@
             'Authorization': 'Bearer ' + ANON_KEY,
           },
           body: JSON.stringify({
-            type: 'session_pack',
-            session_pack_id: pack.id,
-            name: pack.name,
-            price: pack.price,
-            quantity: 1,
+            school_id: schoolId,
+            student_id: studentData.id,
+            line_items: [{
+              name: pack.name,
+              unit_amount: Math.round(parseFloat(pack.price) * 100),
+              quantity: 1,
+              product_id: pack.id,
+              item_type: 'session_pack'
+            }],
             success_url: returnUrl,
-            cancel_url: cancelUrl,
-            metadata: {
-              token: token,
-              pack_id: pack.id,
-            }
+            cancel_url: cancelUrl
           }),
         });
 
