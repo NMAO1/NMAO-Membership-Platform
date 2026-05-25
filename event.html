@@ -122,6 +122,19 @@
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+  function showPaymentSuccessScreen() {
+      document.getElementById("root").innerHTML =
+        "<div class=\"header\">" +
+          "<div class=\"school-name\">" + escText(state.school.name || "") + "</div>" +
+          "<div class=\"header-rule\"></div>" +
+        "</div>" +
+        "<div class=\"card success-screen\">" +
+          "<i class=\"fa-solid fa-circle-check\"></i>" +
+          "<h2>Payment received!</h2>" +
+          "<p>You are confirmed for <strong>" + escText(state.event.title) + "</strong>. A receipt has been sent to your email.</p>" +
+        "</div>";
+    }
+
     async function loadEvent() {
       var eventId = getEventIdFromUrl();
       if (!eventId) {
@@ -141,10 +154,20 @@
         state.sessions = sess.data || [];
         var tiers = await sb.from("event_price_tiers").select("*").eq("event_id", eventId).eq("visibility", "public").order("sort_order");
         state.tiers = tiers.data || [];
-        if (state.tiers.length > 0) {
+       if (state.tiers.length > 0) {
           state.selectedTierId = state.tiers[0].id;
           autoSelectSessions();
         }
+
+        // Handle Stripe return states
+        var returnParams = new URLSearchParams(window.location.search);
+        var paymentStatus = returnParams.get("payment");
+        if (paymentStatus === "success") {
+          showPaymentSuccessScreen();
+          return;
+        }
+        // If payment=cancel, fall through and render normally; user can retry
+
         render();
       } catch(e) {
         document.getElementById("root").innerHTML = "<div class=\"card\"><div class=\"loading-state\">Error loading event: " + escText(e.message) + "</div></div>";
@@ -299,13 +322,54 @@
             guest_phone: phone
           })
         });
-        var data = await r.json();
+    var data = await r.json();
         if (!r.ok || data.error) {
           msgEl.innerHTML = "<div class=\"msg error\">" + escText(data.error || "Registration failed.") + "</div>";
           state.submitting = false;
           btn.disabled = false;
           return;
         }
+
+        // If paid event, redirect to Stripe Checkout
+        if (data.requires_payment) {
+          msgEl.innerHTML = "<div class=\"msg\" style=\"color:var(--muted)\">Redirecting to secure payment...</div>";
+          try {
+            var checkoutResp = await fetch(SURL + "/functions/v1/stripe-create-checkout", {
+              method: "POST",
+              headers: {"Content-Type": "application/json", "Authorization": "Bearer " + SKEY},
+              body: JSON.stringify({
+                kind: "event_registration",
+                school_id: state.event.school_id,
+                event_registration_id: data.registration_id,
+                event_id: state.event.id,
+                student_id: null,
+                guest_name: firstName + " " + lastName,
+                guest_email: email,
+                amount_cents: data.amount_cents,
+                tier_label: tier.label,
+                save_card: false,
+                success_url: window.location.origin + window.location.pathname + "?id=" + state.event.id + "&payment=success&reg=" + data.registration_id,
+                cancel_url: window.location.origin + window.location.pathname + "?id=" + state.event.id + "&payment=cancel&reg=" + data.registration_id
+              })
+            });
+            var checkoutData = await checkoutResp.json();
+            if (!checkoutResp.ok || checkoutData.error || !checkoutData.url) {
+              msgEl.innerHTML = "<div class=\"msg error\">Could not start payment: " + escText(checkoutData.error || "no checkout URL returned") + "</div>";
+              state.submitting = false;
+              btn.disabled = false;
+              return;
+            }
+            window.location.href = checkoutData.url;
+            return;
+          } catch(checkoutErr) {
+            msgEl.innerHTML = "<div class=\"msg error\">Payment setup error: " + escText(checkoutErr.message) + "</div>";
+            state.submitting = false;
+            btn.disabled = false;
+            return;
+          }
+        }
+
+        // Free event — show success screen immediately
         document.getElementById("root").innerHTML =
           "<div class=\"header\">" +
             "<div class=\"school-name\">" + escText(state.school.name || "") + "</div>" +
@@ -315,7 +379,6 @@
             "<i class=\"fa-solid fa-circle-check\"></i>" +
             "<h2>You are registered!</h2>" +
             "<p>Thank you for signing up for <strong>" + escText(state.event.title) + "</strong>. " +
-            (tier && parseFloat(tier.price) > 0 ? "We will contact you shortly to arrange payment. " : "") +
             "A confirmation has been sent to <strong>" + escText(email) + "</strong>.</p>" +
           "</div>";
       } catch(e) {
