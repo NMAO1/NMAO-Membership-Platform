@@ -101,6 +101,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .portal-tab{flex-shrink:0;display:flex;align-items:center;justify-content:center;height:48px;padding:0 0.75rem;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;white-space:nowrap;line-height:1;}
 .portal-tab.active{color:var(--gold);border-color:var(--gold);}
 .portal-tab i{margin-right:0.4rem;line-height:1;font-size:0.78rem;}
+@media (min-width: 600px) {
+  .portal-tabs{flex-wrap:wrap;overflow-x:visible;}
+  .portal-tab{flex:1 1 calc(20% - 1px);flex-shrink:1;}
+}
 .profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
 .hero-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;}
 .hero-avatar:hover .avatar-overlay{opacity:1;}
@@ -602,6 +606,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-tab active" id="ptab-schedule"    onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
         <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates<span class="tab-badge-notif" id="updatesBadgeNotif" style="display:none">0</span></div>
         <div class="portal-tab"        id="ptab-profile"     onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
+        <div class="portal-tab"        id="ptab-curriculum"  onclick="switchPortalTab('curriculum')"><i class="fa-solid fa-video"></i> Curriculum</div>
         <div class="portal-tab"        id="ptab-progress"    onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
         <div class="portal-tab"        id="ptab-attendance"  onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
         <div class="portal-tab"        id="ptab-sessions"    onclick="switchPortalTab('sessions')"><i class="fa-solid fa-person-chalkboard"></i> Sessions</div>
@@ -646,12 +651,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
           <div class="info-card" id="contactCard"></div>
         </div>
-       <div class="portal-section" id="curriculumSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
-          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
-          <div id="curriculumList"></div>
-        </div>
-        <div class="portal-section">
+       <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-key"></i> Password</div>
           <div class="info-card">
             <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Set or change your password for quick sign-in. With a password, you can skip the email step next time.</p>
@@ -661,7 +661,20 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
             <p class="form-msg" id="passwordMsg"></p>
           </div>
         </div>
-      </div><!-- END portalTabProfile -->
+    </div><!-- END portalTabProfile -->
+      <div id="portalTabCurriculum" style="display:none">
+        <div class="portal-section" id="curriculumSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-video"></i> Your Curriculum</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Materials for your current rank:</p>
+          <div id="curriculumList"></div>
+        </div>
+        <div id="curriculumEmptyState" class="portal-section">
+          <div class="info-card" style="text-align:center;padding:2rem 1.5rem">
+            <i class="fa-solid fa-video" style="color:var(--gold);font-size:1.5rem;margin-bottom:0.75rem;display:block"></i>
+            <div style="color:var(--muted);font-size:0.88rem;font-style:italic">No curriculum materials available for your current rank yet. Check back as you progress!</div>
+          </div>
+        </div>
+      </div><!-- END portalTabCurriculum -->
 
       <!-- ════════════════════════════════════
            §SECTION: TAB_PROGRESS
@@ -1888,7 +1901,7 @@ async function buildAttendance(sid){
 //  Updated to include all 8 tabs + lazy-load new ones on first open
 // ─────────────────────────────────────────────────────────────
 function switchPortalTab(tab){
-  var tabs=['schedule','updates','profile','progress','attendance','sessions','packs','book','shop'];
+  var tabs=['schedule','updates','profile','curriculum','progress','attendance','sessions','packs','book','shop'];
   tabs.forEach(function(t){
     var key=t.charAt(0).toUpperCase()+t.slice(1);
     var panel=document.getElementById('portalTab'+key);
