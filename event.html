@@ -129,7 +129,7 @@
         return;
       }
       try {
-        var ev = await sb.from("events").select("*").eq("id", eventId).single();
+        var ev = await sb.from("events").select("*").eq("id", eventId).eq("public_signup_enabled", true).single();
         if (ev.error || !ev.data) {
           document.getElementById("root").innerHTML = "<div class=\"card\"><div class=\"loading-state\">This event is not available for public signup.</div></div>";
           return;
@@ -139,7 +139,7 @@
         state.school = school.data || {name: ""};
         var sess = await sb.from("event_sessions").select("*").eq("event_id", eventId).order("sort_order");
         state.sessions = sess.data || [];
-        var tiers = await sb.from("event_price_tiers").select("*").eq("event_id", eventId).order("sort_order");
+        var tiers = await sb.from("event_price_tiers").select("*").eq("event_id", eventId).eq("visibility", "public").order("sort_order");
         state.tiers = tiers.data || [];
         if (state.tiers.length > 0) {
           state.selectedTierId = state.tiers[0].id;
