@@ -1781,11 +1781,14 @@ async function buildBeltSection(s,levels){
   levels.forEach(function(b){var isc=cb&&b.id===cb.id;html+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,5)+'</div></div>';});
   html+='</div>';
   document.getElementById('beltCard').innerHTML=html;
+var emptyEl=document.getElementById('curriculumEmptyState');
  if(cb){
     document.getElementById('curriculumSection').style.display='block';
+    if(emptyEl) emptyEl.style.display='none';
     renderCurriculumAccordion(levels, cb.id, 'curriculumList');
   } else {
     document.getElementById('curriculumSection').style.display='none';
+    if(emptyEl) emptyEl.style.display='block';
   }
 }
 
