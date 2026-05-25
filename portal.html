@@ -476,12 +476,20 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     <div class="login-logo" id="loginLogoText">NMAO</div>
   </div>
   <div class="login-tagline" id="loginSchoolName">Member Portal</div>
-  <div class="login-card">
+ <div class="login-card">
     <div class="login-title">Welcome back</div>
-    <div class="login-sub">Enter your email and we will send you a secure sign-in link. No password needed.</div>
-    <div class="field"><label>Email Address</label><input type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()" /></div>
-    <button class="btn-gold" id="loginBtn" onclick="sendMagicLink()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link</button>
+    <div class="login-sub">Sign in to your member portal.</div>
+    <div class="field"><label>Email Address</label><input type="email" id="loginEmail" placeholder="your@email.com" /></div>
+    <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter your password" onkeydown="if(event.key==='Enter')submitLogin()" /></div>
+    <div style="display:flex;align-items:center;gap:0.5rem;margin:0.75rem 0 1rem 0">
+      <input type="checkbox" id="keepSignedIn" style="width:auto;cursor:pointer" checked />
+      <label for="keepSignedIn" style="cursor:pointer;font-size:0.85rem;color:var(--muted)">Keep me signed in for 30 days</label>
+    </div>
+    <button class="btn-gold" id="loginBtn" onclick="submitLogin()"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In</button>
     <p class="form-msg" id="loginMsg"></p>
+    <div style="text-align:center;margin-top:1rem;font-size:0.85rem">
+      <a href="javascript:void(0)" onclick="sendMagicLink()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Forgot password? Email me a magic link</a>
+    </div>
   </div>
 </div>
 
@@ -908,7 +916,10 @@ var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID=null;
 var PORTAL_URL=window.location.origin+window.location.pathname;
-var sb=supabase.createClient(SURL,SKEY);
+var KEEP_SIGNED_IN_KEY='nmao_keep_signed_in';
+var keepSignedInPref=localStorage.getItem(KEEP_SIGNED_IN_KEY);
+var keepSignedIn=keepSignedInPref!=='false';
+var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
 
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
 var ANIM_EMOJIS={confetti:'🎊',belt:'🥋',stars:'⭐',fire:'🔥',petals:'🌸',lightning:'⚡',trophy:'🏆',bullseye:'🎯'};
@@ -1060,14 +1071,36 @@ function hideAllScreens(){
 // ─────────────────────────────────────────────────────────────
 //  §JS: MAGIC_LINK
 // ─────────────────────────────────────────────────────────────
+async function submitLogin(){
+  var email=document.getElementById('loginEmail').value.trim();
+  var password=document.getElementById('loginPassword').value;
+  var keepCheckbox=document.getElementById('keepSignedIn');
+  if(!email||!email.includes('@')){setLoginMsg('Please enter a valid email address.','error');return;}
+  if(!password){setLoginMsg('Please enter your password, or use the magic link option below.','error');return;}
+  localStorage.setItem(KEEP_SIGNED_IN_KEY, keepCheckbox.checked?'true':'false');
+  var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Signing in...';
+  var r=await sb.auth.signInWithPassword({email:email,password:password});
+  if(r.error){
+    var msg=r.error.message;
+    if(msg&&msg.toLowerCase().indexOf('invalid')!==-1){msg='Invalid email or password. Try again, or use the magic link option below.';}
+    setLoginMsg(msg,'error');
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In';
+  }else if(r.data&&r.data.session){
+    document.getElementById('loginScreen').style.display='none';
+    await detectUserTypeAndRoute(r.data.session.user);
+  }
+}
+
 async function sendMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
-  if(!email||!email.includes('@')){setLoginMsg('Please enter a valid email address.','error');return;}
-  var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Sending...';
+  if(!email||!email.includes('@')){setLoginMsg('Please enter your email address above first, then click this link again.','error');return;}
+  setLoginMsg('Sending magic link...','');
   var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:PORTAL_URL}});
-  if(r.error){setLoginMsg(r.error.message,'error');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link';}
+  if(r.error){setLoginMsg(r.error.message,'error');}
   else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
 }
+
 function setLoginMsg(text,type){var el=document.getElementById('loginMsg');el.textContent=text;el.className='form-msg '+(type||'');}
 
 // ─────────────────────────────────────────────────────────────
