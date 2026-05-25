@@ -96,14 +96,13 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
    NOTE: portal-tabs now scrolls horizontally
    to support 8 tabs without cramping.
 ══════════════════════════════════════════ */
-.portal-tabs{display:flex;align-items:stretch;border-bottom:1px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.portal-tabs::-webkit-scrollbar{display:none;}
-.portal-tab{flex-shrink:0;display:flex;align-items:center;justify-content:center;height:48px;padding:0 0.75rem;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;white-space:nowrap;line-height:1;}
+.portal-tabs{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.portal-tab{flex:1 1 25%;min-width:0;display:flex;align-items:center;justify-content:center;height:48px;padding:0 0.5rem;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;white-space:nowrap;line-height:1;overflow:hidden;}
 .portal-tab.active{color:var(--gold);border-color:var(--gold);}
-.portal-tab i{margin-right:0.4rem;line-height:1;font-size:0.78rem;}
+.portal-tab i{margin-right:0.35rem;line-height:1;font-size:0.7rem;flex-shrink:0;}
 @media (min-width: 600px) {
-  .portal-tabs{flex-wrap:wrap;overflow-x:visible;}
-  .portal-tab{flex:1 1 calc(20% - 1px);flex-shrink:1;}
+  .portal-tab{padding:0 0.75rem;font-size:0.68rem;letter-spacing:0.12em;}
+  .portal-tab i{margin-right:0.4rem;font-size:0.78rem;}
 }
 .profile-hero{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:var(--surface);border:1px solid var(--border);}
 .hero-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem;color:var(--gold);background:var(--gold-bg);flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;}
@@ -602,16 +601,14 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
            Tab order: Schedule · Updates · Profile
            Progress · Attendance · Sessions · Packs · Book
       ════════════════════════════════════ -->
-      <div class="portal-tabs">
+    <div class="portal-tabs">
         <div class="portal-tab active" id="ptab-schedule"    onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
         <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Updates<span class="tab-badge-notif" id="updatesBadgeNotif" style="display:none">0</span></div>
         <div class="portal-tab"        id="ptab-profile"     onclick="switchPortalTab('profile')"><i class="fa-solid fa-id-card"></i> Profile</div>
         <div class="portal-tab"        id="ptab-curriculum"  onclick="switchPortalTab('curriculum')"><i class="fa-solid fa-video"></i> Curriculum</div>
         <div class="portal-tab"        id="ptab-progress"    onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
-        <div class="portal-tab"        id="ptab-attendance"  onclick="switchPortalTab('attendance')"><i class="fa-solid fa-clipboard-list"></i> Attendance</div>
         <div class="portal-tab"        id="ptab-sessions"    onclick="switchPortalTab('sessions')"><i class="fa-solid fa-person-chalkboard"></i> Sessions</div>
-        <div class="portal-tab"        id="ptab-packs"       onclick="switchPortalTab('packs')"><i class="fa-solid fa-layer-group"></i> Packs</div>
-       <div class="portal-tab"        id="ptab-book"        onclick="switchPortalTab('book')"><i class="fa-solid fa-calendar-plus"></i> Book</div>
+        <div class="portal-tab"        id="ptab-book"        onclick="switchPortalTab('book')"><i class="fa-solid fa-calendar-plus"></i> Book</div>
         <div class="portal-tab"        id="ptab-shop"        onclick="switchPortalTab('shop')"><i class="fa-solid fa-bag-shopping"></i> Shop<span class="shop-badge-notif" id="shopBadgeNotif" style="display:none">0</span></div>
       </div>
 
@@ -676,8 +673,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div><!-- END portalTabCurriculum -->
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_PROGRESS
+ <!-- ════════════════════════════════════
+           §SECTION: TAB_PROGRESS [MERGED]
+           Order: Class Tracker (countdown) → Belt Progress (conditional) → Recent Attendance
       ════════════════════════════════════ -->
       <div id="portalTabProgress" style="display:none">
         <div class="portal-section">
@@ -688,40 +686,20 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
           <div class="belt-card" id="beltCard"></div>
         </div>
-      </div>
-
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_ATTENDANCE
-      ════════════════════════════════════ -->
-      <div id="portalTabAttendance" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-calendar-check"></i> Recent Attendance</div>
           <div id="attendanceSection"></div>
         </div>
       </div>
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_SESSIONS [NEW]
-           Tables: sessions + session_types
-           Search: §SECTION: TAB_SESSIONS
+
+<!-- ════════════════════════════════════
+           §SECTION: TAB_SESSIONS [MERGED]
+           Tables: student_session_packs · session_packs · sessions · session_types
+           Order: Active Packs → Buy a Pack → Upcoming Private Sessions
+           Past Sessions hidden from UI (kept in DB).
       ════════════════════════════════════ -->
       <div id="portalTabSessions" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-calendar-star"></i> Upcoming Private Sessions</div>
-          <div id="sessionsUpcomingList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
-        </div>
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-clock-rotate-left"></i> Past Sessions</div>
-          <div id="sessionsPastList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_PACKS [NEW]
-           Tables: student_session_packs · session_packs · payments
-           Search: §SECTION: TAB_PACKS
-      ════════════════════════════════════ -->
-      <div id="portalTabPacks" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-layer-group"></i> Your Active Packs</div>
           <div id="packsBalanceList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
@@ -731,7 +709,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap Purchase to add sessions to your account.</p>
           <div id="packsBuyList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
         </div>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-star"></i> Upcoming Private Sessions</div>
+          <div id="sessionsUpcomingList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
       </div>
+
 
       <!-- ════════════════════════════════════
            §SECTION: TAB_BOOK [NEW]
@@ -971,7 +954,6 @@ var scheduleViewDay=0;
 var enrollmentCounts={};
 // lazy-load flags for new tabs — reset in buildPortal
 var sessionsLoaded=false;
-var packsLoaded=false;
 var bookLoaded=false;
 var shopLoaded=false;
 
@@ -1276,7 +1258,7 @@ function showStudentPortal(student){
 
 async function buildPortal(s){
   // Reset lazy-load flags each time portal builds
-  sessionsLoaded=false;packsLoaded=false;bookLoaded=false;shopLoaded=false;
+sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   // Fire badge checks (non-blocking, complete after portal loads)
   checkShopUpdates();
   checkUpdatesNotif();
@@ -1901,7 +1883,7 @@ async function buildAttendance(sid){
 //  Updated to include all 8 tabs + lazy-load new ones on first open
 // ─────────────────────────────────────────────────────────────
 function switchPortalTab(tab){
-  var tabs=['schedule','updates','profile','curriculum','progress','attendance','sessions','packs','book','shop'];
+  var tabs=['schedule','updates','profile','curriculum','progress','sessions','book','shop'];
   tabs.forEach(function(t){
     var key=t.charAt(0).toUpperCase()+t.slice(1);
     var panel=document.getElementById('portalTab'+key);
@@ -1909,9 +1891,8 @@ function switchPortalTab(tab){
     var btn=document.getElementById('ptab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
-  // Lazy-load new tabs on first visit
-  if(tab==='sessions'&&!sessionsLoaded){sessionsLoaded=true;buildSessions(currentStudent);}
-  if(tab==='packs'&&!packsLoaded){packsLoaded=true;buildPacks(currentStudent);}
+  // Lazy-load tabs on first visit. Sessions tab now builds packs too (merged tab).
+  if(tab==='sessions'&&!sessionsLoaded){sessionsLoaded=true;buildSessions(currentStudent);buildPacks(currentStudent);}
   if(tab==='book'&&!bookLoaded){bookLoaded=true;buildBook();}
   if(tab==='shop'&&!shopLoaded){shopLoaded=true;buildShop();}
   if(tab==='shop'){clearShopBadge();}
@@ -1925,7 +1906,6 @@ function switchPortalTab(tab){
 // ─────────────────────────────────────────────────────────────
 async function buildSessions(s){
   var upEl=document.getElementById('sessionsUpcomingList');
-  var pastEl=document.getElementById('sessionsPastList');
   var today=new Date().toISOString().split('T')[0];
 
   try{
@@ -1938,13 +1918,10 @@ async function buildSessions(s){
 
     var all=r.data||[];
     var upcoming=all.filter(function(x){return x.session_date>=today&&x.status!=='cancelled';}).reverse();
-    var past=all.filter(function(x){return x.session_date<today||x.status==='completed'||x.status==='cancelled';});
 
     upEl.innerHTML=upcoming.length?upcoming.map(function(x){return buildSessionCard(x,true);}).join(''):emptyState('fa-calendar-star','No upcoming private sessions.');
-    pastEl.innerHTML=past.length?past.slice(0,15).map(function(x){return buildSessionCard(x,false);}).join(''):emptyState('fa-clock-rotate-left','No past sessions yet.');
   }catch(e){
     upEl.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load sessions.</div>';
-    pastEl.innerHTML='';
     console.error('buildSessions error:',e);
   }
 }
