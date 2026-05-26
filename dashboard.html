@@ -1616,6 +1616,7 @@
         <button class="btn-sm gold" onclick="openEditStudent()"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="btn-sm" id="sendMagicLinkBtn" onclick="sendPortalMagicLink()"><i class="fa-solid fa-link"></i> Portal Link</button>
         <button class="btn-sm" onclick="cycleStudentStatus()">Change Status</button>
+        <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="confirmDeleteStudent()"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1.3fr;max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
@@ -4755,7 +4756,7 @@ async function sendUpdateCardLinkSMS(){
 // ─────────────────────────────── §MEMBERS ───────────────────────────────
 
 async function loadStudents() {
-  var r = await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id',SID);
+  var r = await sb.from('students').select('*, programs(name), memberships(name)').eq('school_id',SID).is('deleted_at', null);
   allStudents = r.data || [];
   var tr = await sb.from('student_tags').select('student_id,tag_id').eq('school_id',SID);
   var tagMap = {};
@@ -5410,6 +5411,38 @@ async function cycleStudentStatus(){
   if(n==='paused'){update.paused_at=now;}else if(c==='paused'&&n==='active'){update.paused_at=null;update.reactivated_at=now;}
   var r=await sb.from('students').update(update).eq('id',currentProfileStudent.id);
   if(!r.error){await openStudentProfile(currentProfileStudent.id);await loadStudents();}
+}
+  // ─────────────────────────────────────────────────────────────
+//  §JS: DELETE_STUDENT — soft-delete (deleted_at timestamp)
+//  Preserves history (attendance, payments, memberships) for
+//  potential restore via SQL: UPDATE students SET deleted_at=NULL WHERE id=?
+// ─────────────────────────────────────────────────────────────
+async function confirmDeleteStudent() {
+  if (!currentProfileStudent) return;
+  var s = currentProfileStudent;
+  var fullName = s.first_name + ' ' + s.last_name;
+
+  var confirmed = confirm(
+    'Delete ' + fullName + '?\n\n' +
+    'This student will be hidden from active rosters. Their history ' +
+    '(attendance, payments, memberships) will be preserved in the database ' +
+    'and can be restored by an administrator if needed.\n\n' +
+    'Continue?'
+  );
+  if (!confirmed) return;
+
+  var r = await sb.from('students')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', s.id);
+
+  if (r.error) {
+    showToast('Could not delete student: ' + r.error.message, 'err');
+    return;
+  }
+
+  showToast(fullName + ' deleted', 'ok');
+  closeStudentProfile();
+  await loadStudents();
 }
 function openEditStudent(){
   if(!currentProfileStudent) return; var s=currentProfileStudent;
@@ -6255,7 +6288,7 @@ function renderPrograms(){
 }
   async function deleteProgram(pid){
   if(!confirm('Delete this program? Students assigned to it will lose their program link. This cannot be undone.')) return;
-  var inUse=await sb.from('students').select('id',{count:'exact',head:true}).eq('program_id',pid).eq('school_id',SID);
+var inUse=await sb.from('students').select('id',{count:'exact',head:true}).eq('program_id',pid).eq('school_id',SID).is('deleted_at', null);
   if(inUse.count>0){alert('Cannot delete — '+inUse.count+' student'+(inUse.count!==1?'s are':' is')+' assigned to this program. Reassign them first.');return;}
   var r=await sb.from('programs').update({active:false}).eq('id',pid);
   if(r.error){alert('Error: '+r.error.message);return;}
@@ -6481,7 +6514,7 @@ function removeEditVideoRow(btn){
   else { row.parentNode.removeChild(row); }
 }
 async function deleteBeltLevel(lid){
-  var check=await sb.from('students').select('id',{count:'exact',head:true}).eq('current_belt_id',lid);
+var check=await sb.from('students').select('id',{count:'exact',head:true}).eq('current_belt_id',lid).is('deleted_at', null);
   if(check.count>0){alert('Cannot delete \u2014 '+check.count+' student'+(check.count!==1?'s are':' is')+' at this level.');return;}
   if(!confirm('Delete this belt level?')) return;
   await sb.from('belt_level_videos').delete().eq('belt_level_id',lid);
@@ -8088,7 +8121,7 @@ var REPORT_DEFS = [
     table:'students', join:'memberships(name),programs(name)', dateField:'created_at',
     customQuery:async function(sb,SID){
       var now=new Date(); var in30=new Date(); in30.setDate(now.getDate()+30);
-      var r=await sb.from('students').select('*,memberships(name),programs(name)').eq('school_id',SID).eq('status','active').gte('membership_end_date',localDateStr(now)).lte('membership_end_date',localDateStr(in30)).order('membership_end_date');
+var r=await sb.from('students').select('*,memberships(name),programs(name)').eq('school_id',SID).eq('status','active').gte('membership_end_date',localDateStr(now)).lte('membership_end_date',localDateStr(in30)).is('deleted_at', null).order('membership_end_date');
       return r;
     },
     actionable:true,
@@ -8106,7 +8139,7 @@ var REPORT_DEFS = [
   { key:'birthdays', title:'Birthdays', desc:'Students with birthdays in the next 30 days.',
     table:'students', join:null, dateField:'created_at',
     customQuery:async function(sb,SID){
-      var r=await sb.from('students').select('*').eq('school_id',SID).not('date_of_birth','is',null).order('last_name');
+var r=await sb.from('students').select('*').eq('school_id',SID).not('date_of_birth','is',null).is('deleted_at', null).order('last_name');
       return r;
     },
     customFilter:function(data){
@@ -8149,7 +8182,7 @@ var REPORT_DEFS = [
   { key:'retention', title:'Retention Risk', desc:'Students not attended in 14, 30, or 60 days.',
     table:'students', join:null, dateField:'created_at',
     customQuery:async function(sb,SID){
-      var r=await sb.from('students').select('*').eq('school_id',SID).eq('status','active').order('last_name');
+var r=await sb.from('students').select('*').eq('school_id',SID).eq('status','active').is('deleted_at', null).order('last_name');
       return r;
     },
     customFilter:async function(data){
