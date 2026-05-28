@@ -1150,6 +1150,7 @@
           <div class="field"><label>Border Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingBorderColor" value="#2A2520" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncBorderColor()" /><input type="text" id="settingBorderColorHex" value="#2A2520" style="flex:1" oninput="syncBorderColorText()" /></div></div>
           <div class="field"><label>Surface Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingSurfaceColor" value="#141414" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncSurfaceColor()" /><input type="text" id="settingSurfaceColorHex" value="#141414" style="flex:1" oninput="syncSurfaceColorText()" /></div></div>
           <div class="field"><label>Text Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingFontColor" value="#F5F0E8" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncFontColor()" /><input type="text" id="settingFontColorHex" value="#F5F0E8" style="flex:1" oninput="syncFontColorText()" /></div></div>
+          <div class="field"><label>Sidebar Nav Text</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingSidebarText" value="#9A8F80" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncSidebarTextColor()" /><input type="text" id="settingSidebarTextHex" value="#9A8F80" style="flex:1" oninput="syncSidebarTextColorText()" /></div></div>
         </div>
         <div style="margin-top:1.25rem;max-width:600px" id="fontOptions">
           <div class="font-option selected" onclick="selectFont('Cormorant Garamond',this)" data-font="Cormorant Garamond"><span class="font-preview" style="font-family:'Cormorant Garamond',serif">Cormorant Garamond</span><span style="font-size:0.68rem;color:var(--muted)">Elegant serif</span></div>
@@ -1160,7 +1161,12 @@
           <div class="font-option" onclick="selectFont('Nunito',this)" data-font="Nunito"><span class="font-preview" style="font-family:'Nunito',sans-serif">Nunito</span><span style="font-size:0.68rem;color:var(--muted)">Friendly</span></div>
         </div>
         <button class="panel-action" style="margin-top:1rem" onclick="saveBrandSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Brand Settings</button>
-        <p class="form-msg" id="brandMsg"></p>
+       <p class="form-msg" id="brandMsg"></p>
+        <div style="margin-top:1.75rem;border-top:1px solid var(--border);padding-top:1.25rem;max-width:600px">
+          <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.25rem">Saved Schemes</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem">Save up to three full color schemes — everyday, seasonal, tournament — then switch the whole platform with one tap.</div>
+          <div id="brandTemplates"></div>
+        </div>
       </div></div>
       <!-- §SETTINGS: MEMBERSHIPS -->
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
@@ -2913,7 +2919,8 @@ async function loadSchool() {
     document.getElementById('settingSurfaceColor').value   = surfaceCol; document.getElementById('settingSurfaceColorHex').value = surfaceCol;
     document.getElementById('settingFontColor').value      = fontCol; document.getElementById('settingFontColorHex').value      = fontCol;
     applyBrandColors(col, bgCol, borderCol, font, surfaceCol, fontCol);
-    if(d.sidebar_text_color){ document.getElementById('settingSidebarText').value=d.sidebar_text_color; document.getElementById('settingSidebarTextHex').value=d.sidebar_text_color; document.documentElement.style.setProperty('--sidebar-text',d.sidebar_text_color); }
+if(d.sidebar_text_color){ document.getElementById('settingSidebarText').value=d.sidebar_text_color; document.getElementById('settingSidebarTextHex').value=d.sidebar_text_color; document.documentElement.style.setProperty('--sidebar-text',d.sidebar_text_color); }     
+    renderBrandTemplates();
     document.querySelectorAll('.font-option').forEach(function(fo){ fo.classList.toggle('selected', fo.dataset.font===font); });
     if (d.logo_url) showLogo(d.logo_url);
     milestoneSettings = d.milestone_messages || {};
@@ -3044,7 +3051,67 @@ async function saveAlertSettings(){
 async function saveBrandSettings() {
   setMsg('brandMsg','Saving...','');
   var r=await sb.from('schools').update({color:document.getElementById('settingColor').value,bg_color:document.getElementById('settingBgColor').value,border_color:document.getElementById('settingBorderColor').value,surface_color:document.getElementById('settingSurfaceColor').value,font_color:document.getElementById('settingFontColor').value,sidebar_text_color:document.getElementById('settingSidebarText').value,font_family:selectedFont}).eq('id',SID);
-  if(r.error){setMsg('brandMsg',r.error.message,'error');}else{setMsg('brandMsg','Brand settings saved!','success');setTimeout(function(){document.getElementById('brandMsg').textContent='';},3000);}
+if(r.error){setMsg('brandMsg',r.error.message,'error');}else{setMsg('brandMsg','Brand settings saved!','success');setTimeout(function(){document.getElementById('brandMsg').textContent='';},3000);}
+}
+function getBrandTemplates(){
+  var t=(schoolData&&schoolData.brand_templates)?schoolData.brand_templates:[];
+  if(!Array.isArray(t))t=[];
+  return t;
+}
+function renderBrandTemplates(){
+  var host=document.getElementById('brandTemplates');
+  if(!host)return;
+  var t=getBrandTemplates();
+  var html='';
+  for(var i=0;i<3;i++){
+    var slot=t[i]||null;
+    var nm=(slot&&slot.name)?slot.name:'';
+    var safe=nm.replace(/"/g,'&quot;');
+    var dis=slot?'':';opacity:0.4;pointer-events:none';
+    html+='<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem">';
+    html+='<input type="text" id="brandTplName'+i+'" value="'+safe+'" placeholder="Scheme '+(i+1)+'" style="flex:1" />';
+    html+='<button class="panel-action" style="padding:0.4rem 0.85rem" onclick="saveBrandTemplate('+i+')"><i class="fa-solid fa-floppy-disk"></i> Save</button>';
+    html+='<button class="panel-action" style="padding:0.4rem 0.85rem'+dis+'" onclick="applyBrandTemplate('+i+')"><i class="fa-solid fa-wand-magic-sparkles"></i> Activate</button>';
+    html+='</div>';
+  }
+  host.innerHTML=html;
+}
+function saveBrandTemplate(idx){
+  var t=getBrandTemplates();
+  while(t.length<3){t.push(null);}
+  var nameEl=document.getElementById('brandTplName'+idx);
+  var nm=(nameEl&&nameEl.value)?nameEl.value:('Scheme '+(idx+1));
+  t[idx]={name:nm,color:document.getElementById('settingColor').value,bg_color:document.getElementById('settingBgColor').value,border_color:document.getElementById('settingBorderColor').value,surface_color:document.getElementById('settingSurfaceColor').value,font_color:document.getElementById('settingFontColor').value,sidebar_text_color:document.getElementById('settingSidebarText').value,font_family:selectedFont};
+  saveBrandTemplatesToDb(t,'Scheme saved!');
+}
+async function saveBrandTemplatesToDb(t,msg){
+  setMsg('brandMsg','Saving...','');
+  var r=await sb.from('schools').update({brand_templates:t}).eq('id',SID);
+  if(r.error){setMsg('brandMsg',r.error.message,'error');return;}
+  if(schoolData){schoolData.brand_templates=t;}
+  renderBrandTemplates();
+  setMsg('brandMsg',msg,'success');
+  setTimeout(function(){document.getElementById('brandMsg').textContent='';},3000);
+}
+async function applyBrandTemplate(idx){
+  var t=getBrandTemplates();
+  var s=t[idx];
+  if(!s)return;
+  document.getElementById('settingColor').value=s.color;document.getElementById('settingColorHex').value=s.color;
+  document.getElementById('settingBgColor').value=s.bg_color;document.getElementById('settingBgColorHex').value=s.bg_color;
+  document.getElementById('settingBorderColor').value=s.border_color;document.getElementById('settingBorderColorHex').value=s.border_color;
+  document.getElementById('settingSurfaceColor').value=s.surface_color;document.getElementById('settingSurfaceColorHex').value=s.surface_color;
+  document.getElementById('settingFontColor').value=s.font_color;document.getElementById('settingFontColorHex').value=s.font_color;
+  if(s.sidebar_text_color){document.getElementById('settingSidebarText').value=s.sidebar_text_color;document.getElementById('settingSidebarTextHex').value=s.sidebar_text_color;}
+  selectedFont=s.font_family;
+  applyBrandColors(s.color,s.bg_color,s.border_color,s.font_family,s.surface_color,s.font_color);
+  if(s.sidebar_text_color){document.documentElement.style.setProperty('--sidebar-text',s.sidebar_text_color);}
+  document.querySelectorAll('.font-option').forEach(function(fo){fo.classList.toggle('selected',fo.dataset.font===s.font_family);});
+  setMsg('brandMsg','Activating...','');
+  var r=await sb.from('schools').update({color:s.color,bg_color:s.bg_color,border_color:s.border_color,surface_color:s.surface_color,font_color:s.font_color,sidebar_text_color:s.sidebar_text_color,font_family:s.font_family}).eq('id',SID);
+  if(r.error){setMsg('brandMsg',r.error.message,'error');return;}
+  setMsg('brandMsg','Scheme activated — members see it on next load.','success');
+  setTimeout(function(){document.getElementById('brandMsg').textContent='';},3500);
 }
 async function saveWaiver() {
   var title=document.getElementById('waiverTitle').value.trim(); var content=getQuillContent('waiverEditor');
