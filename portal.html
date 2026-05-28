@@ -1134,7 +1134,14 @@ function openWaiverModalForChild(childId){
 function updateWaiverBanner(){
   var banner = document.getElementById('waiverBanner');
   if(!banner) return;
-  var portalScreen = document.getElementByI
+  var portalScreen = document.getElementById('portalScreen');
+  var isPortalVisible = portalScreen && portalScreen.style.display !== 'none';
+  if(isPortalVisible && currentStudent && currentStudent.waiver_signed === false){
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: INIT
