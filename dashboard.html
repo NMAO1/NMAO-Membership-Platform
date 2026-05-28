@@ -2913,6 +2913,7 @@ async function loadSchool() {
     document.getElementById('settingSurfaceColor').value   = surfaceCol; document.getElementById('settingSurfaceColorHex').value = surfaceCol;
     document.getElementById('settingFontColor').value      = fontCol; document.getElementById('settingFontColorHex').value      = fontCol;
     applyBrandColors(col, bgCol, borderCol, font, surfaceCol, fontCol);
+    if(d.sidebar_text_color){ document.getElementById('settingSidebarText').value=d.sidebar_text_color; document.getElementById('settingSidebarTextHex').value=d.sidebar_text_color; document.documentElement.style.setProperty('--sidebar-text',d.sidebar_text_color); }
     document.querySelectorAll('.font-option').forEach(function(fo){ fo.classList.toggle('selected', fo.dataset.font===font); });
     if (d.logo_url) showLogo(d.logo_url);
     milestoneSettings = d.milestone_messages || {};
@@ -3012,6 +3013,8 @@ function syncSurfaceColor()    { var v=document.getElementById('settingSurfaceCo
 function syncSurfaceColorText(){ var h=document.getElementById('settingSurfaceColorHex').value; if(/^#[0-9A-Fa-f]{6}$/.test(h)){ document.getElementById('settingSurfaceColor').value=h; document.documentElement.style.setProperty('--surface',h); } }
 function syncFontColor()       { var v=document.getElementById('settingFontColor').value;   document.getElementById('settingFontColorHex').value=v;   document.documentElement.style.setProperty('--white',v); }
 function syncFontColorText()   { var h=document.getElementById('settingFontColorHex').value;  if(/^#[0-9A-Fa-f]{6}$/.test(h)){ document.getElementById('settingFontColor').value=h;   document.documentElement.style.setProperty('--white',h); } }
+function syncSidebarTextColor()     { var v=document.getElementById('settingSidebarText').value;    document.getElementById('settingSidebarTextHex').value=v;    document.documentElement.style.setProperty('--sidebar-text',v); }
+function syncSidebarTextColorText() { var h=document.getElementById('settingSidebarTextHex').value; if(/^#[0-9A-Fa-f]{6}$/.test(h)){ document.getElementById('settingSidebarText').value=h; document.documentElement.style.setProperty('--sidebar-text',h); } }
 function selectFont(font,el)   { selectedFont=font; document.querySelectorAll('.font-option').forEach(function(fo){fo.classList.remove('selected');}); el.classList.add('selected'); document.documentElement.style.setProperty('--font-display',"'"+font+"',serif"); }
 
 async function saveSettings() {
@@ -3040,7 +3043,7 @@ async function saveAlertSettings(){
 }
 async function saveBrandSettings() {
   setMsg('brandMsg','Saving...','');
-  var r=await sb.from('schools').update({color:document.getElementById('settingColor').value,bg_color:document.getElementById('settingBgColor').value,border_color:document.getElementById('settingBorderColor').value,surface_color:document.getElementById('settingSurfaceColor').value,font_color:document.getElementById('settingFontColor').value,font_family:selectedFont}).eq('id',SID);
+  var r=await sb.from('schools').update({color:document.getElementById('settingColor').value,bg_color:document.getElementById('settingBgColor').value,border_color:document.getElementById('settingBorderColor').value,surface_color:document.getElementById('settingSurfaceColor').value,font_color:document.getElementById('settingFontColor').value,sidebar_text_color:document.getElementById('settingSidebarText').value,font_family:selectedFont}).eq('id',SID);
   if(r.error){setMsg('brandMsg',r.error.message,'error');}else{setMsg('brandMsg','Brand settings saved!','success');setTimeout(function(){document.getElementById('brandMsg').textContent='';},3000);}
 }
 async function saveWaiver() {
