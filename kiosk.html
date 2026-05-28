@@ -252,6 +252,8 @@ var r=await sb.from("schools").select("id,name,slug,logo_url,bio,tagline,color,b
       if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
       if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
       if(d.font_family)document.documentElement.style.setProperty('--font-display','\''+d.font_family+'\',serif');
+      if(d.surface_color)document.documentElement.style.setProperty('--surface',d.surface_color);
+      if(d.font_color)document.documentElement.style.setProperty('--white',d.font_color);
       if(d.logo_url){
         document.getElementById('kioskLogoImg').src=d.logo_url;
         document.getElementById('kioskLogoImg').style.display='block';
