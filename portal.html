@@ -327,7 +327,57 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .waiver-body{padding:1.5rem;overflow-y:auto;flex:1;font-size:0.85rem;color:var(--muted2);line-height:1.7;}
 .waiver-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;flex-shrink:0;}
 .btn-sign-waiver{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;}
+/* ══════════════════════════════════════════
+   §CSS: WAIVER_SIGN_SECTION
+   Opt-in checkboxes, ESIGN consent, typed-name signature,
+   inline status, and disabled sign-button state.
+   Phase 1 waiver upgrade.
+══════════════════════════════════════════ */
+.waiver-sign-section{padding:1.25rem 1.5rem;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);flex-shrink:0;max-height:50vh;overflow-y:auto;}
+.waiver-sign-heading{font-family:var(--font-display);font-size:0.75rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
 
+.consent-block{border:1px solid var(--border);background:rgba(0,0,0,0.25);padding:0.85rem 1rem;margin-bottom:0.8rem;}
+.consent-row{display:flex;align-items:flex-start;gap:0.65rem;cursor:pointer;margin-bottom:0.6rem;}
+.consent-row:last-child{margin-bottom:0;}
+.consent-checkbox{flex-shrink:0;width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--gold);}
+.consent-text{font-size:0.78rem;line-height:1.5;color:var(--muted2);}
+.consent-text strong{color:var(--white);font-weight:600;}
+
+.waiver-esign{font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.5;margin:1rem 0 0.6rem;padding:0.65rem 0.85rem;background:rgba(201,168,76,0.06);border-left:2px solid var(--gold);}
+
+.waiver-name-field{margin-bottom:0.5rem;}
+.waiver-name-field label{display:block;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+.waiver-name-field input{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-display);font-size:1.1rem;font-style:italic;padding:0.85rem 1rem;outline:none;transition:border-color 0.2s;}
+.waiver-name-field input:focus{border-color:var(--gold);}
+
+.btn-sign-waiver:disabled{opacity:0.4;cursor:not-allowed;}
+
+.waiver-sign-msg{font-size:0.78rem;margin-top:0.5rem;text-align:center;min-height:1rem;}
+.waiver-sign-msg.error{color:#E07070;}
+.waiver-sign-msg.success{color:var(--green);}
+
+/* ══════════════════════════════════════════
+   §CSS: WAIVER_BANNER
+   Persistent unsigned-waiver banner shown inside #portalScreen
+   when currentStudent.waiver_signed is false.
+══════════════════════════════════════════ */
+.waiver-banner{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin:0 auto 1rem;max-width:720px;padding:0.9rem 1.2rem;display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap;}
+.waiver-banner-icon{color:var(--gold);font-size:1.1rem;flex-shrink:0;}
+.waiver-banner-text{flex:1;font-size:0.85rem;color:var(--white);line-height:1.4;min-width:200px;}
+.waiver-banner-text strong{font-weight:600;}
+.waiver-banner-sub{display:block;font-size:0.72rem;color:var(--muted);margin-top:0.2rem;}
+.waiver-banner-btn{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;transition:opacity 0.2s;}
+.waiver-banner-btn:hover{opacity:0.9;}
+
+/* ══════════════════════════════════════════
+   §CSS: CHILD_WAIVER_PILL
+   Family portal — per-child sign-waiver pill on hero card,
+   shown when child.waiver_signed is false.
+══════════════════════════════════════════ */
+.child-waiver-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.35rem 0.7rem;margin-top:0.5rem;cursor:pointer;transition:all 0.15s;}
+.child-waiver-pill:hover{background:var(--gold);color:var(--black);}
+.child-waiver-pill i{font-size:0.75rem;}
+    
 /* ══════════════════════════════════════════
    §CSS: CONTACT_MODAL
 ══════════════════════════════════════════ */
@@ -570,6 +620,14 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       </div>
     </div>
     <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
+  </div>
+  <div class="waiver-banner" id="waiverBanner" style="display:none">
+    <i class="fa-solid fa-circle-exclamation waiver-banner-icon"></i>
+    <div class="waiver-banner-text">
+      <strong>Please sign your school waiver.</strong>
+      <span class="waiver-banner-sub">Required before your first class. Takes about a minute.</span>
+    </div>
+    <button class="waiver-banner-btn" onclick="openWaiverModal()">Sign Now</button>
   </div>
   <div class="portal-body">
     <div id="portalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading your profile...</div>
@@ -891,11 +949,35 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       <button class="waiver-close" onclick="document.getElementById('waiverModal').classList.remove('active')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="waiver-body" id="waiverModalBody">
-      <p style="color:var(--muted);font-style:italic">Loading waiver...</p>
+   <p style="color:var(--muted);font-style:italic">Loading waiver...</p>
+    </div>
+    <div class="waiver-sign-section">
+      <div class="waiver-sign-heading">Your Consent &amp; Signature</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;line-height:1.5">The permissions below are optional. You may sign the waiver without granting them.</div>
+      <div class="consent-block">
+        <label class="consent-row">
+          <input type="checkbox" class="consent-checkbox" id="waiverOptInPhoto" />
+          <span class="consent-text"><strong>Photo &amp; video release.</strong> I grant <span id="waiverConsentSchoolPhoto">my school</span> permission to photograph and record me during classes and events, and to use those recordings for promotional purposes.</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" class="consent-checkbox" id="waiverOptInSms" />
+          <span class="consent-text"><strong>SMS text messages.</strong> I agree to receive SMS text messages from <span id="waiverConsentSchoolSms">my school</span> regarding class confirmations, reminders, payment receipts, and other account notifications. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" class="consent-checkbox" id="waiverOptInEmail" />
+          <span class="consent-text"><strong>Email notifications.</strong> I agree to receive transactional emails from <span id="waiverConsentSchoolEmail">my school</span> regarding my membership, classes, payments, and school announcements.</span>
+        </label>
+      </div>
+      <div class="waiver-esign">By typing my full name and tapping Sign, I am signing this agreement electronically, with the same legal effect as a handwritten signature.</div>
+      <div class="waiver-name-field">
+        <label for="waiverTypedName">Type your full name to sign</label>
+        <input type="text" id="waiverTypedName" placeholder="First and last name" autocomplete="off" />
+      </div>
+      <div class="waiver-sign-msg" id="waiverSignMsg"></div>
     </div>
     <div class="waiver-footer">
       <button style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.65rem 1.25rem;cursor:pointer" onclick="document.getElementById('waiverModal').classList.remove('active')">Cancel</button>
-      <button class="btn-sign-waiver" onclick="signWaiver()"><i class="fa-solid fa-signature" style="margin-right:0.4rem"></i>I Agree — Sign Waiver</button>
+      <button class="btn-sign-waiver" id="signWaiverBtn" onclick="signWaiver()" disabled><i class="fa-solid fa-signature" style="margin-right:0.4rem"></i>I Agree — Sign Waiver</button>
     </div>
   </div>
 </div>
@@ -960,6 +1042,99 @@ var shopLoaded=false;
 // Shop cart state — array of {id,name,price,qty,image_url,track_inventory,inventory_qty}
 // Resets on page reload (including Stripe redirect return). v1 — no persistence.
 var shopCart=[];
+
+// ─────────────────────────────────────────────────────────────
+//  §JS: WAIVER_SIGNING
+//  Module-scope state and helpers for the upgraded waiver flow.
+//
+//  waiverSigningContext: the student record currently being signed
+//  for. For adult self-sign this is currentStudent; for family-sign
+//  it is the selected child. signWaiver() reads from this exclusively
+//  so the family-portal pill flow works even though currentStudent is
+//  null on the family branch.
+//
+//  waiverScrollMaxPct: forensic signal — max scroll percentage
+//  achieved in the waiver body during the current modal session.
+//  Captured at submit and sent to the Edge Function. Non-blocking.
+// ─────────────────────────────────────────────────────────────
+var waiverSigningContext = null;
+var waiverScrollMaxPct = 0;
+var waiverScrollListenerAttached = false;
+
+function setWaiverSignMsg(text, type){
+  var el = document.getElementById('waiverSignMsg');
+  if(!el) return;
+  el.textContent = text || '';
+  el.className = 'waiver-sign-msg' + (type ? ' ' + type : '');
+}
+
+function scopeWaiverModalToStudent(student){
+  waiverSigningContext = student || null;
+  waiverScrollMaxPct = 0;
+  var photo = document.getElementById('waiverOptInPhoto');
+  var sms = document.getElementById('waiverOptInSms');
+  var email = document.getElementById('waiverOptInEmail');
+  var name = document.getElementById('waiverTypedName');
+  var btn = document.getElementById('signWaiverBtn');
+  if(photo) photo.checked = false;
+  if(sms) sms.checked = false;
+  if(email) email.checked = false;
+  if(name) name.value = '';
+  if(btn) btn.disabled = true;
+  setWaiverSignMsg('', '');
+  var sn = (schoolData && schoolData.name) ? schoolData.name : 'the school';
+  ['waiverConsentSchoolPhoto','waiverConsentSchoolSms','waiverConsentSchoolEmail'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.textContent = sn;
+  });
+  var body = document.getElementById('waiverModalBody');
+  if(body) body.scrollTop = 0;
+}
+
+function onWaiverNameInput(){
+  var input = document.getElementById('waiverTypedName');
+  var btn = document.getElementById('signWaiverBtn');
+  if(!input || !btn) return;
+  var v = (input.value || '').trim();
+  var words = v.split(/\s+/).filter(function(w){return w.length > 0;});
+  btn.disabled = !(words.length >= 2);
+}
+
+function onWaiverBodyScroll(){
+  var body = document.getElementById('waiverModalBody');
+  if(!body) return;
+  var scrollable = body.scrollHeight - body.clientHeight;
+  if(scrollable <= 0){
+    waiverScrollMaxPct = 100;
+    return;
+  }
+  var pct = Math.round((body.scrollTop / scrollable) * 100);
+  if(pct > waiverScrollMaxPct) waiverScrollMaxPct = pct;
+}
+
+function attachWaiverHandlersOnce(){
+  if(waiverScrollListenerAttached) return;
+  var body = document.getElementById('waiverModalBody');
+  var name = document.getElementById('waiverTypedName');
+  if(body) body.addEventListener('scroll', onWaiverBodyScroll);
+  if(name) name.addEventListener('input', onWaiverNameInput);
+  waiverScrollListenerAttached = true;
+}
+
+function openWaiverModalForChild(childId){
+  var child = (familyChildren || []).find(function(c){return c.id === childId;});
+  if(!child){
+    showPortalToast('Could not find that child record. Please refresh and try again.', 'error');
+    return;
+  }
+  scopeWaiverModalToStudent(child);
+  openWaiverModal();
+}
+
+function updateWaiverBanner(){
+  var banner = document.getElementById('waiverBanner');
+  if(!banner) return;
+  var portalScreen = document.getElementByI
 
 // ─────────────────────────────────────────────────────────────
 //  §JS: INIT
@@ -1214,23 +1389,165 @@ async function setPortalPassword(){
 }
 
 async function openWaiverModal(){
-  try{
-    var r=await sb.from('waivers').select('*').eq('school_id',SID).eq('active',true).limit(1);
-    var w=r.data&&r.data.length?r.data[0]:null;
-    document.getElementById('waiverModalTitle').textContent=w?w.title:'School Waiver';
-    document.getElementById('waiverModalBody').innerHTML=w?w.content:'<p style="color:var(--muted);font-style:italic">No waiver content configured. Click below to confirm acceptance.</p>';
-  }catch(e){
-    document.getElementById('waiverModalBody').innerHTML='<p style="color:var(--muted);font-style:italic">Click below to confirm your acceptance of the school waiver.</p>';
+  // Default to self-sign (current student) if no context was pre-set
+  // by a family-sign pill. scopeWaiverModalToStudent resets sign-section
+  // state, clears typed name, disables button, populates school-name
+  // spans. Family-sign callers pre-set context via openWaiverModalForChild.
+  if(!waiverSigningContext){
+    if(!currentStudent){
+      showPortalToast('No student context. Please refresh and try again.', 'error');
+      return;
+    }
+    scopeWaiverModalToStudent(currentStudent);
   }
+  var isFamilySign = !!(waiverSigningContext && currentFamily);
+  // Open modal first so handlers attach to visible DOM nodes
   document.getElementById('waiverModal').classList.add('active');
+  attachWaiverHandlersOnce();
+  // Fetch active waiver for the relevant school
+  var schoolId = (waiverSigningContext && waiverSigningContext.school_id) || SID;
+  try{
+    var r = await sb.from('waivers').select('*').eq('school_id', schoolId).eq('active', true).limit(1);
+    var w = r.data && r.data.length ? r.data[0] : null;
+    var titleText;
+    if(isFamilySign){
+      titleText = 'Sign waiver for ' + (waiverSigningContext.first_name || 'Student');
+    }else{
+      titleText = w ? w.title : 'School Waiver';
+    }
+    document.getElementById('waiverModalTitle').textContent = titleText;
+    document.getElementById('waiverModalBody').innerHTML = w
+      ? w.content
+      : '<p style="color:var(--muted);font-style:italic">No waiver content configured. Please contact the school.</p>';
+  }catch(e){
+    document.getElementById('waiverModalBody').innerHTML = '<p style="color:var(--muted);font-style:italic">Could not load waiver content. Please contact the school.</p>';
+  }
+  // Adjust name-field label for family-sign vs self-sign
+  var nameLabel = document.querySelector('.waiver-name-field label');
+  if(nameLabel){
+    nameLabel.textContent = isFamilySign ? 'Parent or guardian full name' : 'Type your full name to sign';
+  }
+  // Recompute scroll % once content is laid out (handles the short-waiver
+  // case where the body fits without needing to scroll = 100% implicitly)
+  setTimeout(onWaiverBodyScroll, 50);
 }
 
 async function signWaiver(){
-  if(!currentStudent)return;
-  await sb.from('students').update({waiver_signed:true,waiver_signed_at:new Date().toISOString()}).eq('id',currentStudent.id);
-  currentStudent.waiver_signed=true;
-  document.getElementById('waiverModal').classList.remove('active');
-  refreshOnboardingSteps(currentStudent);
+  var ctx = waiverSigningContext;
+  if(!ctx){
+    setWaiverSignMsg('No student context. Please close and reopen the modal.', 'error');
+    return;
+  }
+
+  // Read sign-section state
+  var typedName = (document.getElementById('waiverTypedName').value || '').trim();
+  if(typedName.split(/\s+/).filter(function(w){return w.length>0;}).length < 2){
+    setWaiverSignMsg('Please type your full name (first and last) to sign.', 'error');
+    return;
+  }
+  var optInPhoto = document.getElementById('waiverOptInPhoto').checked;
+  var optInSms = document.getElementById('waiverOptInSms').checked;
+  var optInEmail = document.getElementById('waiverOptInEmail').checked;
+
+  // Lock UI during submission
+  var btn = document.getElementById('signWaiverBtn');
+  var nameInput = document.getElementById('waiverTypedName');
+  var originalBtnHtml = btn ? btn.innerHTML : '';
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Signing...';
+  }
+  if(nameInput) nameInput.disabled = true;
+  setWaiverSignMsg('', '');
+
+  try{
+    // Get the user JWT for the Edge Function call
+    var sess = await sb.auth.getSession();
+    var jwt = sess && sess.data && sess.data.session ? sess.data.session.access_token : null;
+    if(!jwt){
+      throw new Error('Not signed in. Please refresh and try again.');
+    }
+
+    // POST to record-waiver-signature with all the captured data
+    var r = await fetch(SURL + '/functions/v1/record-waiver-signature', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + jwt
+      },
+      body: JSON.stringify({
+        student_id: ctx.id,
+        typed_name: typedName,
+        opt_in_photo: optInPhoto,
+        opt_in_sms: optInSms,
+        opt_in_email: optInEmail,
+        scroll_pct: waiverScrollMaxPct
+      })
+    });
+    var data = await r.json();
+    if(!r.ok || data.error || !data.success){
+      throw new Error(data.error || 'Failed to record signature. Please try again.');
+    }
+
+    // SUCCESS — update local state to match server
+    var signedAt = data.signed_at || new Date().toISOString();
+    ctx.waiver_signed = true;
+    ctx.waiver_signed_at = signedAt;
+
+    // Family-sign: also update the matching child in familyChildren
+    // (usually the same object reference but defensive belt-and-suspenders)
+    if(currentFamily && familyChildren && familyChildren.length){
+      for(var i=0; i<familyChildren.length; i++){
+        if(familyChildren[i].id === ctx.id){
+          familyChildren[i].waiver_signed = true;
+          familyChildren[i].waiver_signed_at = signedAt;
+          break;
+        }
+      }
+    }
+
+    // Re-enable name input before modal closes so reopen starts clean
+    if(nameInput) nameInput.disabled = false;
+    // Close modal, capture isFamilySign before clearing context
+    document.getElementById('waiverModal').classList.remove('active');
+    var isFamilySign = !!(waiverSigningContext && currentFamily);
+    waiverSigningContext = null;
+
+    // Refresh self-sign UI surfaces
+    if(currentStudent && currentStudent.id === ctx.id){
+      refreshOnboardingSteps(currentStudent);
+      updateWaiverBanner();
+    }
+
+    // Refresh family-sign UI surfaces
+    if(isFamilySign){
+      if(selectedChildId === ctx.id){
+        var signedChild = familyChildren.find(function(c){return c.id === ctx.id;});
+        if(signedChild) await loadFamilyChildView(signedChild);
+      }
+      // Re-render dropdown to drop the unsigned marker on this child
+      var dd = document.getElementById('childSelect');
+      if(dd && familyChildren){
+        dd.innerHTML = familyChildren.map(function(c){
+          var prog = c.programs ? c.programs.name : 'Member';
+          var marker = c.waiver_signed ? '' : ' \u26A0';
+          var isSelected = (c.id === selectedChildId) ? ' selected' : '';
+          return '<option value="' + c.id + '"' + isSelected + '>' + c.first_name + ' ' + c.last_name + ' \u2014 ' + prog + marker + '</option>';
+        }).join('');
+      }
+    }
+
+    showPortalToast('Waiver signed successfully.', 'success');
+
+  }catch(e){
+    console.error('signWaiver error:', e);
+    setWaiverSignMsg(e.message || 'Could not save signature. Please try again.', 'error');
+    if(btn){
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    if(nameInput) nameInput.disabled = false;
+  }
 }
 
 async function completeOnboarding(){
@@ -1249,6 +1566,7 @@ async function completeOnboarding(){
 function showStudentPortal(student){
   hideAllScreens();
   document.getElementById('portalScreen').style.display='block';
+  updateWaiverBanner();
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
   buildPortal(student);
@@ -2489,7 +2807,7 @@ async function showFamilyPortal(family){
     return;
   }
   var sel=document.getElementById('childSelect');
-  sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+'</option>';}).join('');
+  sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';var marker=c.waiver_signed?'':' \u26A0';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+marker+'</option>';}).join('');
   document.getElementById('childSwitcherBar').style.display='flex';
   document.getElementById('familyPortalLoading').style.display='none';
   document.getElementById('familyPortalContent').style.display='block';
@@ -2520,8 +2838,9 @@ async function loadFamilyChildView(child){
       '<div class="hero-name">'+child.first_name+' '+child.last_name+'</div>',
       '<div class="hero-tags">',
         '<span class="chip '+statusClass+'">'+st+'</span>',
-        '<span class="prog-tag" style="border-color:'+pc+';color:'+pc+'">'+pn+'</span>',
+       '<span class="prog-tag" style="border-color:'+pc+';color:'+pc+'">'+pn+'</span>',
       '</div>',
+      (child.waiver_signed ? '' : '<div class="child-waiver-pill" onclick="openWaiverModalForChild(\''+child.id+'\')"><i class="fa-solid fa-signature"></i><span>Sign waiver</span></div>'),
       '<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.4rem">',
         '<i class="fa-solid fa-id-card" style="color:var(--gold);margin-right:0.35rem"></i>'+memName,
       '</div>',
