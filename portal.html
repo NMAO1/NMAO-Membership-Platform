@@ -324,7 +324,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .waiver-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
 .waiver-title{font-family:var(--font-display);font-size:1.1rem;color:var(--white);}
 .waiver-close{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;}
-.waiver-body{padding:1.5rem;overflow-y:auto;flex:3 1 0;min-height:0;font-size:0.85rem;color:var(--muted2);line-height:1.7;}
+.waiver-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;}
+.waiver-body{padding:1.5rem;font-size:0.85rem;color:var(--muted2);line-height:1.7;overflow-wrap:break-word;}
+.waiver-body *{max-width:100%;box-sizing:border-box;}
+.waiver-body img{height:auto;}
+.waiver-body pre{white-space:pre-wrap;}
+.waiver-body table{width:100%;table-layout:fixed;}
 .waiver-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;flex-shrink:0;}
 .btn-sign-waiver{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;}
 /* ══════════════════════════════════════════
@@ -333,7 +338,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
    inline status, and disabled sign-button state.
    Phase 1 waiver upgrade.
 ══════════════════════════════════════════ */
-.waiver-sign-section{padding:1.25rem 1.5rem;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);flex:2 1 0;min-height:0;overflow-y:auto;}
+.waiver-sign-section{padding:1.25rem 1.5rem;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);}
 .waiver-sign-heading{font-family:var(--font-display);font-size:0.75rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
 
 .consent-block{border:1px solid var(--border);background:rgba(0,0,0,0.25);padding:0.85rem 1rem;margin-bottom:0.8rem;}
@@ -948,6 +953,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       <div class="waiver-title" id="waiverModalTitle">School Waiver</div>
       <button class="waiver-close" onclick="document.getElementById('waiverModal').classList.remove('active')"><i class="fa-solid fa-xmark"></i></button>
     </div>
+ <div class="waiver-scroll" id="waiverScroll">
     <div class="waiver-body" id="waiverModalBody">
    <p style="color:var(--muted);font-style:italic">Loading waiver...</p>
     </div>
@@ -973,7 +979,8 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <label for="waiverTypedName">Type your full name to sign</label>
         <input type="text" id="waiverTypedName" placeholder="First and last name" autocomplete="off" />
       </div>
-      <div class="waiver-sign-msg" id="waiverSignMsg"></div>
+    <div class="waiver-sign-msg" id="waiverSignMsg"></div>
+    </div>
     </div>
     <div class="waiver-footer">
       <button style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.65rem 1.25rem;cursor:pointer" onclick="document.getElementById('waiverModal').classList.remove('active')">Cancel</button>
@@ -1087,8 +1094,8 @@ function scopeWaiverModalToStudent(student){
     var el = document.getElementById(id);
     if(el) el.textContent = sn;
   });
-  var body = document.getElementById('waiverModalBody');
-  if(body) body.scrollTop = 0;
+   var body = document.getElementById('waiverScroll');
+   if(body) body.scrollTop = 0;
 }
 
 function onWaiverNameInput(){
@@ -1101,7 +1108,7 @@ function onWaiverNameInput(){
 }
 
 function onWaiverBodyScroll(){
-  var body = document.getElementById('waiverModalBody');
+  var body = document.getElementById('waiverScroll');
   if(!body) return;
   var scrollable = body.scrollHeight - body.clientHeight;
   if(scrollable <= 0){
@@ -1114,7 +1121,7 @@ function onWaiverBodyScroll(){
 
 function attachWaiverHandlersOnce(){
   if(waiverScrollListenerAttached) return;
-  var body = document.getElementById('waiverModalBody');
+  var body = document.getElementById('waiverScroll');
   var name = document.getElementById('waiverTypedName');
   if(body) body.addEventListener('scroll', onWaiverBodyScroll);
   if(name) name.addEventListener('input', onWaiverNameInput);
