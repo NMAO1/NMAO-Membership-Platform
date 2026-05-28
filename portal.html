@@ -1181,7 +1181,7 @@ async function init(){
 // ─────────────────────────────────────────────────────────────
 async function loadSchoolBranding(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
+var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
     if(!r.data)return;
     var d=r.data;
     schoolData=d;
@@ -1189,6 +1189,8 @@ async function loadSchoolBranding(){
     if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
     if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
     if(d.font_family)document.documentElement.style.setProperty('--font-display',"'"+d.font_family+"',serif");
+    if(d.surface_color)document.documentElement.style.setProperty('--surface',d.surface_color);
+    if(d.font_color)document.documentElement.style.setProperty('--white',d.font_color);
     milestoneSettings=d.milestone_messages||{};
     var sn=d.name||'Member Portal';
     ['loginSchoolName','portalSchoolName','familySchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
