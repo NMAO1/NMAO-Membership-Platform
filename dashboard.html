@@ -1139,6 +1139,7 @@
         <div class="field"><label>State</label><input type="text" id="settingState" /></div>
         <div class="field"><label>School Logo</label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students</div></div></label></div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card</div></div></label></div>
         <button class="panel-action" style="width:fit-content" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="settingsMsg"></p>
       </div></div>
@@ -2926,7 +2927,8 @@ if(d.sidebar_text_color){ document.getElementById('settingSidebarText').value=d.
     milestoneSettings = d.milestone_messages || {};
     buildMilestonesEditor();
     if (d.pass_fees_to_students) document.getElementById('passFeesToggle').checked = true;
-   // Phase 11.D: school-wide rollover cap (NULL = no cap)
+    if (d.allow_member_card_updates) document.getElementById('cardUpdateToggle').checked = true;
+    // Phase 11.D: school-wide rollover cap (NULL = no cap)
 if (d.max_rollover_balance !== null && d.max_rollover_balance !== undefined) {
   document.getElementById('settingMaxRollover').value = d.max_rollover_balance;
 } else {
@@ -3025,7 +3027,7 @@ function syncSidebarTextColorText() { var h=document.getElementById('settingSide
 function selectFont(font,el)   { selectedFont=font; document.querySelectorAll('.font-option').forEach(function(fo){fo.classList.remove('selected');}); el.classList.add('selected'); document.documentElement.style.setProperty('--font-display',"'"+font+"',serif"); }
 
 async function saveSettings() {
-  var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked}).eq('id',SID);
+var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked,allow_member_card_updates:document.getElementById('cardUpdateToggle').checked}).eq('id',SID);
   if(r.error){setMsg('settingsMsg',r.error.message,'error');}else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();}
 }
 async function saveMembershipSettings(){
