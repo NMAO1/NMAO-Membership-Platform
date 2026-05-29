@@ -279,7 +279,7 @@
     <span id="bannerSpots" style="font-family:'Libre Baskerville',serif;font-size:2.8rem;font-weight:700;color:#F5F0E8;line-height:1;">25</span>
     <span style="font-size:1rem;color:#9A8F80;">of 25 founding spots remaining</span>
   </div>
-  <div style="font-size:0.85rem;color:#9A8F80;font-style:italic;">First 25 schools to sign up become founding members — 3-year rate lock, 0.75% platform fee, charter badge.</div>
+  <div style="font-size:0.85rem;color:#9A8F80;font-style:italic;">First 25 schools to sign up become founding members — 3-year rate lock, 1% platform fee, charter badge.</div>
 </div>
     
   <div class="price-grid">
@@ -586,7 +586,7 @@ async function doSignup() {
     insertObj.founding_member_number = foundingNum;
     insertObj.subscription_term = 'monthly';
     insertObj.subscription_locked_until = threeYears.toISOString().split('T')[0];
-    insertObj.platform_fee_override = 0.0075;
+    insertObj.platform_fee_override = 0.01;
     insertObj.founding_purchase_date = today.toISOString().split('T')[0];
     insertObj.refund_window_expires_at = refundExpires.toISOString();
   }
