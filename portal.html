@@ -703,9 +703,17 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         UI not yet built. See Bible v11 F1 notes.)
   ════════════════════════════════════ -->
       <div id="portalTabProfile" style="display:none">
-        <div class="portal-section">
+     <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
           <div class="info-card" id="membershipCard"></div>
+        </div>
+        <div class="portal-section" id="cardUpdateSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-credit-card"></i> Payment Method</div>
+          <div class="info-card">
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Update the card used for membership auto-renewals. You will be redirected to a secure Stripe page to enter the new card.</p>
+            <button class="btn-gold" id="updateCardBtn" onclick="startCardUpdate()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Update Payment Card</button>
+            <p class="form-msg" id="cardUpdateMsg"></p>
+          </div>
         </div>
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
@@ -1181,7 +1189,7 @@ async function init(){
 // ─────────────────────────────────────────────────────────────
 async function loadSchoolBranding(){
   try{
-var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages').eq('id',SID).single();
+var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages,allow_member_card_updates').eq('id',SID).single();
     if(!r.data)return;
     var d=r.data;
     schoolData=d;
@@ -1588,6 +1596,7 @@ function showStudentPortal(student){
   buildPortal(student);
   handlePackReturnParams();
   handleShopReturnParams();
+  handleCardUpdateReturnParams();
 }
 
 async function buildPortal(s){
@@ -1611,6 +1620,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
+  if(schoolData.allow_member_card_updates)document.getElementById('cardUpdateSection').style.display='';
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
@@ -2388,6 +2398,37 @@ function hidePackConfirm(packId){
   if(btn){btn.style.display='';}
 }
 
+  async function startCardUpdate(){
+  var msg=document.getElementById('cardUpdateMsg');
+  msg.textContent='';msg.className='form-msg';
+  var btn=document.getElementById('updateCardBtn');
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin" style="margin-right:0.5rem"></i>Redirecting...';
+  try{
+    var origin=window.location.origin+window.location.pathname;
+    var successUrl=origin+'?card_updated=1';
+    var cancelUrl=origin+'?card_update_cancelled=1';
+    var r=await fetch(SURL+'/functions/v1/create-card-update-session',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({
+        school_id:SID,
+        student_id:currentStudent.id,
+        success_url:successUrl,
+        cancel_url:cancelUrl
+      })
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.url) throw new Error(data.error||'Failed to start card update');
+    window.location.href=data.url;
+  }catch(e){
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Update Payment Card';
+    msg.textContent=e.message||'Could not start card update';
+    msg.className='form-msg error';
+  }
+}
+
 async function executePurchasePack(packId){
   if(!currentStudent) return;
   var confirmRow=document.getElementById('pkconfirm-'+packId);
@@ -2769,6 +2810,21 @@ function handleShopReturnParams(){
   }
 }
 
+  function handleCardUpdateReturnParams(){
+  var params=new URLSearchParams(window.location.search);
+  var success=params.get('card_updated');
+  var cancel=params.get('card_update_cancelled');
+  if(!success && !cancel) return;
+  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
+  window.history.replaceState({}, '', cleanUrl);
+  if(typeof switchPortalTab==='function') switchPortalTab('profile');
+  if(success){
+    showPortalToast('Payment card updated successfully.', 'success');
+  } else if(cancel){
+    showPortalToast('Card update cancelled. No changes were made.', 'info');
+  }
+}
+  
 // §SHOP_BADGE_NOTIF — show count of products updated since student last viewed shop
 async function checkShopUpdates(){
   if(!currentStudent) return;
