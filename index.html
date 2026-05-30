@@ -43,10 +43,10 @@
 
     <div style="text-align:left;padding:2rem;border:1px solid rgba(201,168,76,0.3);background:linear-gradient(180deg,rgba(201,168,76,0.05),rgba(201,168,76,0.01));">
       <div style="font-size:1.85rem;color:#C9A84C;font-family:'Libre Baskerville',serif;margin-bottom:0.7rem;line-height:1;">◈ Save Money</div>
-      <div style="font-size:0.95rem;color:#F5F0E8;line-height:1.5;margin-bottom:1.1rem;font-weight:600;">Half the cost. 1.5% fee. Built-in everything.</div>
+      <div style="font-size:0.95rem;color:#F5F0E8;line-height:1.5;margin-bottom:1.1rem;font-weight:600;">Half the cost. 1% fee. Built-in everything.</div>
       <ul style="list-style:none;padding:0;margin:0;color:#C2B7A8;font-size:0.85rem;line-height:1.55;">
         <li style="padding:0.35rem 0 0.35rem 1rem;position:relative;"><span style="position:absolute;left:0;color:#C9A84C;">▪</span>Half the monthly subscription of Mindbody, Zen Planner, and Pike13</li>
-        <li style="padding:0.35rem 0 0.35rem 1rem;position:relative;"><span style="position:absolute;left:0;color:#C9A84C;">▪</span>1.5% platform fee vs. competitors' 2.9%+ on every transaction</li>
+        <li style="padding:0.35rem 0 0.35rem 1rem;position:relative;"><span style="position:absolute;left:0;color:#C9A84C;">▪</span>1% platform fee vs. competitors' 2.9%+ on every transaction</li>
         <li style="padding:0.35rem 0 0.35rem 1rem;position:relative;"><span style="position:absolute;left:0;color:#C9A84C;">▪</span>No per-instructor charges, no kiosk add-on, no analytics upcharge</li>
         <li style="padding:0.35rem 0 0.35rem 1rem;position:relative;"><span style="position:absolute;left:0;color:#C9A84C;">▪</span>NMAO Accredited schools save another 50% on top</li>
       </ul>
@@ -279,7 +279,7 @@
     <span id="bannerSpots" style="font-family:'Libre Baskerville',serif;font-size:2.8rem;font-weight:700;color:#F5F0E8;line-height:1;">25</span>
     <span style="font-size:1rem;color:#9A8F80;">of 25 founding spots remaining</span>
   </div>
-  <div style="font-size:0.85rem;color:#9A8F80;font-style:italic;">First 25 schools to sign up become founding members — 3-year rate lock, 1% platform fee, charter badge.</div>
+  <div style="font-size:0.85rem;color:#9A8F80;font-style:italic;">First 25 schools to sign up become founding members — 3-year rate lock at 1%, charter badge, accreditation discount.</div>
 </div>
     
   <div class="price-grid">
@@ -591,9 +591,15 @@ async function doSignup() {
     insertObj.refund_window_expires_at = refundExpires.toISOString();
   }
 
-  await sc.from('schools').insert(insertObj);
-  btn.textContent = 'Redirecting to checkout...';
-  setMsg('Account created! Taking you to secure payment...', 'ok');
+var ins = await sc.from('schools').insert(insertObj);
+if (ins.error) {
+  setMsg('Signup failed: ' + ins.error.message, 'er');
+  btn.disabled = false;
+  btn.textContent = 'Create Account and Subscribe';
+  return;
+}
+btn.textContent = 'Setting up your free trial...';
+setMsg('Account created! Taking you to your free trial setup...', 'ok');
   setTimeout(async function() {
     var links = {
       starter:      'https://buy.stripe.com/test_3cI00k73S2aCenQcwM6Vq03',
