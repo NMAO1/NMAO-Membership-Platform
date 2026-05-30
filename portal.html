@@ -3361,7 +3361,7 @@ function handlePackReturnParams(){
   var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
   window.history.replaceState({}, '', cleanUrl);
   // Switch to Packs tab so the user sees the new balance (or the offer they cancelled from)
-  if(typeof switchPortalTab==='function') switchPortalTab('packs');
+  if(typeof switchPortalTab==='function') switchPortalTab('sessions');
   if(success){
     // Webhook may need a couple seconds to credit the pack — refresh after a beat
     setTimeout(function(){
