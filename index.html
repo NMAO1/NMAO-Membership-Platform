@@ -480,7 +480,7 @@ var sc = supabase.createClient(SURL, SKEY);
     }
   } catch(e) { console.error('Banner counter failed:', e); }
 })();
-var stripe = Stripe('pk_test_51THQDyLNJ1kmY0YwuPyrwANWtajj1AZrLPrNEuV7EWOurT1Q6NAVFUdbEmaBke2X1j0waK5X59ycvyqV8J1eOghV00wfR16u3j');
+var stripe = Stripe('pk_live_51TJgPFLToqPAWdSSNsRlurbrLBY3bp8f11Cap9pKVBSmLpbwmvozt8dSfJVbIQ7v18TnnlryqZrDSrr8m3fkOi2l00zZSS3rGy');
 var PLANS = {
   starter:      { name:'Starter',      price:50  },
   professional: { name:'Professional', price:100 },
@@ -602,9 +602,9 @@ btn.textContent = 'Setting up your free trial...';
 setMsg('Account created! Taking you to your free trial setup...', 'ok');
   setTimeout(async function() {
     var links = {
-      starter:      'https://buy.stripe.com/test_3cI00k73S2aCenQcwM6Vq03',
-      professional: 'https://buy.stripe.com/test_00w14ococ5mO4Ng9kA6Vq04',
-      elite:        'https://buy.stripe.com/test_4gMaEY9c0dTk2F82Wc6Vq05'
+      starter:      'https://buy.stripe.com/cNi4gA0GC0pk3T51w80VO00',
+      professional: 'https://buy.stripe.com/5kQ8wQ8943Bw1KX4Ik0VO01',
+      elite:        'https://buy.stripe.com/dRm5kEblg4FAcpBgr20VO02'
     };
     window.location.href = links[plan] + '?prefilled_email=' + encodeURIComponent(email);
   }, 1500);
