@@ -2884,7 +2884,8 @@ async function init() {
     buildRetentionAlerts();
     buildSetupChecklist();
     buildInstructorComparison();
-    loadRevenue();
+  loadRevenue();
+    await handleStripeOAuthReturn();
     await loadStripeConnectStatus();
     await loadSmsUsageWidget();
     await loadSmsWarningBanner();
