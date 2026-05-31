@@ -8600,15 +8600,46 @@ async function loadStripeConnectStatus(){
 async function connectStripe(){
   setMsg('stripeConnectMsg','Connecting...','');
   try{
+    var returnUrl=window.location.origin+window.location.pathname;
     var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({school_id:SID,return_url:window.location.href})
+      body:JSON.stringify({school_id:SID,return_url:returnUrl})
     });
     var data=await r.json();
-   if(data.url){window.location.href=data.url;}
+    if(data.url){window.location.href=data.url;}
     else{setMsg('stripeConnectMsg',data.error||'Failed to connect Stripe.','error');}
   }catch(e){setMsg('stripeConnectMsg',e.message,'error');}
+}
+async function handleStripeOAuthReturn(){
+  var params=new URLSearchParams(window.location.search);
+  var code=params.get('code');
+  var state=params.get('state');
+  var oauthError=params.get('error');
+  var oauthErrorDesc=params.get('error_description');
+  if(!code&&!oauthError)return;
+  window.history.replaceState({},'',window.location.pathname);
+  if(oauthError){
+    setMsg('stripeConnectMsg','Stripe connection failed: '+(oauthErrorDesc||oauthError),'error');
+    return;
+  }
+  setMsg('stripeConnectMsg','Completing Stripe connection...','');
+  try{
+    var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({action:'callback',code:code,state:state})
+    });
+    var data=await r.json();
+    if(data.error){
+      setMsg('stripeConnectMsg','Stripe connection failed: '+data.error,'error');
+      return;
+    }
+    setMsg('stripeConnectMsg','Stripe connected successfully!','success');
+    await loadStripeConnectStatus();
+  }catch(e){
+    setMsg('stripeConnectMsg','Stripe connection error: '+(e.message||e),'error');
+  }
 }
 
 // §SMS-USAGE — Dashboard SMS usage widget on Billing tab (Phase β.5)
