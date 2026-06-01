@@ -735,15 +735,15 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="info-card" id="contactCard"></div>
         </div>
        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-key"></i> Password</div>
-          <div class="info-card">
-            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Set or change your password for quick sign-in. With a password, you can skip the email step next time.</p>
-            <div class="field"><label>New Password</label><input type="password" id="newPassword" placeholder="At least 6 characters" /></div>
-            <div class="field"><label>Confirm Password</label><input type="password" id="confirmPassword" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')setPortalPassword()" /></div>
-            <button class="btn-gold" id="setPasswordBtn" onclick="setPortalPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password</button>
-            <p class="form-msg" id="passwordMsg"></p>
-          </div>
-        </div>
+  <div class="section-label"><i class="fa-solid fa-key"></i> Update Password</div>
+  <div class="info-card">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Change the password you use to sign in to your portal.</p>
+    <div class="field"><label>New Password</label><input type="password" id="newPassword" placeholder="At least 6 characters" /></div>
+    <div class="field"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')setPortalPassword()" /></div>
+    <button class="btn-gold" id="setPasswordBtn" onclick="setPortalPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Update Password</button>
+    <p class="form-msg" id="passwordMsg"></p>
+  </div>
+</div>
     </div><!-- END portalTabProfile -->
       <div id="portalTabCurriculum" style="display:none">
         <div class="portal-section" id="curriculumSection" style="display:none">
@@ -1424,7 +1424,7 @@ async function setPortalPassword(){
   var btn=document.getElementById('setPasswordBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Saving...';
   var r=await sb.auth.updateUser({password:pwd});
   if(r.error){msg.textContent=r.error.message;msg.className='form-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';}
-  else{msg.textContent='Password saved! You can sign in with email and password next time.';msg.className='form-msg success';document.getElementById('newPassword').value='';document.getElementById('confirmPassword').value='';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';}
+  else{msg.textContent='Password updated!';msg.className='form-msg success';document.getElementById('newPassword').value='';document.getElementById('confirmPassword').value='';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';}
 }
 
 function maybePromptFirstRunPassword(){
