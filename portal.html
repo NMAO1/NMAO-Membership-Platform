@@ -519,6 +519,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 /* §CSS: TAB_BADGE_NOTIF — shared notification dot for Shop and Updates tabs */
 .shop-badge-notif,.tab-badge-notif{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#E07070;color:white;font-size:0.6rem;font-weight:700;border-radius:9px;margin-left:0.35rem;line-height:1;}
 
+#firstRunPwModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+#firstRunPwModal.active{display:flex}
+    
   </style>
 </head>
 <body>
@@ -546,8 +549,19 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     <button class="btn-gold" id="loginBtn" onclick="submitLogin()"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In</button>
     <p class="form-msg" id="loginMsg"></p>
     <div style="text-align:center;margin-top:1rem;font-size:0.85rem">
-      <a href="javascript:void(0)" onclick="sendMagicLink()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Forgot password? Email me a magic link</a>
+     <a href="javascript:void(0)" onclick="sendMagicLink()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Forgot password? Email me a magic link</a>
     </div>
+  </div>
+</div>
+
+<div id="firstRunPwModal">
+  <div style="background:var(--card,#fff);border-radius:12px;max-width:420px;width:100%;padding:1.5rem;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+    <div class="login-title">Set Your Password</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin:0.5rem 0 1rem 0">Create a password to finish setting up your portal. You'll use it to sign in from now on.</p>
+    <div class="field"><label>New Password</label><input type="password" id="firstRunPwInput" placeholder="At least 6 characters" /></div>
+    <div class="field"><label>Confirm Password</label><input type="password" id="firstRunPwConfirm" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')saveFirstRunPassword()" /></div>
+    <button class="btn-gold" id="firstRunPwBtn" onclick="saveFirstRunPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password</button>
+    <p class="form-msg" id="firstRunPwMsg"></p>
   </div>
 </div>
 
