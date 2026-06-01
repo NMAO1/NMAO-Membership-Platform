@@ -4553,6 +4553,7 @@ async function bookSession_paymentLink(){
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
       body: JSON.stringify({
+        school_id: SID,
         student_id: studentId,
         line_items: [bookSessionLineItem()],
         success_url: window.location.origin + window.location.pathname + '?pos_success=1',
@@ -5717,8 +5718,8 @@ async function createStripeCheckoutLink() {
         school_id: SID,
         student_id: currentProfileStudent.id,
         membership_id: membershipId,
-        success_url: window.location.origin + '/portal.html?membership_success=1',
-        cancel_url: window.location.origin + '/portal.html?membership_cancel=1'
+        success_url: window.location.origin + window.location.pathname + '?payment=success',
+        cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
       })
     });
     var data = await r.json();
