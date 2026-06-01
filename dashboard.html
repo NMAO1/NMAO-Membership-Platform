@@ -1368,7 +1368,8 @@
         <button class="panel-action" id="evCopyLinkBtn" onclick="copyEventPublicLink()" style="display:none"><i class="fa-solid fa-link"></i> Copy Public Link</button>
         <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invite</button>
         <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
-        <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    <button class="panel-action" style="border-color:#A04040;color:#E07070" onclick="window.deleteEvent(window.currentEventId)"><i class="fa-solid fa-trash"></i> Delete</button>
+    <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
@@ -4088,7 +4089,7 @@ function renderClassPacks(){
     var classLabel=count+' class'+(count!==1?'es':'');
     var statusLabel=m.active?'Active':'Inactive';
     var price='$'+parseFloat(m.price||0).toFixed(2);
-    return '<div class="pack-template-card"><div><div class="pack-template-name">'+m.name+'</div><div class="pack-template-meta">'+classLabel+' \u00B7 '+statusLabel+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">'+price+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div></div>';
+    return '<div class="pack-template-card"><div><div class="pack-template-name">'+m.name+'</div><div class="pack-template-meta">'+classLabel+' \u00B7 '+statusLabel+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">'+price+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div></div>';
   }).join('');
 }
 function populateSessionPackDropdowns(){
@@ -6945,6 +6946,30 @@ async function saveMilestones(){
 
 // ─────────────────────────────── §MEMBERSHIPS ───────────────────────────────
 
+async function deleteMembership(mid){
+  var m=allMemberships.find(function(x){return x.id===mid;});
+  var nm=m?m.name:'this membership';
+  if(!confirm('Delete '+nm+'? It will be hidden from your memberships list. Active subscribers keep their plans and their history is preserved.')) return;
+  var r=await sb.from('memberships').update({active:false}).eq('id',mid);
+  if(r.error){alert('Error: '+r.error.message);return;}
+  await loadMemberships();
+}
+
+async function deleteMembership(mid){
+  var m=allMemberships.find(function(x){return x.id===mid;});
+  var nm=m?m.name:'this membership';
+  var inUse=await sb.from('student_memberships').select('id',{count:'exact',head:true}).eq('membership_id',mid).eq('status','active');
+  var cnt=inUse.count||0;
+  var msg='Delete '+nm+'?\n\n';
+  if(cnt>0){msg+=cnt+' student'+(cnt!==1?'s are':' is')+' currently on this plan. They keep their plan and history - this only hides it from your memberships list.\n\n';}
+  else{msg+='It will be hidden from your memberships list. ';}
+  msg+='Continue?';
+  if(!confirm(msg)) return;
+  var r=await sb.from('memberships').update({active:false}).eq('id',mid);
+  if(r.error){alert('Error: '+r.error.message);return;}
+  await loadMemberships();
+}
+
 async function loadMemberships(){
   var r=await sb.from('memberships').select('*').eq('school_id',SID).eq('active',true).order('name');
   allMemberships=r.data||[];
@@ -6965,7 +6990,7 @@ async function renderMemberships(){
     var autopayDay=m.autopay_day?({anniversary:'Anniversary',1:'1st',15:'15th'}[m.autopay_day]||'Day '+m.autopay_day):'Anniversary';
     var vis=m.visibility||'public';
     var visLabel=vis==='public'?'<span style="color:#5A9A6A;font-size:0.72rem">Public</span>':vis==='hidden'?'<span style="color:var(--muted);font-size:0.72rem">Hidden</span>':'<span style="color:var(--gold);font-size:0.72rem">Widget Only</span>';
-    return '<tr><td class="name">'+(m.featured?'<i class="fa-solid fa-star" style="color:var(--gold);margin-right:0.4rem;font-size:0.72rem"></i>':'')+m.name+'</td><td style="font-size:0.78rem;color:var(--muted2)">'+progNames+'</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td style="font-size:0.78rem;color:var(--muted)">'+autopayDay+'</td><td>'+visLabel+'</td><td><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></td></tr>';
+    return '<tr><td class="name">'+(m.featured?'<i class="fa-solid fa-star" style="color:var(--gold);margin-right:0.4rem;font-size:0.72rem"></i>':'')+m.name+'</td><td style="font-size:0.78rem;color:var(--muted2)">'+progNames+'</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td style="font-size:0.78rem;color:var(--muted)">'+autopayDay+'</td><td>'+visLabel+'</td><td><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button> <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
   }).join('');
 }
 function populateProgramCheckboxes(currentIds){
@@ -9339,12 +9364,20 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
   };
 
   window.deleteEvent = async function(eventId){
-    if (!confirm("Delete this event? This cannot be undone.")) return;
-    var r = await sb.from("events").update({active: false}).eq("id", eventId);
-    if (r.error) { alert("Error: " + r.error.message); return; }
-    if (window.currentEventId === eventId) window.closeEventDetail();
-    await window.loadEvents();
-  };
+  var ev=(window.allEvents||[]).find(function(x){return x.id===eventId;});
+  var nm=ev&&ev.title?ev.title:"this event";
+  var reg=await sb.from("event_registrations").select("id",{count:"exact",head:true}).eq("event_id",eventId);
+  var cnt=reg.count||0;
+  var msg="Delete "+nm+"?\n\n";
+  if(cnt>0){msg+=cnt+" "+(cnt!==1?"people are":"person is")+" registered for this event. Their registrations and payment history are preserved - this only hides the event from your list.\n\n";}
+  else{msg+="It will be hidden from your events list. ";}
+  msg+="Continue?";
+  if(!confirm(msg)) return;
+  var r=await sb.from("events").update({active: false}).eq("id", eventId);
+  if(r.error){alert("Error: "+r.error.message);return;}
+  if(window.currentEventId === eventId) window.closeEventDetail();
+  await window.loadEvents();
+};
 
   window.openEventDetail = async function(eventId){
     window.currentEventId = eventId;
