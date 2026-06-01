@@ -1426,6 +1426,33 @@ async function setPortalPassword(){
   else{msg.textContent='Password saved! You can sign in with email and password next time.';msg.className='form-msg success';document.getElementById('newPassword').value='';document.getElementById('confirmPassword').value='';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';}
 }
 
+function maybePromptFirstRunPassword(){
+  if(!currentStudent) return;
+  if(currentStudent.password_set) return;
+  document.getElementById('firstRunPwInput').value='';
+  document.getElementById('firstRunPwConfirm').value='';
+  document.getElementById('firstRunPwMsg').textContent='';
+  document.getElementById('firstRunPwModal').classList.add('active');
+}
+
+async function saveFirstRunPassword(){
+  var pwd=document.getElementById('firstRunPwInput').value;
+  var confirmPwd=document.getElementById('firstRunPwConfirm').value;
+  var msg=document.getElementById('firstRunPwMsg');
+  msg.textContent='';msg.className='form-msg';
+  if(!pwd||pwd.length<6){msg.textContent='Password must be at least 6 characters.';msg.className='form-msg error';return;}
+  if(pwd!==confirmPwd){msg.textContent='Passwords do not match.';msg.className='form-msg error';return;}
+  var btn=document.getElementById('firstRunPwBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Saving...';
+  var r=await sb.auth.updateUser({password:pwd});
+  if(r.error){msg.textContent=r.error.message;msg.className='form-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';return;}
+  if(currentStudent){
+    try{ await sb.from('students').update({password_set:true}).eq('id',currentStudent.id); }catch(e){}
+    currentStudent.password_set=true;
+  }
+  document.getElementById('firstRunPwModal').classList.remove('active');
+  showPortalToast('Password set! You can now use your email and password to sign in.','success');
+}
+
 async function openWaiverModal(){
   // Default to self-sign (current student) if no context was pre-set
   // by a family-sign pill. scopeWaiverModalToStudent resets sign-section
@@ -1596,6 +1623,7 @@ async function completeOnboarding(){
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
   await buildPortal(currentStudent);
+  maybePromptFirstRunPassword();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1611,6 +1639,7 @@ function showStudentPortal(student){
   handlePackReturnParams();
   handleShopReturnParams();
   handleCardUpdateReturnParams();
+  maybePromptFirstRunPassword();
 }
 
 async function buildPortal(s){
