@@ -3864,13 +3864,13 @@ function buildHomeStats(){
   var active=allStudents.filter(function(s){return s.status==='active';}).length;
   var trial=allStudents.filter(function(s){return s.status==='trial';}).length;
   var paused=allStudents.filter(function(s){return s.status==='paused';}).length;
-  var expiringSoon=allStudents.filter(function(s){if(!s.membership_end_date)return false;var d=new Date(s.membership_end_date);var diff=(d-new Date())/(1000*60*60*24);return diff>=0&&diff<=30;}).length;
+  var expiringSoon=allStudents.filter(function(s){if(s.status!=='active')return false;if(!s.membership_end_date)return false;var d=new Date(s.membership_end_date);var diff=(d-new Date())/(1000*60*60*24);return diff>=0&&diff<=30;}).length;
   var newLeads=allLeads.filter(function(l){return l.status==='new';}).length;
   var upcomingTests=allBeltTests.filter(function(t){return t.test_date>=localDateStr(new Date());}).length;
   var html='<div class="home-stat-card" onclick="navigate(\'members\',null)"><div class="home-stat-num">'+allStudents.length+'</div><div class="home-stat-label">Total Members</div><div class="home-stat-sub">'+active+' active, '+trial+' trial'+(paused?' · '+paused+' paused':'')+'</div></div>';
   html+='<div class="home-stat-card" onclick="navigate(\'members\',null)"><div class="home-stat-num">'+active+'</div><div class="home-stat-label">Active Members</div></div>';
   html+='<div class="home-stat-card" onclick="navigate(\'leads\',null)"><div class="home-stat-num">'+allLeads.length+'</div><div class="home-stat-label">Total Leads</div><div class="home-stat-sub">'+newLeads+' new</div></div>';
-  html+='<div class="home-stat-card" onclick="navigate(\'members\',null)"><div class="home-stat-num" style="color:'+(expiringSoon>0?'#E07070':'var(--gold)')+'">'+expiringSoon+'</div><div class="home-stat-label">Expiring Soon</div></div>';
+  html+='<div class="home-stat-card" onclick="openReport(\'expiring\')"><div class="home-stat-num" style="color:'+(expiringSoon>0?'#E07070':'var(--gold)')+'">'+expiringSoon+'</div><div class="home-stat-label">Expiring Soon</div></div>';
   html+='<div class="home-stat-card" onclick="navigate(\'sessions\',null)"><div class="home-stat-num" style="color:#9060D0">'+allSessions.length+'</div><div class="home-stat-label">Total Sessions</div></div>';
   if(upcomingTests) html+='<div class="home-stat-card" onclick="navigate(\'belttests\',null)"><div class="home-stat-num" style="color:#7DAAD4">'+upcomingTests+'</div><div class="home-stat-label">Upcoming Tests</div></div>';
   document.getElementById('homeStats').innerHTML=html;
