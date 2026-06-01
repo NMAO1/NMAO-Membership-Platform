@@ -4553,11 +4553,10 @@ async function bookSession_paymentLink(){
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
       body: JSON.stringify({
-        school_id: SID,
         student_id: studentId,
         line_items: [bookSessionLineItem()],
-        success_url: window.location.origin + '/portal.html?pack_success=1',
-        cancel_url: window.location.origin + '/portal.html?pack_cancel=1',
+        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
+        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
       }),
     });
     var data = await r.json();
@@ -7284,8 +7283,8 @@ async function checkoutPOS_paymentLink(){
         school_id: SID,
         student_id: posSelectedStudentId || null,
         line_items: posCartLineItems(),
-        success_url: window.location.origin + '/portal.html?shop_success=1',
-        cancel_url: window.location.origin + '/portal.html?shop_cancel=1',
+        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
+        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
       }),
     });
     var data = await r.json();
