@@ -1597,8 +1597,6 @@ function showStudentPortal(student){
   handlePackReturnParams();
   handleShopReturnParams();
   handleCardUpdateReturnParams();
-  handleMembershipReturnParams();
-  handleEventReturnParams();
 }
 
 async function buildPortal(s){
@@ -3372,35 +3370,6 @@ function handlePackReturnParams(){
     showPortalToast('Purchase complete! Your sessions have been added.', 'success');
   } else if(cancel){
     showPortalToast('Purchase cancelled. No charge was made.', 'info');
-  }
-}
-  function handleMembershipReturnParams(){
-  var params=new URLSearchParams(window.location.search);
-  var success=params.get('membership_success');
-  var cancel=params.get('membership_cancel');
-  if(!success && !cancel) return;
-  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
-  window.history.replaceState({}, '', cleanUrl);
-  if(typeof switchPortalTab==='function') switchPortalTab('profile');
-  if(success){
-    setTimeout(function(){ if(currentStudent) buildPortal(currentStudent); }, 1500);
-    showPortalToast('Membership active! Your plan is now set up.', 'success');
-  } else if(cancel){
-    showPortalToast('Checkout cancelled. No charge was made.', 'info');
-  }
-}
-
-function handleEventReturnParams(){
-  var params=new URLSearchParams(window.location.search);
-  var success=params.get('event_success');
-  var cancel=params.get('event_cancelled');
-  if(!success && !cancel) return;
-  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
-  window.history.replaceState({}, '', cleanUrl);
-  if(success){
-    showPortalToast('Registration confirmed! See you at the event.', 'success');
-  } else if(cancel){
-    showPortalToast('Registration cancelled. No charge was made.', 'info');
   }
 }
 
