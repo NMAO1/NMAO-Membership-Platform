@@ -4556,8 +4556,8 @@ async function bookSession_paymentLink(){
         school_id: SID,
         student_id: studentId,
         line_items: [bookSessionLineItem()],
-        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
-        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+        success_url: window.location.origin + '/portal.html?pack_success=1',
+        cancel_url: window.location.origin + '/portal.html?pack_cancel=1',
       }),
     });
     var data = await r.json();
@@ -5718,8 +5718,8 @@ async function createStripeCheckoutLink() {
         school_id: SID,
         student_id: currentProfileStudent.id,
         membership_id: membershipId,
-        success_url: window.location.origin + window.location.pathname + '?payment=success',
-        cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
+        success_url: window.location.origin + '/portal.html?membership_success=1',
+        cancel_url: window.location.origin + '/portal.html?membership_cancel=1'
       })
     });
     var data = await r.json();
@@ -7284,8 +7284,8 @@ async function checkoutPOS_paymentLink(){
         school_id: SID,
         student_id: posSelectedStudentId || null,
         line_items: posCartLineItems(),
-        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
-        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+        success_url: window.location.origin + '/portal.html?shop_success=1',
+        cancel_url: window.location.origin + '/portal.html?shop_cancel=1',
       }),
     });
     var data = await r.json();
