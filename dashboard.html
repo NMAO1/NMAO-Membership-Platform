@@ -651,6 +651,16 @@
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap" id="membershipAlertActions"></div>
         </div>
       </div>
+      <!-- §SMS-INBOX-BANNER — unread inbound texts (live-updated) -->
+      <div id="smsInboxBanner" style="display:none;margin-bottom:1.5rem">
+        <div style="background:var(--surface);border:1px solid rgba(122,170,212,0.35);border-left:4px solid #7AAAD4;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:0.85rem">
+            <div style="font-family:var(--font-display);font-size:1.6rem;color:#7AAAD4;line-height:1" id="smsInboxBannerCount">0</div>
+            <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#7AAAD4"><i class="fa-solid fa-comments" style="margin-right:0.4rem"></i><span id="smsInboxBannerLabel">new text messages</span></div>
+          </div>
+          <button class="btn-sm" style="border-color:#7AAAD4;color:#7AAAD4" onclick="openSmsInboxFromBanner()"><i class="fa-solid fa-inbox" style="margin-right:0.3rem"></i>View Messages</button>
+        </div>
+      </div>
       <div class="setup-banner" id="setupBanner">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
           <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold)"><i class="fa-solid fa-rocket" style="margin-right:0.4rem"></i>Getting Started</div>
@@ -10616,11 +10626,12 @@ var url = APP_URL + "event.html?id=" + window.currentEventId;
       var count = r.count || 0;
       window.smsUnreadCount = count;
       window.renderSmsBadge();
+      if(window.updateSmsInboxBanner) window.updateSmsInboxBanner();
     } catch(e){ console.error("refreshSmsUnreadBadge:", e); }
   };
 
   window.renderSmsBadge = function(){
-    var nav = document.querySelector(".nav-item.communications") || document.querySelector(".communications");
+    var nav = document.getElementById("nav-communications");
     if (!nav) return;
     var existing = nav.querySelector(".sms-unread-badge");
     if (existing) existing.remove();
@@ -10645,14 +10656,55 @@ var url = APP_URL + "event.html?id=" + window.currentEventId;
   setInterval(function(){ window.refreshSmsUnreadBadge(); }, 60000);
 
   setTimeout(function(){
-    var nav = document.querySelector(".nav-item.communications") || document.querySelector(".communications");
+    var nav = document.getElementById("nav-communications");
     if (nav && !nav.dataset.smsWired) {
       nav.dataset.smsWired = "1";
       nav.addEventListener("click", function(){
         setTimeout(function(){ window.refreshSmsUnreadBadge(); }, 1500);
       });
-    }
+   }
 }, 1000);
+
+})();
+
+// §SMS-INBOX-BANNER + REALTIME — home banner for unread texts, updated instantly
+(function(){
+
+  window.updateSmsInboxBanner = function(){
+    var banner = document.getElementById('smsInboxBanner');
+    if(!banner) return;
+    var count = window.smsUnreadCount || 0;
+    if(count <= 0){ banner.style.display = 'none'; return; }
+    var cEl = document.getElementById('smsInboxBannerCount');
+    var lEl = document.getElementById('smsInboxBannerLabel');
+    if(cEl) cEl.textContent = count > 99 ? '99+' : String(count);
+    if(lEl) lEl.textContent = count === 1 ? 'new text message' : 'new text messages';
+    banner.style.display = 'block';
+  };
+
+  window.openSmsInboxFromBanner = function(){
+    navigate('communications', null);
+    setTimeout(function(){ if(window.switchCommTab) switchCommTab('sms'); }, 300);
+  };
+
+  // One-time realtime subscription: fires the instant a row lands in sms_inbox.
+  async function subscribeSmsInbox(){
+    await window.SID_READY;
+    if(!SID) return;
+    sb.channel('sms_inbox_' + SID)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'sms_inbox', filter: 'school_id=eq.' + SID },
+        function(payload){
+          if(window.refreshSmsUnreadBadge) window.refreshSmsUnreadBadge();
+          var commsPage = document.getElementById('page-communications');
+          var smsPanel = document.getElementById('commTabSms');
+          if(commsPage && commsPage.classList.contains('active') && smsPanel && smsPanel.style.display !== 'none' && window.loadSmsInbox){
+            window.loadSmsInbox();
+          }
+        })
+      .subscribe();
+  }
+  subscribeSmsInbox();
 
 })();
 </script>
