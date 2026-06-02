@@ -398,6 +398,7 @@
     .sms-inbox-row  { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; background: var(--black); border: 1px solid var(--border); border-left: 2px solid var(--border); margin-bottom: 0.35rem; cursor: pointer; transition: all 0.15s; }
     .sms-inbox-row:hover  { border-left-color: var(--gold); }
     .sms-inbox-row.unread { border-left-color: var(--gold); background: rgba(201,168,76,0.03); }
+    .sms-inbox-row.active { border-left-color: var(--gold); background: rgba(201,168,76,0.10); }
     .sms-inbox-name    { font-size: 0.88rem; color: var(--white); margin-bottom: 0.15rem; font-weight: 600; }
     .sms-inbox-preview { font-size: 0.75rem; color: var(--muted); }
     .sms-inbox-time    { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; margin-left: 1rem; }
@@ -504,22 +505,7 @@
 </div>
 
 <!-- ═══════════════════ §DIALOG-SMS-THREAD ═══════════════════ -->
-<div class="sms-thread-modal" id="smsThreadModal">
-  <div class="sms-thread-card">
-    <div class="sms-thread-header">
-      <div>
-        <div id="smsThreadName" style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)"></div>
-        <div id="smsThreadPhone" style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem"></div>
-      </div>
-      <button onclick="closeSmsThread()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="sms-thread-body" id="smsThreadBody"></div>
-    <div class="sms-thread-input">
-      <input type="text" id="smsReplyInput" placeholder="Reply..." onkeydown="if(event.key==='Enter')sendSmsReply()" style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.65rem 0.85rem;outline:none" />
-      <button onclick="sendSmsReply()" style="background:var(--gold);color:var(--black);border:none;padding:0.65rem 1.1rem;cursor:pointer;font-size:0.82rem;letter-spacing:0.1em;font-family:var(--font-ui);font-weight:700"><i class="fa-solid fa-paper-plane"></i></button>
-    </div>
-  </div>
-</div>
+<!-- §DIALOG-SMS-THREAD removed — SMS now uses the inline two-pane in #commTabSms -->
 
 <!-- ═══════════════════════════════════════════════════════
      §SIDEBAR
@@ -997,23 +983,25 @@
       </div>
       <!-- SMS Inbox -->
       <div id="commTabSms" style="display:none">
-        <div style="display:grid;grid-template-columns:300px 1fr;gap:1.5rem;min-height:400px">
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:1.5rem;min-height:460px">
           <div>
             <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Conversations</div>
             <div id="smsInboxList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">No messages yet.</div></div>
           </div>
-          <div id="smsInboxPlaceholder" style="display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border)">
-            <div style="text-align:center;color:var(--muted)"><i class="fa-solid fa-comments" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-size:0.85rem;font-style:italic">Select a conversation</div></div>
-          </div>
-          <div id="smsInboxThread" style="display:none;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column">
-            <div id="smsThreadHeaderInline" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0">
-              <div id="smsThreadNameInline" style="font-family:var(--font-display);font-size:1rem;color:var(--white)"></div>
-              <div id="smsThreadPhoneInline" style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem"></div>
+          <div style="background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;min-height:460px">
+            <div id="smsInboxPlaceholder" style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="text-align:center;color:var(--muted)"><i class="fa-solid fa-comments" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-size:0.85rem;font-style:italic">Select a conversation</div></div>
             </div>
-            <div id="smsThreadBodyInline" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;-webkit-overflow-scrolling:touch;max-height:400px"></div>
-            <div style="padding:0.75rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;flex-shrink:0">
-              <input type="text" id="smsReplyInline" placeholder="Reply via SMS..." style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" onkeydown="if(event.key==='Enter')sendSmsReplyInline()" />
-              <button onclick="sendSmsReplyInline()" style="background:var(--gold);color:var(--black);border:none;padding:0.6rem 1rem;cursor:pointer;font-size:0.82rem;font-family:var(--font-ui);font-weight:700"><i class="fa-solid fa-paper-plane"></i></button>
+            <div id="smsInboxThread" style="display:none;flex:1;flex-direction:column;min-height:0">
+              <div id="smsThreadHeaderInline" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0">
+                <div id="smsThreadNameInline" style="font-family:var(--font-display);font-size:1rem;color:var(--white)"></div>
+                <div id="smsThreadPhoneInline" style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem"></div>
+              </div>
+              <div id="smsThreadBodyInline" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;-webkit-overflow-scrolling:touch;min-height:0"></div>
+              <div style="padding:0.75rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;flex-shrink:0">
+                <input type="text" id="smsReplyInline" placeholder="Reply via SMS..." style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" onkeydown="if(event.key==='Enter')sendSmsReplyInline()" />
+                <button onclick="sendSmsReplyInline()" style="background:var(--gold);color:var(--black);border:none;padding:0.6rem 1rem;cursor:pointer;font-size:0.82rem;font-family:var(--font-ui);font-weight:700"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -3293,7 +3281,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
-  if(page==='communications') { loadSmsInbox(); }
+if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
 
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
@@ -7646,26 +7634,26 @@ async function loadSmsInbox(){
   try{
     var r=await sb.from('sms_inbox').select('*, students(first_name,last_name)').eq('school_id',SID).order('created_at',{ascending:false}).limit(50);
     var data=r.data||[];
-    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1.5rem;text-align:center">No SMS messages yet.</div>';return;}
-    // Group by student/sender
-    var threads={};
+    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1.5rem;text-align:center">No messages yet.</div>';return;}
+    var threads={}; var orderKeys=[];
     data.forEach(function(msg){
       var key=msg.student_id||msg.from_phone||'unknown';
-      if(!threads[key]){threads[key]={msgs:[],student:msg.students,lastMsg:msg};}
+      if(!threads[key]){threads[key]={msgs:[],student:msg.students,lastMsg:msg};orderKeys.push(key);}
       threads[key].msgs.push(msg);
     });
-    el.innerHTML=Object.keys(threads).map(function(key){
+    el.innerHTML=orderKeys.map(function(key){
       var thread=threads[key]; var last=thread.lastMsg;
       var s=thread.student; var name=s?s.first_name+' '+s.last_name:(last.from_phone||'Unknown');
       var dt=new Date(last.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
       var unread=thread.msgs.filter(function(m){return m.direction==='inbound'&&!m.read;}).length;
-      return '<div class="sms-thread-row" onclick="openSmsThread(\''+key+'\',\''+name.replace(/'/g,"\\'")+'\')">' +
-        '<div class="sms-thread-avatar">'+name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase()+'</div>'+
-        '<div class="sms-thread-info">'+
-          '<div class="sms-thread-name">'+name+(unread?'<span class="sms-unread-badge">'+unread+'</span>':'')+'</div>'+
-          '<div class="sms-thread-preview">'+(last.body||'').slice(0,50)+'</div>'+
+      var cls='sms-inbox-row'+(unread?' unread':'')+(key===currentSmsSenderId?' active':'');
+      var badge=unread?' <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#E07070;color:#fff;font-size:0.62rem;font-weight:700;border-radius:9px;margin-left:0.4rem">'+unread+'</span>':'';
+      return '<div class="'+cls+'" data-key="'+key+'" onclick="openSmsThread(\''+key+'\',\''+name.replace(/'/g,"\\'")+'\')">' +
+        '<div style="min-width:0;flex:1">'+
+          '<div class="sms-inbox-name">'+escText(name)+badge+'</div>'+
+          '<div class="sms-inbox-preview">'+escText((last.body||'').slice(0,52))+'</div>'+
         '</div>'+
-        '<div class="sms-thread-time">'+dt+'</div>'+
+        '<div class="sms-inbox-time">'+dt+'</div>'+
       '</div>';
     }).join('');
   }catch(e){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">SMS inbox unavailable.</div>';}
@@ -7674,55 +7662,73 @@ async function openSmsThread(studentOrPhone,name){
   currentSmsSenderId=studentOrPhone; currentSmsStudentId=null;
   var student=allStudents.find(function(s){return s.id===studentOrPhone;});
   if(student) currentSmsStudentId=student.id;
-  document.getElementById('smsThreadName').textContent=name;
-  document.getElementById('smsThreadModal').classList.add('active');
-  document.getElementById('smsReplyInput').value='';
-  document.getElementById('smsReplyMsg').textContent='';
+  var phone=student?(student.phone||''):studentOrPhone;
+  var nEl=document.getElementById('smsThreadNameInline'); if(nEl) nEl.textContent=name;
+  var pEl=document.getElementById('smsThreadPhoneInline'); if(pEl) pEl.textContent=phone||'';
+  var ph=document.getElementById('smsInboxPlaceholder'); if(ph) ph.style.display='none';
+  var th=document.getElementById('smsInboxThread'); if(th) th.style.display='flex';
+  var inp=document.getElementById('smsReplyInline'); if(inp) inp.value='';
+  document.querySelectorAll('#smsInboxList .sms-inbox-row').forEach(function(row){
+    row.classList.toggle('active', row.getAttribute('data-key')===String(studentOrPhone));
+  });
   await loadSmsThread(studentOrPhone);
+  if(inp) inp.focus();
 }
 async function loadSmsThread(key){
-  var el=document.getElementById('smsThreadMessages');
+  var el=document.getElementById('smsThreadBodyInline');
+  if(!el) return;
   try{
     var q=sb.from('sms_inbox').select('*').eq('school_id',SID).order('created_at');
     var student=allStudents.find(function(s){return s.id===key;});
     if(student){q=q.eq('student_id',key);}else{q=q.eq('from_phone',key);}
     var r=await q;
     var data=r.data||[];
-    // Mark inbound as read
     var unreadIds=data.filter(function(m){return m.direction==='inbound'&&!m.read;}).map(function(m){return m.id;});
-    if(unreadIds.length) await sb.from('sms_inbox').update({read:true}).in('id',unreadIds);
-    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem">No messages.</div>';return;}
+    if(unreadIds.length){
+      await sb.from('sms_inbox').update({read:true}).in('id',unreadIds);
+      if(window.refreshSmsUnreadBadge) window.refreshSmsUnreadBadge();
+    }
+    if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;margin:auto">No messages.</div>';return;}
     el.innerHTML=data.map(function(m){
       var isOut=m.direction==='outbound';
-      var dt=new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      var dt=new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
       return '<div class="sms-bubble '+(isOut?'outbound':'inbound')+'">' +
-        '<div class="sms-bubble-text">'+m.body+'</div>'+
-        '<div class="sms-bubble-time">'+dt+'</div>'+
+        escText(m.body||'')+
+        '<div class="sms-bubble-meta">'+dt+'</div>'+
       '</div>';
     }).join('');
     el.scrollTop=el.scrollHeight;
   }catch(e){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Thread unavailable.</div>';}
 }
 async function sendSmsReplyInline(){
-  var body=document.getElementById('smsReplyInput').value.trim();
-  if(!body){return;}
-  setMsg('smsReplyMsg','Sending...','');
+  var inp=document.getElementById('smsReplyInline');
+  if(!inp) return;
+  var body=inp.value.trim();
+  if(!body) return;
   try{
+    var payload={school_id:SID, student_id:currentSmsStudentId||null, body:body};
+    if(!currentSmsStudentId && currentSmsSenderId) payload.to_phone=currentSmsSenderId;
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({school_id:SID,student_id:currentSmsStudentId||null,body:body})
+      body:JSON.stringify(payload)
     });
     if(r.ok){
-      document.getElementById('smsReplyInput').value='';
-      document.getElementById('smsReplyMsg').textContent='';
+      inp.value='';
       await loadSmsThread(currentSmsSenderId);
       await loadSmsInbox();
-    }else{var err=await r.json();setMsg('smsReplyMsg',err.error||'Failed.','error');}
-  }catch(e){setMsg('smsReplyMsg',e.message,'error');}
+    }else{
+      var err={}; try{err=await r.json();}catch(e2){}
+      showToast(err.error||'Message failed to send','err');
+    }
+  }catch(e){ showToast('Message failed to send','err'); }
 }
-function closeSmsThread(){ document.getElementById('smsThreadModal').classList.remove('active'); currentSmsSenderId=null; currentSmsStudentId=null; }
-
+function closeSmsThread(){
+  var th=document.getElementById('smsInboxThread'); if(th) th.style.display='none';
+  var ph=document.getElementById('smsInboxPlaceholder'); if(ph) ph.style.display='flex';
+  currentSmsSenderId=null; currentSmsStudentId=null;
+  document.querySelectorAll('#smsInboxList .sms-inbox-row').forEach(function(row){ row.classList.remove('active'); });
+}
 // ─────────────────────────────── §PORTAL-INVITES ───────────────────────────────
 // Phase F.2 — Bulk magic-link invitations for students + family heads.
 // EF: send-portal-invite. Custom-branded email delivery via Resend.
@@ -10694,12 +10700,13 @@ var url = APP_URL + "event.html?id=" + window.currentEventId;
     sb.channel('sms_inbox_' + SID)
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sms_inbox', filter: 'school_id=eq.' + SID },
-        function(payload){
+       function(payload){
           if(window.refreshSmsUnreadBadge) window.refreshSmsUnreadBadge();
           var commsPage = document.getElementById('page-communications');
           var smsPanel = document.getElementById('commTabSms');
-          if(commsPage && commsPage.classList.contains('active') && smsPanel && smsPanel.style.display !== 'none' && window.loadSmsInbox){
-            window.loadSmsInbox();
+          if(commsPage && commsPage.classList.contains('active') && smsPanel && smsPanel.style.display !== 'none'){
+            if(window.loadSmsInbox) window.loadSmsInbox();
+            if(currentSmsSenderId && window.loadSmsThread) window.loadSmsThread(currentSmsSenderId);
           }
         })
       .subscribe();
