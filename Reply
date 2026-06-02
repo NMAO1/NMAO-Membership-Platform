@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <title>Reply — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       REPLY.HTML — mobile reply page (token-authed, brand-themed)
+       Defaults below are the NMAO palette; applyBrand() overrides the
+       7 brand vars from the school row returned by sms-thread.
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --black: #0A0A0A;
+      --surface: #141414;
+      --surface2: #1A1A1A;
+      --border: #2A2520;
+      --white: #F5F0E8;
+      --muted: #7A7060;
+      --muted2: #9A8F80;
+      --green: #5A9A6A;
+      --red: #C07070;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-ui: 'Lato', sans-serif;
+    }
+
+    html, body { height: 100%; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-ui);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .chat-header {
+      flex-shrink: 0;
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-school {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.15rem;
+    }
+    .chat-name {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      color: var(--white);
+      line-height: 1.1;
+    }
+
+    /* ── Messages ── */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .bubble {
+      max-width: 82%;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--white);
+      word-wrap: break-word;
+    }
+    .bubble.inbound {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px 14px 14px 3px;
+    }
+    .bubble.outbound {
+      align-self: flex-end;
+      background: rgba(201,168,76,0.14); /* fallback */
+      background: color-mix(in srgb, var(--gold) 16%, transparent);
+      border: 1px solid var(--gold);
+      border-radius: 14px 3px 3px 14px;
+    }
+    .bubble-meta {
+      font-size: 0.66rem;
+      color: var(--muted2);
+      margin-top: 0.25rem;
+    }
+    .chat-empty {
+      margin: auto;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    /* ── Reply bar ── */
+    .chat-reply {
+      flex-shrink: 0;
+      padding: 0.75rem;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    .chat-reply textarea {
+      flex: 1;
+      background: var(--black);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 1rem; /* >=16px avoids iOS zoom-on-focus */
+      padding: 0.7rem 0.85rem;
+      outline: none;
+      resize: none;
+      max-height: 7rem;
+      line-height: 1.35;
+    }
+    .chat-reply button {
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      padding: 0 1.1rem;
+      height: 2.85rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .chat-reply button:disabled { opacity: 0.45; }
+
+    /* ── Loading / Error (centered) ── */
+    .center-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      gap: 1rem;
+      text-align: center;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .center-icon { font-size: 2.4rem; }
+    .center-title { font-family: var(--font-display); font-size: 1.4rem; color: var(--white); }
+    .center-sub { font-size: 0.88rem; color: var(--muted2); line-height: 1.6; max-width: 22rem; }
+    .center-text { font-size: 0.82rem; color: var(--muted); letter-spacing: 0.08em; }
+
+    .toast {
+      position: fixed;
+      left: 50%; bottom: 5.5rem;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--red);
+      color: var(--red);
+      padding: 0.6rem 1rem;
+      font-size: 0.82rem;
+      max-width: 90%;
+      display: none;
+      z-index: 10;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div class="center-wrap" id="loadingState">
+    <div class="spinner"></div>
+    <div class="center-text">Loading conversation…</div>
+  </div>
+
+  <!-- Error -->
+  <div class="center-wrap" id="errorState" style="display:none">
+    <div class="center-icon">⚠️</div>
+    <div class="center-title">Link Expired</div>
+    <div class="center-sub" id="errorMsg">This reply link is invalid or has expired. Open your dashboard to respond.</div>
+  </div>
+
+  <!-- Thread -->
+  <div class="chat-header" id="chatHeader" style="display:none">
+    <div class="chat-school" id="chatSchool"></div>
+    <div class="chat-name" id="chatName"></div>
+  </div>
+  <div class="chat-messages" id="chatMessages" style="display:none"></div>
+  <div class="chat-reply" id="chatReply" style="display:none">
+    <textarea id="replyInput" rows="1" placeholder="Reply…" oninput="autoGrow(this)" onkeydown="onReplyKey(event)"></textarea>
+    <button id="sendBtn" onclick="sendReply()">Send</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============================================================
+    // REPLY.HTML — token-authed mobile reply page
+    // Called via: reply.html?t=<signed token>
+    // Edge function: sms-thread  (load + send)
+    // ============================================================
+
+    var SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var THREAD_URL = SUPABASE_URL + '/functions/v1/sms-thread';
+
+    var token = null;
+
+    window.onload = function() {
+      var params = new URLSearchParams(window.location.search);
+      token = params.get('t');
+      if (!token) { showError('No reply token found in this link.'); return; }
+      loadThread();
+    };
+
+    async function callThread(payload) {
+      var res = await fetch(THREAD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ANON_KEY },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    // Mirrors the dashboard's applyBrandColors — themes the page to the school.
+    function applyBrand(b) {
+      if (!b) return;
+      var root = document.documentElement;
+      if (b.color)              root.style.setProperty('--gold', b.color);
+      if (b.bg_color)           root.style.setProperty('--black', b.bg_color);
+      if (b.border_color)       root.style.setProperty('--border', b.border_color);
+      if (b.surface_color)      root.style.setProperty('--surface', b.surface_color);
+      if (b.font_color)         root.style.setProperty('--white', b.font_color);
+      if (b.font_family)        root.style.setProperty('--font-display', "'" + b.font_family + "',serif");
+      if (b.sidebar_text_color) root.style.setProperty('--sidebar-text', b.sidebar_text_color);
+    }
+
+    async function loadThread() {
+      try {
+        var res = await callThread({ token: token, action: 'load' });
+        if (res.error) { showError(res.error); return; }
+        applyBrand(res.brand);
+        document.getElementById('chatSchool').textContent = res.school_name || 'NMAO';
+        document.getElementById('chatName').textContent = res.name || 'Conversation';
+        renderMessages(res.messages || []);
+        showThread();
+        scrollToBottom();
+      } catch (e) {
+        showError('Unable to load this conversation. Please try again.');
+      }
+    }
+
+    function renderMessages(messages) {
+      var el = document.getElementById('chatMessages');
+      if (!messages.length) {
+        el.innerHTML = '<div class="chat-empty">No messages yet.</div>';
+        return;
+      }
+      el.innerHTML = messages.map(function(m) {
+        var out = m.direction === 'outbound';
+        var dt = new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        return '<div class="bubble ' + (out ? 'outbound' : 'inbound') + '">' +
+          escText(m.body || '') +
+          '<div class="bubble-meta">' + dt + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    async function sendReply() {
+      var input = document.getElementById('replyInput');
+      var body = input.value.trim();
+      if (!body) return;
+      var btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      try {
+        var res = await callThread({ token: token, action: 'send', body: body });
+        if (res.error) { showToast(res.error); btn.disabled = false; return; }
+        // Append the sent bubble locally and clear the box.
+        appendOutbound(res.body || body, res.created_at);
+        input.value = '';
+        autoGrow(input);
+        scrollToBottom();
+      } catch (e) {
+        showToast('Message failed to send.');
+      }
+      btn.disabled = false;
+    }
+
+    function appendOutbound(body, created_at) {
+      var el = document.getElementById('chatMessages');
+      var empty = el.querySelector('.chat-empty');
+      if (empty) el.innerHTML = '';
+      var dt = new Date(created_at || Date.now()).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      var div = document.createElement('div');
+      div.className = 'bubble outbound';
+      div.innerHTML = escText(body) + '<div class="bubble-meta">' + dt + '</div>';
+      el.appendChild(div);
+    }
+
+    // ── State + helpers ──
+    function showThread() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('chatHeader').style.display = 'block';
+      document.getElementById('chatMessages').style.display = 'flex';
+      document.getElementById('chatReply').style.display = 'flex';
+    }
+    function showError(msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorMsg').textContent = msg;
+      document.getElementById('errorState').style.display = 'flex';
+    }
+    function scrollToBottom() {
+      var el = document.getElementById('chatMessages');
+      requestAnimationFrame(function() { el.scrollTop = el.scrollHeight; });
+    }
+    var toastTimer = null;
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() { t.classList.remove('show'); }, 4000);
+    }
+    function autoGrow(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 112) + 'px';
+    }
+    function onReplyKey(e) {
+      // Enter sends; Shift+Enter makes a newline.
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); }
+    }
+    function escText(s) {
+      return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>
