@@ -655,6 +655,8 @@
         if (res.school_name) {
           document.getElementById('schoolLogoText').textContent = res.school_name;
         }
+        // Theme the page to the school's brand colors (falls back to NMAO defaults).
+        if (res.brand) { applyBrand(res.brand); }
 
         // Check if session is already finalized.
         // Note: lookup returns 'status: ok' regardless — only confirmation_status
@@ -1090,6 +1092,19 @@
 
     function goToPortal() {
       window.location.href = PORTAL_URL;
+    }
+
+    // Theme the page to the school's brand palette (mirrors the dashboard's applyBrandColors).
+    function applyBrand(b) {
+      if (!b) return;
+      var root = document.documentElement;
+      if (b.color)              root.style.setProperty('--gold', b.color);
+      if (b.bg_color)           root.style.setProperty('--black', b.bg_color);
+      if (b.border_color)       root.style.setProperty('--border', b.border_color);
+      if (b.surface_color)      root.style.setProperty('--surface', b.surface_color);
+      if (b.font_color)         root.style.setProperty('--white', b.font_color);
+      if (b.font_family)        root.style.setProperty('--font-display', "'" + b.font_family + "',serif");
+      if (b.sidebar_text_color) root.style.setProperty('--sidebar-text', b.sidebar_text_color);
     }
   </script>
 </body>
