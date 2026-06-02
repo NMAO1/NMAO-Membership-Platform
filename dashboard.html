@@ -8846,6 +8846,7 @@ function truncate(str,n){ return str&&str.length>n?str.slice(0,n)+'...':str||'';
 // §INIT — attach Flatpickr once init finishes and the DOM is populated
 init().then(function(){
   if(window.attachFlatpickrGlobally) window.attachFlatpickrGlobally();
+  try { handleSmsDeepLink(); } catch(e) { console.error('sms deep-link:', e); }
 });
 setTimeout(initCalView, 200);
 
