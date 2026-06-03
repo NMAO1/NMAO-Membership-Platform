@@ -1989,7 +1989,7 @@
 <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Billing</div>
       <div class="form-row">
         <div class="field"><label>Type</label><select id="memType" onchange="toggleMemType()"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option></select></div>
-        <div class="field"><label>Length</label><div style="display:flex;gap:0.5rem"><input type="number" id="memLength" value="1" min="1" style="width:60px" /><select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select></div></div>
+        <div class="field"><label>Length</label><div style="display:flex;gap:0.5rem"><input type="number" id="memLength" value="1" min="1" max="12" style="width:60px" /><select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select></div><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;line-height:1.5">For a plan that bills every few months, keep Type as Monthly and set Length to 3, 6, or 12 with Unit = Months. Length × Unit is how often the card is charged.</p></div>
       </div>
       <div class="form-row">
         <div class="field"><label>Price</label><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
@@ -7040,8 +7040,10 @@ async function renderMemberships(){
   if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}
   var mpR=await sb.from('membership_programs').select('membership_id,program_id'); var mpData=mpR.data||[];
   tb.innerHTML=nonClassPack.map(function(m){
-    var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
-    var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':'');
+   var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
+   var _bl=parseInt(m.billing_length,10);
+   if(m.billing_type==='monthly'&&m.billing_unit==='months'&&_bl>1){tl='Every '+_bl+' months';}
+   var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?((m.billing_unit==='months'&&_bl>1)?('/'+_bl+'mo'):'/mo'):m.billing_type==='yearly'?'/yr':'');
     var limit=m.class_limit_type==='unlimited'?'Unlimited':(m.class_limit_count||'?')+'/'+(m.class_limit_type==='per_week'?'wk':'mo');
     var progIds=mpData.filter(function(x){return x.membership_id===m.id;}).map(function(x){return x.program_id;});
     var progNames=allPrograms.filter(function(p){return progIds.includes(p.id);}).map(function(p){return p.name;}).join(', ')||'--';
