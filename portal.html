@@ -722,6 +722,14 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
           <div class="info-card" id="membershipCard"></div>
         </div>
+       <div class="portal-section" id="startMembershipSection" style="display:none">
+          <div class="section-label"><i class="fa-solid fa-circle-check"></i> Activate Membership</div>
+          <div class="info-card">
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing. You'll enter your card on a secure Stripe page — your first payment is prorated to the next billing date, and future payments run automatically.</p>
+            <button class="btn-gold" id="startMembershipBtn" onclick="startMembership()"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start my membership</button>
+            <p class="form-msg" id="startMembershipMsg"></p>
+          </div>
+        </div>
         <div class="portal-section" id="cardUpdateSection" style="display:none">
           <div class="section-label"><i class="fa-solid fa-credit-card"></i> Payment Method</div>
           <div class="info-card">
@@ -1657,6 +1665,8 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   document.getElementById('heroName').textContent=s.first_name+' '+s.last_name;
   var st=s.status||'trial';
   var sc=document.getElementById('heroStatus');sc.textContent=st;sc.className='chip '+(st==='active'?'chip-active':'chip-trial');
+  var ssec=document.getElementById('startMembershipSection');
+  if(ssec){ ssec.style.display=(s.membership_id && st!=='active')?'':'none'; }
   var pc=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
   var pn=(s.programs&&s.programs.name)?s.programs.name:'--';
   var pt=document.getElementById('heroProgram');pt.textContent=pn;pt.style.borderColor=pc;pt.style.color=pc;
@@ -2468,8 +2478,39 @@ function hidePackConfirm(packId){
   }catch(e){
     btn.disabled=false;
     btn.innerHTML='<i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Update Payment Card';
-    msg.textContent=e.message||'Could not start card update';
+  msg.textContent=e.message||'Could not start card update';
     msg.className='form-msg error';
+  }
+}
+
+async function startMembership(){
+  var msg=document.getElementById('startMembershipMsg');
+  if(msg){msg.textContent='';msg.className='form-msg';}
+  if(!currentStudent||!currentStudent.membership_id){
+    if(msg){msg.textContent='No membership is assigned to your account yet — please contact the school.';msg.className='form-msg error';}
+    return;
+  }
+  var btn=document.getElementById('startMembershipBtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin" style="margin-right:0.5rem"></i>Redirecting...';}
+  try{
+    var origin=window.location.origin+window.location.pathname;
+    var r=await fetch(SURL+'/functions/v1/stripe-create-checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({
+        school_id:SID,
+        student_id:currentStudent.id,
+        membership_id:currentStudent.membership_id,
+        success_url:origin+'?membership_started=1',
+        cancel_url:origin+'?membership_cancelled=1'
+      })
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.url) throw new Error(data.error||'Could not start your membership');
+    window.location.href=data.url;
+  }catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start my membership';}
+    if(msg){msg.textContent=e.message||'Could not start your membership';msg.className='form-msg error';}
   }
 }
 
@@ -2854,7 +2895,20 @@ function handleShopReturnParams(){
   }
 }
 
-  function handleCardUpdateReturnParams(){
+  function handleMembershipReturnParams(){
+  var params=new URLSearchParams(window.location.search);
+  var started=params.get('membership_started');
+  var cancelled=params.get('membership_cancelled');
+  if(!started && !cancelled) return;
+  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
+  window.history.replaceState({}, '', cleanUrl);
+  if(typeof switchPortalTab==='function') switchPortalTab('profile');
+  if(started){ showPortalToast('Membership started! Your billing is all set.', 'success'); }
+  else if(cancelled){ showPortalToast('Checkout cancelled — no changes were made.', 'info'); }
+}
+
+function handleCardUpdateReturnParams(){
+  handleMembershipReturnParams();
   var params=new URLSearchParams(window.location.search);
   var success=params.get('card_updated');
   var cancel=params.get('card_update_cancelled');
