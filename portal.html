@@ -1254,7 +1254,7 @@ var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-      sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type)').eq('email',user.email).maybeSingle(),
+sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at)').eq('email',user.email).maybeSingle(),
       sb.from('families').select('*').eq('email',user.email).maybeSingle(),
       sb.from('instructors').select('*').eq('email',user.email).eq('active',true).maybeSingle()
     ]);
@@ -1665,8 +1665,11 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   document.getElementById('heroName').textContent=s.first_name+' '+s.last_name;
   var st=s.status||'trial';
   var sc=document.getElementById('heroStatus');sc.textContent=st;sc.className='chip '+(st==='active'?'chip-active':'chip-trial');
+  var hasActiveSub=false;
+  var _sm=s.student_memberships;
+  if(_sm&&_sm.length){ for(var _i=0;_i<_sm.length;_i++){ if(_sm[_i]&&_sm[_i].stripe_subscription_id&&_sm[_i].status!=='cancelled'){ hasActiveSub=true; break; } } }
   var ssec=document.getElementById('startMembershipSection');
-  if(ssec){ ssec.style.display=(s.membership_id && st!=='active')?'':'none'; }
+  if(ssec){ ssec.style.display=(s.membership_id && !hasActiveSub)?'':'none'; }
   var pc=(s.programs&&s.programs.color)?s.programs.color:'#C9A84C';
   var pn=(s.programs&&s.programs.name)?s.programs.name:'--';
   var pt=document.getElementById('heroProgram');pt.textContent=pn;pt.style.borderColor=pc;pt.style.color=pc;
@@ -1674,7 +1677,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
-  if(schoolData.allow_member_card_updates)document.getElementById('cardUpdateSection').style.display='';
+if(schoolData.allow_member_card_updates && hasActiveSub)document.getElementById('cardUpdateSection').style.display='';
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
