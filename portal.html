@@ -2973,7 +2973,7 @@ async function showFamilyPortal(family){
   document.getElementById('familyPortalScreen').style.display='block';
   // Fire badge check (non-blocking, completes after portal loads)
   checkFamilyUpdatesNotif();
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).order('first_name');
+  var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
   familyChildren=r.data||[];
   if(!familyChildren.length){
     document.getElementById('familyPortalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
