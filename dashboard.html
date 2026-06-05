@@ -3816,7 +3816,7 @@ function buildWeekGrid(){
   }
   document.getElementById('weekGrid').innerHTML=html;
 }
-function renderAllClasses(){ document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes">No classes yet.</div>'; }
+function renderAllClasses(){ document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes" style="text-align:center;padding:2rem 1rem">'+(allPrograms.length?'<div style="margin-bottom:0.5rem">Classes are your weekly schedule.</div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add your first class</button>':'<div style="margin-bottom:0.5rem">Create a program first, then schedule a class.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</div>'; }
 
 async function loadClasses(){
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
@@ -4953,7 +4953,7 @@ function filterMembers() {
 function renderMembersTable() { filterMembers(); }
 function renderMembersTableFiltered(list) {
   var tb = document.getElementById('membersTableBody');
-  if (!list.length) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">'+(allStudents.length?'No students match your search.':'No students yet.')+'</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">'+(allStudents.length?'No students match your search.':'No students yet. Add them one at a time or import a CSV.<br><br><button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add your first student</button>')+'</td></tr>'; return; }
   tb.innerHTML = list.map(function(s){
     var st = s.status||'trial';
     var sc = st==='active'?'chip-active':st==='paused'?'chip-paused':st==='trial'?'chip-pending':'chip-expired';
@@ -6115,7 +6115,7 @@ async function loadInstructors(){
 }
 function renderInstructors(){
   var tb=document.getElementById('instructorsTableBody');
-  if(!allInstructors.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No instructors yet.</td></tr>';return;}
+  if(!allInstructors.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">Instructors get their own staff login.<br><br><button class="panel-action" onclick="openAddInstructor()"><i class="fa-solid fa-plus"></i> Add your first instructor</button></td></tr>';return;}
   tb.innerHTML=allInstructors.map(function(instr){
     var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
     var classCount=allClasses.filter(function(c){return c.instructor_name===name;}).length;
@@ -6440,7 +6440,7 @@ async function loadPrograms(){
 }
 function renderPrograms(){
   var el=document.getElementById('programsGrid');
-  if(!allPrograms.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No programs yet.</div>';return;}
+  if(!allPrograms.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1;text-align:center;padding:2rem 1rem"><div style="margin-bottom:0.5rem">Programs are your curriculum tracks.</div>'+(allBeltSystems.length?'<button class="panel-action" onclick="openAddProgram()"><i class="fa-solid fa-plus"></i> Add your first program</button>':'<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">Set up a belt system first, then create a program.</div><button class="panel-action" onclick="navigate(\'belts\',null);openAddBeltSystem()"><i class="fa-solid fa-plus"></i> Add belt ranks</button>')+'</div>';return;}
   el.innerHTML=allPrograms.map(function(p){
     var color=p.color||'#C9A84C';
     return '<div class="panel" style="overflow:hidden"><div style="height:4px;background:'+color+'"></div><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem"><div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)">'+p.name+'</div><div style="width:14px;height:14px;border-radius:50%;background:'+color+'"></div></div>'+(p.description?'<div style="font-size:0.85rem;color:var(--muted2);font-style:italic;margin-bottom:0.75rem">'+p.description+'</div>':'')+'<div style="display:flex;gap:0.5rem;flex-wrap:wrap">'+(p.age_group?'<span class="class-tag">'+p.age_group+'</span>':'')+(p.belt_system?'<span class="class-tag">'+p.belt_system+'</span>':'')+'</div><div style="margin-top:0.75rem;display:flex;flex-direction:row;gap:0.5rem;flex-wrap:nowrap"><button class="btn-sm" onclick="openEditProgram(\''+p.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="deleteProgram(\''+p.id+'\')"><i class="fa-solid fa-trash"></i> Delete</button></div></div></div>';
@@ -6547,7 +6547,7 @@ async function loadBeltSystems(){
 }
 function renderBeltSystems(){
   var el=document.getElementById('beltSystemsGrid');
-  if(!allBeltSystems.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1">No belt systems yet.</div>';return;}
+  if(!allBeltSystems.length){el.innerHTML='<div class="no-classes" style="grid-column:1/-1;text-align:center;padding:2rem 1rem"><div style="margin-bottom:0.5rem">Belt ranks are the foundation of your curriculum.</div><button class="panel-action" onclick="openAddBeltSystem()"><i class="fa-solid fa-plus"></i> Add your first belt system</button></div>';return;}
   el.innerHTML=allBeltSystems.map(function(bs){
     var count=(bs.belt_levels&&bs.belt_levels.length)?bs.belt_levels.length:0;
     var safeName=bs.name.replace(/'/g,"\\'");
@@ -7065,7 +7065,7 @@ async function loadMemberships(){
 async function renderMemberships(){
   var tb=document.getElementById('membershipsTableBody');
   var nonClassPack=allMemberships.filter(function(m){return m.class_limit_type!=='class_pack';});
-  if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No memberships yet.</td></tr>';return;}
+  if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">'+(allPrograms.length?'<div style="font-style:italic;margin-bottom:0.5rem">Memberships are how members pay to train.</div><button class="panel-action" onclick="openAddMembership()"><i class="fa-solid fa-plus"></i> Add your first membership</button>':'<div style="font-style:italic;margin-bottom:0.5rem">Create a program first, then add a membership.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</td></tr>';return;}
   var mpR=await sb.from('membership_programs').select('membership_id,program_id'); var mpData=mpR.data||[];
   tb.innerHTML=nonClassPack.map(function(m){
    var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
