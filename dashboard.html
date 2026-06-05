@@ -3408,14 +3408,13 @@ async function updateRevenueGoalWidget(goal){
 async function buildSetupChecklist(){
   var stripeConnected=false, hasBrand=false;
   try{
-    var _scr=await sb.from('schools').select('stripe_connected,logo_url').eq('id',SID).single();
+    var _scr=await sb.from('schools').select('stripe_connected,logo_url,color').eq('id',SID).single();
     if(_scr&&_scr.data){
       stripeConnected=!!_scr.data.stripe_connected;
-      hasBrand=!!_scr.data.logo_url;
+      hasBrand=!!(_scr.data.logo_url||_scr.data.color);
     }
   }catch(e){}
   var steps=[
-    {key:'brand',        label:'Add your logo and brand colors', why:'Make the platform feel like your school.',          ctaLabel:'Set up branding',    cta:'',                     requires:[],                          check:function(){return hasBrand;},                 nav:'settings'},
     {key:'belts',        label:'Add your belt ranks',            why:'Your curriculum is built on these, so start here.', ctaLabel:'Add belt ranks',     cta:'openAddBeltSystem()',  requires:[],                          check:function(){return allBeltSystems.length>0;},  nav:'belts'},
     {key:'programs',     label:'Create your programs',           why:'Programs are your curriculum tracks.',              ctaLabel:'Add a program',      cta:'openAddProgram()',     requires:['belts'],                   check:function(){return allPrograms.length>0;},     nav:'programs'},
     {key:'memberships',  label:'Set up memberships',             why:'How members pay to train with you.',                ctaLabel:'Add a membership',   cta:'openAddMembership()',  requires:['programs'],                check:function(){return allMemberships.length>0;},  nav:'memberships'},
@@ -3424,8 +3423,11 @@ async function buildSetupChecklist(){
     {key:'stripe',       label:'Connect Stripe to get paid',     why:'Connect Stripe so you can accept payments.',        ctaLabel:'Connect Stripe',     cta:'connectStripe()',      requires:[],                          check:function(){return stripeConnected;},          nav:'billing'},
     {key:'instructors',  label:'Invite your instructors',        why:'Give your staff their own login.',                  ctaLabel:'Add an instructor',  cta:'openAddInstructor()',  requires:[],                          check:function(){return allInstructors.length>0;},  nav:'instructors'},
     {key:'sessiontypes', label:'Add session types',              why:'For private lessons and session packs.',            ctaLabel:'Add a session type', cta:'openAddSessionType()', requires:[],                          check:function(){return allSessionTypes.length>0;}, nav:'sessions'},
-    {key:'sessionpacks', label:'Configure a session pack',       why:'Sell prepaid blocks of sessions.',                  ctaLabel:'Add a session pack', cta:'openAddSessionPack()', requires:['sessiontypes'],            check:function(){return allSessionPacks.length>0;}, nav:'sessions'}
+    {key:'sessionpacks', label:'Configure a session pack',       why:'Sell prepaid blocks of sessions.',                  ctaLabel:'Add a session pack', cta:'openAddSessionPack()',   requires:['sessiontypes'],            check:function(){return allSessionPacks.length>0;}, nav:'sessions'},
+    {key:'brand',        label:'Add your logo and brand colors', why:'Optional — keep the default look or make it yours.', ctaLabel:'Set up branding',    cta:'',                     requires:[],                          check:function(){return hasBrand;},                 nav:'settings'}
   ];
+After this, belts becomes the active first step, brand sits last with "optional" copy, and the color you already changed will register it as done. If your schools.color has a default value, brand will read as done for every school automatically — which is the "easily passed, never forced" behavior you want. The one edge case: a school that keeps a truly null color would sit at 9 of 10 and the banner wouldn't auto-hide on its own (they can still dismiss it). If you'd rather brand never hold up completion, say the word and I'll make its check always return true so it's a pure optional reminder.
+Quick test: reload your test school — belts should now be the highlighted step, brand should be last and already checked off from your color change.Want to be notified when Claude responds?Notify
   var done=steps.filter(function(s){return s.check();}).length; var total=steps.length;
   try{var sr=await sb.from('schools').select('setup_dismissed').eq('id',SID).single();if(sr.data&&sr.data.setup_dismissed){document.getElementById('setupBanner').style.display='none';return;}}catch(e){try{if(localStorage.getItem('nmao_setup_dismissed')==='1'){document.getElementById('setupBanner').style.display='none';return;}}catch(e2){}}
   if(done>=total){document.getElementById('setupBanner').style.display='none';return;}
