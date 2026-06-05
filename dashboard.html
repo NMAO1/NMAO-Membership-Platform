@@ -108,9 +108,16 @@
     .setup-banner { background: var(--surface); border: 1px solid rgba(201,168,76,0.25); border-left: 3px solid var(--gold); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
     .setup-progress-bar  { height: 3px; background: var(--border); border-radius: 2px; margin: 0.5rem 0; overflow: hidden; }
     .setup-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s; }
-    .setup-step { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; font-size: 0.82rem; cursor: pointer; }
-    .setup-step.done { color: var(--muted); }
-    .setup-step.todo { color: var(--white); }
+    .setup-step { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.45rem 0; font-size: 0.95rem; cursor: pointer; line-height: 1.4; }
+.setup-step.done { color: var(--muted); }
+.setup-step.todo { color: var(--white); }
+.setup-step.locked { color: var(--muted); cursor: default; opacity: 0.55; }
+.setup-step .setup-step-sub { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+.setup-step.active { display: block; cursor: default; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.35); border-radius: 8px; padding: 0.7rem 0.85rem; margin: 0.45rem 0; color: var(--white); }
+.setup-step.active .setup-step-head { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 0.98rem; }
+.setup-step-why { font-size: 0.8rem; color: var(--muted); margin: 0.4rem 0 0.65rem; }
+.setup-step-cta { background: var(--gold); color: #0A0A0A; border: none; border-radius: 6px; padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
+.setup-step-cta:hover { opacity: 0.9; }
 
     /* §CSS-CALENDAR */
     .cal-grid        { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; border: 1px solid var(--border); }
@@ -3399,23 +3406,44 @@ async function updateRevenueGoalWidget(goal){
 
 // Setup checklist
 async function buildSetupChecklist(){
+  var stripeConnected=false, hasBrand=false;
+  try{
+    var _scr=await sb.from('schools').select('stripe_connected,logo_url').eq('id',SID).single();
+    if(_scr&&_scr.data){
+      stripeConnected=!!_scr.data.stripe_connected;
+      hasBrand=!!_scr.data.logo_url;
+    }
+  }catch(e){}
   var steps=[
-    {label:'Add at least one program',        check:function(){return allPrograms.length>0;},    nav:'programs'},
-    {label:'Add your first class',            check:function(){return allClasses.length>0;},     nav:'classes'},
-    {label:'Create a membership plan',        check:function(){return allMemberships.length>0;}, nav:'memberships'},
-    {label:'Add your first student',          check:function(){return allStudents.length>0;},    nav:'members'},
-    {label:'Upload your school logo',         check:function(){var img=document.getElementById('schoolLogoImg');return img&&img.style.display!=='none';}, nav:'settings'},
-    {label:'Set up a belt system',            check:function(){return allBeltSystems.length>0;}, nav:'belts'},
-    {label:'Add session types',               check:function(){return allSessionTypes.length>0;},nav:'sessions'},
-    {label:'Configure at least one session pack', check:function(){return allSessionPacks.length>0;}, nav:'sessions'}
+    {key:'brand',        label:'Add your logo and brand colors', why:'Make the platform feel like your school.',          ctaLabel:'Set up branding',    cta:'',                     requires:[],                          check:function(){return hasBrand;},                 nav:'settings'},
+    {key:'belts',        label:'Add your belt ranks',            why:'Your curriculum is built on these, so start here.', ctaLabel:'Add belt ranks',     cta:'openAddBeltSystem()',  requires:[],                          check:function(){return allBeltSystems.length>0;},  nav:'belts'},
+    {key:'programs',     label:'Create your programs',           why:'Programs are your curriculum tracks.',              ctaLabel:'Add a program',      cta:'openAddProgram()',     requires:['belts'],                   check:function(){return allPrograms.length>0;},     nav:'programs'},
+    {key:'memberships',  label:'Set up memberships',             why:'How members pay to train with you.',                ctaLabel:'Add a membership',   cta:'openAddMembership()',  requires:['programs'],                check:function(){return allMemberships.length>0;},  nav:'memberships'},
+    {key:'classes',      label:'Add your classes',               why:'Put your weekly schedule on the calendar.',         ctaLabel:'Add a class',        cta:'openAddClass()',       requires:['programs'],                check:function(){return allClasses.length>0;},      nav:'classes'},
+    {key:'students',     label:'Add your students',              why:'Add them one at a time or import a CSV.',           ctaLabel:'Add a student',      cta:'openAddStudent()',     requires:['programs','memberships'],  check:function(){return allStudents.length>0;},     nav:'members'},
+    {key:'stripe',       label:'Connect Stripe to get paid',     why:'Connect Stripe so you can accept payments.',        ctaLabel:'Connect Stripe',     cta:'connectStripe()',      requires:[],                          check:function(){return stripeConnected;},          nav:'billing'},
+    {key:'instructors',  label:'Invite your instructors',        why:'Give your staff their own login.',                  ctaLabel:'Add an instructor',  cta:'openAddInstructor()',  requires:[],                          check:function(){return allInstructors.length>0;},  nav:'instructors'},
+    {key:'sessiontypes', label:'Add session types',              why:'For private lessons and session packs.',            ctaLabel:'Add a session type', cta:'openAddSessionType()', requires:[],                          check:function(){return allSessionTypes.length>0;}, nav:'sessions'},
+    {key:'sessionpacks', label:'Configure a session pack',       why:'Sell prepaid blocks of sessions.',                  ctaLabel:'Add a session pack', cta:'openAddSessionPack()', requires:['sessiontypes'],            check:function(){return allSessionPacks.length>0;}, nav:'sessions'}
   ];
   var done=steps.filter(function(s){return s.check();}).length; var total=steps.length;
   try{var sr=await sb.from('schools').select('setup_dismissed').eq('id',SID).single();if(sr.data&&sr.data.setup_dismissed){document.getElementById('setupBanner').style.display='none';return;}}catch(e){try{if(localStorage.getItem('nmao_setup_dismissed')==='1'){document.getElementById('setupBanner').style.display='none';return;}}catch(e2){}}
   if(done>=total){document.getElementById('setupBanner').style.display='none';return;}
   document.getElementById('setupBanner').style.display='block';
   document.getElementById('setupProgressFill').style.width=Math.round((done/total)*100)+'%';
-  var html=steps.map(function(s){var isDone=s.check();return '<div class="setup-step '+(isDone?'done':'todo')+'" onclick="'+(isDone?'':'navigate(\''+s.nav+'\',null)')+'">'+'<i class="fa-solid '+(isDone?'fa-circle-check':'fa-circle')+'" style="color:'+(isDone?'#5A9A6A':'var(--muted)')+';font-size:0.82rem;flex-shrink:0"></i>'+s.label+'</div>';}).join('');
-  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem">'+done+' of '+total+' completed</div>';
+  var doneMap={}; steps.forEach(function(s){doneMap[s.key]=s.check();});
+  var labelByKey={}; steps.forEach(function(s){labelByKey[s.key]=s.label;});
+  function _locked(s){ if(!s.requires||!s.requires.length) return false; for(var i=0;i<s.requires.length;i++){ if(!doneMap[s.requires[i]]) return true; } return false; }
+  var activeKey=null;
+  for(var ai=0;ai<steps.length;ai++){ if(!doneMap[steps[ai].key]&&!_locked(steps[ai])){ activeKey=steps[ai].key; break; } }
+  var html=steps.map(function(s){
+    var isDone=doneMap[s.key], isLocked=_locked(s), isActive=(s.key===activeKey);
+    if(isDone){ return '<div class="setup-step done" onclick="navigate(\''+s.nav+'\',null)"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div>'; }
+    if(isActive){ return '<div class="setup-step active"><div class="setup-step-head"><i class="fa-solid fa-circle" style="color:var(--gold);font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div><div class="setup-step-why">'+s.why+'</div><button class="setup-step-cta" onclick="navigate(\''+s.nav+'\',null);'+s.cta+'">'+s.ctaLabel+' <i class="fa-solid fa-arrow-right"></i></button></div>'; }
+    if(isLocked){ var rk=(s.requires&&s.requires.length)?s.requires[0]:null; var rl=rk?labelByKey[rk]:''; return '<div class="setup-step locked"><i class="fa-solid fa-lock" style="color:var(--muted);font-size:0.8rem;flex-shrink:0"></i><span>'+s.label+'<span class="setup-step-sub">Unlocks after: '+rl+'</span></span></div>'; }
+    return '<div class="setup-step todo" onclick="navigate(\''+s.nav+'\',null)"><i class="fa-solid fa-circle" style="color:var(--muted);font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div>';
+  }).join('');
+  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.74rem;color:var(--muted);margin-top:0.5rem">'+done+' of '+total+' completed</div>';
 }
 async function dismissSetupBanner(){
   document.getElementById('setupBanner').style.display='none';
