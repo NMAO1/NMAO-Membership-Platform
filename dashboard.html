@@ -786,6 +786,16 @@
           <div class="policy-section-title"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Low Pack Threshold</div>
           <div class="field"><label>Alert student when sessions remaining falls below</label><input type="number" id="packLowThreshold" value="2" min="1" /></div>
         </div>
+        <div class="no-show-policy-box">
+          <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders</div>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /> <span>Text a confirmation when a session is booked</span></label>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="checkbox" id="packReminderEnabled" checked /> <span>Text a reminder when a student's session pack runs low</span></label>
+        </div>
+        <div class="no-show-policy-box">
+          <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders</div>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /> <span>Text a confirmation when a session is booked</span></label>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="checkbox" id="packReminderEnabled" checked /> <span>Text a reminder when a student's session pack runs low</span></label>
+        </div>
         <button class="panel-action" onclick="saveSessionSettings()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save Session Settings</button>
         <p class="form-msg" id="sessSettingsMsg"></p>
       </div>
@@ -3009,7 +3019,9 @@ if (d.no_show_hours)       document.getElementById('noShowHours').value       = 
       if (ss.late_cancel_hours) document.getElementById('lateCancelHours').value = ss.late_cancel_hours;
       if (ss.late_cancel_action) document.getElementById('lateCancelAction').value = ss.late_cancel_action;
       if (ss.late_cancel_fee) document.getElementById('lateCancelFee').value = ss.late_cancel_fee;
-      if (ss.low_pack_threshold) document.getElementById('packLowThreshold').value = ss.low_pack_threshold;
+       if (ss.low_pack_threshold) document.getElementById('packLowThreshold').value = ss.low_pack_threshold;
+      if (ss.session_reminder_enabled !== undefined && ss.session_reminder_enabled !== null) document.getElementById('sessionReminderEnabled').checked = ss.session_reminder_enabled;
+      if (ss.pack_reminder_enabled !== undefined && ss.pack_reminder_enabled !== null) document.getElementById('packReminderEnabled').checked = ss.pack_reminder_enabled;
       // Recompute the fee-field visibility against the final action value,
       // not just the schools-side check above.
       document.getElementById('lateCancelFeeField').style.display = (document.getElementById('lateCancelAction').value === 'charge') ? 'block' : 'none';
@@ -3207,6 +3219,8 @@ async function saveSessionSettings(){
     late_cancel_action:document.getElementById('lateCancelAction').value||'No Action',
     late_cancel_fee:parseFloat(document.getElementById('lateCancelFee').value)||0,
     low_pack_threshold:parseInt(document.getElementById('packLowThreshold').value)||2,
+    session_reminder_enabled:document.getElementById('sessionReminderEnabled').checked,
+    pack_reminder_enabled:document.getElementById('packReminderEnabled').checked,
     updated_at:new Date().toISOString()
   },{onConflict:'school_id'});
   if(r.error){setMsg('sessSettingsMsg',r.error.message,'error');}
