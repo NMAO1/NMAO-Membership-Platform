@@ -7727,13 +7727,13 @@ async function loadSmsInbox(){
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1.5rem;text-align:center">No messages yet.</div>';return;}
     var threads={}; var orderKeys=[];
     data.forEach(function(msg){
-      var key=msg.student_id||msg.from_phone||'unknown';
+      var key=msg.student_id||(msg.direction==='outbound'?msg.to_phone:msg.from_phone)||'unknown';
       if(!threads[key]){threads[key]={msgs:[],student:msg.students,lastMsg:msg};orderKeys.push(key);}
       threads[key].msgs.push(msg);
     });
     el.innerHTML=orderKeys.map(function(key){
       var thread=threads[key]; var last=thread.lastMsg;
-      var s=thread.student; var name=s?s.first_name+' '+s.last_name:(last.from_phone||'Unknown');
+      var s=thread.student; var name=s?s.first_name+' '+s.last_name:((last.direction==='outbound'?last.to_phone:last.from_phone)||'Unknown');
       var dt=new Date(last.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
       var unread=thread.msgs.filter(function(m){return m.direction==='inbound'&&!m.read;}).length;
       var cls='sms-inbox-row'+(unread?' unread':'')+(key===currentSmsSenderId?' active':'');
@@ -7770,7 +7770,7 @@ async function loadSmsThread(key){
   try{
     var q=sb.from('sms_inbox').select('*').eq('school_id',SID).order('created_at');
     var student=allStudents.find(function(s){return s.id===key;});
-    if(student){q=q.eq('student_id',key);}else{q=q.eq('from_phone',key);}
+    if(student){q=q.eq('student_id',key);}else{q=q.or('from_phone.eq.'+key+',to_phone.eq.'+key);}
     var r=await q;
     var data=r.data||[];
     var unreadIds=data.filter(function(m){return m.direction==='inbound'&&!m.read;}).map(function(m){return m.id;});
