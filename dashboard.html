@@ -7565,6 +7565,21 @@ async function saveAutomation(key){
 }
 
 // Broadcast
+function toggleTagAudience(){
+  var a=document.getElementById('commAudience');
+  var f=document.getElementById('commTagField');
+  if(!a||!f) return;
+  f.style.display=a.value==='tag'?'block':'none';
+}
+
+function clearReportSelection(){
+  selectedReportRecipients=[];
+  var b=document.getElementById('commRecipientBanner');
+  if(b) b.style.display='none';
+  var n=document.getElementById('commRecipientNames');
+  if(n) n.textContent='';
+}
+
 async function sendCommunication(){
   var audience=document.getElementById('commAudience').value;
   var tagId=document.getElementById('commTag').value;
@@ -7596,6 +7611,17 @@ async function sendCommunication(){
       if(r.ok){totalReached+=emailRecipients.length;}
       else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
     }catch(e){errors.push('Email: '+e.message);}
+  }
+  if(smsRecipients.length){
+    try{
+      var rs=await fetch(SURL+'/functions/v1/send-communication',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({school_id:SID,type:'sms',body:body,recipients:smsRecipients})
+      });
+      if(rs.ok){totalReached+=smsRecipients.length;}
+      else{var errs=await rs.json();errors.push('SMS: '+(errs.error||'failed'));}
+    }catch(e2){errors.push('SMS: '+e2.message);}
   }
   var unreachable=selectedReportRecipients.length
     ?selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;}).length
