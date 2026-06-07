@@ -886,10 +886,11 @@
 
       try {
         var stuRes = await sb.from('students')
-          .select('id')
-          .eq('school_id', instructor.school_id)
-          .eq('email', email)
-          .limit(1);
+              .select('id')
+              .eq('school_id', instructor.school_id)
+              .eq('email', email.toLowerCase())
+              .is('deleted_at', null)
+              .limit(1);
 
         if (!stuRes.data || !stuRes.data.length) {
           eligiblePacks = [];
@@ -1421,40 +1422,25 @@
           sessionNotes = notes ? contactLine + '\n' + notes : contactLine;
         }
 
-        // Create session record
-        var sessPayload = {
-          school_id:               instructor.school_id,
-          student_id:              studentId,
-          instructor_name:         instrName,
-          session_type_id:         selectedSetting.session_type_id,
-          session_date:            selectedDate,
-          start_time:              selectedTime,
-          duration_minutes:        selectedSetting.duration_minutes,
-          status:                  'scheduled',
-          confirmation_status:     'pending',
-          price:                   selectedPack ? 0 : selectedSetting.price,
-          notes:                   sessionNotes,
-          student_session_pack_id: selectedPack ? selectedPack.id : null
-        };
+        // Create session via the secure RPC (server re-derives price, validates the
+        // pack, resolves the student, sets status, and records consent).
+        var rpcRes = await sb.rpc('book_public_session', {
+          p_instructor_id:   instructor.id,
+          p_session_type_id: selectedSetting.session_type_id,
+          p_session_date:    selectedDate,
+          p_start_time:      selectedTime,
+          p_email:           email.toLowerCase(),
+          p_first_name:      first,
+          p_last_name:       last,
+          p_phone:           phone || null,
+          p_notes:           sessionNotes,
+          p_pack_id:         selectedPack ? selectedPack.id : null,
+          p_sms_consent:     smsConsent
+        });
+        if (rpcRes.error) throw new Error(rpcRes.error.message);
+        var newSessionId = rpcRes.data;
 
-        var sessRes = await sb.from('sessions').insert(sessPayload).select().maybeSingle();
-        if (sessRes.error) throw new Error(sessRes.error.message);
-
-        // If no existing student, create a lead
-        if (!studentId) {
-          try {
-            await sb.from('leads').insert({
-              school_id:  instructor.school_id,
-              first_name: first,
-              last_name:  last,
-              email:      email.toLowerCase(),
-              phone:      phone || null,
-              source:     'instructor_booking',
-              status:     'trial',
-              notes:      'Booked session with ' + instrName + ' on ' + formatDate(selectedDate) + ' at ' + fmtTime(selectedTime) + (smsConsent ? ' | SMS consent: granted ' + new Date().toISOString() : '')
-            });
-          } catch(e) {}
-        }
+        // (lead creation + consent now handled inside book_public_session)
 
         showSuccess(first, selectedSetting.name);
 
