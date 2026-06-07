@@ -7607,23 +7607,29 @@ async function sendCommunication(){
     smsRecipients=selectedReportRecipients.filter(function(r){return r.phone;});
   }else{
     var pool=allStudents.filter(function(s){
-      if(audience==='active') return s.status==='active';
-      if(audience==='tag')    return tagId&&s._tags&&s._tags.includes(tagId);
+      if(audience==='active')  return s.status==='active';
+      if(audience==='trial')   return s.status==='trial';
+      if(audience==='paused')  return s.status==='paused';
+      if(audience==='expired') return s.status==='expired';
+      if(audience==='tag')     return tagId&&s._tags&&s._tags.includes(tagId);
       return true;
     });
     emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name,phone:s.phone};});
     smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:s.first_name+' '+s.last_name,email:s.email};});
   }
-  var totalReached=0; var errors=[];
+  var totalReached=0; var hardErrors=[]; var failNotes=[];
   if(emailRecipients.length){
     try{
       var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients,reply_to:ownerEmail})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients,audience:audience,reply_to:ownerEmail})
       });
-      if(r.ok){totalReached+=emailRecipients.length;}
-      else{var err=await r.json();errors.push('Email: '+(err.error||'failed'));}
+      var ej=await r.json().catch(function(){return{};});
+      if(r.ok){
+        totalReached+=(typeof ej.email_sent==='number'?ej.email_sent:0);
+        (ej.errors||[]).forEach(function(x){failNotes.push(x.name+' ('+x.channel+'): '+x.reason);});
+      }else{hardErrors.push('Email: '+(ej.error||'failed'));}
     }catch(e){errors.push('Email: '+e.message);}
   }
   if(smsRecipients.length){
@@ -7631,21 +7637,28 @@ async function sendCommunication(){
       var rs=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({school_id:SID,type:'sms',body:body,recipients:smsRecipients})
+        body:JSON.stringify({school_id:SID,type:'sms',body:body,recipients:smsRecipients,audience:audience})
       });
-      if(rs.ok){totalReached+=smsRecipients.length;}
-      else{var errs=await rs.json();errors.push('SMS: '+(errs.error||'failed'));}
+      var es=await rs.json().catch(function(){return{};});
+      if(rs.ok){
+        totalReached+=(typeof es.sms_sent==='number'?es.sms_sent:0);
+        (es.errors||[]).forEach(function(x){failNotes.push(x.name+' ('+x.channel+'): '+x.reason);});
+      }else{hardErrors.push('SMS: '+(es.error||'failed'));}
     }catch(e2){errors.push('SMS: '+e2.message);}
   }
   var unreachable=selectedReportRecipients.length
     ?selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;}).length
     :0;
-  if(errors.length){setMsg('commMsg',errors.join(' | '),'error');return;}
+  if(failNotes.length||hardErrors.length) console.log('Communication failures:',failNotes,hardErrors);
+  if(totalReached===0){
+    setMsg('commMsg',hardErrors.concat(failNotes).join(' | ')||'No messages were sent.','error');return;
+  }
   var resultMsg='Sent to '+totalReached+' recipient'+(totalReached!==1?'s':'');
   if(unreachable) resultMsg+=' ('+unreachable+' skipped — no contact info)';
+  var failCount=failNotes.length+hardErrors.length;
+  if(failCount) resultMsg+=' — '+failCount+' failed';
   clearReportSelection();
-  setMsg('commMsg',resultMsg,'success');
-  await sb.from('communications').insert({school_id:SID,type:'announcement',channel:'email',subject:subject||'(no subject)',body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),recipient_count:totalReached});
+  setMsg('commMsg',resultMsg,failCount?'error':'success');
   setTimeout(function(){document.getElementById('commMsg').textContent='';},5000);
 }
 
