@@ -1666,7 +1666,7 @@
         <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="confirmDeleteStudent()"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
     </div>
-    <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div>
       <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem">
         <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div>
         <div>
@@ -4775,6 +4775,58 @@ async function loadProfileCardOnFile(sid){
   }
 }
 
+// §PROFILE-VITALS
+async function buildProfileVitals(sid){
+  var el=document.getElementById('profileVitals'); if(!el) return;
+  var lastSeen='--', weekCount=0, monthCount=0, balance=0, hasPack=false;
+  var isMember=false, rollover=0, rolloverShow=false, statusTxt='--', statusColor='var(--muted)';
+  try{
+    var ar=await sb.from('class_attendance').select('noted_at').eq('student_id',sid).eq('status','present').order('noted_at',{ascending:false});
+    var adata=ar.data||[];
+    if(adata.length){
+      var now=new Date();
+      var days=Math.floor((Date.now()-new Date(adata[0].noted_at).getTime())/86400000);
+      lastSeen=days<=0?'Today':days===1?'Yesterday':days+' days ago';
+      var dow=now.getDay(); var back=(dow===0?6:dow-1);
+      var weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-back).getTime();
+      var monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+      adata.forEach(function(x){ var t=new Date(x.noted_at).getTime(); if(t>=weekStart)weekCount++; if(t>=monthStart)monthCount++; });
+    } else { lastSeen='Never'; }
+  }catch(e){}
+  try{
+    var pr=await sb.from('student_session_packs').select('sessions_remaining').eq('student_id',sid).eq('status','active');
+    (pr.data||[]).forEach(function(p){ hasPack=true; balance+=(p.sessions_remaining||0); });
+  }catch(e){}
+  try{
+    var smr=await sb.from('student_memberships').select('status,classes_remaining,rollover_balance,memberships(class_limit_type,rollover_enabled)').eq('student_id',sid);
+    var smdata=smr.data||[];
+    smdata.forEach(function(m){
+      var clt=m.memberships?m.memberships.class_limit_type:null;
+      var active=(m.status==='active'||m.status==='past_due');
+      if(clt==='class_pack'){ if(m.classes_remaining!=null){ hasPack=true; balance+=m.classes_remaining; } }
+      else if(active){
+        isMember=true;
+        if(m.rollover_balance!=null) rollover+=m.rollover_balance;
+        if((m.memberships&&m.memberships.rollover_enabled)||m.rollover_balance) rolloverShow=true;
+      }
+    });
+    if(smdata.some(function(m){return m.status==='past_due';})){ statusTxt='Past due'; statusColor='#E07070'; }
+    else if(smdata.some(function(m){return m.status==='active';})){ statusTxt='Active'; statusColor='#5A9A6A'; }
+    else if(currentProfileStudent&&currentProfileStudent.status){ statusTxt=currentProfileStudent.status; }
+  }catch(e){}
+  var tiles=[{l:'Last seen', v:lastSeen, c:'#F5F0E8'}];
+  if(isMember){
+    tiles.push({l:'This week', v:weekCount+(weekCount===1?' visit':' visits'), c:'#F5F0E8'});
+    tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
+    if(rolloverShow) tiles.push({l:'Rollover', v:rollover+(rollover===1?' class':' classes'), c:'var(--gold)'});
+  }
+  if(hasPack) tiles.push({l:'Class balance', v:balance+(balance===1?' class':' classes'), c:'#F5F0E8'});
+  tiles.push({l:'Membership', v:statusTxt, c:statusColor});
+  el.innerHTML=tiles.map(function(t){
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.7rem 0.85rem"><div style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+t.l+'</div><div style="font-size:1.15rem;color:'+t.c+';margin-top:0.2rem">'+t.v+'</div></div>';
+  }).join('');
+}
+
 async function replaceStudentCard(sid){
   var el = document.getElementById('profileCardOnFile');
   var origHtml = el.innerHTML;
@@ -4822,6 +4874,7 @@ async function removeStudentCard(sid){
       return;
     }
     await loadProfileCardOnFile(sid);
+  await buildProfileVitals(sid);
   }catch(e){
     el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">Network error removing card.</div>' +
       '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
