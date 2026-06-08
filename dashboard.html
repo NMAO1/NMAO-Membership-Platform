@@ -5080,7 +5080,7 @@ async function saveStudent() {
 
   var r;
   if (eid) { r=await sb.from('students').update(payload).eq('id',eid); }
-  else { payload.school_id=SID; r=await sb.from('students').insert(payload); }
+  else { payload.school_id=SID; payload.source='manual'; r=await sb.from('students').insert(payload); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
   else { setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200); }
 }
@@ -5759,7 +5759,7 @@ async function runImport(){
     if(!first||!last){errors.push({row:i+1,msg:'Missing name',status:'skip'});skipped++;continue;}
     var email=getMappedField('email')?row[getMappedField('email')]:'';
     if(email&&allStudents.some(function(s){return s.email===email;})){errors.push({row:i+1,msg:first+' '+last+' - duplicate email',status:'skip'});skipped++;continue;}
-    var payload={school_id:SID,first_name:first,last_name:last,email:email||null,phone:getMappedField('phone')?row[getMappedField('phone')]:null,date_of_birth:getMappedField('date_of_birth')?row[getMappedField('date_of_birth')]||null:null,status:getMappedField('status')?row[getMappedField('status')]||'active':'active',program_id:defaultProgId,membership_id:defaultMemId,plan_type:'membership',start_date:localDateStr(new Date())};
+    var payload={school_id:SID,first_name:first,last_name:last,email:email||null,phone:getMappedField('phone')?row[getMappedField('phone')]:null,date_of_birth:getMappedField('date_of_birth')?row[getMappedField('date_of_birth')]||null:null,status:getMappedField('status')?row[getMappedField('status')]||'active':'active',program_id:defaultProgId,membership_id:defaultMemId,plan_type:'membership',start_date:localDateStr(new Date()),source:'csv_import'};
     var r=await sb.from('students').insert(payload);
     if(r.error){errors.push({row:i+1,msg:first+' '+last+' - '+r.error.message,status:'warn'});}
     else{errors.push({row:i+1,msg:first+' '+last+' - imported',status:'ok'});imported++;}
