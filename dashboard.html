@@ -986,12 +986,12 @@
               <div class="field"><label>Subject</label><input type="text" id="alertSubject" placeholder="e.g. School Closed Saturday" /></div>
               <div class="field"><label>Audience</label><select id="alertAudience"><option value="all">All Members</option><option value="active">Active Only</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
               <div class="field" id="alertTagField" style="display:none"><label>Select Tag</label><select id="alertTag"><option value="">-- Select Tag --</option></select></div>
-              <div class="field"><label>CTA (optional)</label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div>
+              <div class="field"><label>CTA (optional)</label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div><div class="field"><label>Schedule for (optional)</label><input type="datetime-local" id="alertScheduleFor" style="max-width:240px" /><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">Leave blank to publish now. Set a future date/time and it appears in member portals at that time.</div></div>
             </div>
             <div><div class="field"><label>Message</label><div id="alertBodyEditor" style="margin-top:0.25rem"></div></div></div>
           </div>
           <div style="display:flex;gap:0.75rem;margin-top:0.75rem">
-            <button class="panel-action" onclick="sendAlert()"><i class="fa-solid fa-paper-plane"></i> Send Now</button>
+            <button class="panel-action" id="alertSendBtn" onclick="sendAlert()"><i class="fa-solid fa-paper-plane"></i> Send Now</button>
             <button class="btn-sm" onclick="saveAlertDraft()"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
           </div>
           <p class="form-msg" id="alertMsg"></p>
@@ -7541,7 +7541,7 @@ async function loadPayments(){
 }
 
 document.addEventListener('change',function(e){
-  if(e.target&&e.target.id==='alertAudience')    document.getElementById('alertTagField').style.display=e.target.value==='tag'?'block':'none';
+  if(e.target&&e.target.id==='alertAudience')    document.getElementById('alertTagField').style.display=e.target.value==='tag'?'block':'none';   if(e.target&&e.target.id==='alertScheduleFor'){var _sb=document.getElementById('alertSendBtn');if(_sb)_sb.innerHTML=e.target.value?'<i class="fa-solid fa-clock"></i> Schedule':'<i class="fa-solid fa-paper-plane"></i> Send Now';}
   if(e.target&&e.target.id==='commAudience')     toggleTagAudience();
   if(e.target&&e.target.id==='profileAutopayDay')document.getElementById('profileAutopayCustomDay').style.display=e.target.value==='custom'?'block':'none';
   if(e.target&&e.target.id==='memAutopayDay')    toggleMemCustomDay();
@@ -7711,6 +7711,8 @@ async function loadAlertHistory(){
     el.innerHTML=data.map(function(a){
       var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       var isExpired=a.expires_at && a.expires_at < nowIso;
+      var isScheduled=a.scheduled_for && a.scheduled_for > nowIso;
+      var schedNote=isScheduled?' <span style="color:#6BA3E0;font-size:0.7rem"><i class="fa-solid fa-clock"></i> Scheduled '+new Date(a.scheduled_for).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span>':'';
       var expNote='';
       if(a.expires_at){
         var expDt=new Date(a.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -7720,7 +7722,7 @@ async function loadAlertHistory(){
       }
       return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid '+(isExpired?'var(--muted)':'var(--gold)')+';margin-bottom:0.4rem;'+(isExpired?'opacity:0.6;':'')+'">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem;gap:0.5rem">'+
-          '<div style="font-size:0.85rem;color:var(--white);flex:1">'+a.subject+expNote+'</div>'+
+          '<div style="font-size:0.85rem;color:var(--white);flex:1">'+a.subject+schedNote+expNote+'</div>'+
           '<div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">'+
             '<div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div>'+
             '<button class="alert-delete-btn" onclick="softDeleteAlert(\''+a.id+'\')" title="Delete alert"><i class="fa-solid fa-trash"></i></button>'+
@@ -7782,17 +7784,19 @@ async function sendAlert(){
   if(!subject||!body){setMsg('alertMsg','Subject and body required.','error');return;}
   setMsg('alertMsg','Sending...','');
   // Compute expires_at from school's alert_auto_expire_days setting
+  var scheduleFor=document.getElementById('alertScheduleFor').value;
+  var startIso=scheduleFor?new Date(scheduleFor).toISOString():new Date().toISOString();
   var expiresAt=null;
   try{
     var schoolRes=await sb.from('schools').select('alert_auto_expire_days').eq('id',SID).maybeSingle();
     var days=schoolRes.data && schoolRes.data.alert_auto_expire_days;
     if(days && days > 0){
-      expiresAt=new Date(Date.now() + days*24*60*60*1000).toISOString();
+      expiresAt=new Date(new Date(startIso).getTime() + days*24*60*60*1000).toISOString();
     }
   }catch(e){}
-  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:new Date().toISOString(),expires_at:expiresAt,cta_label:ctaLabel||null,cta_url:ctaUrl||null});
+  var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:startIso,scheduled_for:startIso,expires_at:expiresAt,cta_label:ctaLabel||null,cta_url:ctaUrl||null});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
-else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';document.getElementById('alertCtaLabel').value='';document.getElementById('alertCtaUrl').value='';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
+else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';document.getElementById('alertCtaLabel').value='';document.getElementById('alertCtaUrl').value='';document.getElementById('alertScheduleFor').value='';var _sbtn=document.getElementById('alertSendBtn');if(_sbtn)_sbtn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Now';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
 
 // SMS Inbox
