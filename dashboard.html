@@ -4777,21 +4777,31 @@ async function loadProfileCardOnFile(sid){
 
 // §PROFILE-FAMILY
 async function buildProfileFamily(sid){
-  var tile=document.getElementById('profileFamilyTile'), el=document.getElementById('profileFamilyList');
-  if(!tile||!el) return;
   var fam=currentProfileStudent?currentProfileStudent.family_id:null;
-  if(!fam){ tile.style.display='none'; return; }
+  var tile=document.getElementById('profileFamilyTile');
+  if(!fam){ if(tile) tile.style.display='none'; return; }
   try{
     var r=await sb.from('students').select('id,first_name,last_name,status').eq('family_id',fam).neq('id',sid).is('deleted_at',null).order('first_name');
     var data=r.data||[];
-    if(!data.length){ tile.style.display='none'; return; }
+    if(!data.length){ if(tile) tile.style.display='none'; return; }
+    if(!tile){
+      var anchor=document.getElementById('profileContactInfo');
+      var contactTile=anchor?anchor.parentElement:null;
+      var grid=contactTile?contactTile.parentElement:null;
+      if(!grid) return;
+      tile=document.createElement('div');
+      tile.id='profileFamilyTile';
+      tile.innerHTML='<div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Family</div><div id="profileFamilyList"></div>';
+      if(contactTile.nextElementSibling) grid.insertBefore(tile,contactTile.nextElementSibling);
+      else grid.appendChild(tile);
+    }
     tile.style.display='block';
-    el.innerHTML=data.map(function(m){
+    document.getElementById('profileFamilyList').innerHTML=data.map(function(m){
       var nm=(m.first_name||'')+' '+(m.last_name||'');
       var sc=m.status==='active'?'#5A9A6A':'var(--muted)';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border)"><span style="font-size:0.85rem;color:#F5F0E8"><i class="fa-solid fa-user" style="color:'+sc+';margin-right:0.4rem;font-size:0.72rem"></i>'+nm+'</span><button class="btn-sm" style="font-size:0.62rem;padding:0.2rem 0.5rem" onclick="openStudentProfile(\''+m.id+'\')">View</button></div>';
     }).join('');
-  }catch(e){ tile.style.display='none'; }
+  }catch(e){ if(tile) tile.style.display='none'; }
 }
   
 // §PROFILE-VITALS
