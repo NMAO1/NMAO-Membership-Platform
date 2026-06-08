@@ -1666,7 +1666,7 @@
         <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="confirmDeleteStudent()"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
     </div>
-    <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div>
+    <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div><div id="profileAlerts" style="display:none;flex-wrap:wrap;gap:0.5rem;padding:0.75rem 1.5rem;border-bottom:1px solid var(--border)"></div>
       <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem">
         <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div>
         <div>
@@ -4778,15 +4778,15 @@ async function loadProfileCardOnFile(sid){
 // §PROFILE-VITALS
 async function buildProfileVitals(sid){
   var el=document.getElementById('profileVitals'); if(!el) return;
-  var lastSeen='--', weekCount=0, monthCount=0, balance=0, hasPack=false;
-  var isMember=false, rollover=0, rolloverShow=false, statusTxt='--', statusColor='var(--muted)';
+  var lastSeen='--', lastSeenDays=null, weekCount=0, monthCount=0, balance=0, hasPack=false;
+  var isMember=false, rollover=0, rolloverShow=false, statusTxt='--', statusColor='var(--muted)', expiringDays=null;
   try{
     var ar=await sb.from('class_attendance').select('noted_at').eq('student_id',sid).eq('status','present').order('noted_at',{ascending:false});
     var adata=ar.data||[];
     if(adata.length){
       var now=new Date();
-      var days=Math.floor((Date.now()-new Date(adata[0].noted_at).getTime())/86400000);
-      lastSeen=days<=0?'Today':days===1?'Yesterday':days+' days ago';
+      lastSeenDays=Math.floor((Date.now()-new Date(adata[0].noted_at).getTime())/86400000);
+      lastSeen=lastSeenDays<=0?'Today':lastSeenDays===1?'Yesterday':lastSeenDays+' days ago';
       var dow=now.getDay(); var back=(dow===0?6:dow-1);
       var weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-back).getTime();
       var monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
@@ -4798,13 +4798,15 @@ async function buildProfileVitals(sid){
     (pr.data||[]).forEach(function(p){ hasPack=true; balance+=(p.sessions_remaining||0); });
   }catch(e){}
   try{
-    var smr=await sb.from('student_memberships').select('status,classes_remaining,rollover_balance,memberships(class_limit_type,rollover_enabled)').eq('student_id',sid);
+    var smr=await sb.from('student_memberships').select('status,classes_remaining,rollover_balance,expires_at,memberships(class_limit_type,rollover_enabled)').eq('student_id',sid);
     var smdata=smr.data||[];
     smdata.forEach(function(m){
       var clt=m.memberships?m.memberships.class_limit_type:null;
       var active=(m.status==='active'||m.status==='past_due');
-      if(clt==='class_pack'){ if(m.classes_remaining!=null){ hasPack=true; balance+=m.classes_remaining; } }
-      else if(active){
+      if(clt==='class_pack'){
+        if(m.classes_remaining!=null){ hasPack=true; balance+=m.classes_remaining; }
+        if(active&&m.expires_at){ var d=Math.ceil((new Date(m.expires_at).getTime()-Date.now())/86400000); if(d>=0&&(expiringDays===null||d<expiringDays)) expiringDays=d; }
+      } else if(active){
         isMember=true;
         if(m.rollover_balance!=null) rollover+=m.rollover_balance;
         if((m.memberships&&m.memberships.rollover_enabled)||m.rollover_balance) rolloverShow=true;
@@ -4825,6 +4827,23 @@ async function buildProfileVitals(sid){
   el.innerHTML=tiles.map(function(t){
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.7rem 0.85rem"><div style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+t.l+'</div><div style="font-size:1.15rem;color:'+t.c+';margin-top:0.2rem">'+t.v+'</div></div>';
   }).join('');
+  var alerts=[];
+  if(statusTxt==='Past due') alerts.push({t:'Payment past due', i:'fa-solid fa-circle-exclamation', sev:'d'});
+  if(lastSeenDays!==null&&lastSeenDays>14) alerts.push({t:'No visit in '+lastSeenDays+' days', i:'fa-solid fa-user-clock', sev:'w'});
+  if(hasPack&&balance===0) alerts.push({t:'No classes remaining', i:'fa-solid fa-ban', sev:'d'});
+  else if(hasPack&&balance<=2) alerts.push({t:'Low balance: '+balance+(balance===1?' class':' classes')+' left', i:'fa-solid fa-triangle-exclamation', sev:'w'});
+  if(expiringDays!==null&&expiringDays<=7) alerts.push({t:expiringDays<=0?'Pack expires today':'Pack expires in '+expiringDays+(expiringDays===1?' day':' days'), i:'fa-solid fa-clock', sev:'w'});
+  var ael=document.getElementById('profileAlerts');
+  if(ael){
+    if(!alerts.length){ ael.style.display='none'; ael.innerHTML=''; }
+    else{
+      ael.style.display='flex';
+      ael.innerHTML=alerts.map(function(a){
+        var col=a.sev==='d'?'#E07070':'#C9A84C', bg=a.sev==='d'?'rgba(224,112,112,0.12)':'rgba(201,168,76,0.12)';
+        return '<span style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.3rem 0.65rem;border-radius:3px;background:'+bg+';color:'+col+';border:1px solid '+col+'55"><i class="'+a.i+'"></i> '+a.t+'</span>';
+      }).join('');
+    }
+  }
 }
 
 async function replaceStudentCard(sid){
