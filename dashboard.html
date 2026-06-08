@@ -1668,7 +1668,7 @@
     </div>
     <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div><div id="profileAlerts" style="display:none;flex-wrap:wrap;gap:0.5rem;padding:0.75rem 1.5rem;border-bottom:1px solid var(--border)"></div>
       <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem">
-        <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div>
+        <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div><div id="profileFamilyTile" style="display:none"><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Family</div><div id="profileFamilyList"></div></div>
         <div>
   <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
   <div id="profileMembershipslist"></div>
@@ -4775,6 +4775,25 @@ async function loadProfileCardOnFile(sid){
   }
 }
 
+// §PROFILE-FAMILY
+async function buildProfileFamily(sid){
+  var tile=document.getElementById('profileFamilyTile'), el=document.getElementById('profileFamilyList');
+  if(!tile||!el) return;
+  var fam=currentProfileStudent?currentProfileStudent.family_id:null;
+  if(!fam){ tile.style.display='none'; return; }
+  try{
+    var r=await sb.from('students').select('id,first_name,last_name,status').eq('family_id',fam).neq('id',sid).is('deleted_at',null).order('first_name');
+    var data=r.data||[];
+    if(!data.length){ tile.style.display='none'; return; }
+    tile.style.display='block';
+    el.innerHTML=data.map(function(m){
+      var nm=(m.first_name||'')+' '+(m.last_name||'');
+      var sc=m.status==='active'?'#5A9A6A':'var(--muted)';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border)"><span style="font-size:0.85rem;color:#F5F0E8"><i class="fa-solid fa-user" style="color:'+sc+';margin-right:0.4rem;font-size:0.72rem"></i>'+nm+'</span><button class="btn-sm" style="font-size:0.62rem;padding:0.2rem 0.5rem" onclick="openStudentProfile(\''+m.id+'\')">View</button></div>';
+    }).join('');
+  }catch(e){ tile.style.display='none'; }
+}
+  
 // §PROFILE-VITALS
 async function buildProfileVitals(sid){
   var el=document.getElementById('profileVitals'); if(!el) return;
@@ -4893,7 +4912,8 @@ async function removeStudentCard(sid){
       return;
     }
     await loadProfileCardOnFile(sid);
-  await buildProfileVitals(sid);
+    await buildProfileVitals(sid);
+    await buildProfileFamily(sid);
   }catch(e){
     el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">Network error removing card.</div>' +
       '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
