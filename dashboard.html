@@ -5190,6 +5190,7 @@ async function openStudentProfile(sid) {
   await loadStudentSessions(sid);
   await loadProfilePacks(sid);
   await loadProfileCardOnFile(sid);
+  await buildProfileVitals(sid);
   document.getElementById('manualPayDate').value = localDateStr(new Date());
 }
 function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
