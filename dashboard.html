@@ -2811,6 +2811,7 @@ var AUTOMATION_TRIGGERS = [
   {key:'no_attendance_30', title:'No Attendance 30 Days',    desc:'Fires when a student has not attended in 30 days',       icon:'fa-person-walking-arrow-right'},
   {key:'birthday',         title:'Birthday',                 desc:'Fires on the student birthday',                          icon:'fa-cake-candles'},
   {key:'welcome',          title:'New Student Welcome',      desc:'Fires when a new student is added',                      icon:'fa-hands-clapping'},
+  {key:'kiosk_welcome', title:'Kiosk Sign-Up Welcome', desc:'Fires when someone signs up at the front-desk kiosk', icon:'fa-id-badge'},
   {key:'promotion',        title:'Belt Promotion',           desc:'Fires when a student is promoted',                       icon:'fa-ranking-star'},
   {key:'belt_test_invite', title:'Belt Test Invitation',     desc:'Fires when a student is invited to a belt test',         icon:'fa-trophy'},
   {key:'pack_low',         title:'Session Pack Low',         desc:'Fires when a student pack balance falls below threshold', icon:'fa-layer-group'}
@@ -7564,7 +7565,7 @@ function renderAutomations(){
   var el=document.getElementById('automationsList'); if(!el) return;
   el.innerHTML=AUTOMATION_TRIGGERS.map(function(t){
     var saved=automationSettings[t.key]||{}; var enabled=!!saved.enabled;
-    var ch=saved.channels||{email:true,sms:false};
+    var ch={email:(saved.email_enabled===undefined?true:!!saved.email_enabled),sms:!!saved.sms_enabled};
     return '<div class="automation-row" id="auto-row-'+t.key+'">'+
       '<div style="display:flex;align-items:flex-start;gap:1rem;flex:1">'+
         '<label class="toggle-switch" style="margin-top:0.2rem"><input type="checkbox" id="auto-enabled-'+t.key+'" '+(enabled?'checked':'')+' onchange="toggleAutomation(\''+t.key+'\')" /><div class="toggle-slider"></div></label>'+
