@@ -596,6 +596,8 @@
         <div class="quick-add-menu" id="quickAddMenu">
           <div class="quick-add-item" onclick="closeQuickAdd();openPOS()"><span class="quick-add-icon"><i class="fa-solid fa-store"></i></span> Retail / POS</div>
           <div class="quick-add-item" onclick="closeQuickAdd();openBookSession()"><span class="quick-add-icon"><i class="fa-solid fa-user-clock"></i></span> Book Session</div>
+          <div class="quick-add-item" onclick="closeQuickAdd();quickSellMembership()"><span class="quick-add-icon"><i class="fa-solid fa-id-card"></i></span> Add Membership</div>
+          <div class="quick-add-item" onclick="closeQuickAdd();quickSellClassPack()"><span class="quick-add-icon"><i class="fa-solid fa-layer-group"></i></span> Add Class Pack</div>
           <div class="quick-add-item" onclick="closeQuickAdd();openAddStudent()"><span class="quick-add-icon"><i class="fa-solid fa-user-plus"></i></span> Add Student</div>
           <div class="quick-add-item" onclick="closeQuickAdd();openAddLead()"><span class="quick-add-icon"><i class="fa-solid fa-user-tag"></i></span> Add Lead</div>
           <div class="quick-add-item" onclick="closeQuickAdd();openAddClass()"><span class="quick-add-icon"><i class="fa-solid fa-calendar-plus"></i></span> Add Class</div>
@@ -6739,6 +6741,101 @@ function checkoutCardError(errStr){
       ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>';
   }
   checkoutSetBusy(false);
+}
+
+  /* ============================================================
+   §CHECKOUT — BITE 4: dashboard quick-add -> student picker -> checkout
+   "Add Membership" / "Add Class Pack" pick a student first (the dashboard
+   has no student in context), then open the checkout locked to that category.
+   Reuses the whole engine; no new backend.
+   iPad-safe (var/single-quote/no-template/no-arrow).
+   ============================================================ */
+
+var _checkoutPickerCat = null;
+
+function quickSellMembership(){ checkoutPickStudent('membership'); }
+function quickSellClassPack(){ checkoutPickStudent('classpack'); }
+
+function ensureStudentPickerModal(){
+  if (document.getElementById('checkoutStudentPicker')) return;
+  var ov = document.createElement('div');
+  ov.id = 'checkoutStudentPicker';
+  ov.className = 'modal-overlay';
+  ov.innerHTML = [
+    '<div class="modal" style="width:480px;max-width:94vw;max-height:80vh;display:flex;flex-direction:column;padding:0">',
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--border)">',
+        '<div>',
+          '<div style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)">Select a student</div>',
+          '<div id="checkoutPickerSub" style="font-size:0.8rem;color:var(--muted);margin-top:0.15rem"></div>',
+        '</div>',
+        '<button class="btn-sm" onclick="closeStudentPicker()"><i class="fa-solid fa-xmark"></i></button>',
+      '</div>',
+      '<div style="padding:0.9rem 1.3rem 0.6rem">',
+        '<input type="text" id="checkoutPickerSearch" placeholder="Search students\u2026" oninput="checkoutFilterStudents()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.55rem 0.75rem;font-size:0.86rem" />',
+      '</div>',
+      '<div id="checkoutPickerList" style="overflow-y:auto;flex:1;padding:0 1.3rem 1rem"></div>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(ov);
+}
+
+function checkoutPickStudent(cat){
+  _checkoutPickerCat = cat;
+  ensureStudentPickerModal();
+  var subs = { membership: 'Selling a membership', classpack: 'Selling a class pack' };
+  document.getElementById('checkoutPickerSub').textContent = subs[cat] || 'Selling';
+  document.getElementById('checkoutPickerSearch').value = '';
+  renderStudentPickerList('');
+  document.getElementById('checkoutStudentPicker').classList.add('active');
+  setTimeout(function(){ var el = document.getElementById('checkoutPickerSearch'); if (el) el.focus(); }, 50);
+}
+
+function checkoutPickerStudents(){
+  var arr = (typeof allStudents !== 'undefined' && allStudents) ? allStudents : [];
+  var out = [];
+  for (var i=0;i<arr.length;i++){ if (!arr[i].deleted_at) out.push(arr[i]); }
+  out.sort(function(a,b){
+    var an = ((a.last_name || '') + ' ' + (a.first_name || '')).toLowerCase();
+    var bn = ((b.last_name || '') + ' ' + (b.first_name || '')).toLowerCase();
+    return an < bn ? -1 : (an > bn ? 1 : 0);
+  });
+  return out;
+}
+
+function renderStudentPickerList(filter){
+  var f = (filter || '').toLowerCase();
+  var students = checkoutPickerStudents();
+  var html = '';
+  var shown = 0;
+  for (var i=0;i<students.length;i++){
+    var s = students[i];
+    var name = ((s.first_name || '') + ' ' + (s.last_name || '')).trim();
+    if (f && name.toLowerCase().indexOf(f) === -1) continue;
+    shown++;
+    var statusTag = (s.status && s.status !== 'active')
+      ? '<span style="font-size:0.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">' + escapeCheckout(s.status) + '</span>'
+      : '';
+    html += '<div onclick="checkoutPickerChoose(\'' + s.id + '\')" style="cursor:pointer;padding:0.6rem 0.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between" onmouseover="this.style.background=\'var(--black)\'" onmouseout="this.style.background=\'transparent\'">' +
+      '<span style="font-size:0.88rem;color:var(--white)">' + escapeCheckout(name || 'Unnamed') + '</span>' + statusTag +
+    '</div>';
+  }
+  if (!shown) html = '<div style="color:var(--muted);font-size:0.82rem;padding:0.8rem 0">No students match.</div>';
+  document.getElementById('checkoutPickerList').innerHTML = html;
+}
+
+function checkoutFilterStudents(){
+  renderStudentPickerList(document.getElementById('checkoutPickerSearch').value);
+}
+
+function checkoutPickerChoose(sid){
+  var cat = _checkoutPickerCat;
+  closeStudentPicker();
+  openCheckout(sid, cat);
+}
+
+function closeStudentPicker(){
+  var m = document.getElementById('checkoutStudentPicker');
+  if (m) m.classList.remove('active');
 }
   
 function toggleStripeChargeForm() {
