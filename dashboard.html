@@ -6191,6 +6191,8 @@ function escapeCheckout(s){
    ============================================================ */
 
 /* ---- cart classification (cart is exclusive: cart[0].kind sets the class) ---- */
+var INTERVAL_MAP = { monthly: 'month', weekly: 'week', yearly: 'year' };
+
 function checkoutCartClass(){
   if (!_checkout || !_checkout.cart.length) return 'empty';
   var k = _checkout.cart[0].kind;
