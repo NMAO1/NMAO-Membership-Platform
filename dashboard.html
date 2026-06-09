@@ -1675,8 +1675,7 @@
 
   <!-- Primary actions: payment processing -->
   <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
-    <button class="panel-action gold" style="font-size:0.72rem" onclick="toggleStripeChargeForm()"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</button>
-    <button class="panel-action" style="font-size:0.72rem" onclick="toggleManualPaymentForm()"><i class="fa-solid fa-receipt"></i> Record Manual</button>
+    <button class="panel-action gold" style="font-size:0.72rem" onclick="openProfileCheckout()"><i class="fa-solid fa-cash-register"></i> New charge / sell</button>
   </div>
 
   <!-- Stripe charge form (moved from Financial tab) -->
@@ -5874,6 +5873,312 @@ async function runImport(){
   document.getElementById('importStep2').style.display='block';
 }
 // Stripe charge flow (J.4.4)
+  /* ============================================================
+   §CHECKOUT — unified "New charge / sell" engine
+   BITE 1: self-injecting modal shell + Step 1 (item picker + cart)
+   One engine, multiple entry points. iPad-safe (var/single-quote/no-template/no-arrow).
+   ============================================================ */
+
+var _checkout = null; /* active checkout state */
+
+/* ---- exclusivity: a membership or class pack is a single-item transaction
+   (one membership_id through stripe-create-checkout / the subscription EF),
+   so it can never share a cart with packs/retail/custom. ---- */
+function checkoutIsExclusive(kind){ return kind === 'membership' || kind === 'classpack'; }
+
+var CHECKOUT_CATS = ['membership','classpack','sessionpack','retail','custom'];
+var CHECKOUT_CAT_LABELS = {
+  membership:'Membership', classpack:'Class Pack', sessionpack:'Session Pack', retail:'Retail', custom:'Custom'
+};
+
+/* ---- inject the modal once (lazy; no load hook needed) ---- */
+function ensureCheckoutModal(){
+  if (document.getElementById('checkoutModal')) return;
+  var ov = document.createElement('div');
+  ov.id = 'checkoutModal';
+  ov.className = 'modal-overlay';
+  ov.innerHTML = [
+    '<div class="modal" style="width:760px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;padding:0">',
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)">',
+        '<div>',
+          '<div style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)">New charge / sell</div>',
+          '<div id="checkoutStudentName" style="font-size:1.05rem;color:var(--white);margin-top:0.15rem"></div>',
+        '</div>',
+        '<button class="btn-sm" onclick="closeCheckout()" style="font-size:0.9rem"><i class="fa-solid fa-xmark"></i></button>',
+      '</div>',
+      '<div id="checkoutSteps" style="display:flex;gap:0.5rem;align-items:center;padding:0.85rem 1.4rem;border-bottom:1px solid var(--border);font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase"></div>',
+      '<div id="checkoutBody" style="padding:1.2rem 1.4rem;overflow-y:auto;flex:1"></div>',
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.4rem;border-top:1px solid var(--border)">',
+        '<div id="checkoutTotal" style="font-size:0.95rem;color:var(--white)"></div>',
+        '<div style="display:flex;gap:0.5rem">',
+          '<button class="btn-sm" id="checkoutBackBtn" onclick="checkoutBack()" style="display:none">Back</button>',
+          '<button class="panel-action gold" id="checkoutNextBtn" onclick="checkoutNext()" style="font-size:0.78rem">Next</button>',
+        '</div>',
+      '</div>',
+      '<p class="form-msg" id="checkoutMsg" style="margin:0;padding:0 1.4rem 1rem"></p>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(ov);
+}
+
+/* ---- entry points ---- */
+function openProfileCheckout(){
+  if (!currentProfileStudent) return;
+  openCheckout(currentProfileStudent.id, null);
+}
+
+function openCheckout(studentId, lockCategory){
+  ensureCheckoutModal();
+  var student = null;
+  if (currentProfileStudent && currentProfileStudent.id === studentId){
+    student = currentProfileStudent;
+  } else if (typeof allStudents !== 'undefined' && allStudents){
+    for (var i=0;i<allStudents.length;i++){ if (allStudents[i].id === studentId){ student = allStudents[i]; break; } }
+  }
+  _checkout = {
+    studentId: studentId,
+    student: student,
+    cart: [],
+    lockCategory: lockCategory || null,
+    category: lockCategory || 'membership',
+    method: null,
+    step: 1
+  };
+  var nm = student ? (((student.first_name || '') + ' ' + (student.last_name || '')).trim()) : 'Select a student';
+  document.getElementById('checkoutStudentName').textContent = nm || 'Student';
+  renderCheckoutStep();
+  document.getElementById('checkoutModal').classList.add('active');
+}
+
+function closeCheckout(){
+  var m = document.getElementById('checkoutModal');
+  if (m) m.classList.remove('active');
+  _checkout = null;
+}
+
+/* ---- step framework ---- */
+function renderCheckoutStepIndicator(){
+  var labels = ['1 \u00b7 What', '2 \u00b7 Payment', '3 \u00b7 Review'];
+  var html = '';
+  for (var i=0;i<labels.length;i++){
+    var on = (_checkout.step === i + 1);
+    html += '<span style="color:' + (on ? 'var(--gold)' : 'var(--muted)') + '">' + labels[i] + '</span>';
+    if (i < labels.length - 1) html += '<span style="color:var(--border)">&rsaquo;</span>';
+  }
+  document.getElementById('checkoutSteps').innerHTML = html;
+}
+
+function renderCheckoutStep(){
+  renderCheckoutStepIndicator();
+  document.getElementById('checkoutBackBtn').style.display = (_checkout.step > 1) ? 'inline-flex' : 'none';
+  var next = document.getElementById('checkoutNextBtn');
+  if (_checkout.step === 1){
+    renderCheckoutStep1();
+    next.textContent = 'Next';
+    next.style.display = 'inline-flex';
+  } else if (_checkout.step === 2){
+    document.getElementById('checkoutBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Payment methods land in Bite 2.</div>';
+    next.textContent = 'Next';
+  } else {
+    document.getElementById('checkoutBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Review + complete land in Bite 3.</div>';
+    next.textContent = 'Complete';
+  }
+  renderCheckoutTotal();
+  setMsg('checkoutMsg','','');
+}
+
+function checkoutNext(){
+  if (_checkout.step === 1){
+    if (!_checkout.cart.length){ setMsg('checkoutMsg','Add at least one item to continue.','error'); return; }
+    _checkout.step = 2; renderCheckoutStep();
+  } else if (_checkout.step === 2){
+    _checkout.step = 3; renderCheckoutStep();
+  } else {
+    /* complete — Bite 3 */
+  }
+}
+function checkoutBack(){ if (_checkout.step > 1){ _checkout.step -= 1; renderCheckoutStep(); } }
+
+/* ---- Step 1: category -> item list -> cart ---- */
+function checkoutCatItems(cat){
+  var out = [];
+  var arrM = (typeof allMemberships !== 'undefined' && allMemberships) ? allMemberships : [];
+  var arrP = (typeof allSessionPacks !== 'undefined' && allSessionPacks) ? allSessionPacks : [];
+  var arrR = (typeof allProducts !== 'undefined' && allProducts) ? allProducts : [];
+  if (cat === 'membership'){
+    arrM.forEach(function(m){
+      if (m.active && m.class_limit_type !== 'class_pack'){
+        out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'membership', billing_type:m.billing_type });
+      }
+    });
+  } else if (cat === 'classpack'){
+    arrM.forEach(function(m){
+      if (m.active && m.class_limit_type === 'class_pack'){
+        out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'classpack' });
+      }
+    });
+  } else if (cat === 'sessionpack'){
+    arrP.forEach(function(p){
+      if (p.active && p.kind === 'session'){
+        out.push({ id:p.id, name:p.name, price:Number(p.price) || 0, kind:'sessionpack', sessions:p.quantity });
+      }
+    });
+  } else if (cat === 'retail'){
+    arrR.forEach(function(p){
+      if (p.active){ out.push({ id:p.id, name:p.name, price:Number(p.price) || 0, kind:'retail' }); }
+    });
+  }
+  return out;
+}
+
+function renderCheckoutStep1(){
+  var body = document.getElementById('checkoutBody');
+  var c = _checkout.category || 'membership';
+  var html = '';
+  /* category tabs (hidden/locked when entered from a quick-add) */
+  html += '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1.1rem">';
+  for (var i=0;i<CHECKOUT_CATS.length;i++){
+    var cat = CHECKOUT_CATS[i];
+    if (_checkout.lockCategory && cat !== _checkout.lockCategory) continue;
+    var on = (cat === c);
+    html += '<button class="btn-sm' + (on ? ' gold' : '') + '" style="font-size:0.72rem" onclick="checkoutSetCat(\'' + cat + '\')">' + CHECKOUT_CAT_LABELS[cat] + '</button>';
+  }
+  html += '</div>';
+  html += '<div id="checkoutItemArea">' + renderCheckoutItemArea(c) + '</div>';
+  html += '<div id="checkoutCart" style="margin-top:1.3rem;border-top:1px solid var(--border);padding-top:0.95rem">' + renderCheckoutCart() + '</div>';
+  body.innerHTML = html;
+}
+
+function checkoutSetCat(cat){
+  _checkout.category = cat;
+  renderCheckoutStep1();
+}
+
+function renderCheckoutItemArea(cat){
+  if (cat === 'custom'){
+    return '' +
+      '<div class="form-row">' +
+        '<div class="field"><label>Description</label><input type="text" id="checkoutCustomName" placeholder="e.g. Private lesson" /></div>' +
+        '<div class="field"><label>Amount</label><input type="number" id="checkoutCustomAmt" value="0" min="0" step="0.01" /></div>' +
+      '</div>' +
+      '<button class="btn-sm" style="font-size:0.72rem" onclick="checkoutAddCustom()"><i class="fa-solid fa-plus"></i> Add to cart</button>';
+  }
+  var items = checkoutCatItems(cat);
+  if (!items.length){
+    return '<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No active items in this category.</div>';
+  }
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0.6rem">';
+  items.forEach(function(it){
+    var sub = it.kind === 'sessionpack' && it.sessions ? (it.sessions + ' sessions') : '';
+    html += '' +
+      '<div onclick="checkoutAddItem(\'' + it.kind + '\',\'' + it.id + '\')" ' +
+        'style="cursor:pointer;border:1px solid var(--border);background:var(--black);padding:0.65rem 0.8rem;transition:border-color 0.15s" ' +
+        'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="font-size:0.84rem;color:var(--white)">' + escapeCheckout(it.name) + '</div>' +
+        '<div style="font-size:0.78rem;color:var(--gold);margin-top:0.2rem">$' + it.price.toFixed(2) + '</div>' +
+        (sub ? '<div style="font-size:0.66rem;color:var(--muted);margin-top:0.1rem">' + sub + '</div>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function checkoutAddItem(kind, id){
+  var items = checkoutCatItems(_checkout.category);
+  var found = null;
+  for (var i=0;i<items.length;i++){ if (items[i].id === id){ found = items[i]; break; } }
+  if (!found) return;
+  if (checkoutIsExclusive(kind)){
+    /* membership / class pack: single-item transaction */
+    _checkout.cart = [{ kind:kind, id:found.id, name:found.name, price:found.price, qty:1, sessions:found.sessions || null }];
+  } else {
+    /* packs / retail: additive, but clear any exclusive item first */
+    if (_checkout.cart.length && checkoutIsExclusive(_checkout.cart[0].kind)) _checkout.cart = [];
+    var existing = null;
+    for (var j=0;j<_checkout.cart.length;j++){ if (_checkout.cart[j].kind === kind && _checkout.cart[j].id === id){ existing = _checkout.cart[j]; break; } }
+    if (existing){ existing.qty += 1; }
+    else { _checkout.cart.push({ kind:kind, id:found.id, name:found.name, price:found.price, qty:1, sessions:found.sessions || null }); }
+  }
+  refreshCheckoutCart();
+}
+
+function checkoutAddCustom(){
+  var nameEl = document.getElementById('checkoutCustomName');
+  var amtEl = document.getElementById('checkoutCustomAmt');
+  var name = (nameEl.value || '').trim();
+  var amt = parseFloat(amtEl.value) || 0;
+  if (!name){ setMsg('checkoutMsg','Give the custom charge a description.','error'); return; }
+  if (amt <= 0){ setMsg('checkoutMsg','Custom amount must be greater than zero.','error'); return; }
+  if (_checkout.cart.length && checkoutIsExclusive(_checkout.cart[0].kind)) _checkout.cart = [];
+  _checkout.cart.push({ kind:'custom', id:null, name:name, price:amt, qty:1, sessions:null });
+  nameEl.value = ''; amtEl.value = '0';
+  setMsg('checkoutMsg','','');
+  refreshCheckoutCart();
+}
+
+function refreshCheckoutCart(){
+  var el = document.getElementById('checkoutCart');
+  if (el) el.innerHTML = renderCheckoutCart();
+  renderCheckoutTotal();
+}
+
+function renderCheckoutCart(){
+  var html = '<div style="font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">Cart</div>';
+  if (!_checkout.cart.length){
+    return html + '<div style="color:var(--muted);font-size:0.82rem">Nothing added yet.</div>';
+  }
+  _checkout.cart.forEach(function(line, idx){
+    var qtyControl = '';
+    if (!checkoutIsExclusive(line.kind)){
+      qtyControl = '' +
+        '<button class="btn-sm" style="padding:0.1rem 0.5rem" onclick="checkoutQty(' + idx + ',-1)">\u2212</button>' +
+        '<span style="min-width:1.5rem;text-align:center;display:inline-block">' + line.qty + '</span>' +
+        '<button class="btn-sm" style="padding:0.1rem 0.5rem" onclick="checkoutQty(' + idx + ',1)">+</button>';
+    }
+    html += '' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid var(--border)">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:0.84rem;color:var(--white)">' + escapeCheckout(line.name) + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--muted)">$' + line.price.toFixed(2) + (checkoutIsExclusive(line.kind) ? '' : ' each') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:0.4rem">' + qtyControl + '</div>' +
+        '<div style="min-width:4.5rem;text-align:right;font-size:0.84rem;color:var(--gold)">$' + (line.price * line.qty).toFixed(2) + '</div>' +
+        '<button class="btn-sm" style="color:#E07070;padding:0.1rem 0.5rem" onclick="checkoutRemove(' + idx + ')"><i class="fa-solid fa-xmark"></i></button>' +
+      '</div>';
+  });
+  return html;
+}
+
+function checkoutQty(idx, delta){
+  var line = _checkout.cart[idx];
+  if (!line) return;
+  line.qty += delta;
+  if (line.qty < 1) _checkout.cart.splice(idx, 1);
+  refreshCheckoutCart();
+}
+function checkoutRemove(idx){
+  _checkout.cart.splice(idx, 1);
+  refreshCheckoutCart();
+}
+
+function checkoutCartTotal(){
+  var t = 0;
+  for (var i=0;i<_checkout.cart.length;i++){ t += _checkout.cart[i].price * _checkout.cart[i].qty; }
+  return t;
+}
+function renderCheckoutTotal(){
+  var el = document.getElementById('checkoutTotal');
+  if (!el) return;
+  var t = (_checkout && _checkout.cart) ? checkoutCartTotal() : 0;
+  el.innerHTML = 'Total <span style="color:var(--gold);margin-left:0.3rem">$' + t.toFixed(2) + '</span>';
+}
+
+/* small HTML escaper so item names cannot break the markup */
+function escapeCheckout(s){
+  s = String(s == null ? '' : s);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+  
 function toggleStripeChargeForm() {
   var f = document.getElementById('stripeChargeForm');
   var openNow = f.style.display === 'none';
