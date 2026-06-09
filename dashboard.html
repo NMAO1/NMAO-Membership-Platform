@@ -6363,6 +6363,7 @@ function checkoutComplete(){
   if (!_checkout.method){ setMsg('checkoutMsg', 'Pick a payment method first.', 'error'); return; }
   if (_checkout.method === 'cash'){ checkoutCompleteCash(); return; }
   if (_checkout.method === 'link'){ checkoutCompleteLink(); return; }
+  if (_checkout.method === 'card_on_file'){ checkoutCompleteCard(); return; }
   setMsg('checkoutMsg', 'This payment method is wired in the next bite.', 'error');
 }
 
@@ -6674,6 +6675,70 @@ async function checkoutLinkSms(){
       setMsg('checkoutLinkMsg', 'Text failed: ' + (err.error || 'unknown error'), 'error');
     }
   } catch (e){ setMsg('checkoutLinkMsg', 'Text error: ' + e.message, 'error'); }
+}
+
+/* ============================================================
+   §CHECKOUT — BITE 3c: Card on file (real charges)
+   recurring membership -> create-membership-subscription (off-session sub)
+   session pack / retail / custom -> create-pos-charge (off-session PI)
+   Both EFs do their own inline fulfillment; we just refresh + report.
+   Failures (NO_SAVED_CARD / 3DS / decline) offer a one-click link fallback.
+   Card-on-file is gated off for class packs / one-time memberships in Step 2,
+   so this is only reachable for 'membership' (recurring) or 'pos' carts.
+   iPad-safe (var/single-quote/no-template/no-arrow). async/await OK.
+   ============================================================ */
+
+async function checkoutCompleteCard(){
+  setMsg('checkoutMsg', 'Charging card on file\u2026', '');
+  checkoutSetBusy(true);
+  try {
+    var cls = checkoutCartClass();
+    var endpoint, payload;
+    if (cls === 'membership'){
+      endpoint = 'create-membership-subscription';
+      payload = { school_id: SID, student_id: _checkout.studentId, membership_id: _checkout.cart[0].id };
+    } else if (cls === 'pos'){
+      endpoint = 'create-pos-charge';
+      payload = { school_id: SID, student_id: _checkout.studentId, line_items: checkoutPosLineItems() };
+    } else {
+      /* defensive: card-on-file should never be selectable for classpack/empty */
+      checkoutCardError('Card on file is not available for this item \u2014 use Send Link or Cash.');
+      return;
+    }
+    var r = await fetch(SURL + '/functions/v1/' + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify(payload)
+    });
+    var data = await r.json();
+    if (!r.ok || !data || data.error){
+      checkoutCardError((data && data.error) ? data.error : 'The charge did not go through.');
+      return;
+    }
+    checkoutRefreshAfterSale();
+    var brandLine = (data.brand && data.last4) ? (String(data.brand).toUpperCase() + ' \u2022\u2022\u2022\u2022' + data.last4) : 'card on file';
+    checkoutShowSuccess('Charged ' + brandLine + '.');
+  } catch (e){
+    checkoutCardError((e && e.message) ? e.message : 'Network error.');
+  }
+}
+
+/* friendly error + one-click fallback to a payment link */
+function checkoutCardError(errStr){
+  errStr = String(errStr || '');
+  var isNoCard = errStr.indexOf('NO_SAVED_CARD') === 0;
+  var isAuth = errStr.indexOf('AUTHENTICATION_REQUIRED') === 0;
+  var friendly;
+  if (isNoCard) friendly = 'No saved card on file.';
+  else if (isAuth) friendly = 'Card needs verification (3D Secure) and can\u2019t be charged on its own.';
+  else friendly = errStr.replace(/^[A-Z_]+:\s*/, ''); /* strip a leading CODE: prefix */
+  var msgEl = document.getElementById('checkoutMsg');
+  if (msgEl){
+    msgEl.className = 'form-msg error';
+    msgEl.innerHTML = escapeCheckout(friendly) +
+      ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>';
+  }
+  checkoutSetBusy(false);
 }
   
 function toggleStripeChargeForm() {
