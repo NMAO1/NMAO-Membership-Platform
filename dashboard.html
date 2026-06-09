@@ -6218,8 +6218,8 @@ function checkoutMembershipIsRecurring(){
 function checkoutCardAllowed(){
   var cls = checkoutCartClass();
   if (cls === 'pos') return true;
-  if (cls === 'membership') return checkoutMembershipIsRecurring();
-  return false; /* classpack, empty, or one-time membership */
+  if (cls === 'membership') return true;
+  if (cls === 'classpack') return true;   return false;
 }
 
 /* ---- Step 2 render ---- */
@@ -6697,7 +6697,7 @@ async function checkoutCompleteCard(){
   try {
     var cls = checkoutCartClass();
     var endpoint, payload;
-    if (cls === 'membership'){
+    if (cls === 'membership' || cls === 'classpack'){
       endpoint = 'create-membership-subscription';
       payload = { school_id: SID, student_id: _checkout.studentId, membership_id: _checkout.cart[0].id };
     } else if (cls === 'pos'){
