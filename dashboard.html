@@ -5972,12 +5972,14 @@ function renderCheckoutStep(){
   renderCheckoutStepIndicator();
   document.getElementById('checkoutBackBtn').style.display = (_checkout.step > 1) ? 'inline-flex' : 'none';
   var next = document.getElementById('checkoutNextBtn');
+  next.disabled = false;
+  next.style.opacity = '1';
   if (_checkout.step === 1){
     renderCheckoutStep1();
     next.textContent = 'Next';
     next.style.display = 'inline-flex';
   } else if (_checkout.step === 2){
-    document.getElementById('checkoutBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Payment methods land in Bite 2.</div>';
+    renderCheckoutStep2();
     next.textContent = 'Next';
   } else {
     document.getElementById('checkoutBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Review + complete land in Bite 3.</div>';
@@ -6178,7 +6180,140 @@ function escapeCheckout(s){
   s = String(s == null ? '' : s);
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-  
+
+/* ============================================================
+   §CHECKOUT — BITE 2: Step 2 (payment method, adaptive)
+   Methods shown depend on cart class + saved-card status:
+     - card_on_file : recurring membership / session pack / retail / custom, AND a card exists
+     - link         : always
+     - cash         : always
+   iPad-safe (var/single-quote/no-template/no-arrow).
+   ============================================================ */
+
+/* ---- cart classification (cart is exclusive: cart[0].kind sets the class) ---- */
+function checkoutCartClass(){
+  if (!_checkout || !_checkout.cart.length) return 'empty';
+  var k = _checkout.cart[0].kind;
+  if (k === 'membership') return 'membership';
+  if (k === 'classpack') return 'classpack';
+  return 'pos'; /* sessionpack / retail / custom */
+}
+
+function checkoutMembershipIsRecurring(){
+  var line = _checkout.cart[0];
+  if (!line || line.kind !== 'membership') return false;
+  var arrM = (typeof allMemberships !== 'undefined' && allMemberships) ? allMemberships : [];
+  for (var i=0;i<arrM.length;i++){
+    if (arrM[i].id === line.id) return !!INTERVAL_MAP[arrM[i].billing_type];
+  }
+  return false;
+}
+
+/* card-on-file is valid for pos carts and recurring memberships only (off-session paths we have) */
+function checkoutCardAllowed(){
+  var cls = checkoutCartClass();
+  if (cls === 'pos') return true;
+  if (cls === 'membership') return checkoutMembershipIsRecurring();
+  return false; /* classpack, empty, or one-time membership */
+}
+
+/* ---- Step 2 render ---- */
+function renderCheckoutStep2(){
+  /* drop a now-invalid card selection if the cart changed since it was picked */
+  if (_checkout.method === 'card_on_file' && !checkoutCardAllowed()) _checkout.method = null;
+  var next = document.getElementById('checkoutNextBtn');
+  next.textContent = 'Next';
+  next.disabled = !_checkout.method;
+  next.style.opacity = next.disabled ? '0.5' : '1';
+  var body = document.getElementById('checkoutBody');
+  body.innerHTML =
+    '<div style="font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem">How is this being paid?</div>' +
+    '<div id="checkoutMethodList" style="display:grid;gap:0.7rem">' + renderCheckoutMethodTiles() + '</div>';
+  if (checkoutCardAllowed() && !_checkout.cardLoaded) checkoutLoadCard();
+}
+
+function renderCheckoutMethodTiles(){
+  var html = '';
+  html += checkoutRenderCardTile();
+  html += checkoutMethodTile('link', 'Send payment link', 'fa-solid fa-link', 'Copy, email, text, or show a QR. They pay securely on Stripe.', _checkout.method === 'link');
+  html += checkoutMethodTile('cash', 'Cash / manual', 'fa-solid fa-money-bill-wave', 'Record a cash, check, or manual card payment. No processing fee.', _checkout.method === 'cash');
+  return html;
+}
+
+function checkoutRenderCardTile(){
+  if (!checkoutCardAllowed()){
+    var cls = checkoutCartClass();
+    var why = (cls === 'classpack') ? 'class packs' : 'one-time memberships';
+    return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'Not available for ' + why + ' yet \u2014 use Send Link or Cash.');
+  }
+  if (!_checkout.cardLoaded){
+    return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'Checking for a saved card\u2026');
+  }
+  var card = _checkout.card;
+  if (!card || !card.has_card){
+    return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'No card on file. Use Send Link to collect one, or Cash.');
+  }
+  var brand = (card.brand || 'card').toUpperCase();
+  var last4 = card.last4 || '????';
+  var exp = (card.exp_month && card.exp_year) ? (' \u00b7 Exp ' + String(card.exp_month).padStart(2,'0') + '/' + String(card.exp_year).slice(-2)) : '';
+  var desc = brand + ' \u2022\u2022\u2022\u2022' + last4 + exp + ' \u2014 charges immediately.';
+  return checkoutMethodTile('card_on_file', 'Card on file', 'fa-solid fa-credit-card', desc, _checkout.method === 'card_on_file');
+}
+
+function checkoutMethodTile(method, title, icon, desc, selected){
+  var border = selected ? 'var(--gold)' : 'var(--border)';
+  var check = selected ? ' <i class="fa-solid fa-check" style="color:var(--gold);margin-left:0.3rem"></i>' : '';
+  return '' +
+    '<div onclick="checkoutSelectMethod(\'' + method + '\')" style="cursor:pointer;border:1px solid ' + border + ';background:var(--black);padding:0.9rem 1.05rem;display:flex;align-items:center;gap:0.85rem">' +
+      '<i class="' + icon + '" style="color:var(--gold);font-size:1.1rem;width:1.4rem;text-align:center"></i>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:0.9rem;color:var(--white)">' + title + check + '</div>' +
+        '<div style="font-size:0.74rem;color:var(--muted);margin-top:0.15rem">' + desc + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function checkoutMethodTileDisabled(title, icon, reason){
+  return '' +
+    '<div style="border:1px solid var(--border);background:var(--black);padding:0.9rem 1.05rem;display:flex;align-items:center;gap:0.85rem;opacity:0.5">' +
+      '<i class="' + icon + '" style="color:var(--muted);font-size:1.1rem;width:1.4rem;text-align:center"></i>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:0.9rem;color:var(--muted)">' + title + '</div>' +
+        '<div style="font-size:0.74rem;color:var(--muted);margin-top:0.15rem">' + reason + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function checkoutSelectMethod(method){
+  _checkout.method = method;
+  var list = document.getElementById('checkoutMethodList');
+  if (list) list.innerHTML = renderCheckoutMethodTiles();
+  var next = document.getElementById('checkoutNextBtn');
+  next.disabled = false;
+  next.style.opacity = '1';
+}
+
+/* ---- saved-card lookup (same EF the profile Card-on-File tile uses) ---- */
+function checkoutLoadCard(){
+  _checkout.cardLoaded = false;
+  var sid = _checkout.studentId;
+  fetch(SURL + '/functions/v1/get-student-card', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+    body: JSON.stringify({ school_id: SID, student_id: sid })
+  }).then(function(r){ return r.json(); }).then(function(data){
+    _checkout.cardLoaded = true;
+    _checkout.card = (data && !data.error) ? data : { has_card: false };
+    var list = document.getElementById('checkoutMethodList');
+    if (list && _checkout.step === 2) list.innerHTML = renderCheckoutMethodTiles();
+  }).catch(function(){
+    _checkout.cardLoaded = true;
+    _checkout.card = { has_card: false };
+    var list = document.getElementById('checkoutMethodList');
+    if (list && _checkout.step === 2) list.innerHTML = renderCheckoutMethodTiles();
+  });
+}
+
 function toggleStripeChargeForm() {
   var f = document.getElementById('stripeChargeForm');
   var openNow = f.style.display === 'none';
