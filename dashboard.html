@@ -5982,7 +5982,7 @@ function renderCheckoutStep(){
     renderCheckoutStep2();
     next.textContent = 'Next';
   } else {
-    document.getElementById('checkoutBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Review + complete land in Bite 3.</div>';
+    renderCheckoutStep3();
     next.textContent = 'Complete';
   }
   renderCheckoutTotal();
@@ -5996,7 +5996,7 @@ function checkoutNext(){
   } else if (_checkout.step === 2){
     _checkout.step = 3; renderCheckoutStep();
   } else {
-    /* complete — Bite 3 */
+    checkoutComplete();
   }
 }
 function checkoutBack(){ if (_checkout.step > 1){ _checkout.step -= 1; renderCheckoutStep(); } }
@@ -6316,6 +6316,199 @@ function checkoutLoadCard(){
   });
 }
 
+  /* ============================================================
+   §CHECKOUT — BITE 3a: Step 3 (review) + cash/manual completes
+   Cash moves no money: it records payments and activates entitlements
+   client-side, mirroring saveManualPayment (membership) and
+   checkoutPOS_cash (packs/retail). card_on_file + link land in 3b/3c.
+   iPad-safe (var/single-quote/no-template/no-arrow). async/await OK (used elsewhere).
+   ============================================================ */
+
+var CHECKOUT_METHOD_LABELS = { card_on_file: 'Card on file', link: 'Payment link', cash: 'Cash / manual' };
+
+/* ---- Step 3 render: review summary ---- */
+function renderCheckoutStep3(){
+  var body = document.getElementById('checkoutBody');
+  var html = '<div style="font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem">Review</div>';
+  html += '<div style="border:1px solid var(--border);background:var(--black);padding:0.3rem 0.95rem">';
+  for (var i=0;i<_checkout.cart.length;i++){
+    var c = _checkout.cart[i];
+    var qtyTag = (c.qty > 1) ? ' <span style="color:var(--muted)">\u00d7' + c.qty + '</span>' : '';
+    html += '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.45rem 0;border-bottom:1px solid var(--border)">' +
+      '<div style="font-size:0.84rem;color:var(--white)">' + escapeCheckout(c.name) + qtyTag + '</div>' +
+      '<div style="font-size:0.84rem;color:var(--gold)">$' + (c.price * c.qty).toFixed(2) + '</div>' +
+    '</div>';
+  }
+  html += '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.6rem 0">' +
+    '<div style="font-size:0.86rem;color:var(--white)">Total</div>' +
+    '<div style="font-size:0.98rem;color:var(--gold)">$' + checkoutCartTotal().toFixed(2) + '</div>' +
+  '</div>';
+  html += '</div>';
+  html += '<div style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">Paying with ' +
+    '<span style="color:var(--white)">' + (CHECKOUT_METHOD_LABELS[_checkout.method] || '\u2014') + '</span> \u00b7 ' +
+    escapeCheckout(checkoutStudentLabel()) + '</div>';
+  body.innerHTML = html;
+}
+
+function checkoutStudentLabel(){
+  var s = _checkout.student;
+  if (!s) return 'Student';
+  var n = ((s.first_name || '') + ' ' + (s.last_name || '')).trim();
+  return n || 'Student';
+}
+
+/* ---- Complete dispatcher (3a wires cash only) ---- */
+function checkoutComplete(){
+  if (!_checkout || !_checkout.cart.length) return;
+  if (!_checkout.method){ setMsg('checkoutMsg', 'Pick a payment method first.', 'error'); return; }
+  if (_checkout.method === 'cash'){ checkoutCompleteCash(); return; }
+  setMsg('checkoutMsg', 'This payment method is wired in the next bite.', 'error');
+}
+
+function checkoutSetBusy(b){
+  var next = document.getElementById('checkoutNextBtn');
+  var back = document.getElementById('checkoutBackBtn');
+  if (next){ next.disabled = b; next.style.opacity = b ? '0.5' : '1'; }
+  if (back) back.disabled = b;
+}
+
+async function checkoutCompleteCash(){
+  setMsg('checkoutMsg', 'Recording\u2026', '');
+  checkoutSetBusy(true);
+  try {
+    var cls = checkoutCartClass();
+    if (cls === 'membership' || cls === 'classpack'){
+      await checkoutCashMembership();
+    } else {
+      await checkoutCashPos();
+    }
+    checkoutRefreshAfterSale();
+    checkoutShowSuccess('Payment recorded.');
+  } catch (e){
+    setMsg('checkoutMsg', (e && e.message) ? e.message : 'Something went wrong recording the payment.', 'error');
+    checkoutSetBusy(false);
+  }
+}
+
+/* membership / class pack cash — mirrors saveManualPayment's membership branch */
+async function checkoutCashMembership(){
+  var line = _checkout.cart[0];
+  var sid = _checkout.studentId;
+  var nowIso = new Date().toISOString();
+  var today = nowIso.split('T')[0];
+
+  var pr = await sb.from('payments').insert({
+    school_id: SID,
+    student_id: sid,
+    amount: line.price,
+    type: 'membership',
+    status: 'paid',
+    description: 'Cash - ' + line.name,
+    created_at: nowIso,
+    paid_at: nowIso
+  });
+  if (pr.error) throw new Error(pr.error.message);
+
+  var programId = null;
+  var mpR = await sb.from('membership_programs').select('program_id').eq('membership_id', line.id).limit(1);
+  if (mpR.data && mpR.data.length) programId = mpR.data[0].program_id;
+
+  await sb.from('students').update({ status: 'active', membership_id: line.id }).eq('id', sid);
+
+  await sb.from('student_memberships').upsert({
+    school_id: SID,
+    student_id: sid,
+    membership_id: line.id,
+    program_id: programId,
+    status: 'active',
+    started_at: nowIso,
+    start_date: today
+  });
+}
+
+/* session pack / retail / custom cash — mirrors checkoutPOS_cash
+   (payments per line + session-pack credit; no inventory decrement, matching POS cash) */
+async function checkoutCashPos(){
+  var sid = _checkout.studentId;
+  var nowIso = new Date().toISOString();
+
+  var inserts = [];
+  for (var i=0;i<_checkout.cart.length;i++){
+    var c = _checkout.cart[i];
+    inserts.push({
+      school_id: SID,
+      student_id: sid,
+      amount: c.price * c.qty,
+      status: 'paid',
+      type: (c.kind === 'sessionpack') ? 'session_pack' : 'retail_sale',
+      description: 'Cash - ' + c.name + (c.qty > 1 ? ' x' + c.qty : ''),
+      created_at: nowIso,
+      paid_at: nowIso
+    });
+  }
+  var pr = await sb.from('payments').insert(inserts);
+  if (pr.error) throw new Error(pr.error.message);
+
+  for (var j=0;j<_checkout.cart.length;j++){
+    var item = _checkout.cart[j];
+    if (item.kind !== 'sessionpack') continue;
+    var pkR = await sb.from('session_packs').select('quantity, expiry_days, name, session_type_id, kind').eq('id', item.id).single();
+    var pack = pkR.data;
+    if (!pack) continue;
+    if (pack.kind === 'class') continue; /* class packs are memberships, never credited here */
+    var expiresAt = null;
+    if (pack.expiry_days){
+      var exp = new Date();
+      exp.setDate(exp.getDate() + pack.expiry_days);
+      expiresAt = localDateStr(exp) + 'T00:00:00';
+    }
+    var qty = item.qty || 1;
+    for (var q=0;q<qty;q++){
+      await sb.from('student_session_packs').insert({
+        school_id: SID,
+        student_id: sid,
+        session_pack_id: item.id,
+        session_type_id: pack.session_type_id || null,
+        name: pack.name,
+        sessions_remaining: pack.quantity,
+        sessions_total: pack.quantity,
+        expires_at: expiresAt,
+        pack_kind: pack.kind,
+        status: 'active'
+      });
+    }
+  }
+}
+
+/* ---- refresh the open profile + dashboard totals after a sale ---- */
+function checkoutRefreshAfterSale(){
+  var sid = _checkout.studentId;
+  var onProfile = (typeof currentProfileStudent !== 'undefined' && currentProfileStudent && currentProfileStudent.id === sid);
+  if (onProfile){
+    if (typeof loadProfileMemberships === 'function') loadProfileMemberships(sid);
+    if (typeof loadProfilePacks === 'function') loadProfilePacks(sid);
+    if (typeof loadProfilePaymentHistory === 'function') loadProfilePaymentHistory(sid);
+    if (typeof buildProfileVitals === 'function') buildProfileVitals(sid);
+  }
+  if (typeof loadStudents === 'function') loadStudents();
+  if (typeof loadRevenue === 'function') loadRevenue();
+}
+
+/* ---- success screen ---- */
+function checkoutShowSuccess(msg){
+  var body = document.getElementById('checkoutBody');
+  body.innerHTML = '<div style="text-align:center;padding:1.6rem 0">' +
+    '<i class="fa-solid fa-circle-check" style="color:var(--gold);font-size:2.4rem"></i>' +
+    '<div style="font-size:1.05rem;color:var(--white);margin-top:0.8rem">' + (msg || 'Done.') + '</div>' +
+    '<div style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem">' + escapeCheckout(checkoutStudentLabel()) + ' \u00b7 $' + checkoutCartTotal().toFixed(2) + '</div>' +
+    '<button class="panel-action gold" style="margin-top:1.3rem;font-size:0.78rem" onclick="closeCheckout()">Done</button>' +
+  '</div>';
+  var next = document.getElementById('checkoutNextBtn'); if (next) next.style.display = 'none';
+  var back = document.getElementById('checkoutBackBtn'); if (back) back.style.display = 'none';
+  var total = document.getElementById('checkoutTotal'); if (total) total.textContent = '';
+  setMsg('checkoutMsg', '', '');
+}
+  
 function toggleStripeChargeForm() {
   var f = document.getElementById('stripeChargeForm');
   var openNow = f.style.display === 'none';
