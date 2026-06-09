@@ -6362,6 +6362,7 @@ function checkoutComplete(){
   if (!_checkout || !_checkout.cart.length) return;
   if (!_checkout.method){ setMsg('checkoutMsg', 'Pick a payment method first.', 'error'); return; }
   if (_checkout.method === 'cash'){ checkoutCompleteCash(); return; }
+  if (_checkout.method === 'link'){ checkoutCompleteLink(); return; }
   setMsg('checkoutMsg', 'This payment method is wired in the next bite.', 'error');
 }
 
@@ -6507,6 +6508,172 @@ function checkoutShowSuccess(msg){
   var back = document.getElementById('checkoutBackBtn'); if (back) back.style.display = 'none';
   var total = document.getElementById('checkoutTotal'); if (total) total.textContent = '';
   setMsg('checkoutMsg', '', '');
+}
+
+  /* ============================================================
+   §CHECKOUT — BITE 3b: Send link (generate + deliver)
+   membership / class pack -> stripe-create-checkout
+   session pack / retail / custom -> create-pos-checkout
+   then deliver via copy / email / text / QR. Nothing charges until paid.
+   iPad-safe (var/single-quote/no-template/no-arrow). async/await OK.
+   ============================================================ */
+
+/* map the checkout cart to the create-pos-checkout line_items shape */
+function checkoutPosLineItems(){
+  var out = [];
+  for (var i=0;i<_checkout.cart.length;i++){
+    var c = _checkout.cart[i];
+    var itype = (c.kind === 'sessionpack') ? 'session_pack' : (c.kind === 'retail' ? 'product' : 'custom');
+    out.push({
+      name: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
+      unit_amount: Math.round(c.price * 100),
+      quantity: c.qty,
+      product_id: c.id || null,
+      item_type: itype
+    });
+  }
+  return out;
+}
+
+async function checkoutCompleteLink(){
+  setMsg('checkoutMsg', 'Generating payment link\u2026', '');
+  checkoutSetBusy(true);
+  try {
+    var cls = checkoutCartClass();
+    var url = null;
+    if (cls === 'membership' || cls === 'classpack'){
+      var r = await fetch(SURL + '/functions/v1/stripe-create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+        body: JSON.stringify({
+          school_id: SID,
+          student_id: _checkout.studentId,
+          membership_id: _checkout.cart[0].id,
+          success_url: window.location.origin + window.location.pathname + '?payment=success',
+          cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
+        })
+      });
+      var data = await r.json();
+      if (!r.ok || data.error || !data.url) throw new Error(data.error || 'Could not create the payment link.');
+      url = data.url;
+    } else {
+      var r2 = await fetch(SURL + '/functions/v1/create-pos-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+        body: JSON.stringify({
+          school_id: SID,
+          student_id: _checkout.studentId,
+          line_items: checkoutPosLineItems(),
+          success_url: window.location.origin + window.location.pathname + '?pos_success=1',
+          cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1'
+        })
+      });
+      var data2 = await r2.json();
+      if (!r2.ok || data2.error || !data2.url) throw new Error(data2.error || 'Could not create the payment link.');
+      url = data2.url;
+    }
+    _checkout.linkUrl = url;
+    renderCheckoutLinkDelivery();
+  } catch (e){
+    setMsg('checkoutMsg', (e && e.message) ? e.message : 'Could not create the payment link.', 'error');
+    checkoutSetBusy(false);
+  }
+}
+
+function renderCheckoutLinkDelivery(){
+  var url = _checkout.linkUrl;
+  var s = _checkout.student;
+  var hasEmail = !!(s && s.email);
+  var hasPhone = !!(s && s.phone);
+  var body = document.getElementById('checkoutBody');
+  var html = '<div style="font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem">Payment link ready</div>';
+  html += '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.8rem">$' + checkoutCartTotal().toFixed(2) + ' \u00b7 ' + escapeCheckout(checkoutStudentLabel()) + ' \u2014 share it however works.</div>';
+  html += '<input type="text" readonly value="' + escapeCheckout(url) + '" onclick="this.select()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.5rem 0.7rem;font-size:0.72rem;margin-bottom:0.7rem" />';
+  html += '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.1rem">';
+  html += '<button class="btn-sm" onclick="checkoutLinkCopy()"><i class="fa-solid fa-copy"></i> Copy</button>';
+  html += '<button class="btn-sm"' + (hasEmail ? '' : ' disabled style="opacity:0.5"') + ' onclick="checkoutLinkEmail()"><i class="fa-solid fa-envelope"></i> Email</button>';
+  html += '<button class="btn-sm"' + (hasPhone ? '' : ' disabled style="opacity:0.5"') + ' onclick="checkoutLinkSms()"><i class="fa-solid fa-message"></i> Text</button>';
+  html += '</div>';
+  html += '<div style="text-align:center;margin-bottom:0.4rem"><img alt="QR code" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(url) + '" style="background:#fff;padding:8px;border-radius:4px" /></div>';
+  html += '<p class="form-msg" id="checkoutLinkMsg" style="text-align:center"></p>';
+  html += '<div style="text-align:center;margin-top:0.6rem"><button class="panel-action gold" style="font-size:0.78rem" onclick="closeCheckout()">Done</button></div>';
+  body.innerHTML = html;
+  var next = document.getElementById('checkoutNextBtn'); if (next) next.style.display = 'none';
+  var back = document.getElementById('checkoutBackBtn'); if (back) back.style.display = 'none';
+  var total = document.getElementById('checkoutTotal'); if (total) total.textContent = '';
+  setMsg('checkoutMsg', '', '');
+}
+
+function checkoutLinkCopy(){
+  if (!_checkout.linkUrl) return;
+  navigator.clipboard.writeText(_checkout.linkUrl).then(function(){
+    setMsg('checkoutLinkMsg', 'Copied to clipboard.', 'success');
+  }).catch(function(){
+    setMsg('checkoutLinkMsg', 'Copy failed \u2014 select the link and copy manually.', 'error');
+  });
+}
+
+async function checkoutLinkEmail(){
+  var s = _checkout.student;
+  if (!s || !s.email){ setMsg('checkoutLinkMsg', 'No email on file.', 'error'); return; }
+  var url = _checkout.linkUrl;
+  setMsg('checkoutLinkMsg', 'Sending email\u2026', '');
+  var name = s.first_name || 'there';
+  var subject = 'Your payment link';
+  var bodyHtml = '<p>Hi ' + name + ',</p>' +
+    '<p>Here is your secure payment link:</p>' +
+    '<p><a href="' + url + '">Complete your payment</a></p>' +
+    '<p>Or paste this into your browser:<br>' + url + '</p>';
+  try {
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({
+        school_id: SID, type: 'email', subject: subject, body: bodyHtml,
+        recipients: [{ id: s.id, email: s.email, name: checkoutStudentLabel(), phone: s.phone || null }],
+        reply_to: (typeof ownerEmail !== 'undefined' ? ownerEmail : null) || null
+      })
+    });
+    if (r.ok){
+      setMsg('checkoutLinkMsg', 'Email sent to ' + s.email, 'success');
+      await sb.from('communications').insert({
+        school_id: SID, type: 'announcement', channel: 'email', subject: subject, body: bodyHtml,
+        audience: 'selected', status: 'sent', sent_at: new Date().toISOString(), recipient_count: 1
+      });
+    } else {
+      var err = await r.json();
+      setMsg('checkoutLinkMsg', 'Email failed: ' + (err.error || 'unknown error'), 'error');
+    }
+  } catch (e){ setMsg('checkoutLinkMsg', 'Email error: ' + e.message, 'error'); }
+}
+
+async function checkoutLinkSms(){
+  var s = _checkout.student;
+  if (!s || !s.phone){ setMsg('checkoutLinkMsg', 'No phone number on file.', 'error'); return; }
+  var url = _checkout.linkUrl;
+  setMsg('checkoutLinkMsg', 'Sending text\u2026', '');
+  var firstName = s.first_name || 'there';
+  var smsBody = 'Hi ' + firstName + ', here is your payment link: ' + url;
+  try {
+    var r = await fetch(SURL + '/functions/v1/send-communication', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({
+        school_id: SID, type: 'sms', body: smsBody,
+        recipients: [{ id: s.id, phone: s.phone, name: checkoutStudentLabel(), email: s.email || null }]
+      })
+    });
+    if (r.ok){
+      setMsg('checkoutLinkMsg', 'Text sent to ' + s.phone, 'success');
+      await sb.from('communications').insert({
+        school_id: SID, type: 'announcement', channel: 'sms', subject: '(SMS)', body: smsBody,
+        audience: 'selected', status: 'sent', sent_at: new Date().toISOString(), recipient_count: 1
+      });
+    } else {
+      var err = await r.json();
+      setMsg('checkoutLinkMsg', 'Text failed: ' + (err.error || 'unknown error'), 'error');
+    }
+  } catch (e){ setMsg('checkoutLinkMsg', 'Text error: ' + e.message, 'error'); }
 }
   
 function toggleStripeChargeForm() {
