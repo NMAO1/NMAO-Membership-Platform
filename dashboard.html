@@ -1726,6 +1726,7 @@
     <div id="membershipMoreActions" style="display:none;padding-top:0.5rem">
       <a onclick="openChangeMembership()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Switch Plan (No Charge)</a>
       <a onclick="openAddMembershipToProfile()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Comp Plan</a>
+      <a onclick="openCancelMembership()" style="color:#E07070;text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Cancel Membership</a>
     </div>
   </div>
 
@@ -6835,6 +6836,179 @@ function checkoutPickerChoose(sid){
 
 function closeStudentPicker(){
   var m = document.getElementById('checkoutStudentPicker');
+  if (m) m.classList.remove('active');
+}
+
+  /* ============================================================
+   §CANCEL MEMBERSHIP — owner-side cancel from the profile
+   Stripe-backed -> cancel-subscription EF (period_end | now)
+   cash / manual  -> direct student_memberships status flip
+   Queries student_memberships directly; names resolved from allMemberships.
+   iPad-safe (var/single-quote/no-template/no-arrow). async/await OK.
+   ============================================================ */
+
+var _cancelRows = [];
+
+function checkoutMembershipName(mid){
+  var arr = (typeof allMemberships !== 'undefined' && allMemberships) ? allMemberships : [];
+  for (var i=0;i<arr.length;i++){ if (arr[i].id === mid) return arr[i].name; }
+  return 'Membership';
+}
+
+function ensureCancelModal(){
+  if (document.getElementById('cancelMembershipModal')) return;
+  var ov = document.createElement('div');
+  ov.id = 'cancelMembershipModal';
+  ov.className = 'modal-overlay';
+  ov.innerHTML = [
+    '<div class="modal" style="width:460px;max-width:94vw;max-height:80vh;display:flex;flex-direction:column;padding:0">',
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--border)">',
+        '<div>',
+          '<div style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)">Cancel membership</div>',
+          '<div id="cancelStudentName" style="font-size:0.95rem;color:var(--white);margin-top:0.15rem"></div>',
+        '</div>',
+        '<button class="btn-sm" onclick="closeCancelModal()"><i class="fa-solid fa-xmark"></i></button>',
+      '</div>',
+      '<div id="cancelBody" style="overflow-y:auto;flex:1;padding:1.1rem 1.3rem"></div>',
+      '<p class="form-msg" id="cancelMsg" style="margin:0;padding:0 1.3rem 1rem"></p>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(ov);
+}
+
+async function openCancelMembership(){
+  if (typeof currentProfileStudent === 'undefined' || !currentProfileStudent) return;
+  var sid = currentProfileStudent.id;
+  ensureCancelModal();
+  document.getElementById('cancelStudentName').textContent =
+    (((currentProfileStudent.first_name || '') + ' ' + (currentProfileStudent.last_name || '')).trim()) || 'Student';
+  document.getElementById('cancelBody').innerHTML = '<div style="color:var(--muted);font-size:0.85rem">Loading\u2026</div>';
+  setMsg('cancelMsg', '', '');
+  document.getElementById('cancelMembershipModal').classList.add('active');
+  try {
+    var r = await sb.from('student_memberships')
+      .select('id, membership_id, status, stripe_subscription_id')
+      .eq('student_id', sid).eq('school_id', SID)
+      .in('status', ['active', 'past_due', 'trialing']);
+    var rows = r.data || [];
+    _cancelRows = [];
+    for (var i=0;i<rows.length;i++){
+      _cancelRows.push({
+        smId: rows[i].id,
+        subId: rows[i].stripe_subscription_id || null,
+        name: checkoutMembershipName(rows[i].membership_id),
+        status: rows[i].status
+      });
+    }
+    renderCancelList();
+  } catch (e){
+    document.getElementById('cancelBody').innerHTML = '<div style="color:#E07070;font-size:0.85rem">Could not load memberships.</div>';
+  }
+}
+
+function renderCancelList(){
+  var body = document.getElementById('cancelBody');
+  if (!_cancelRows.length){
+    body.innerHTML = '<div style="color:var(--muted);font-size:0.85rem">No active membership to cancel.</div>';
+    return;
+  }
+  var html = '';
+  for (var i=0;i<_cancelRows.length;i++){
+    var row = _cancelRows[i];
+    var kind = row.subId ? 'Auto-renewing (Stripe)' : 'Manual / cash';
+    var statusTag = (row.status && row.status !== 'active') ? (' \u00b7 ' + escapeCheckout(row.status)) : '';
+    html += '<div style="border:1px solid var(--border);background:var(--black);padding:0.8rem 0.95rem;margin-bottom:0.7rem">';
+    html += '<div style="font-size:0.9rem;color:var(--white)">' + escapeCheckout(row.name) + '</div>';
+    html += '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.7rem">' + kind + statusTag + '</div>';
+    html += '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">';
+    if (row.subId){
+      html += '<button class="btn-sm" onclick="cancelConfirm(' + i + ',\'period_end\')">End at period close</button>';
+      html += '<button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="cancelConfirm(' + i + ',\'now\')">End now</button>';
+    } else {
+      html += '<button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="cancelConfirm(' + i + ',\'now\')">End membership</button>';
+    }
+    html += '</div></div>';
+  }
+  body.innerHTML = html;
+}
+
+function cancelConfirm(i, when){
+  var row = _cancelRows[i];
+  if (!row) return;
+  var msg;
+  if (!row.subId){
+    msg = 'End ' + row.name + ' for this member? This marks the membership cancelled.';
+  } else if (when === 'now'){
+    msg = 'End ' + row.name + ' immediately? Access and billing stop now (no refund of the current period).';
+  } else {
+    msg = 'Cancel ' + row.name + ' at the end of the current billing period? They keep access until then and are not billed again.';
+  }
+  if (!window.confirm(msg)) return;
+  cancelMembershipDo(i, when);
+}
+
+function setCancelBusy(b){
+  var body = document.getElementById('cancelBody');
+  if (!body) return;
+  var btns = body.getElementsByTagName('button');
+  for (var i=0;i<btns.length;i++){ btns[i].disabled = b; }
+}
+
+async function cancelMembershipDo(i, when){
+  var row = _cancelRows[i];
+  if (!row) return;
+  setCancelBusy(true);
+  setMsg('cancelMsg', 'Working\u2026', '');
+  try {
+    var successMsg;
+    if (row.subId){
+      var r = await fetch(SURL + '/functions/v1/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+        body: JSON.stringify({ school_id: SID, subscription_id: row.subId, when: when })
+      });
+      var data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || 'Cancel failed.');
+      if (when === 'now'){
+        successMsg = row.name + ' ended.';
+      } else {
+        var end = data.current_period_end ? new Date(data.current_period_end * 1000) : null;
+        successMsg = end ? (row.name + ' will end ' + end.toLocaleDateString() + '.') : (row.name + ' will end at the period close.');
+      }
+    } else {
+      var up = await sb.from('student_memberships').update({ status: 'cancelled' }).eq('id', row.smId);
+      if (up.error) throw new Error(up.error.message);
+      successMsg = row.name + ' ended.';
+    }
+    cancelRefresh();
+    renderCancelSuccess(successMsg);
+  } catch (e){
+    setMsg('cancelMsg', (e && e.message) ? e.message : 'Could not cancel.', 'error');
+    setCancelBusy(false);
+  }
+}
+
+function cancelRefresh(){
+  var sid = (typeof currentProfileStudent !== 'undefined' && currentProfileStudent) ? currentProfileStudent.id : null;
+  if (sid){
+    if (typeof loadProfileMemberships === 'function') loadProfileMemberships(sid);
+    if (typeof buildProfileVitals === 'function') buildProfileVitals(sid);
+  }
+  if (typeof loadStudents === 'function') loadStudents();
+}
+
+function renderCancelSuccess(msg){
+  var body = document.getElementById('cancelBody');
+  body.innerHTML = '<div style="text-align:center;padding:1.2rem 0">' +
+    '<i class="fa-solid fa-circle-check" style="color:var(--gold);font-size:2rem"></i>' +
+    '<div style="font-size:0.95rem;color:var(--white);margin-top:0.7rem">' + escapeCheckout(msg) + '</div>' +
+    '<button class="panel-action gold" style="margin-top:1.1rem;font-size:0.78rem" onclick="closeCancelModal()">Done</button>' +
+  '</div>';
+  setMsg('cancelMsg', '', '');
+}
+
+function closeCancelModal(){
+  var m = document.getElementById('cancelMembershipModal');
   if (m) m.classList.remove('active');
 }
   
