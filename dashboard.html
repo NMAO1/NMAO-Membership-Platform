@@ -6726,7 +6726,7 @@ async function checkoutLinkSms(){
    iPad-safe (var/single-quote/no-template/no-arrow). async/await OK.
    ============================================================ */
 
-async function checkoutCompleteCard(){
+async function checkoutCompleteCard(force){
   setMsg('checkoutMsg', 'Charging card on file\u2026', '');
   checkoutSetBusy(true);
   try {
@@ -6737,6 +6737,7 @@ async function checkoutCompleteCard(){
       payload = { school_id: SID, student_id: _checkout.studentId, membership_id: _checkout.cart[0].id };
       var _fcd = document.getElementById('checkoutFirstChargeDate');
       if (_fcd && _fcd.value) payload.first_charge_date = _fcd.value;
+      if (force) payload.allow_duplicate = true;
     } else if (cls === 'pos'){
       endpoint = 'create-pos-charge';
       payload = { school_id: SID, student_id: _checkout.studentId, line_items: checkoutPosLineItems() };
@@ -6769,6 +6770,7 @@ function checkoutCardError(errStr){
   errStr = String(errStr || '');
   var isNoCard = errStr.indexOf('NO_SAVED_CARD') === 0;
   var isAuth = errStr.indexOf('AUTHENTICATION_REQUIRED') === 0;
+  var isDup = errStr.indexOf('ALREADY_SUBSCRIBED') === 0;
   var friendly;
   if (isNoCard) friendly = 'No saved card on file.';
   else if (isAuth) friendly = 'Card needs verification (3D Secure) and can\u2019t be charged on its own.';
@@ -6777,7 +6779,9 @@ function checkoutCardError(errStr){
   if (msgEl){
     msgEl.className = 'form-msg error';
     msgEl.innerHTML = escapeCheckout(friendly) +
-      ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>';
+      (isDup
+        ? ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteCard(true)"><i class="fa-solid fa-plus"></i> Add another anyway</button>'
+        : ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>');
   }
   checkoutSetBusy(false);
 }
