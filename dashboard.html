@@ -4856,7 +4856,7 @@ async function buildProfileVitals(sid){
     tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
     if(isMember&&rolloverShow) tiles.push({l:'Rollover', v:rollover+(rollover===1?' class':' classes'), c:'var(--gold)'});
   }
-  if(hasPack) tiles.push({l:'Class balance', v:balance+(balance===1?' class':' classes'), c:'#F5F0E8'});
+  if(hasPack) tiles.push({l:'Class pack balance', v:balance+(balance===1?' class':' classes'), c:'#F5F0E8'});
   tiles.push({l:'Membership', v:statusTxt, c:statusColor});
   el.innerHTML=tiles.map(function(t){
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.7rem 0.85rem"><div style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+t.l+'</div><div style="font-size:1.15rem;color:'+t.c+';margin-top:0.2rem">'+t.v+'</div></div>';
