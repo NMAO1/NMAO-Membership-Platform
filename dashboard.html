@@ -4809,7 +4809,7 @@ async function buildProfileFamily(sid){
 // §PROFILE-VITALS
 async function buildProfileVitals(sid){
   var el=document.getElementById('profileVitals'); if(!el) return;
-  var lastSeen='--', lastSeenDays=null, weekCount=0, monthCount=0, balance=0, hasPack=false;
+  var lastSeen='--', lastSeenDays=null, weekCount=0, monthCount=0, sessionBalance=0, hasSessionPack=false, classBalance=0, hasClassPack=false;
   var isMember=false, rollover=0, rolloverShow=false, statusTxt='--', statusColor='var(--muted)', expiringDays=null;
   try{
     var ar=await sb.from('class_attendance').select('noted_at').eq('student_id',sid).eq('status','present').order('noted_at',{ascending:false});
@@ -4826,7 +4826,7 @@ async function buildProfileVitals(sid){
   }catch(e){}
   try{
     var pr=await sb.from('student_session_packs').select('sessions_remaining').eq('student_id',sid).eq('status','active');
-    (pr.data||[]).forEach(function(p){ hasPack=true; balance+=(p.sessions_remaining||0); });
+    (pr.data||[]).forEach(function(p){ hasSessionPack=true; sessionBalance+=(p.sessions_remaining||0); });
   }catch(e){}
   try{
     var smr=await sb.from('student_memberships').select('status,classes_remaining,classes_used,rollover_balance,expires_at,memberships(class_limit_type,rollover_enabled,class_limit_count)').eq('student_id',sid);
@@ -4837,7 +4837,7 @@ async function buildProfileVitals(sid){
       if(clt==='class_pack'){
         if(active){
           var cap=(m.memberships&&m.memberships.class_limit_count!=null)?m.memberships.class_limit_count:null;
-          if(cap!=null){ hasPack=true; balance+=Math.max(cap-(m.classes_used||0),0); }
+          if(cap!=null){ hasClassPack=true; classBalance+=Math.max(cap-(m.classes_used||0),0); }
           if(m.expires_at){ var d=Math.ceil((new Date(m.expires_at).getTime()-Date.now())/86400000); if(d>=0&&(expiringDays===null||d<expiringDays)) expiringDays=d; }
         }
       } else if(active){
@@ -4851,12 +4851,13 @@ async function buildProfileVitals(sid){
     else if(currentProfileStudent&&currentProfileStudent.status){ statusTxt=currentProfileStudent.status; }
   }catch(e){}
   var tiles=[{l:'Last seen', v:lastSeen, c:'#F5F0E8'}];
-  if(isMember||hasPack){
+  if(isMember||hasClassPack){
     tiles.push({l:'This week', v:weekCount+(weekCount===1?' visit':' visits'), c:'#F5F0E8'});
     tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
     if(isMember&&rolloverShow) tiles.push({l:'Rollover', v:rollover+(rollover===1?' class':' classes'), c:'var(--gold)'});
   }
-  if(hasPack) tiles.push({l:'Class pack balance', v:balance+(balance===1?' class':' classes'), c:'#F5F0E8'});
+  if(hasClassPack) tiles.push({l:'Class pack balance', v:classBalance+(classBalance===1?' class':' classes'), c:'#F5F0E8'});
+  if(hasSessionPack) tiles.push({l:'Session balance', v:sessionBalance+(sessionBalance===1?' session':' sessions'), c:'#F5F0E8'});
   tiles.push({l:'Membership', v:statusTxt, c:statusColor});
   el.innerHTML=tiles.map(function(t){
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.7rem 0.85rem"><div style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+t.l+'</div><div style="font-size:1.15rem;color:'+t.c+';margin-top:0.2rem">'+t.v+'</div></div>';
@@ -4864,8 +4865,10 @@ async function buildProfileVitals(sid){
   var alerts=[];
   if(statusTxt==='Past due') alerts.push({t:'Payment past due', i:'fa-solid fa-circle-exclamation', sev:'d'});
   if(lastSeenDays!==null&&lastSeenDays>14) alerts.push({t:'No visit in '+lastSeenDays+' days', i:'fa-solid fa-user-clock', sev:'w'});
-  if(hasPack&&balance===0) alerts.push({t:'No classes remaining', i:'fa-solid fa-ban', sev:'d'});
-  else if(hasPack&&balance<=2) alerts.push({t:'Low balance: '+balance+(balance===1?' class':' classes')+' left', i:'fa-solid fa-triangle-exclamation', sev:'w'});
+  if(hasClassPack&&classBalance===0) alerts.push({t:'No classes remaining', i:'fa-solid fa-ban', sev:'d'});
+  else if(hasClassPack&&classBalance<=2) alerts.push({t:'Low class balance: '+classBalance+(classBalance===1?' class':' classes')+' left', i:'fa-solid fa-triangle-exclamation', sev:'w'});
+  if(hasSessionPack&&sessionBalance===0) alerts.push({t:'No sessions remaining', i:'fa-solid fa-ban', sev:'d'});
+  else if(hasSessionPack&&sessionBalance<=2) alerts.push({t:'Low session balance: '+sessionBalance+(sessionBalance===1?' session':' sessions')+' left', i:'fa-solid fa-triangle-exclamation', sev:'w'});
   if(expiringDays!==null&&expiringDays<=7) alerts.push({t:expiringDays<=0?'Pack expires today':'Pack expires in '+expiringDays+(expiringDays===1?' day':' days'), i:'fa-solid fa-clock', sev:'w'});
   var ael=document.getElementById('profileAlerts');
   if(ael){
