@@ -5164,11 +5164,18 @@ async function saveStudent() {
     }
   }
 
-  var r;
+var r;
   if (eid) { r=await sb.from('students').update(payload).eq('id',eid); }
-  else { payload.school_id=SID; payload.source='manual'; r=await sb.from('students').insert(payload); }
+  else { payload.school_id=SID; payload.source='manual'; r=await sb.from('students').insert(payload).select('id').single(); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
-  else { setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200); }
+  else {
+    // §JUNCTION-ON-CREATE — new students get an active student_memberships row so they are
+    // visible to kiosk caps, vitals, cancel, and renewals (mirrors the Comp Plan insert shape).
+    if (!eid && r.data && r.data.id) {
+      await sb.from('student_memberships').insert({ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())) });
+    }
+    setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200);
+  }
 }
 
 // Student Profile
@@ -5244,10 +5251,7 @@ async function loadProfileMemberships(sid) {
     var data = r.data||[];
     var el = document.getElementById('profileMembershipslist');
     if (!data.length) {
-      var s=currentProfileStudent;
-      var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'--';
-      var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/mo':s.memberships.billing_type==='yearly'?'/yr':''):'--';
-      el.innerHTML='<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:#F5F0E8">'+mn+'</span></div><div class="profile-info-row"><span class="profile-info-label">Price</span><span style="color:var(--gold)">'+mp+'</span></div>';
+      el.innerHTML='<div class="profile-info-row"><span class="profile-info-label">Plan</span><span style="color:var(--muted)">No active membership</span></div>';
       return;
     }
     el.innerHTML = data.map(function(sm){
@@ -5257,7 +5261,18 @@ async function loadProfileMemberships(sid) {
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
-async function removeStudentMembership(smid) { await sb.from('student_memberships').update({status:'cancelled'}).eq('id',smid); await loadProfileMemberships(currentProfileStudent.id); }
+async function removeStudentMembership(smid) {
+  await sb.from('student_memberships').update({status:'cancelled'}).eq('id',smid);
+  var sid=(currentProfileStudent&&currentProfileStudent.id)?currentProfileStudent.id:null;
+  await syncMembershipPointer(sid);
+  if(sid) await loadProfileMemberships(sid);
+}
+// §POINTER-SYNC — clear the legacy students.membership_id pointer once no active memberships remain.
+async function syncMembershipPointer(sid){
+  if(!sid) return;
+  var act=await sb.from('student_memberships').select('id',{count:'exact',head:true}).eq('student_id',sid).eq('status','active');
+  if(!act.error && (act.count||0)===0){ await sb.from('students').update({membership_id:null}).eq('id',sid); }
+}
 
 async function loadProfileTags(sid) {
   try { var r=await sb.from('student_tags').select('*, tags(id,name,color)').eq('student_id',sid); currentProfileTags=r.data||[]; renderProfileTags(); populateTagDropdowns(); } catch(e) { currentProfileTags=[]; }
@@ -5687,17 +5702,44 @@ async function confirmDeleteStudent() {
 
   var confirmed = confirm(
     'Delete ' + fullName + '?\n\n' +
-    'This student will be hidden from active rosters. Their history ' +
+    'Any active membership will be cancelled and recurring billing stopped immediately. ' +
+    'The student will be hidden from active rosters, and their history ' +
     '(attendance, payments, memberships) will be preserved in the database ' +
     'and can be restored by an administrator if needed.\n\n' +
     'Continue?'
   );
   if (!confirmed) return;
 
-  var r = await sb.from('students')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', s.id);
+  // §DELETE-CLEANUP — cancel active memberships (and any Stripe subscription) before hiding the
+  // student, so a deleted member is never left with live billing or an orphaned 'active' junction.
+  var smr = await sb.from('student_memberships').select('id, stripe_subscription_id').eq('student_id', s.id).eq('status', 'active');
+  if (smr.error) { showToast('Could not read memberships: ' + smr.error.message, 'err'); return; }
+  var smRows = smr.data || [];
+  for (var di = 0; di < smRows.length; di++) {
+    var drow = smRows[di];
+    if (drow.stripe_subscription_id) {
+      try {
+        var dcr = await fetch(SURL + '/functions/v1/cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+          body: JSON.stringify({ school_id: SID, subscription_id: drow.stripe_subscription_id, when: 'now' })
+        });
+        var dcd = await dcr.json();
+        if (!dcr.ok || dcd.error) throw new Error(dcd.error || 'Subscription cancel failed');
+        // cancel-subscription flips this junction row to 'cancelled' for when:'now'.
+      } catch (de) {
+        showToast('Could not cancel billing for ' + fullName + ' (' + ((de && de.message) ? de.message : 'error') + '). Student not deleted.', 'err');
+        return;
+      }
+    } else {
+      var dur = await sb.from('student_memberships').update({ status: 'cancelled' }).eq('id', drow.id);
+      if (dur.error) { showToast('Could not close membership: ' + dur.error.message, 'err'); return; }
+    }
+  }
 
+  var r = await sb.from('students')
+    .update({ deleted_at: new Date().toISOString(), membership_id: null })
+    .eq('id', s.id);
   if (r.error) {
     showToast('Could not delete student: ' + r.error.message, 'err');
     return;
@@ -5845,9 +5887,13 @@ async function runImport(){
     var email=getMappedField('email')?row[getMappedField('email')]:'';
     if(email&&allStudents.some(function(s){return s.email===email;})){errors.push({row:i+1,msg:first+' '+last+' - duplicate email',status:'skip'});skipped++;continue;}
     var payload={school_id:SID,first_name:first,last_name:last,email:email||null,phone:getMappedField('phone')?row[getMappedField('phone')]:null,date_of_birth:getMappedField('date_of_birth')?row[getMappedField('date_of_birth')]||null:null,status:getMappedField('status')?row[getMappedField('status')]||'active':'active',program_id:defaultProgId,membership_id:defaultMemId,plan_type:'membership',start_date:localDateStr(new Date()),source:'csv_import'};
-    var r=await sb.from('students').insert(payload);
+    var r=await sb.from('students').insert(payload).select('id').single();
     if(r.error){errors.push({row:i+1,msg:first+' '+last+' - '+r.error.message,status:'warn'});}
-    else{errors.push({row:i+1,msg:first+' '+last+' - imported',status:'ok'});imported++;}
+    else{
+      // §JUNCTION-ON-IMPORT — mirror Add Student so imported students are visible to caps/vitals/cancel.
+      if(r.data&&r.data.id&&payload.membership_id){ await sb.from('student_memberships').insert({school_id:SID,student_id:r.data.id,membership_id:payload.membership_id,program_id:payload.program_id,status:'active',start_date:payload.start_date}); }
+      errors.push({row:i+1,msg:first+' '+last+' - imported',status:'ok'});imported++;
+    }
   }
   await loadStudents(); buildHomeStats();
   document.getElementById('importSummaryStats').innerHTML='<div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:center"><div style="font-family:var(--font-display);font-size:2rem;color:#5A9A6A">'+imported+'</div><div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Imported</div></div><div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:center"><div style="font-family:var(--font-display);font-size:2rem;color:#E07070">'+skipped+'</div><div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Skipped</div></div><div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:center"><div style="font-family:var(--font-display);font-size:2rem;color:var(--gold)">'+importCSVData.length+'</div><div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Total Rows</div></div>';
@@ -6970,6 +7016,7 @@ async function cancelMembershipDo(i, when){
 function cancelRefresh(){
   var sid = (typeof currentProfileStudent !== 'undefined' && currentProfileStudent) ? currentProfileStudent.id : null;
   if (sid){
+    if (typeof syncMembershipPointer === 'function') syncMembershipPointer(sid);
     if (typeof loadProfileMemberships === 'function') loadProfileMemberships(sid);
     if (typeof buildProfileVitals === 'function') buildProfileVitals(sid);
   }
