@@ -711,9 +711,33 @@ async function doCheckinForStudent(student,callback){  try{
         }
       }
     }
-   if(primary&&primary.class_limit_count){
+   // §KIOSK: EXPIRY_CHECK — expired pack: try session credits first, else hard deny.
+   // Kiosk denial is HARD (no override); staff.html has the discretion path instead.
+   if(primary&&primary.is_expired){
+     if(await tryKioskSessionCheckin(student,callback)) return;
+     var expDateStr='';
+     if(primary.expires_at){
+       var ep=String(primary.expires_at).slice(0,10).split('-');
+       if(ep.length===3) expDateStr=' on '+ep[1]+'/'+ep[2]+'/'+ep[0];
+     }
+     showKioskDenial('Class pack expired'+expDateStr+' \u2014 please see the front desk to renew.');
+     if(callback)callback();return;
+   }
+   // §STAFF: EXPIRY_CHECK — expired pack prompts staff discretion (override allowed).
+      // Mirrors the cap-override pattern below; staff have judgment authority, kiosk does not.
+      if(primary&&primary.is_expired){
+        var expDateStr='';
+        if(primary.expires_at){
+          var ep=String(primary.expires_at).slice(0,10).split('-');
+          if(ep.length===3) expDateStr=' on '+ep[1]+'/'+ep[2]+'/'+ep[0];
+        }
+        if(!confirm('Class pack expired'+expDateStr+'.\n\nCheck in anyway?')){
+          if(btn){btn.classList.remove('loading');btn.disabled=false;}
+          return;
+        }
+      }
+ if(primary&&primary.class_limit_count){
       var limit=parseInt(primary.class_limit_count)||0;
-      if(limit>0){
         // Phase 11.B: bucket-aware path. Prefer classes_remaining when populated;
         // fall back to legacy classes_used / rolling-window when null.
         if(primary.classes_remaining!==null&&primary.classes_remaining!==undefined){
