@@ -1763,7 +1763,6 @@
         <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;flex-wrap:wrap">
           <button class="profile-tab active" id="tab-attendance" onclick="switchProfileTab('attendance')">Attendance</button>
           <button class="profile-tab" id="tab-sessions"    onclick="switchProfileTab('sessions')">Sessions</button>
-          <button class="profile-tab" id="tab-packs"       onclick="switchProfileTab('packs')">Packs</button>
           <button class="profile-tab" id="tab-promotions"  onclick="switchProfileTab('promotions')">Belt History</button>
           <button class="profile-tab" id="tab-notes"       onclick="switchProfileTab('notes')">Notes</button>
           <button class="profile-tab" id="tab-messages"    onclick="switchProfileTab('messages')">Messages</button>
@@ -1776,13 +1775,6 @@
             <button class="panel-action" style="font-size:0.72rem" onclick="openBookSessionForStudent()"><i class="fa-solid fa-plus"></i> Book Session</button>
           </div>
           <div id="profileSessionsList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
-        </div>
-        <div id="profileTabPacks" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">Session Pack Balances</div>
-            <button class="panel-action" style="font-size:0.72rem" onclick="openAddPackToStudent()"><i class="fa-solid fa-plus"></i> Add Pack</button>
-          </div>
-          <div id="profilePacksList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
         </div>
         <div id="profileTabPromotions" style="display:none"><div id="profilePromotionHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div></div>
         <div id="profileTabNotes" style="display:none">
@@ -2383,22 +2375,6 @@
   </div>
 </div>
 
-<!-- §MODAL-ADDPACK-TO-STUDENT -->
-<div class="modal-overlay" id="addPackToStudentModal">
-  <div class="modal" style="width:440px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Add Session Pack</span><button class="modal-close" onclick="closeAddPackToStudent()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <div class="field"><label>Pack Template</label><select id="addPackSelect" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Pack --</option></select></div>
-      <div class="form-row">
-        <div class="field"><label>Sessions to Add</label><input type="number" id="addPackQty" value="10" min="1" /></div>
-        <div class="field"><label>Expiry Date (optional)</label><input type="date" id="addPackExpiry" /></div>
-      </div>
-      <div class="field"><label>Note (optional)</label><input type="text" id="addPackNote" placeholder="e.g. Purchased at front desk" /></div>
-      <button class="btn-gold-full" onclick="savePackToStudent()">Add Pack</button>
-      <p class="form-msg" id="addPackMsg"></p>
-    </div>
-  </div>
-</div>
 
 <!-- §MODAL-IMPORT -->
 <div class="modal-overlay" id="importModal">
@@ -5245,7 +5221,6 @@ async function openStudentProfile(sid) {
   await loadMessageHistory(sid);
   await loadProfilePaymentHistory(sid);
   await loadStudentSessions(sid);
-  await loadProfilePacks(sid);
   await loadProfileCardOnFile(sid);
   await buildProfileVitals(sid);
   document.getElementById('manualPayDate').value = localDateStr(new Date());
@@ -5253,7 +5228,7 @@ async function openStudentProfile(sid) {
 function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
 
 function switchProfileTab(tab) {
-  var tabs = ['attendance','sessions','packs','promotions','notes','messages','financial'];
+  var tabs = ['attendance','sessions','promotions','notes','messages','financial'];
   tabs.forEach(function(t){
     var cap = t.charAt(0).toUpperCase()+t.slice(1);
     var panel = document.getElementById('profileTab'+cap);
@@ -5261,7 +5236,6 @@ function switchProfileTab(tab) {
     var btn = document.getElementById('tab-'+t);
     if (btn) btn.classList.toggle('active', t===tab);
   });
-  if (tab==='packs' && currentProfileStudent) loadProfilePacks(currentProfileStudent.id);
 }
 
 async function loadProfileMemberships(sid) {
@@ -6497,7 +6471,6 @@ function checkoutRefreshAfterSale(){
   var onProfile = (typeof currentProfileStudent !== 'undefined' && currentProfileStudent && currentProfileStudent.id === sid);
   if (onProfile){
     if (typeof loadProfileMemberships === 'function') loadProfileMemberships(sid);
-    if (typeof loadProfilePacks === 'function') loadProfilePacks(sid);
     if (typeof loadProfilePaymentHistory === 'function') loadProfilePaymentHistory(sid);
     if (typeof buildProfileVitals === 'function') buildProfileVitals(sid);
   }
