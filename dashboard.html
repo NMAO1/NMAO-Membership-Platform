@@ -3647,6 +3647,10 @@ async function attendanceCapCheck(studentId,programId){
         }
       }
     }
+  // §JS: DASHBOARD-CAP-CHECK EXPIRY — expired pack surfaces as an overridable prompt (owner discretion, like staff).
+    if(primary&&primary.is_expired){
+      return {atCap:true,capType:'expired',current:0,max:0,expiresAt:primary.expires_at};
+    }
   if(!primary||!primary.class_limit_count) return null;
     var limit=parseInt(primary.class_limit_count)||0;
     if(limit<=0) return null;
@@ -3691,7 +3695,14 @@ async function toggleRosterAttendance(sid){
       var student=currentRosterStudents.find(function(s){return s.id===sid;});
       var nm=student?(student.first_name+' '+student.last_name):'This student';
       var msg;
-      if(capStatus.capType==='class_pack'){
+      if(capStatus.capType==='expired'){
+        var exd='';
+        if(capStatus.expiresAt){
+          var exp=String(capStatus.expiresAt).slice(0,10).split('-');
+          if(exp.length===3) exd=' on '+exp[1]+'/'+exp[2]+'/'+exp[0];
+        }
+        msg=nm+"'s class pack expired"+exd+'. Check in anyway?';
+      }else if(capStatus.capType==='class_pack'){
         msg=nm+' has used all classes on their class pack ('+capStatus.current+' of '+capStatus.max+'). Check in anyway?';
       }else if(capStatus.capType==='per_month'){
         msg=nm+' has reached their monthly attendance limit ('+capStatus.current+' of '+capStatus.max+' this month). Check in anyway?';
