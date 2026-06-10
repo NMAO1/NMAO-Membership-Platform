@@ -6726,9 +6726,15 @@ async function checkoutLinkSms(){
    iPad-safe (var/single-quote/no-template/no-arrow). async/await OK.
    ============================================================ */
 
+function checkoutNewIdemKey(){
+  try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch(e){}
+  return 'idem_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+}
 async function checkoutCompleteCard(force){
   setMsg('checkoutMsg', 'Charging card on file\u2026', '');
   checkoutSetBusy(true);
+  // §IDEMPOTENCY — one key per charge attempt; reused on retry so a timed-out request can't double-charge.
+  if (force || !_checkout.idemKey) _checkout.idemKey = checkoutNewIdemKey();
   try {
     var cls = checkoutCartClass();
     var endpoint, payload;
@@ -6746,16 +6752,19 @@ async function checkoutCompleteCard(force){
       checkoutCardError('Card on file is not available for this item \u2014 use Send Link or Cash.');
       return;
     }
+    payload.idempotency_key = _checkout.idemKey;
     var r = await fetch(SURL + '/functions/v1/' + endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
       body: JSON.stringify(payload)
     });
     var data = await r.json();
-    if (!r.ok || !data || data.error){
+   if (!r.ok || !data || data.error){
+      _checkout.idemKey = null; // definitive failure response — next deliberate attempt is a fresh charge
       checkoutCardError((data && data.error) ? data.error : 'The charge did not go through.');
       return;
     }
+    _checkout.idemKey = null; // success — next sale gets a new key
     checkoutRefreshAfterSale();
     var brandLine = (data.brand && data.last4) ? (String(data.brand).toUpperCase() + ' \u2022\u2022\u2022\u2022' + data.last4) : 'card on file';
     if (data.scheduled){ checkoutShowSuccess('Membership activated. First charge scheduled for ' + data.first_charge_date + '.'); }
