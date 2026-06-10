@@ -6376,6 +6376,16 @@ function renderCheckoutStep3(){
   html += '<div style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">Paying with ' +
     '<span style="color:var(--white)">' + (CHECKOUT_METHOD_LABELS[_checkout.method] || '\u2014') + '</span> \u00b7 ' +
     escapeCheckout(checkoutStudentLabel()) + '</div>';
+
+  // §DEFERRED-BILLING — for a card-on-file recurring membership, optionally start billing on a future
+  // date (e.g. migrating a member who already paid elsewhere this cycle). Blank = charge today.
+  if (_checkout.method === 'card_on_file' && checkoutCartClass() === 'membership') {
+    html += '<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">' +
+      '<label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">First charge date</label>' +
+      '<input type="date" id="checkoutFirstChargeDate" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem;width:100%" />' +
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem">Optional. Leave blank to charge today. If set, the membership activates now and the first charge is scheduled for this date - nothing is charged today.</div>' +
+    '</div>';
+  }
   body.innerHTML = html;
 }
 
@@ -6725,6 +6735,8 @@ async function checkoutCompleteCard(){
     if (cls === 'membership' || cls === 'classpack'){
       endpoint = 'create-membership-subscription';
       payload = { school_id: SID, student_id: _checkout.studentId, membership_id: _checkout.cart[0].id };
+      var _fcd = document.getElementById('checkoutFirstChargeDate');
+      if (_fcd && _fcd.value) payload.first_charge_date = _fcd.value;
     } else if (cls === 'pos'){
       endpoint = 'create-pos-charge';
       payload = { school_id: SID, student_id: _checkout.studentId, line_items: checkoutPosLineItems() };
@@ -6745,7 +6757,8 @@ async function checkoutCompleteCard(){
     }
     checkoutRefreshAfterSale();
     var brandLine = (data.brand && data.last4) ? (String(data.brand).toUpperCase() + ' \u2022\u2022\u2022\u2022' + data.last4) : 'card on file';
-    checkoutShowSuccess('Charged ' + brandLine + '.');
+    if (data.scheduled){ checkoutShowSuccess('Membership activated. First charge scheduled for ' + data.first_charge_date + '.'); }
+    else { checkoutShowSuccess('Charged ' + brandLine + '.'); }
   } catch (e){
     checkoutCardError((e && e.message) ? e.message : 'Network error.');
   }
