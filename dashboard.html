@@ -2051,6 +2051,7 @@
         <div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div>
         <div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div>
       </div>
+       <div class="field"><label>Start Date <span style="color:var(--muted);font-weight:normal">(the "member since" date — when this membership began. Backdate for a migrated member; blank = today. This is record-only and does not affect billing.)</span></label><input type="date" id="ccStartDate" /></div>
       <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(the next charge date — future only. For a migrated member, set it to their next billing date; the membership is active now and bills from this date onward. Blank = charge today.)</span></label><input type="date" id="ccFirstCharge" /></div>
       <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Payment</div>
       <div class="check-group" style="flex-direction:column;gap:0.5rem">
@@ -2060,6 +2061,14 @@
       <button id="ccSaveBtn" class="btn-gold-full" onclick="saveCraftCustomMembership()">Create &amp; Assign</button>
       <p class="form-msg" id="ccMsg"></p>
     </div>
+  </div>
+</div>
+
+<!-- §MODAL-MEMBERSHIP-DETAIL -->
+<div class="modal-overlay" id="membershipDetailModal">
+  <div class="modal" style="width:620px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title" id="mdTitle">Membership</span><button class="modal-close" onclick="closeMembershipDetail()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body" id="mdBody"><div style="color:var(--muted);font-size:0.85rem">Loading\u2026</div></div>
   </div>
 </div>
 
@@ -5299,7 +5308,7 @@ function switchProfileTab(tab) {
 
 async function loadProfileMemberships(sid) {
   try {
-    var r = await sb.from('student_memberships').select('*, memberships(name,billing_type,price,billing_length,billing_unit)').eq('student_id',sid).eq('status','active');
+    var r = await sb.from('student_memberships').select('*, memberships(name,billing_type,price,billing_length,billing_unit,class_limit_type,class_limit_count,signup_fee,is_custom)').eq('student_id',sid).eq('status','active');
     var data = r.data||[];
     var el = document.getElementById('profileMembershipslist');
     if (!data.length) {
@@ -5308,10 +5317,11 @@ async function loadProfileMemberships(sid) {
     }
     el.innerHTML = data.map(function(sm){
       var m=sm.memberships; var name=m?m.name:'--';
-      var _bl=parseInt(m&&m.billing_length,10);
-      var freqLabel=(m&&m.billing_type==='monthly')?((m.billing_unit==='months'&&_bl>1)?(' every '+_bl+' months'):'/mo'):(m&&m.billing_type==='yearly'?'/yr':'');
-      var price=m?'$'+parseFloat(m.price||0).toFixed(2)+freqLabel:'--';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border)"><div><div style="font-size:0.85rem;color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--gold)">'+price+'</div></div><button onclick="removeStudentMembership(\''+sm.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>';
+      var pill=smStatusPill(sm.status);
+      var price=m?smPriceLabel(m):'--';
+      var cl=m?smClassLine(m):'';
+      var since=sm.start_date?('Member since '+smDateLabel(sm.start_date)):'';
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
@@ -6083,6 +6093,7 @@ async function saveCraftCustomMembership(){
   for(var i=0;i<cce.length;i++){ classIds.push(cce[i].value); }
   var mode=(document.querySelector('input[name="ccBillingMode"]:checked')||{}).value||'stripe';
   var firstCharge=document.getElementById('ccFirstCharge').value||null;
+  var startDate=document.getElementById('ccStartDate').value||null;
   var beltId=document.getElementById('ccBelt').value||null;
 
   setMsg('ccMsg','Creating membership...','');
@@ -6110,7 +6121,7 @@ async function saveCraftCustomMembership(){
     var pr=await sb.from('payments').insert({school_id:SID,student_id:sid,amount:parseFloat(price)||0,type:'membership',status:'paid',description:'Cash - '+name,created_at:nowIso,paid_at:nowIso});
     if(pr.error){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',pr.error.message,'error'); return; }
     await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
-    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:nowIso,start_date:today});
+    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:nowIso,start_date:(startDate||today)});
     setMsg('ccMsg','Custom membership created and recorded (cash).','success');
   }else{
     var payload={school_id:SID,student_id:sid,membership_id:mid};
@@ -6131,6 +6142,7 @@ async function saveCraftCustomMembership(){
       }
       if(data.scheduled){ setMsg('ccMsg','Custom membership activated. First charge scheduled for '+data.first_charge_date+'.','success'); }
       else { setMsg('ccMsg','Custom membership activated and charged.','success'); }
+      if(startDate){ await sb.from('student_memberships').update({start_date:startDate}).eq('student_id',sid).eq('membership_id',mid).eq('status','active'); }
     }catch(e){
       await sb.from('memberships').update({active:false}).eq('id',mid);
       document.getElementById('ccSaveBtn').disabled=false;
@@ -6143,6 +6155,82 @@ async function saveCraftCustomMembership(){
   document.getElementById('ccSaveBtn').disabled=false;
   setTimeout(closeCraftCustom,1200);
 }
+
+/* ===== §MEMBERSHIP-DETAIL — shared display helpers ===== */
+function smDateLabel(d){ if(!d) return '\u2014'; try{ var dt=new Date((''+d).indexOf('T')>-1?d:(d+'T12:00:00')); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }catch(e){ return ''+d; } }
+function smPriceLabel(m){ if(!m) return '--'; var bl=parseInt(m.billing_length,10); var f=(m.billing_type==='monthly')?((m.billing_unit==='months'&&bl>1)?(' every '+bl+' months'):'/mo'):(m.billing_type==='yearly'?'/yr':''); return '$'+parseFloat(m.price||0).toFixed(2)+f; }
+function smFreqWord(m){ if(!m) return 'monthly'; var bl=parseInt(m.billing_length,10); if(m.billing_type==='monthly'&&m.billing_unit==='months'&&bl>1) return 'every '+bl+' months'; if(m.billing_type==='yearly') return 'yearly'; return 'monthly'; }
+function smClassLine(m){ if(!m) return ''; var t=m.class_limit_type; var n=m.class_limit_count; if(t==='per_week') return (n||'?')+' per week'; if(t==='per_month') return (n||'?')+' per month'; if(t==='class_pack') return (n||'?')+'-class pack'; return 'Unlimited'; }
+function smStatusPill(s){ var map={active:['Active','#5A9A6A'],trialing:['Trial','#7DAAD4'],past_due:['Past due','#E07070'],paused:['Paused','#C9A84C'],cancelled:['Cancelled','#888888']}; var v=map[s]||[(s||'\u2014'),'#888888']; return '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:'+v[1]+';border:1px solid '+v[1]+'66;border-radius:999px;padding:0.12rem 0.5rem"><i class="fa-solid fa-circle" style="font-size:0.42rem"></i>'+v[0]+'</span>'; }
+
+var _mdRow=null;
+function closeMembershipDetail(){ var el=document.getElementById('membershipDetailModal'); if(el) el.classList.remove('active'); }
+async function openMembershipDetail(smId){
+  var modal=document.getElementById('membershipDetailModal'); var body=document.getElementById('mdBody');
+  if(!modal||!body) return;
+  body.innerHTML='<div style="color:var(--muted);font-size:0.85rem">Loading\u2026</div>';
+  modal.classList.add('active');
+  try{
+    var r=await sb.from('student_memberships').select('*, memberships(*)').eq('id',smId).single();
+    if(r.error||!r.data){ body.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load this membership.</div>'; return; }
+    var sm=r.data; var m=sm.memberships||{}; _mdRow=sm;
+    var titleEl=document.getElementById('mdTitle'); if(titleEl) titleEl.textContent=m.name||'Membership';
+    var progNames=[];
+    var mp=await sb.from('membership_programs').select('program_id').eq('membership_id',sm.membership_id);
+    var pids=(mp.data||[]).map(function(x){return x.program_id;});
+    if(pids.length && typeof allPrograms!=='undefined' && allPrograms){ progNames=allPrograms.filter(function(p){return pids.indexOf(p.id)!==-1;}).map(function(p){return p.name;}); }
+    var classNames=[];
+    var mc=await sb.from('membership_classes').select('class_id').eq('membership_id',sm.membership_id);
+    var cids=(mc.data||[]).map(function(x){return x.class_id;});
+    if(cids.length && typeof allClasses!=='undefined' && allClasses){ classNames=allClasses.filter(function(c){return cids.indexOf(c.id)!==-1;}).map(function(c){return c.name;}); }
+    var pr=await sb.from('payments').select('amount,description,status,created_at').eq('student_id',sm.student_id).eq('type','membership').order('created_at',{ascending:false}).limit(5);
+    var pays=pr.data||[];
+    body.innerHTML=mdRender(sm,m,progNames,classNames,pays);
+  }catch(e){ body.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load this membership.</div>'; }
+}
+function mdRender(sm,m,progNames,classNames,pays){
+  var billed = sm.stripe_subscription_id ? 'Auto-billed (card on file)' : 'Cash / manual';
+  var since = sm.start_date ? smDateLabel(sm.start_date) : '\u2014';
+  var next;
+  if(sm.stripe_subscription_id){
+    if(sm.first_charge_date){ var fc=new Date((''+sm.first_charge_date)+'T12:00:00'); next = (fc.getTime()>Date.now()) ? smDateLabel(sm.first_charge_date) : ('Auto-renews '+smFreqWord(m)); }
+    else { next='Auto-renews '+smFreqWord(m); }
+  } else { next='\u2014 (manual)'; }
+  var scope = classNames.length ? classNames.join(', ') : (progNames.length ? ('All classes in '+progNames.join(', ')) : '\u2014');
+  var usage;
+  if(m.class_limit_type==='class_pack'){ usage=((sm.classes_remaining!=null)?sm.classes_remaining:'?')+' of '+(m.class_limit_count||'?')+' remaining'; }
+  else if(m.class_limit_type==='per_week'){ usage=(m.class_limit_count||'?')+' per week'; }
+  else if(m.class_limit_type==='per_month'){ usage=(m.class_limit_count||'?')+' per month'; }
+  else { usage='Unlimited'; }
+  function row(l,v){ return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.3rem 0;font-size:0.82rem"><span style="color:var(--muted)">'+l+'</span><span style="color:var(--white);text-align:right">'+v+'</span></div>'; }
+  function head(t){ return '<div style="margin:1rem 0 0.35rem;padding-bottom:0.3rem;border-bottom:1px solid var(--border);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:700">'+t+'</div>'; }
+  var h='';
+  h+='<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.25rem">'+smStatusPill(sm.status)+'<span style="font-size:0.95rem;color:var(--gold);font-weight:600">'+smPriceLabel(m)+'</span>'+(m.is_custom?'<span style="font-size:0.62rem;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0.05rem 0.35rem">CUSTOM</span>':'')+'</div>';
+  h+=head('Details');
+  h+=row('Programs', progNames.length?progNames.join(', '):'\u2014');
+  h+=row('Class access', scope);
+  h+=head('Usage');
+  h+=row('Allowance', usage);
+  h+=head('Billing');
+  h+=row('Billing mode', billed);
+  h+=row('Member since', since);
+  h+=row('Next charge', next);
+  if(m.signup_fee && parseFloat(m.signup_fee)>0){ h+=row('Signup fee','$'+parseFloat(m.signup_fee).toFixed(2)); }
+  h+=row('Expires', sm.expires_at?smDateLabel(sm.expires_at):'Ongoing');
+  h+=head('Latest payments');
+  if(pays.length){
+    h+=pays.map(function(p){ var col={paid:'#5A9A6A',pending:'#C9A84C',failed:'#E07070',refunded:'#7DAAD4'}[p.status]||'var(--muted)'; return '<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.3rem 0;font-size:0.76rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted);min-width:74px">'+smDateLabel(p.created_at)+'</span><span style="color:var(--white);flex:1">'+(p.description||'\u2014')+'</span><span style="color:var(--gold)">$'+parseFloat(p.amount||0).toFixed(2)+'</span><span style="color:'+col+';min-width:54px;text-align:right">'+(p.status||'')+'</span></div>'; }).join('');
+  } else { h+='<div style="color:var(--muted);font-size:0.78rem;padding:0.3rem 0">No membership payments yet.</div>'; }
+  h+='<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1.1rem">';
+  h+='<button class="btn-sm" onclick="mdChangePlan()" style="flex:1;min-width:120px"><i class="fa-solid fa-right-left"></i> Change plan</button>';
+  if(!sm.stripe_subscription_id){ h+='<button class="btn-sm" onclick="mdAddCard()" style="flex:1;min-width:120px"><i class="fa-solid fa-credit-card"></i> Add card</button>'; }
+  h+='<button class="btn-sm" onclick="mdCancel()" style="flex:1;min-width:120px;border-color:#A04040;color:#E07070"><i class="fa-solid fa-ban"></i> Cancel</button>';
+  h+='</div>';
+  return h;
+}
+function mdCancel(){ closeMembershipDetail(); if(typeof openCancelMembership==='function') openCancelMembership(); }
+function mdChangePlan(){ closeMembershipDetail(); if(currentProfileStudent && typeof openCheckout==='function') openCheckout(currentProfileStudent.id,'membership'); }
+function mdAddCard(){ closeMembershipDetail(); if(currentProfileStudent && typeof replaceStudentCard==='function') replaceStudentCard(currentProfileStudent.id); }
 
 /* ---- entry points ---- */
 function openProfileCheckout(){
