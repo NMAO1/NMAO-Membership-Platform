@@ -885,12 +885,7 @@
       statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking...';
 
       try {
-        var stuRes = await sb.from('students')
-              .select('id')
-              .eq('school_id', instructor.school_id)
-              .eq('email', email.toLowerCase())
-              .is('deleted_at', null)
-              .limit(1);
+        var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email.toLowerCase()});
 
         if (!stuRes.data || !stuRes.data.length) {
           eligiblePacks = [];
@@ -961,11 +956,7 @@
         lookupEmail = email;
 
         // Look up student
-        var stuRes = await sb.from('students')
-          .select('id, first_name, last_name, email, phone')
-          .eq('school_id', instructor.school_id)
-          .eq('email', email)
-          .limit(1);
+        var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email});
 
         lookupStudent = (stuRes.data && stuRes.data.length) ? stuRes.data[0] : null;
 
@@ -1395,11 +1386,7 @@
         var studentId = lookupStudent ? lookupStudent.id : null;
         if (!studentId) {
           try {
-            var stuRes = await sb.from('students')
-              .select('id')
-              .eq('school_id', instructor.school_id)
-              .eq('email', email.toLowerCase())
-              .limit(1);
+            var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email.toLowerCase()});
             if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
           } catch(e) {}
         }
