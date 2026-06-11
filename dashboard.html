@@ -6114,8 +6114,11 @@ async function saveCraftCustomMembership(){
   if(cr.error || !cr.data){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',(cr.error?cr.error.message:'Could not create membership.'),'error'); return; }
   var mid=cr.data;
 
-  if(beltId){ await sb.from('students').update({current_belt_id:beltId}).eq('id',sid); }
-
+var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;});
+  var stuUpd={};
+  if(firstProg) stuUpd.program_id=firstProg.id;
+  if(beltId) stuUpd.current_belt_id=beltId;
+  if(firstProg||beltId){ await sb.from('students').update(stuUpd).eq('id',sid); }
   if(mode==='cash'){
     var nowIso=new Date().toISOString(); var today=nowIso.split('T')[0];
     var pr=await sb.from('payments').insert({school_id:SID,student_id:sid,amount:parseFloat(price)||0,type:'membership',status:'paid',description:'Cash - '+name,created_at:nowIso,paid_at:nowIso});
