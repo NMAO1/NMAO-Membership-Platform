@@ -631,7 +631,7 @@
 // ─────────────────────────────────────────────────────────────
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
-var SID='6b203063-1bab-42cb-8e21-2cbbb7dba6d5';
+var SID=null;
 var STAFF_URL=window.location.origin+window.location.pathname;
 var sb=supabase.createClient(SURL,SKEY);
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -720,7 +720,6 @@ async function startStaffApp(user){
   // Verify instructor record — match on email (initial auth)
   var r=await sb.from('instructors')
     .select('*')
-    .eq('school_id',SID)
     .eq('email',user.email)
     .eq('active',true)
     .maybeSingle();
@@ -732,6 +731,8 @@ async function startStaffApp(user){
   }
 
   currentInstructor=r.data;
+  SID=r.data.school_id;          // A1: resolve this staff member's school from their record
+  await loadSchoolBranding();    // brand the now-known school
 
   // Self-healing: stamp auth_user_id if not already set
   // After this runs once, all future RLS checks use UUID directly
