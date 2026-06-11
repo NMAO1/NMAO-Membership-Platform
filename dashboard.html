@@ -2039,7 +2039,7 @@
       <div id="ccStudentName" style="font-size:1rem;color:var(--white);margin-bottom:1rem"></div>
       <div class="field"><label>Membership Name</label><input type="text" id="ccName" placeholder="e.g. Legacy Unlimited" /></div>
       <div class="field"><label>Programs</label><div id="ccProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
-      <div class="field"><label>Class Access <span style="color:var(--muted);font-weight:normal">(optional — leave all unchecked for every class in the selected programs)</span></label><div id="ccClassChecks" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div></div></div>
+      <div class="field"><label>Class Access <span style="color:var(--muted);font-weight:normal">(optional — leave all unchecked for every class in the selected programs, now and future)</span></label><div id="ccClassChecks" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div></div></div>
       <div class="field" id="ccBeltField" style="display:none"><label>Current Belt <span style="color:var(--muted);font-weight:normal">(set the student's rank)</span></label><select id="ccBelt"><option value="">-- No change --</option></select><div id="ccBeltHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem"></div></div>
       <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Billing</div>
       <div class="form-row">
@@ -6291,11 +6291,15 @@ function renderCheckoutItemArea(cat){
       '</div>' +
       '<button class="btn-sm" style="font-size:0.72rem" onclick="checkoutAddCustom()"><i class="fa-solid fa-plus"></i> Add to cart</button>';
   }
+  var craftBtn = '';
+  if (cat === 'membership' && currentProfileStudent && typeof _checkout !== 'undefined' && _checkout && currentProfileStudent.id === _checkout.studentId){
+    craftBtn = '<button class="btn-sm" style="font-size:0.72rem;margin-bottom:0.7rem" onclick="closeCheckout();openCraftCustomMembership()"><i class="fa-solid fa-plus"></i> Craft Custom Membership</button>';
+  }
   var items = checkoutCatItems(cat);
   if (!items.length){
-    return '<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No active items in this category.</div>';
+    return craftBtn + '<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No active items in this category.</div>';
   }
-  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0.6rem">';
+  var html = craftBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0.6rem">';
   items.forEach(function(it){
     var sub = it.kind === 'sessionpack' && it.sessions ? (it.sessions + ' sessions') : '';
     html += '' +
