@@ -6070,8 +6070,82 @@ function ccToggleLimit(){
   document.getElementById('ccLimitCountField').style.display=(t==='unlimited')?'none':'block';
 }
 
-/* Bite 4 replaces this stub with the create-and-sell wiring */
-function saveCraftCustomMembership(){ setMsg('ccMsg','Builder UI only — create & assign wiring lands in the next step.','error'); }
+async function saveCraftCustomMembership(){
+  if(!currentProfileStudent){ setMsg('ccMsg','No student in context.','error'); return; }
+  var sid=currentProfileStudent.id;
+  var name=document.getElementById('ccName').value.trim();
+  var price=document.getElementById('ccPrice').value;
+  var pids=ccCheckedPrograms();
+  if(!name){ setMsg('ccMsg','Membership name required.','error'); return; }
+  if(!pids.length){ setMsg('ccMsg','Select at least one program.','error'); return; }
+  if(price===''||isNaN(parseFloat(price))){ setMsg('ccMsg','Price required.','error'); return; }
+  var limitType=document.getElementById('ccLimitType').value;
+  var limitCount=document.getElementById('ccLimitCount').value;
+  if(limitType!=='unlimited' && !limitCount){ setMsg('ccMsg','Number of classes required for a per-week / per-month limit.','error'); return; }
+  var classIds=[]; var cce=document.querySelectorAll('.cc-class-check:checked');
+  for(var i=0;i<cce.length;i++){ classIds.push(cce[i].value); }
+  var mode=(document.querySelector('input[name="ccBillingMode"]:checked')||{}).value||'stripe';
+  var firstCharge=document.getElementById('ccFirstCharge').value||null;
+  var beltId=document.getElementById('ccBelt').value||null;
+
+  setMsg('ccMsg','Creating membership...','');
+  document.getElementById('ccSaveBtn').disabled=true;
+
+  var cr=await sb.rpc('create_custom_membership',{
+    p_name:name,
+    p_billing_type:document.getElementById('ccType').value,
+    p_billing_length:parseInt(document.getElementById('ccLength').value)||1,
+    p_billing_unit:document.getElementById('ccUnit').value,
+    p_price:parseFloat(price)||0,
+    p_signup_fee:parseFloat(document.getElementById('ccSignup').value)||0,
+    p_class_limit_type:limitType,
+    p_class_limit_count:limitCount?parseInt(limitCount):null,
+    p_program_ids:pids,
+    p_class_ids:classIds.length?classIds:null
+  });
+  if(cr.error || !cr.data){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',(cr.error?cr.error.message:'Could not create membership.'),'error'); return; }
+  var mid=cr.data;
+
+  if(beltId){ await sb.from('students').update({current_belt_id:beltId}).eq('id',sid); }
+
+  if(mode==='cash'){
+    var nowIso=new Date().toISOString(); var today=nowIso.split('T')[0];
+    var pr=await sb.from('payments').insert({school_id:SID,student_id:sid,amount:parseFloat(price)||0,type:'membership',status:'paid',description:'Cash - '+name,created_at:nowIso,paid_at:nowIso});
+    if(pr.error){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',pr.error.message,'error'); return; }
+    await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
+    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:nowIso,start_date:today});
+    setMsg('ccMsg','Custom membership created and recorded (cash).','success');
+  }else{
+    var payload={school_id:SID,student_id:sid,membership_id:mid};
+    if(firstCharge) payload.first_charge_date=firstCharge;
+    try{
+      var r=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)});
+      var data=await r.json();
+      if(!r.ok||!data||data.error){
+        await sb.from('memberships').update({active:false}).eq('id',mid); /* roll back the unsold custom plan */
+        document.getElementById('ccSaveBtn').disabled=false;
+        var em=(data&&data.error)?String(data.error):'';
+        var friendly = em.indexOf('NO_SAVED_CARD')===0 ? 'No card on file — have the student save a card (portal update-card tile), then try again.'
+          : em.indexOf('AUTHENTICATION_REQUIRED')===0 ? 'Card needs 3-D Secure verification — have them re-save the card via the portal, then try again.'
+          : em.indexOf('ALREADY_SUBSCRIBED')===0 ? 'This student already has an active membership. Cancel the existing one first.'
+          : (em.replace(/^[A-Z_]+:\s*/,'')||'The charge did not go through.');
+        setMsg('ccMsg',friendly,'error');
+        return;
+      }
+      if(data.scheduled){ setMsg('ccMsg','Custom membership activated. First charge scheduled for '+data.first_charge_date+'.','success'); }
+      else { setMsg('ccMsg','Custom membership activated and charged.','success'); }
+    }catch(e){
+      await sb.from('memberships').update({active:false}).eq('id',mid);
+      document.getElementById('ccSaveBtn').disabled=false;
+      setMsg('ccMsg',(e&&e.message)?e.message:'Network error.','error'); return;
+    }
+  }
+
+  await loadMemberships();
+  if(typeof openStudentProfile==='function'){ await openStudentProfile(sid); }
+  document.getElementById('ccSaveBtn').disabled=false;
+  setTimeout(closeCraftCustom,1200);
+}
 
 /* ---- entry points ---- */
 function openProfileCheckout(){
