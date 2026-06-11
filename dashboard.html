@@ -8394,7 +8394,7 @@ async function loadMemberships(){
 }
 async function renderMemberships(){
   var tb=document.getElementById('membershipsTableBody');
-  var nonClassPack=allMemberships.filter(function(m){return m.class_limit_type!=='class_pack';});
+  var nonClassPack=allMemberships.filter(function(m){return m.class_limit_type!=='class_pack' && !m.is_custom;});
   if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">'+(allPrograms.length?'<div style="font-style:italic;margin-bottom:0.5rem">Memberships are how members pay to train.</div><button class="panel-action" onclick="openAddMembership()"><i class="fa-solid fa-plus"></i> Add your first membership</button>':'<div style="font-style:italic;margin-bottom:0.5rem">Create a program first, then add a membership.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</td></tr>';return;}
   var mpR=await sb.from('membership_programs').select('membership_id,program_id'); var mpData=mpR.data||[];
   tb.innerHTML=nonClassPack.map(function(m){
