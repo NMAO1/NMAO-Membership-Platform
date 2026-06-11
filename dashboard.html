@@ -2030,6 +2030,42 @@
   </div>
 </div>
 
+<!-- §MODAL-CUSTOM-MEMBERSHIP -->
+<div class="modal-overlay" id="craftCustomModal">
+  <div class="modal" style="width:600px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title">Craft Custom Membership</span><button class="modal-close" onclick="safeClose('craftCustomModal',closeCraftCustom)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">For</div>
+      <div id="ccStudentName" style="font-size:1rem;color:var(--white);margin-bottom:1rem"></div>
+      <div class="field"><label>Membership Name</label><input type="text" id="ccName" placeholder="e.g. Legacy Unlimited" /></div>
+      <div class="field"><label>Programs</label><div id="ccProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
+      <div class="field"><label>Class Access <span style="color:var(--muted);font-weight:normal">(optional — leave all unchecked for every class in the selected programs)</span></label><div id="ccClassChecks" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div></div></div>
+      <div class="field" id="ccBeltField" style="display:none"><label>Current Belt <span style="color:var(--muted);font-weight:normal">(set the student's rank)</span></label><select id="ccBelt"><option value="">-- No change --</option></select><div id="ccBeltHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem"></div></div>
+      <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Billing</div>
+      <div class="form-row">
+        <div class="field"><label>Type</label><select id="ccType"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+        <div class="field"><label>Length</label><div style="display:flex;gap:0.5rem"><input type="number" id="ccLength" value="1" min="1" max="12" style="width:60px" /><select id="ccUnit"><option value="months">Months</option><option value="weeks">Weeks</option></select></div></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Price</label><input type="number" id="ccPrice" placeholder="0.00" min="0" step="0.01" /></div>
+        <div class="field"><label>Signup Fee</label><input type="number" id="ccSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div>
+        <div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div>
+      </div>
+      <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(blank = charge today; a future date defers the first charge while the membership is active now)</span></label><input type="date" id="ccFirstCharge" /></div>
+      <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Payment</div>
+      <div class="check-group" style="flex-direction:column;gap:0.5rem">
+        <label class="check-item"><input type="radio" name="ccBillingMode" value="stripe" checked /><span class="check-item-label">Auto-bill card on file (Stripe)</span></label>
+        <label class="check-item"><input type="radio" name="ccBillingMode" value="cash" /><span class="check-item-label">Cash / manual — record payment, no auto-billing</span></label>
+      </div>
+      <button id="ccSaveBtn" class="btn-gold-full" onclick="saveCraftCustomMembership()">Create &amp; Assign</button>
+      <p class="form-msg" id="ccMsg"></p>
+    </div>
+  </div>
+</div>
+
 <!-- §MODAL-ADDSTUDENT -->
 <div class="modal-overlay" id="addStudentModal">
   <div class="modal" style="width:560px;max-width:95vw">
@@ -5968,6 +6004,74 @@ function ensureCheckoutModal(){
   ].join('');
   document.body.appendChild(ov);
 }
+
+/* §JS: CRAFT-CUSTOM-MEMBERSHIP — per-student one-off membership builder (opens from member profile) */
+function closeCraftCustom(){ document.getElementById('craftCustomModal').classList.remove('active'); }
+
+function openCraftCustomMembership(){
+  if(!currentProfileStudent){return;}
+  var s=currentProfileStudent;
+  document.getElementById('ccStudentName').textContent=((s.first_name||'')+' '+(s.last_name||'')).trim();
+  document.getElementById('ccName').value='';
+  document.getElementById('ccPrice').value='';
+  document.getElementById('ccSignup').value='0';
+  document.getElementById('ccLength').value='1';
+  document.getElementById('ccUnit').value='months';
+  document.getElementById('ccType').value='monthly';
+  document.getElementById('ccLimitType').value='unlimited';
+  document.getElementById('ccLimitCount').value='';
+  document.getElementById('ccLimitCountField').style.display='none';
+  document.getElementById('ccFirstCharge').value='';
+  document.getElementById('ccMsg').textContent='';
+  var sm=document.querySelector('input[name="ccBillingMode"][value="stripe"]'); if(sm)sm.checked=true;
+  var pc=document.getElementById('ccProgramChecks');
+  if(!allPrograms.length){ pc.innerHTML='<div style="color:var(--muted);font-size:0.85rem;font-style:italic">No programs yet.</div>'; }
+  else{ pc.innerHTML=allPrograms.map(function(p){return '<label class="check-item"><input type="checkbox" class="cc-prog-check" value="'+p.id+'" onchange="ccOnProgramsChange()"/><span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.4rem"></span><span class="check-item-label">'+p.name+'</span></label>';}).join(''); }
+  document.getElementById('ccClassChecks').innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div>';
+  document.getElementById('ccBeltField').style.display='none';
+  document.getElementById('ccBelt').innerHTML='<option value="">-- No change --</option>';
+  document.getElementById('craftCustomModal').classList.add('active');
+}
+
+function ccCheckedPrograms(){
+  var out=[]; var els=document.querySelectorAll('.cc-prog-check:checked');
+  for(var i=0;i<els.length;i++){ out.push(els[i].value); }
+  return out;
+}
+
+async function ccOnProgramsChange(){
+  var pids=ccCheckedPrograms();
+  var cc=document.getElementById('ccClassChecks');
+  if(!pids.length){ cc.innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div>'; }
+  else{
+    var arr=(allClasses||[]).filter(function(c){return pids.indexOf(c.program_id)!==-1;});
+    if(!arr.length){ cc.innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">No classes in the selected programs.</div>'; }
+    else{ cc.innerHTML=arr.map(function(c){var dn=c.name||c.title||'Untitled';return '<label class="check-item"><input type="checkbox" class="cc-class-check" value="'+c.id+'"/><span class="check-item-label">'+dn+(c.start_time?' <span style="color:var(--muted)">'+fmtTime(c.start_time)+'</span>':'')+'</span></label>';}).join(''); }
+  }
+  var beltField=document.getElementById('ccBeltField');
+  var beltSel=document.getElementById('ccBelt');
+  var hint=document.getElementById('ccBeltHint');
+  var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;});
+  var bsId=firstProg?firstProg.belt_system_id:null;
+  if(!bsId){ beltField.style.display='none'; beltSel.innerHTML='<option value="">-- No change --</option>'; return; }
+  beltField.style.display='block';
+  beltSel.innerHTML='<option value="">Loading...</option>';
+  var blR=await sb.from('belt_levels').select('id,name,sort_order').eq('belt_system_id',bsId).order('sort_order');
+  var levels=blR.data||[];
+  var cur=currentProfileStudent?currentProfileStudent.current_belt_id:null;
+  var html='<option value="">-- No change --</option>';
+  levels.forEach(function(b){ html+='<option value="'+b.id+'"'+(b.id===cur?' selected':'')+'>'+b.name+'</option>'; });
+  beltSel.innerHTML=html;
+  hint.textContent=(firstProg?firstProg.name:'')+' belt system'+(pids.length>1?' (first selected program)':'');
+}
+
+function ccToggleLimit(){
+  var t=document.getElementById('ccLimitType').value;
+  document.getElementById('ccLimitCountField').style.display=(t==='unlimited')?'none':'block';
+}
+
+/* Bite 4 replaces this stub with the create-and-sell wiring */
+function saveCraftCustomMembership(){ setMsg('ccMsg','Builder UI only — create & assign wiring lands in the next step.','error'); }
 
 /* ---- entry points ---- */
 function openProfileCheckout(){
