@@ -4230,7 +4230,7 @@ function renderSessionPacks(){
 
 function renderClassPacks(){
   var el=document.getElementById('classPacksList'); if(!el) return;
-  var classPacks=allMemberships.filter(function(m){return m.class_limit_type==='class_pack';});
+  var classPacks=allMemberships.filter(function(m){return m.class_limit_type==='class_pack' && !m.is_custom;});
   if(!classPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No class packs yet.</div>';return;}
   el.innerHTML=classPacks.map(function(m){
     var count=m.class_limit_count||0;
@@ -5180,7 +5180,7 @@ async function filterMembershipsForProgram() {
   var r = await sb.from('membership_programs').select('membership_id').eq('program_id',pid);
   if (r.error || !r.data || !r.data.length) { sel.innerHTML='<option value="">No memberships for this program</option>'; return; }
   var ids  = r.data.map(function(x){ return x.membership_id; });
-  var mems = allMemberships.filter(function(m){ return ids.indexOf(m.id) !== -1; });
+  var mems = allMemberships.filter(function(m){ return ids.indexOf(m.id) !== -1 && !m.is_custom; });
   if (!mems.length) { sel.innerHTML='<option value="">No memberships for this program</option>'; return; }
   sel.innerHTML = '<option value="">-- Select --</option>';
   mems.forEach(function(m){ var o=document.createElement('option'); o.value=m.id; var p='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':''); o.textContent=m.name+' - '+p; sel.appendChild(o); });
@@ -5950,7 +5950,7 @@ function buildImportPreview(){
 }
 async function runImport(){
   setMsg('importMsg','Importing...',''); var imported=0; var skipped=0; var errors=[];
-  var defaultProgId=allPrograms.length?allPrograms[0].id:null; var defaultMemId=allMemberships.length?allMemberships[0].id:null;
+  var defaultProgId=allPrograms.length?allPrograms[0].id:null; var _ncm=allMemberships.filter(function(m){return !m.is_custom;}); var defaultMemId=_ncm.length?_ncm[0].id:null;
   for(var i=0;i<importCSVData.length;i++){
     var row=importCSVData[i];
     var first=getMappedField('first_name')?row[getMappedField('first_name')]:''; var last=getMappedField('last_name')?row[getMappedField('last_name')]:'';
@@ -6407,13 +6407,13 @@ function checkoutCatItems(cat){
   var arrR = (typeof allProducts !== 'undefined' && allProducts) ? allProducts : [];
   if (cat === 'membership'){
     arrM.forEach(function(m){
-      if (m.active && m.class_limit_type !== 'class_pack'){
+      if (m.active && !m.is_custom && m.class_limit_type !== 'class_pack'){
         out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'membership', billing_type:m.billing_type });
       }
     });
   } else if (cat === 'classpack'){
     arrM.forEach(function(m){
-      if (m.active && m.class_limit_type === 'class_pack'){
+      if (m.active && !m.is_custom && m.class_limit_type === 'class_pack'){
         out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'classpack' });
       }
     });
@@ -7457,7 +7457,7 @@ async function populateStripeChargeMemDropdown() {
   var html = '<option value="">-- Select a Plan --</option>';
   allPrograms.forEach(function(prog) {
     var progMemIds = mpData.filter(function(x){return x.program_id===prog.id;}).map(function(x){return x.membership_id;});
-    var progMems = allMemberships.filter(function(m){return progMemIds.indexOf(m.id)!==-1;});
+    var progMems = allMemberships.filter(function(m){return progMemIds.indexOf(m.id)!==-1 && !m.is_custom;});
     if (progMems.length) {
       html += '<optgroup label="'+prog.name+'">';
       progMems.forEach(function(m) {
@@ -12348,7 +12348,7 @@ var url = APP_URL + "event.html?id=" + window.currentEventId;
     });
 
     // Memberships
-    (window.allMemberships || []).forEach(function(m){
+    (window.allMemberships || []).forEach(function(m){       if (m.is_custom) return;
       var name = (m.name || "").toLowerCase();
       if (name && name.indexOf(q) !== -1) {
         results.push({
