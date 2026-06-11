@@ -2051,7 +2051,7 @@
         <div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div>
         <div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div>
       </div>
-      <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(blank = charge today; a future date defers the first charge while the membership is active now)</span></label><input type="date" id="ccFirstCharge" /></div>
+      <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(the next charge date — future only. For a migrated member, set it to their next billing date; the membership is active now and bills from this date onward. Blank = charge today.)</span></label><input type="date" id="ccFirstCharge" /></div>
       <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Payment</div>
       <div class="check-group" style="flex-direction:column;gap:0.5rem">
         <label class="check-item"><input type="radio" name="ccBillingMode" value="stripe" checked /><span class="check-item-label">Auto-bill card on file (Stripe)</span></label>
@@ -5299,7 +5299,7 @@ function switchProfileTab(tab) {
 
 async function loadProfileMemberships(sid) {
   try {
-    var r = await sb.from('student_memberships').select('*, memberships(name,billing_type,price)').eq('student_id',sid).eq('status','active');
+    var r = await sb.from('student_memberships').select('*, memberships(name,billing_type,price,billing_length,billing_unit)').eq('student_id',sid).eq('status','active');
     var data = r.data||[];
     var el = document.getElementById('profileMembershipslist');
     if (!data.length) {
@@ -5308,7 +5308,9 @@ async function loadProfileMemberships(sid) {
     }
     el.innerHTML = data.map(function(sm){
       var m=sm.memberships; var name=m?m.name:'--';
-      var price=m?'$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':''):'--';
+      var _bl=parseInt(m&&m.billing_length,10);
+      var freqLabel=(m&&m.billing_type==='monthly')?((m.billing_unit==='months'&&_bl>1)?(' every '+_bl+' months'):'/mo'):(m&&m.billing_type==='yearly'?'/yr':'');
+      var price=m?'$'+parseFloat(m.price||0).toFixed(2)+freqLabel:'--';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border)"><div><div style="font-size:0.85rem;color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--gold)">'+price+'</div></div><button onclick="removeStudentMembership(\''+sm.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
