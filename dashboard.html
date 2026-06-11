@@ -2665,6 +2665,13 @@ var SID = null;
 var ownerEmail = null;
 var APP_URL = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
 var sb   = supabase.createClient(SURL, SKEY);
+// §SC_BEARER — current session token for owner/instructor-authenticated EF calls
+// (send-communication). Falls back to anon when signed out; the EF rejects anon, so the
+// fallback is harmless. Refreshed on every auth event incl. hourly token refresh.
+var SC_BEARER = 'Bearer ' + SKEY;
+sb.auth.onAuthStateChange(function(_e, session){
+  SC_BEARER = 'Bearer ' + ((session && session.access_token) || SKEY);
+});
   // §SESSION-GUARD — Multi-tenant identity verification and display
 // §UTILS — timezone-safe local date string (returns YYYY-MM-DD in viewer local time)
 // Use instead of localDateStr(d) which silently shifts to UTC after 7pm ET
@@ -5002,7 +5009,7 @@ async function sendUpdateCardLinkSMS(){
   try{
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
       body: JSON.stringify({
         school_id: SID,
         channel: 'sms',
@@ -6678,7 +6685,7 @@ async function checkoutLinkEmail(){
   try {
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
       body: JSON.stringify({
         school_id: SID, type: 'email', subject: subject, body: bodyHtml,
         recipients: [{ id: s.id, email: s.email, name: checkoutStudentLabel(), phone: s.phone || null }],
@@ -6708,7 +6715,7 @@ async function checkoutLinkSms(){
   try {
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
       body: JSON.stringify({
         school_id: SID, type: 'sms', body: smsBody,
         recipients: [{ id: s.id, phone: s.phone, name: checkoutStudentLabel(), email: s.email || null }]
@@ -7178,7 +7185,7 @@ async function emailCheckoutLink() {
   try {
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
       body: JSON.stringify({
         school_id: SID,
         type: 'email',
@@ -7230,7 +7237,7 @@ async function smsCheckoutLink() {
   try {
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
       body: JSON.stringify({
         school_id: SID,
         type: 'sms',
@@ -8802,7 +8809,7 @@ async function sendPOSPaymentLinkSMS(){
   try{
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
       body: JSON.stringify({
         school_id: SID,
         channel: 'sms',
@@ -8954,7 +8961,7 @@ async function sendCommunication(){
     try{
       var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
         body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients,audience:audience,reply_to:ownerEmail})
       });
       var ej=await r.json().catch(function(){return{};});
@@ -8968,7 +8975,7 @@ async function sendCommunication(){
     try{
       var rs=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
         body:JSON.stringify({school_id:SID,type:'sms',body:body,recipients:smsRecipients,audience:audience})
       });
       var es=await rs.json().catch(function(){return{};});
@@ -10062,7 +10069,7 @@ async function runReport(){
     try{
      var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
         body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:emailBody,recipients:emailRecipients,reply_to:ownerEmail})
       });
       if(r.ok){emailSent=emailRecipients.length;}
@@ -10074,7 +10081,7 @@ async function runReport(){
     try{
       var sr=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
         body:JSON.stringify({school_id:SID,type:'sms',body:smsBody,recipients:smsRecipients})
       });
       if(sr.ok){smsSent=smsRecipients.length;}
@@ -11547,7 +11554,7 @@ window.closeWelcomeModal = async function() {
     try {
       var r = await fetch(SURL + "/functions/v1/send-communication", {
         method: "POST",
-        headers: {"Content-Type":"application/json","Authorization":"Bearer "+SKEY},
+        headers: {"Content-Type":"application/json","Authorization":SC_BEARER},
         body: JSON.stringify({school_id: SID, type: "email", subject: subj, body: body, recipients: recipients, reply_to: ownerEmail})
       });
       if (!r.ok) {
