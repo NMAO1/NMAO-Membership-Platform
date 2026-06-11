@@ -358,12 +358,12 @@ function buildWelcomePanel(d){
 //  §JS: LOAD_DATA
 // ─────────────────────────────────────────────────────────────
 async function loadStudents(){
-  var r=await sb.from('students').select('*, programs(name,color)').eq('school_id',SID).eq('status','active').order('last_name');
+var r=await sb.rpc('kiosk_roster',{p_school_id:SID});
   allStudents=r.data||[];
 }
 
 async function loadFamilies(){
-  try{var r=await sb.from('families').select('*').eq('school_id',SID).order('name');allFamilies=r.data||[];}catch(e){allFamilies=[];}
+  try{var r=await sb.rpc('kiosk_families',{p_school_id:SID});allFamilies=r.data||[];}catch(e){allFamilies=[];}
 }
 
 async function loadPrograms(){
