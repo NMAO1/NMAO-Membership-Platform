@@ -2064,6 +2064,7 @@
         <label class="check-item"><input type="radio" name="ccBillingMode" value="stripe" checked /><span class="check-item-label">Auto-bill card on file (Stripe)</span></label>
         <label class="check-item"><input type="radio" name="ccBillingMode" value="cash" /><span class="check-item-label">Cash / manual — record payment, no auto-billing</span></label>
       </div>
+      <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccAutoSendCard" checked /><span class="check-item-label">If the student has no card, activate now and text them a card link automatically <span style="color:var(--muted)">(off = you'll send it yourself)</span></span></label>
       <button id="ccSaveBtn" class="btn-gold-full" onclick="saveCraftCustomMembership()">Create &amp; Assign</button>
       <p class="form-msg" id="ccMsg"></p>
     </div>
@@ -6038,6 +6039,7 @@ function openCraftCustomMembership(){
   document.getElementById('ccFirstCharge').value='';
   document.getElementById('ccMsg').textContent='';
   var sm=document.querySelector('input[name="ccBillingMode"][value="stripe"]'); if(sm)sm.checked=true;
+  var asc=document.getElementById('ccAutoSendCard'); if(asc)asc.checked=true;
   var pc=document.getElementById('ccProgramChecks');
   if(!allPrograms.length){ pc.innerHTML='<div style="color:var(--muted);font-size:0.85rem;font-style:italic">No programs yet.</div>'; }
   else{ pc.innerHTML=allPrograms.map(function(p){return '<label class="check-item"><input type="checkbox" class="cc-prog-check" value="'+p.id+'" onchange="ccOnProgramsChange()"/><span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.4rem"></span><span class="check-item-label">'+p.name+'</span></label>';}).join(''); }
@@ -6140,11 +6142,30 @@ var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;
       var r=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)});
       var data=await r.json();
       if(!r.ok||!data||data.error){
-        await sb.from('memberships').update({active:false}).eq('id',mid); /* roll back the unsold custom plan */
-        document.getElementById('ccSaveBtn').disabled=false;
         var em=(data&&data.error)?String(data.error):'';
-        var friendly = em.indexOf('NO_SAVED_CARD')===0 ? 'No card on file — have the student save a card (portal update-card tile), then try again.'
-          : em.indexOf('AUTHENTICATION_REQUIRED')===0 ? 'Card needs 3-D Secure verification — have them re-save the card via the portal, then try again.'
+        if(em.indexOf('NO_SAVED_CARD')===0){
+          /* Collect-card-later: activate the membership now, awaiting the student's card.
+             The webhook creates the subscription automatically once they save one. */
+          var awIso=new Date().toISOString();
+          var awStart=document.getElementById('ccStartDate')?(document.getElementById('ccStartDate').value||null):null;
+          await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
+          await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:awIso,start_date:(awStart||awIso.split('T')[0]),first_charge_date:(firstCharge||null),awaiting_card:true});
+          var autoSend=document.getElementById('ccAutoSendCard')?document.getElementById('ccAutoSendCard').checked:true;
+          var sentMsg;
+          if(autoSend){
+            try{ await autoSendCardLink(sid); sentMsg='card link texted to the student'; }
+            catch(e3){ sentMsg=(e3&&e3.message==='NO_PHONE')?'no phone on file — use the profile Send Card Link button':'could not auto-send — use the profile Send Card Link button'; }
+          } else { sentMsg='no link sent — use the profile Send Card Link button when ready'; }
+          document.getElementById('ccSaveBtn').disabled=false;
+          setMsg('ccMsg','Membership activated — awaiting card ('+sentMsg+'). Billing starts automatically once they add a card'+(firstCharge?(' (first charge '+firstCharge+')'):'')+'.','success');
+          await loadMemberships();
+          if(typeof openStudentProfile==='function'){ await openStudentProfile(sid); }
+          setTimeout(closeCraftCustom,2000);
+          return;
+        }
+        await sb.from('memberships').update({active:false}).eq('id',mid); /* roll back the unsold custom plan (non-card errors only) */
+        document.getElementById('ccSaveBtn').disabled=false;
+        var friendly = em.indexOf('AUTHENTICATION_REQUIRED')===0 ? 'Card needs 3-D Secure verification — have them re-save the card via the portal, then try again.'
           : em.indexOf('ALREADY_SUBSCRIBED')===0 ? 'This student already has an active membership. Cancel the existing one first.'
           : (em.replace(/^[A-Z_]+:\s*/,'')||'The charge did not go through.');
         setMsg('ccMsg',friendly,'error');
@@ -6317,6 +6338,20 @@ function openUpcomingBreakdown(win){
     items.forEach(function(x){ var badge=x.mode==='auto'?'<span style="font-size:0.62rem;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.05rem 0.3rem">AUTO</span>':'<span style="font-size:0.62rem;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:0.05rem 0.3rem">CASH</span>'; html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+x.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+smDateLabel(x.date)+' &nbsp; '+badge+'</div></div><div style="color:var(--gold)">$'+x.amount.toFixed(2)+'</div></div>'; });
   }
   document.getElementById('revBreakdownList').innerHTML=html;
+}
+
+async function autoSendCardLink(sid){
+  var lr=await fetch(SURL+'/functions/v1/create-card-update-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,student_id:sid,success_url:window.location.origin+window.location.pathname+'?card_updated=1',cancel_url:window.location.origin+window.location.pathname+'?card_update_cancelled=1'})});
+  var ld=await lr.json();
+  if(ld.error||!ld.url) throw new Error(ld.error||'Could not generate link');
+  var fn='there', ph='';
+  if(currentProfileStudent && currentProfileStudent.id===sid){ fn=currentProfileStudent.first_name||'there'; ph=currentProfileStudent.phone||''; }
+  else { var sr=await sb.from('students').select('first_name,phone').eq('id',sid).single(); if(sr.data){ fn=sr.data.first_name||'there'; ph=sr.data.phone||''; } }
+  if(!ph) throw new Error('NO_PHONE');
+  var cr=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID,channel:'sms',body:'Hi '+fn+', please tap to update your card on file: '+ld.url,recipients:[{phone:ph,first_name:fn}]})});
+  var cd=await cr.json();
+  if(cd&&cd.error) throw new Error(cd.error);
+  return true;
 }
 
 /* ---- entry points ---- */
