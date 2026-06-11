@@ -671,6 +671,12 @@
         <div class="rev-card" onclick="openRevenueBreakdown('yesterday')"><div class="rev-amount" id="revYesterday">$0</div><div class="rev-label">Yesterday</div></div>
         <div class="rev-card" onclick="openRevenueBreakdown('month')"><div class="rev-amount" id="revMonth">$0</div><div class="rev-label">This Month</div></div>
       </div>
+     <div class="content-heading"><h2>Projected Income</h2><div class="rule-h"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:0.75rem">
+        <div class="rev-card" onclick="openUpcomingBreakdown(15)"><div class="rev-amount" id="upc15">$0</div><div class="rev-label">Next 15 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc15sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
+        <div class="rev-card" onclick="openUpcomingBreakdown(30)"><div class="rev-amount" id="upc30">$0</div><div class="rev-label">Next 30 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc30sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
+      </div>
+      <div id="upcPastDue" style="display:none;font-size:0.78rem;color:#E07070;margin-bottom:1.5rem;text-align:center"></div>
       <div class="content-heading"><h2>Calendar</h2><div class="rule-h"></div>
         <div class="cal-view-toggle">
           <button class="cal-view-btn" id="calViewWeek" onclick="setCalView('week')"><i class="fa-solid fa-calendar-week" style="margin-right:0.3rem"></i>Week</button>
@@ -4052,6 +4058,7 @@ async function loadRevenue(){
     document.getElementById('revToday').textContent='$'+sum(rt.data).toFixed(2);
     document.getElementById('revYesterday').textContent='$'+sum(ry.data).toFixed(2);
     document.getElementById('revMonth').textContent='$'+sum(rm.data).toFixed(2);
+    loadUpcomingRevenue();
     
   }catch(e){document.getElementById('revToday').textContent='$0.00';document.getElementById('revYesterday').textContent='$0.00';document.getElementById('revMonth').textContent='$0.00';}
 }
@@ -6196,9 +6203,12 @@ function mdRender(sm,m,progNames,classNames,pays){
   var since = sm.start_date ? smDateLabel(sm.start_date) : '\u2014';
   var next;
   if(sm.stripe_subscription_id){
-    if(sm.first_charge_date){ var fc=new Date((''+sm.first_charge_date)+'T12:00:00'); next = (fc.getTime()>Date.now()) ? smDateLabel(sm.first_charge_date) : ('Auto-renews '+smFreqWord(m)); }
-    else { next='Auto-renews '+smFreqWord(m); }
-  } else { next='\u2014 (manual)'; }
+    var _nd=smNextChargeDate(sm,m);
+    next = _nd ? (smDateLabel(_nd)+' ('+smFreqWord(m)+')') : ('Auto-renews '+smFreqWord(m));
+  } else {
+    var _ndc=smNextChargeDate(sm,m);
+    next = _ndc ? ('~'+smDateLabel(_ndc)+' (manual)') : '\u2014 (manual)';
+  }
   var scope = classNames.length ? classNames.join(', ') : (progNames.length ? ('All classes in '+progNames.join(', ')) : '\u2014');
   var usage;
   if(m.class_limit_type==='class_pack'){ usage=((sm.classes_remaining!=null)?sm.classes_remaining:'?')+' of '+(m.class_limit_count||'?')+' remaining'; }
@@ -6234,6 +6244,80 @@ function mdRender(sm,m,progNames,classNames,pays){
 function mdCancel(){ closeMembershipDetail(); if(typeof openCancelMembership==='function') openCancelMembership(); }
 function mdChangePlan(){ closeMembershipDetail(); if(currentProfileStudent && typeof openCheckout==='function') openCheckout(currentProfileStudent.id,'membership'); }
 function mdAddCard(){ closeMembershipDetail(); if(currentProfileStudent && typeof replaceStudentCard==='function') replaceStudentCard(currentProfileStudent.id); }
+
+/* ===== §UPCOMING-REVENUE — projected income (helpers shared with detail modal) ===== */
+function smParseDateLocal(s){ if(!s) return null; var str=''+s; if(str.indexOf('T')>-1){ var dd=new Date(str); return isNaN(dd.getTime())?null:dd; } var d=new Date(str+'T12:00:00'); return isNaN(d.getTime())?null:d; }
+function smIntervalMonths(m){ if(!m) return 1; if(m.billing_type==='yearly') return 12; if(m.billing_type==='monthly'&&m.billing_unit==='months'){ var n=parseInt(m.billing_length,10); return (n&&n>0)?n:1; } return 1; }
+function smChargeAmount(m, passFees){ var base=parseFloat((m&&m.price)||0); if(!passFees||base<=0) return base; var baseCents=Math.round(base*100); var grossCents=Math.round((baseCents+30)/(1-0.039)); return grossCents/100; }
+function smNextChargeDate(sm, m){
+  var now=new Date();
+  if(sm.first_charge_date){ var fc=smParseDateLocal(sm.first_charge_date); if(fc && fc.getTime()>now.getTime()) return fc; }
+  var anchorStr=sm.first_charge_date||sm.start_date||(sm.started_at?(''+sm.started_at).split('T')[0]:null);
+  var d=smParseDateLocal(anchorStr); if(!d) return null;
+  var iv=smIntervalMonths(m); var guard=0;
+  while(d.getTime()<=now.getTime() && guard<800){ d.setMonth(d.getMonth()+iv); guard++; }
+  return d;
+}
+
+var _upcoming=null;
+async function loadUpcomingRevenue(){
+  try{
+    var el15=document.getElementById('upc15'); if(!el15) return;
+    var passFees=false;
+    try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
+    var r=await sb.from('student_memberships').select('id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit)').eq('school_id',SID).in('status',['active','trialing','past_due']);
+    var rows=r.data||[];
+    var now=new Date();
+    var d15=new Date(now.getTime()+15*86400000); var d30=new Date(now.getTime()+30*86400000);
+    var a15=0,c15=0,a30=0,c30=0,pastDue=0,pastN=0; var list=[];
+    for(var i=0;i<rows.length;i++){
+      var sm=rows[i]; var m=sm.memberships||{};
+      var amt=smChargeAmount(m,passFees);
+      var mode=sm.stripe_subscription_id?'auto':'cash';
+      var nm=sm.students?(((sm.students.first_name||'')+' '+(sm.students.last_name||'')).trim()):'Member';
+      if(sm.status==='past_due'){ pastDue+=amt; pastN++; list.push({name:nm,date:null,amount:amt,mode:mode,status:'past_due'}); continue; }
+      if(parseFloat(m.price||0)<=0) continue;
+      var next=smNextChargeDate(sm,m); if(!next) continue;
+      if(next.getTime()>d30.getTime()) continue;
+      if(mode==='auto'){ a30+=amt; if(next.getTime()<=d15.getTime()) a15+=amt; }
+      else { c30+=amt; if(next.getTime()<=d15.getTime()) c15+=amt; }
+      list.push({name:nm,date:next,amount:amt,mode:mode,status:sm.status});
+    }
+    _upcoming={list:list,a15:a15,c15:c15,a30:a30,c30:c30,pastDue:pastDue,pastN:pastN};
+    paintUpcomingTile('upc15','upc15sub',a15,c15);
+    paintUpcomingTile('upc30','upc30sub',a30,c30);
+    var pd=document.getElementById('upcPastDue');
+    if(pd){ if(pastDue>0){ pd.style.display='block'; pd.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>$'+pastDue.toFixed(2)+' past due ('+pastN+' '+(pastN===1?'member':'members')+')'; } else { pd.style.display='none'; } }
+  }catch(e){}
+}
+function paintUpcomingTile(amtId,subId,auto,cash){
+  var total=auto+cash;
+  var a=document.getElementById(amtId); if(a) a.textContent='$'+total.toFixed(2);
+  var s=document.getElementById(subId);
+  if(s) s.innerHTML='<span style="color:var(--gold)"><i class="fa-solid fa-bolt"></i> $'+auto.toFixed(2)+'</span> auto &nbsp;\u00b7&nbsp; <span style="color:var(--white)"><i class="fa-solid fa-money-bill"></i> $'+cash.toFixed(2)+'</span> cash';
+}
+function openUpcomingBreakdown(win){
+  if(!_upcoming) return;
+  var now=new Date(); var lim=new Date(now.getTime()+win*86400000);
+  document.getElementById('revBreakdownTitle').textContent='Next '+win+' Days (Projected)';
+  var plEl=document.getElementById('revBreakdownPeriodLabel'); if(plEl) plEl.textContent='Next '+win+' days';
+  document.getElementById('revenueBreakdownModal').classList.add('active');
+  var items=_upcoming.list.filter(function(x){ return x.status!=='past_due' && x.date && x.date.getTime()<=lim.getTime(); });
+  items.sort(function(a,b){ return a.date.getTime()-b.date.getTime(); });
+  var total=items.reduce(function(s,x){return s+x.amount;},0);
+  document.getElementById('revBreakdownTotalAmt').textContent='$'+total.toFixed(2);
+  var html='';
+  if(!items.length){ html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No projected charges in this window.</div>'; }
+  else{
+    var autoT=items.filter(function(x){return x.mode==='auto';}).reduce(function(s,x){return s+x.amount;},0);
+    var cashT=total-autoT;
+    html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-bolt" style="color:var(--gold)"></i> Automated</div><div style="font-size:0.88rem;color:var(--gold)">$'+autoT.toFixed(2)+'</div></div>';
+    html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-money-bill"></i> Manual / cash</div><div style="font-size:0.88rem;color:var(--gold)">$'+cashT.toFixed(2)+'</div></div>';
+    html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Scheduled charges</div>';
+    items.forEach(function(x){ var badge=x.mode==='auto'?'<span style="font-size:0.62rem;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.05rem 0.3rem">AUTO</span>':'<span style="font-size:0.62rem;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:0.05rem 0.3rem">CASH</span>'; html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+x.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+smDateLabel(x.date)+' &nbsp; '+badge+'</div></div><div style="color:var(--gold)">$'+x.amount.toFixed(2)+'</div></div>'; });
+  }
+  document.getElementById('revBreakdownList').innerHTML=html;
+}
 
 /* ---- entry points ---- */
 function openProfileCheckout(){
