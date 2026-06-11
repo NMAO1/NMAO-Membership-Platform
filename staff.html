@@ -1143,6 +1143,19 @@ async function toggleCheckin(studentId,event){
           }
         }
       }
+      // §STAFF: EXPIRY_CHECK — expired pack prompts staff discretion (override allowed).
+      // Mirrors the cap-override pattern below; staff have judgment authority, kiosk does not.
+      if(primary&&primary.is_expired){
+        var expDateStr='';
+        if(primary.expires_at){
+          var ep=String(primary.expires_at).slice(0,10).split('-');
+          if(ep.length===3) expDateStr=' on '+ep[1]+'/'+ep[2]+'/'+ep[0];
+        }
+        if(!confirm('Class pack expired'+expDateStr+'.\n\nCheck in anyway?')){
+          if(btn){btn.classList.remove('loading');btn.disabled=false;}
+          return;
+        }
+      }
  if(primary&&primary.class_limit_count){
         var capLimit=parseInt(primary.class_limit_count)||0;
         if(capLimit>0){
