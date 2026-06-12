@@ -5808,6 +5808,7 @@ async function setStudentStatus(n){
   if(!currentProfileStudent) return;
   var c=currentProfileStudent.status||'trial';
   if(n===c) return;
+  if(!confirm('Change status from "'+c+'" to "'+n+'"? This updates their status only \u2014 it will not change or cancel their membership plan.')){ var pss=document.getElementById('profileStatusSelect'); if(pss) pss.value=c; return; }
   var now=new Date().toISOString();
   var update={status:n};
   if(n==='paused'){update.paused_at=now;}else if(c==='paused'&&n==='active'){update.paused_at=null;update.reactivated_at=now;}
