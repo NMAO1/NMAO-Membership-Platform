@@ -4854,7 +4854,7 @@ async function buildProfileFamily(sid){
 // §PROFILE-VITALS
 async function buildProfileVitals(sid){
   var el=document.getElementById('profileVitals'); if(!el) return;
-  var lastSeen='--', lastSeenDays=null, weekCount=0, monthCount=0, sessionBalance=0, hasSessionPack=false, classBalance=0, hasClassPack=false;
+  var lastSeen='--', lastSeenDays=null, weekCount=0, monthCount=0, sessionBalance=0, hasSessionPack=false, classBalance=0, hasClassPack=false, packTotal=0, memberCap=null, memberTermMonths=0, memberUnlimited=false, memberAnchor=null;
   var isMember=false, rollover=0, rolloverShow=false, statusTxt='--', statusColor='var(--muted)', expiringDays=null;
   try{
     var ar=await sb.from('class_attendance').select('noted_at').eq('student_id',sid).eq('status','present').order('noted_at',{ascending:false});
@@ -4874,7 +4874,7 @@ async function buildProfileVitals(sid){
     (pr.data||[]).forEach(function(p){ hasSessionPack=true; sessionBalance+=(p.sessions_remaining||0); });
   }catch(e){}
   try{
-    var smr=await sb.from('student_memberships').select('status,classes_remaining,classes_used,rollover_balance,expires_at,memberships(class_limit_type,rollover_enabled,class_limit_count)').eq('student_id',sid);
+    var smr=await sb.from('student_memberships').select('status,started_at,start_date,classes_remaining,classes_used,rollover_balance,expires_at,memberships(class_limit_type,rollover_enabled,class_limit_count,billing_length,billing_type)').eq('student_id',sid);
     var smdata=smr.data||[];
     smdata.forEach(function(m){
       var clt=m.memberships?m.memberships.class_limit_type:null;
@@ -4882,11 +4882,14 @@ async function buildProfileVitals(sid){
       if(clt==='class_pack'){
         if(active){
           var cap=(m.memberships&&m.memberships.class_limit_count!=null)?m.memberships.class_limit_count:null;
-          if(cap!=null){ hasClassPack=true; classBalance+=Math.max(cap-(m.classes_used||0),0); }
+          if(cap!=null){ hasClassPack=true; classBalance+=Math.max(cap-(m.classes_used||0),0); packTotal+=cap; }
           if(m.expires_at){ var d=Math.ceil((new Date(m.expires_at).getTime()-Date.now())/86400000); if(d>=0&&(expiringDays===null||d<expiringDays)) expiringDays=d; }
         }
       } else if(active){
         isMember=true;
+        var _mm=m.memberships||{};
+        if(_mm.class_limit_type==='unlimited'){ memberUnlimited=true; }
+        else if(_mm.class_limit_type==='per_week' && _mm.class_limit_count && memberCap===null){ memberCap=_mm.class_limit_count; memberTermMonths=(_mm.billing_type==='yearly')?12:(_mm.billing_length||1); memberAnchor=m.first_charge_date||m.start_date||m.started_at||null; }
         if(m.rollover_balance!=null) rollover+=m.rollover_balance;
         if((m.memberships&&m.memberships.rollover_enabled)||m.rollover_balance) rolloverShow=true;
       }
@@ -4895,11 +4898,32 @@ async function buildProfileVitals(sid){
     else if(smdata.some(function(m){return m.status==='active';})){ statusTxt='Active'; statusColor='#5A9A6A'; }
     else if(currentProfileStudent&&currentProfileStudent.status){ statusTxt=currentProfileStudent.status; }
   }catch(e){}
+  var classesTotal=null, classesLeft=null;
+  if(memberCap!==null){
+    classesTotal=memberCap*memberTermMonths*4;
+    var attendedTerm=0;
+    if(memberAnchor){
+      var _ta=new Date((''+memberAnchor).length<=10?memberAnchor+'T00:00:00':memberAnchor);
+      if(!isNaN(_ta.getTime())){
+        var _nowMs=Date.now();
+        while(true){ var _nx=new Date(_ta.getTime()); _nx.setMonth(_nx.getMonth()+memberTermMonths); if(_nx.getTime()<=_nowMs){ _ta=_nx; } else { break; } }
+        var _tsMs=_ta.getTime();
+        if(adata) adata.forEach(function(x){ if(new Date(x.noted_at).getTime()>=_tsMs) attendedTerm++; });
+      }
+    }
+    classesLeft=Math.max(classesTotal-attendedTerm,0);
+  }
   var tiles=[];
   tiles.push({l:'Last seen', v:lastSeen, c:'#F5F0E8'});
   tiles.push({l:'This week', v:weekCount+(weekCount===1?' visit':' visits'), c:'#F5F0E8'});
   tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
-  tiles.push({l:'Classes left', v:(hasClassPack?(classBalance+(classBalance===1?' class':' classes')):(isMember?'\u221E':'--')), c:'#F5F0E8'});
+  var classesVal;
+  if(memberUnlimited){ classesVal='\u221E'; }
+  else if(classesLeft!==null){ classesVal=classesLeft+' / '+classesTotal; }
+  else if(isMember){ classesVal='\u221E'; }
+  else { classesVal='--'; }
+  tiles.push({l:'Classes', v:classesVal, c:'#F5F0E8'});
+  tiles.push({l:'Class pack', v:(hasClassPack?(classBalance+' / '+packTotal):'--'), c:'#F5F0E8'});
   tiles.push({l:'Sessions left', v:(hasSessionPack?(sessionBalance+(sessionBalance===1?' session':' sessions')):'--'), c:'#F5F0E8'});
   tiles.push({l:'Membership', v:statusTxt, c:statusColor});
   el.innerHTML=tiles.map(function(t){
