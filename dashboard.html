@@ -4895,14 +4895,12 @@ async function buildProfileVitals(sid){
     else if(smdata.some(function(m){return m.status==='active';})){ statusTxt='Active'; statusColor='#5A9A6A'; }
     else if(currentProfileStudent&&currentProfileStudent.status){ statusTxt=currentProfileStudent.status; }
   }catch(e){}
-  var tiles=[{l:'Last seen', v:lastSeen, c:'#F5F0E8'}];
-  if(isMember||hasClassPack){
-    tiles.push({l:'This week', v:weekCount+(weekCount===1?' visit':' visits'), c:'#F5F0E8'});
-    tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
-    if(isMember&&rolloverShow) tiles.push({l:'Rollover', v:rollover+(rollover===1?' class':' classes'), c:'var(--gold)'});
-  }
-  if(hasClassPack) tiles.push({l:'Class pack balance', v:classBalance+(classBalance===1?' class':' classes'), c:'#F5F0E8'});
-  if(hasSessionPack) tiles.push({l:'Session balance', v:sessionBalance+(sessionBalance===1?' session':' sessions'), c:'#F5F0E8'});
+  var tiles=[];
+  tiles.push({l:'Last seen', v:lastSeen, c:'#F5F0E8'});
+  tiles.push({l:'This week', v:weekCount+(weekCount===1?' visit':' visits'), c:'#F5F0E8'});
+  tiles.push({l:'This month', v:monthCount+(monthCount===1?' class':' classes'), c:'#F5F0E8'});
+  tiles.push({l:'Classes left', v:(hasClassPack?(classBalance+(classBalance===1?' class':' classes')):(isMember?'\u221E':'--')), c:'#F5F0E8'});
+  tiles.push({l:'Sessions left', v:(hasSessionPack?(sessionBalance+(sessionBalance===1?' session':' sessions')):'--'), c:'#F5F0E8'});
   tiles.push({l:'Membership', v:statusTxt, c:statusColor});
   el.innerHTML=tiles.map(function(t){
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.7rem 0.85rem"><div style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+t.l+'</div><div style="font-size:1.15rem;color:'+t.c+';margin-top:0.2rem">'+t.v+'</div></div>';
