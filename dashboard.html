@@ -6690,6 +6690,9 @@ function checkoutRenderCardTile(){
   }
   var card = _checkout.card;
   if (!card || !card.has_card){
+    if (checkoutCartClass()==='membership' && (typeof checkoutMembershipIsRecurring!=='function' || checkoutMembershipIsRecurring())){
+      return checkoutMethodTile('card_later', 'Activate now, collect card later', 'fa-solid fa-hourglass-half', 'No card yet \u2014 activate the membership and text the student a link. Billing starts automatically once they add a card.', _checkout.method === 'card_later');
+    }
     return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'No card on file. Use Send Link to collect one, or Cash.');
   }
   var brand = (card.brand || 'card').toUpperCase();
@@ -6811,6 +6814,7 @@ function checkoutComplete(){
   if (_checkout.method === 'cash'){ checkoutCompleteCash(); return; }
   if (_checkout.method === 'link'){ checkoutCompleteLink(); return; }
   if (_checkout.method === 'card_on_file'){ checkoutCompleteCard(); return; }
+  if (_checkout.method === 'card_later'){ checkoutActivateAwaitingCard(); return; }
   setMsg('checkoutMsg', 'This payment method is wired in the next bite.', 'error');
 }
 
