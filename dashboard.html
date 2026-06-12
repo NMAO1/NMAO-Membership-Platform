@@ -5261,6 +5261,8 @@ async function openStudentProfile(sid) {
   var av  = document.getElementById('profileAvatar');
   if (s.photo_url) { av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />'; }
   else { av.innerHTML='<span id="profileInitials">'+ini+'</span>'; }
+  av.style.borderColor='#444';
+  var _bbReset=document.getElementById('profileBeltBadge'); if(_bbReset){ _bbReset.style.display='none'; _bbReset.textContent=''; _bbReset.style.background=''; _bbReset.style.color=''; }
   document.getElementById('profileName').textContent = s.first_name+' '+s.last_name;
   var st = s.status||'trial';
   var statusClass = st==='active'?'chip-active':st==='paused'?'chip-paused':st==='trial'?'chip-pending':'chip-expired';
