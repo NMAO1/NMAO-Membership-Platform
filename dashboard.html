@@ -6866,7 +6866,7 @@ async function checkoutCashMembership(){
   var mpR = await sb.from('membership_programs').select('program_id').eq('membership_id', line.id).limit(1);
   if (mpR.data && mpR.data.length) programId = mpR.data[0].program_id;
 
-  await sb.from('students').update({ status: 'active', membership_id: line.id }).eq('id', sid);
+  await sb.from('students').update({ status: 'active', membership_id: line.id, program_id: programId }).eq('id', sid);
 
   await sb.from('student_memberships').upsert({
     school_id: SID,
@@ -7201,7 +7201,7 @@ async function checkoutActivateAwaitingCard(){
     var pid=null;
     var mp=await sb.from('membership_programs').select('program_id').eq('membership_id',mid).limit(1);
     if(mp.data&&mp.data.length) pid=mp.data[0].program_id;
-    await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
+    await sb.from('students').update({status:'active',membership_id:mid,program_id:pid}).eq('id',sid);
     await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pid,status:'active',started_at:nowIso,start_date:nowIso.split('T')[0],first_charge_date:firstCharge,awaiting_card:true});
     var sentMsg;
     try{ await autoSendCardLink(sid); sentMsg='card link texted to the student'; }
