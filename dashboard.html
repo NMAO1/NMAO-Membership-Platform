@@ -6103,6 +6103,13 @@ async function saveCraftCustomMembership(){
   var startDate=document.getElementById('ccStartDate').value||null;
   var beltId=document.getElementById('ccBelt').value||null;
 
+  var existingActive=await sb.from('student_memberships').select('membership_id,memberships(name)').eq('student_id',sid).eq('status','active');
+  if(existingActive.data){
+    var nlc=name.toLowerCase();
+    var hasDup=false;
+    for(var di=0;di<existingActive.data.length;di++){ var em=existingActive.data[di].memberships; if(em&&em.name&&em.name.toLowerCase()===nlc){ hasDup=true; break; } }
+    if(hasDup){ setMsg('ccMsg','This student already has an active "'+name+'" plan. Edit the existing plan instead of crafting a duplicate.','error'); return; }
+  }
   setMsg('ccMsg','Creating membership...','');
   document.getElementById('ccSaveBtn').disabled=true;
 
