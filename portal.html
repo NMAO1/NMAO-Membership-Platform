@@ -1832,8 +1832,12 @@ function renderScheduleDay(){
       var badge=enrollBadgeHTML(liveCount,cap);
       var metaParts=[]; if(tags.length)metaParts.push(tags.join(' &bull; ')); if(badge)metaParts.push(badge);
       var metaHtml=metaParts.join(' &bull; ');
+      var _gated=(currentStudent && (currentStudent.status==='alumni'||currentStudent.status==='paused'||currentStudent.status==='lapsed'));
       var btnLabel,btnDisabled='';
-      if(isEnrolled){
+      if(_gated){
+        btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Renew to reserve';
+        btnDisabled=' disabled';
+      }else if(isEnrolled){
         btnLabel='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
       }else if(isFull){
         btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Full';
@@ -1857,6 +1861,7 @@ function navScheduleDay(dir){
 //  §JS: RSVP
 // ─────────────────────────────────────────────────────────────
 async function toggleRSVP(classId,sessionDate,btn){
+  if(currentStudent && (currentStudent.status==='alumni'||currentStudent.status==='paused'||currentStudent.status==='lapsed')){ alert('Your membership is currently inactive. Please renew to reserve classes.'); return; }
   if(!currentStudent) return;
   var enrollKey=classId+'_'+sessionDate;
   var isEnrolled=!!enrolledClasses[enrollKey];
