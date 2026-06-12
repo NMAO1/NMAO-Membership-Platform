@@ -6322,13 +6322,14 @@ async function loadUpcomingRevenue(){
     var el15=document.getElementById('upc15'); if(!el15) return;
     var passFees=false;
     try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
-    var r=await sb.from('student_memberships').select('id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit)').eq('school_id',SID).in('status',['active','trialing','past_due']);
+    var r=await sb.from('student_memberships').select('id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('status',['active','trialing','past_due']);
     var rows=r.data||[];
     var now=new Date();
     var d15=new Date(now.getTime()+15*86400000); var d30=new Date(now.getTime()+30*86400000);
     var a15=0,c15=0,a30=0,c30=0,pastDue=0,pastN=0; var list=[];
     for(var i=0;i<rows.length;i++){
       var sm=rows[i]; var m=sm.memberships||{};
+      if(m.class_limit_type==='class_pack') continue;
       var amt=smChargeAmount(m,passFees);
       var mode=sm.stripe_subscription_id?'auto':'cash';
       var nm=sm.students?(((sm.students.first_name||'')+' '+(sm.students.last_name||'')).trim()):'Member';
