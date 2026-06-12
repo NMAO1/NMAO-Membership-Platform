@@ -5278,12 +5278,22 @@ async function openStudentProfile(sid) {
     var asel=document.getElementById('profileAutopayDay');
     if (asel) { if(['anniversary','1','15'].includes(s.autopay_day_override)){asel.value=s.autopay_day_override;}else{asel.value='custom';document.getElementById('profileAutopayCustomDay').style.display='block';document.getElementById('profileAutopayCustomNum').value=s.autopay_day_override;} }
   }
-  var hasBelt = s.programs && s.programs.belt_system==='Belt Progression';
-  if (hasBelt) {
+  var beltProg = (s.programs && s.programs.belt_system==='Belt Progression' && s.programs.belt_system_id) ? s.programs : null;
+  if (!beltProg) {
+    var _mids = [];
+    if (s.membership_id) _mids.push(s.membership_id);
+    var _smB = await sb.from('student_memberships').select('membership_id').eq('student_id',sid).eq('status','active');
+    (_smB.data||[]).forEach(function(x){ if(x.membership_id && _mids.indexOf(x.membership_id)===-1) _mids.push(x.membership_id); });
+    if (_mids.length) {
+      var _mpB = await sb.from('membership_programs').select('program_id').in('membership_id',_mids);
+      var _pidsB = (_mpB.data||[]).map(function(x){return x.program_id;});
+      beltProg = (allPrograms||[]).find(function(p){ return _pidsB.indexOf(p.id)!==-1 && p.belt_system==='Belt Progression' && p.belt_system_id; }) || null;
+    }
+  }
+  if (beltProg) {
     document.getElementById('profileBeltSection').style.display='block';
     document.getElementById('promoteBtn').style.display='inline-flex';
-    var bsid = s.programs.belt_system_id;
-    if (bsid) { var br=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',bsid).order('sort_order'); currentProfileBeltLevels=br.data||[]; }
+    var br=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',beltProg.belt_system_id).order('sort_order'); currentProfileBeltLevels=br.data||[];
     await renderProfileBelt(s);
   } else {
     document.getElementById('profileBeltSection').style.display='none';
