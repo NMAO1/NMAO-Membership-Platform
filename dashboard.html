@@ -7182,6 +7182,33 @@ async function checkoutCompleteCard(force){
   }
 }
 
+/* Collect-card-later from checkout: activate the recurring membership now (awaiting card),
+   text the portal card link, and let the webhook create the subscription on card-save.
+   Reuses autoSendCardLink + the awaiting_card machinery from the custom-membership flow. */
+async function checkoutActivateAwaitingCard(){
+  setMsg('checkoutMsg','Activating\u2026','');
+  checkoutSetBusy(true);
+  try{
+    var sid=_checkout.studentId;
+    var mid=_checkout.cart[0].id;
+    var fcd=document.getElementById('checkoutFirstChargeDate');
+    var firstCharge=(fcd&&fcd.value)?fcd.value:null;
+    var nowIso=new Date().toISOString();
+    var pid=null;
+    var mp=await sb.from('membership_programs').select('program_id').eq('membership_id',mid).limit(1);
+    if(mp.data&&mp.data.length) pid=mp.data[0].program_id;
+    await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
+    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pid,status:'active',started_at:nowIso,start_date:nowIso.split('T')[0],first_charge_date:firstCharge,awaiting_card:true});
+    var sentMsg;
+    try{ await autoSendCardLink(sid); sentMsg='card link texted to the student'; }
+    catch(e2){ sentMsg=(e2&&e2.message==='NO_PHONE')?'no phone on file \u2014 use the profile Send Card Link button':'could not auto-send \u2014 use the profile Send Card Link button'; }
+    checkoutRefreshAfterSale();
+    checkoutShowSuccess('Membership activated \u2014 awaiting card ('+sentMsg+'). Billing starts automatically once they add a card'+(firstCharge?(' (first charge '+firstCharge+')'):'')+'.');
+  }catch(e){
+    checkoutCardError((e&&e.message)?e.message:'Could not activate.');
+  }
+}
+
 /* friendly error + one-click fallback to a payment link */
 function checkoutCardError(errStr){
   errStr = String(errStr || '');
@@ -7195,10 +7222,14 @@ function checkoutCardError(errStr){
   var msgEl = document.getElementById('checkoutMsg');
   if (msgEl){
     msgEl.className = 'form-msg error';
+    var _laterBtn='';
+    if(isNoCard && checkoutCartClass()==='membership' && (typeof checkoutMembershipIsRecurring!=='function' || checkoutMembershipIsRecurring())){
+      _laterBtn=' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutActivateAwaitingCard()"><i class="fa-solid fa-hourglass-half"></i> Activate now, collect card later</button>';
+    }
     msgEl.innerHTML = escapeCheckout(friendly) +
       (isDup
         ? ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteCard(true)"><i class="fa-solid fa-plus"></i> Add another anyway</button>'
-        : ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>');
+        : _laterBtn + ' <button class="btn-sm" style="margin-left:0.5rem" onclick="checkoutCompleteLink()"><i class="fa-solid fa-link"></i> Send a payment link instead</button>');
   }
   checkoutSetBusy(false);
 }
