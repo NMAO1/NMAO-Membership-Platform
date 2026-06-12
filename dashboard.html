@@ -880,7 +880,7 @@
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><div class="stat-label">Trial</div><div class="stat-value" id="statPending">0</div></div>
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-pause-circle"></i></div><div class="stat-label">Paused</div><div class="stat-value" id="statPaused">0</div></div>
       </div>
-      <div class="panel"><div class="panel-header"><span class="panel-title">Student Roster</span><span id="memberSearchCount" style="font-size:0.75rem;color:var(--muted)"></span></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Program</th><th>Membership</th><th>Status</th><th>Tags</th><th>Joined</th></tr></thead><tbody id="membersTableBody"></tbody></table></div></div>
+      <div class="panel"><div class="panel-header"><span class="panel-title">Student Roster</span><span id="memberSearchCount" style="font-size:0.75rem;color:var(--muted)"></span></div><div class="table-wrap"><table><thead><tr><th onclick="setMemberSort('name')" style="cursor:pointer;user-select:none">Name<span id="msArrow-name"></span></th><th onclick="setMemberSort('email')" style="cursor:pointer;user-select:none">Email<span id="msArrow-email"></span></th><th onclick="setMemberSort('program')" style="cursor:pointer;user-select:none">Program<span id="msArrow-program"></span></th><th onclick="setMemberSort('membership')" style="cursor:pointer;user-select:none">Membership<span id="msArrow-membership"></span></th><th onclick="setMemberSort('status')" style="cursor:pointer;user-select:none">Status<span id="msArrow-status"></span></th><th onclick="setMemberSort('tags')" style="cursor:pointer;user-select:none">Tags<span id="msArrow-tags"></span></th><th onclick="setMemberSort('joined')" style="cursor:pointer;user-select:none">Joined<span id="msArrow-joined"></span></th></tr></thead><tbody id="membersTableBody"></tbody></table></div></div>
     </div>
 
     <!-- ═══════════════ §PAGE-LEADS ═══════════════ -->
@@ -5109,6 +5109,37 @@ async function loadStudents() {
   renderMembersTable();
 }
 
+var memberSort = { col:'name', dir:'asc' };
+function setMemberSort(col){
+  if(memberSort.col===col){ memberSort.dir=(memberSort.dir==='asc')?'desc':'asc'; }
+  else { memberSort.col=col; memberSort.dir='asc'; }
+  updateMemberSortArrows();
+  filterMembers();
+}
+function memberSortValue(s, col){
+  if(col==='name') return ((s.last_name||'')+' '+(s.first_name||'')).toLowerCase();
+  if(col==='email') return (s.email||'').toLowerCase();
+  if(col==='program') return ((s.programs&&s.programs.name)?s.programs.name:'').toLowerCase();
+  if(col==='membership') return ((s.memberships&&s.memberships.name)?s.memberships.name:'').toLowerCase();
+  if(col==='status') return (s.status||'').toLowerCase();
+  if(col==='tags'){ if(!s._tags||!s._tags.length) return ''; var nm=allTags.filter(function(t){return s._tags.indexOf(t.id)!==-1;}).map(function(t){return (t.name||'').toLowerCase();}); nm.sort(); return nm.join(','); }
+  if(col==='joined') return s.created_at ? new Date(s.created_at).getTime() : 0;
+  return '';
+}
+function sortMemberList(list){
+  var col=memberSort.col; var dir=(memberSort.dir==='desc')?-1:1;
+  return list.slice().sort(function(a,b){
+    var va=memberSortValue(a,col); var vb=memberSortValue(b,col);
+    if(va<vb) return -1*dir;
+    if(va>vb) return 1*dir;
+    var na=((a.last_name||'')+(a.first_name||'')).toLowerCase(); var nb=((b.last_name||'')+(b.first_name||'')).toLowerCase();
+    return na<nb?-1:(na>nb?1:0);
+  });
+}
+function updateMemberSortArrows(){
+  var cols=['name','email','program','membership','status','tags','joined'];
+  for(var i=0;i<cols.length;i++){ var el=document.getElementById('msArrow-'+cols[i]); if(el){ el.textContent=(memberSort.col===cols[i])?(memberSort.dir==='asc'?' \u25B2':' \u25BC'):''; } }
+}
 function filterMembers() {
   var q       = (document.getElementById('memberSearch') ? document.getElementById('memberSearch').value : '').toLowerCase().trim();
   var tagId   = document.getElementById('tagFilter')   ? document.getElementById('tagFilter').value   : '';
@@ -5121,7 +5152,7 @@ function filterMembers() {
   });
   var ce = document.getElementById('memberSearchCount');
   if (ce) ce.textContent = filtered.length !== allStudents.length ? filtered.length+' of '+allStudents.length+' shown' : '';
-  renderMembersTableFiltered(filtered);
+  renderMembersTableFiltered(sortMemberList(filtered)); updateMemberSortArrows();
 }
 function renderMembersTable() { filterMembers(); }
 function renderMembersTableFiltered(list) {
