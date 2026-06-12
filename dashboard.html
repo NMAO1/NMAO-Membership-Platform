@@ -5425,10 +5425,16 @@ async function saveChangeMembership() {
   var mid=val; var pid=null; if(val.includes('|')){var parts=val.split('|');mid=parts[0];pid=parts[1];}
   var title=document.getElementById('profileMembershipChangeTitle').textContent;
   if(title==='Comp Plan'){
-    var r=await sb.from('student_memberships').insert({school_id:SID,student_id:currentProfileStudent.id,membership_id:mid,program_id:pid,status:'active',start_date:localDateStr(new Date())});
+    var r=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'add',p_program_id:pid});
     if(r.error){setMsg('changeMembershipMsg',r.error.message,'error');}else{setMsg('changeMembershipMsg','Added!','success');await loadProfileMemberships(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMembershipChangeBox').style.display='none';},800);}
   }else{
-    var r2=await sb.from('students').update({membership_id:mid,program_id:pid||currentProfileStudent.program_id}).eq('id',currentProfileStudent.id);
+    var curMid=currentProfileStudent.membership_id||null;
+    var swapTarget=null;
+    if(curMid){
+      var sx=await sb.from('student_memberships').select('id').eq('student_id',currentProfileStudent.id).eq('membership_id',curMid).eq('status','active').limit(1);
+      if(sx.data&&sx.data.length) swapTarget=sx.data[0].id;
+    }
+    var r2=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'swap',p_swap_target:swapTarget,p_program_id:pid});
     if(r2.error){setMsg('changeMembershipMsg',r2.error.message,'error');}else{setMsg('changeMembershipMsg','Updated!','success');await loadStudents();setTimeout(async function(){document.getElementById('profileMembershipChangeBox').style.display='none';await openStudentProfile(currentProfileStudent.id);},800);}
   }
 }
@@ -5723,30 +5729,10 @@ async function populateManualMembershipDropdown() {
 
   // 2. If type=membership, activate the membership (mirrors stripe-webhook DB writes)
   if (type === 'membership' && membershipId) {
-    var nowIso = new Date().toISOString();
-    var todayDate = nowIso.split('T')[0];
-
-    // Find the program_id for this membership
-    var programId = null;
-    var mpR = await sb.from('membership_programs').select('program_id').eq('membership_id', membershipId).limit(1);
-    if (mpR.data && mpR.data.length) programId = mpR.data[0].program_id;
-
-    // Update student record
-    await sb.from('students').update({
-      status: 'active',
-      membership_id: membershipId
-    }).eq('id', currentProfileStudent.id);
-
-    // Upsert student_memberships record
-    await sb.from('student_memberships').upsert({
-      school_id: SID,
-      student_id: currentProfileStudent.id,
-      membership_id: membershipId,
-      program_id: programId,
-      status: 'active',
-      started_at: nowIso,
-      start_date: todayDate
-    });
+   // Route through the single membership doorway (idempotent — never duplicates)
+    var amr = await sb.rpc('assign_membership', { p_student_id: currentProfileStudent.id, p_membership_id: membershipId, p_mode: 'add', p_start_date: dateStr });
+    if (amr.error) { setMsg('manualPayMsg', amr.error.message, 'error'); return; }
+    await sb.from('students').update({ status: 'active' }).eq('id', currentProfileStudent.id);
   }
 
   // Success feedback + refresh
