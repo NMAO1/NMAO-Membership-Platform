@@ -5980,14 +5980,21 @@ function handleImportFile(event){
   var file=event.target.files[0]; if(!file) return;
   var reader=new FileReader();
   reader.onload=function(e){
-    var text=e.target.result; var lines=text.split('\n').filter(function(l){return l.trim();});
-    if(lines.length<2){setMsg('importMsg','File must have a header row and at least one data row.','error');return;}
-    importHeaders=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'');});
-    importCSVData=lines.slice(1).map(function(line){var vals=line.split(',').map(function(v){return v.trim().replace(/^"|"$/g,'');});var row={};importHeaders.forEach(function(h,i){row[h]=vals[i]||'';});return row;});
+    var parsed=parseCSV(e.target.result);
+    if(!parsed.rows.length){setMsg('importMsg','File must have a header row and at least one data row.','error');return;}
+    importHeaders=parsed.headers;
+    importCSVData=parsed.rows;
     buildImportMapping();buildImportPreview();
     document.getElementById('importPreviewSection').style.display='block';
-    var conflicts=importCSVData.filter(function(row){var emailField=getMappedField('email');var email=emailField?row[emailField]:'';return email&&allStudents.some(function(s){return s.email===email;});}).length;
-    document.getElementById('importConflictInfo').textContent=conflicts>0?conflicts+' potential duplicate email'+(conflicts!==1?'s':'')+' detected':'No duplicates detected';
+    document.getElementById('importConflictInfo').textContent='Analyzing\u2026';
+    buildImportPlan().then(function(p){
+      var c=p.counts, famN=p.families.filter(function(f){return f.defaultOn;}).length;
+      document.getElementById('importConflictInfo').innerHTML='Analyzed: '+c['new']+' new \u00b7 '+c.merge+' to merge \u00b7 '+c.restore+' to restore \u00b7 '+c.conflict+' to review \u00b7 '+famN+' potential famil'+(famN===1?'y':'ies')+' <span style="color:var(--muted)">\u2014 full review &amp; merge UI ships next step</span>';
+      if(window.console){ console.log('SMART IMPORT PLAN', p);
+        if(console.table){ console.table(p.rows.map(function(r){return {row:r.idx+1, name:(r.c.first+' '+r.c.last).trim(), category:r.category, matched_by:r.matchedBy||'', conflicts:(r.conflictFields||[]).join('|')};})); }
+        if(p.families.length){ console.log('POTENTIAL FAMILIES', p.families); }
+      }
+    }).catch(function(err){ document.getElementById('importConflictInfo').textContent='Analysis error: '+((err&&err.message)?err.message:'unknown'); });
   };
   reader.readAsText(file);
 }
@@ -6026,6 +6033,171 @@ async function runImport(){
   document.getElementById('importStep1').style.display='none';
   document.getElementById('importStep2').style.display='block';
 }
+/* ============================================================
+   §SMART-IMPORT ENGINE (Bite 1) — parsing, matching, family clustering.
+   Analysis only; execute is rewritten in Bite 3.
+   ============================================================ */
+var importPlan = null;
+
+// RFC-4180-ish parser: handles quoted fields, escaped quotes, commas/newlines
+// inside quotes, CRLF, and a leading BOM.
+function parseCSV(text){
+  if(!text) return {headers:[],rows:[]};
+  if(text.charCodeAt(0)===0xFEFF){ text=text.slice(1); }
+  var recs=[], cur=[], field='', inQ=false, i=0, n=text.length;
+  while(i<n){
+    var ch=text[i];
+    if(inQ){
+      if(ch==='"'){ if(text[i+1]==='"'){ field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field+=ch; i++; continue;
+    }
+    if(ch==='"'){ inQ=true; i++; continue; }
+    if(ch===','){ cur.push(field); field=''; i++; continue; }
+    if(ch==='\r'){ i++; continue; }
+    if(ch==='\n'){ cur.push(field); recs.push(cur); cur=[]; field=''; i++; continue; }
+    field+=ch; i++;
+  }
+  if(field!==''||cur.length){ cur.push(field); recs.push(cur); }
+  recs=recs.filter(function(r){ return r.some(function(v){ return v!==undefined&&String(v).trim()!==''; }); });
+  if(!recs.length) return {headers:[],rows:[]};
+  var headers=recs[0].map(function(h){ return String(h).trim(); });
+  var rows=recs.slice(1).map(function(r){
+    var o={}; for(var j=0;j<headers.length;j++){ o[headers[j]]=(r[j]!==undefined?String(r[j]).trim():''); } return o;
+  });
+  return {headers:headers,rows:rows};
+}
+
+function normEmail(v){ return v?String(v).trim().toLowerCase():''; }
+function normPhone(v){ if(!v) return ''; var d=String(v).replace(/\D/g,''); if(d.length>10){ d=d.slice(-10); } return d; }
+function normName(v){ return v?String(v).trim().toLowerCase().replace(/\s+/g,' '):''; }
+function normDob(v){
+  if(!v) return ''; v=String(v).trim();
+  var iso=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso){ return iso[1]+'-'+('0'+iso[2]).slice(-2)+'-'+('0'+iso[3]).slice(-2); }
+  var mdy=v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(mdy){ var yy=mdy[3]; if(yy.length===2){ yy='20'+yy; } return yy+'-'+('0'+mdy[1]).slice(-2)+'-'+('0'+mdy[2]).slice(-2); }
+  return v;
+}
+
+// Full roster — deliberately NO deleted_at filter, so soft-deleted students are matchable
+// (re-import offers Restore instead of silently duplicating).
+async function fetchImportRoster(){
+  var r=await sb.from('students')
+    .select('id,first_name,last_name,email,phone,date_of_birth,family_id,deleted_at,status')
+    .eq('school_id',SID);
+  return r.data||[];
+}
+
+// Classify one CSV row against the roster.
+// Returns category: new | merge | restore | conflict, plus matchedId / matchedBy / conflictFields.
+function matchImportRow(c, roster){
+  var ce=normEmail(c.email), cp=normPhone(c.phone), cn=normName((c.first||'')+' '+(c.last||'')), cd=normDob(c.dob);
+  var strong=null, by='';
+  for(var i=0;i<roster.length;i++){
+    var s=roster[i];
+    var se=normEmail(s.email), sp=normPhone(s.phone), sn=normName((s.first_name||'')+' '+(s.last_name||'')), sd=normDob(s.date_of_birth);
+    if(ce&&se&&ce===se){ strong=s; by='email'; break; }
+    if(cp&&sp&&cp===sp){ strong=s; by='phone'; break; }
+    if(cd&&cn&&sn===cn&&sd&&sd===cd){ strong=s; by='name+dob'; break; }
+  }
+  if(strong){
+    var conf=[];
+    var se2=normEmail(strong.email), sp2=normPhone(strong.phone), sd2=normDob(strong.date_of_birth);
+    if(ce&&se2&&ce!==se2){ conf.push('email'); }
+    if(cp&&sp2&&cp!==sp2){ conf.push('phone'); }
+    if(cd&&sd2&&cd!==sd2){ conf.push('dob'); }
+    var cat = strong.deleted_at ? 'restore' : 'merge';
+    if(conf.length){ cat='conflict'; }
+    return {category:cat, matchedId:strong.id, matchedBy:by, conflictFields:conf, restore:!!strong.deleted_at};
+  }
+  // No strong match — but a same-name student exists → flag for human review, don't auto-create.
+  for(var k=0;k<roster.length;k++){
+    var s2=roster[k];
+    if(cn&&normName((s2.first_name||'')+' '+(s2.last_name||''))===cn){
+      return {category:'conflict', matchedId:s2.id, matchedBy:'name', conflictFields:['identity'], restore:!!s2.deleted_at};
+    }
+  }
+  return {category:'new', matchedId:null, matchedBy:'', conflictFields:[], restore:false};
+}
+
+// Cluster the batch into potential families. Strong = shared email or phone (default on).
+// Weak = same last name only, no shared contact (default off). Existing-family aware.
+function clusterImportFamilies(items){
+  var parent={};
+  function find(x){ if(parent[x]===undefined){ parent[x]=x; } if(parent[x]!==x){ parent[x]=find(parent[x]); } return parent[x]; }
+  function uni(a,b){ parent[find(a)]=find(b); }
+  for(var i=0;i<items.length;i++){
+    var it=items[i], rid='r'+it.idx; find(rid);
+    if(it.email){ uni(rid,'e:'+it.email); }
+    if(it.phone){ uni(rid,'p:'+it.phone); }
+  }
+  var groups={};
+  for(var j=0;j<items.length;j++){ var root=find('r'+items[j].idx); (groups[root]=groups[root]||[]).push(items[j]); }
+  var fams=[], claimed={};
+  for(var key in groups){
+    if(!groups.hasOwnProperty(key)) continue;
+    var members=groups[key];
+    if(members.length<2) continue;
+    var exFid=null;
+    for(var m=0;m<members.length;m++){ if(members[m].matchedFamilyId){ exFid=members[m].matchedFamilyId; break; } }
+    var lastCount={}, topLast='', topN=0, sharedEmail='', sharedPhone='';
+    for(var p=0;p<members.length;p++){
+      var ln=members[p].last||''; lastCount[ln]=(lastCount[ln]||0)+1;
+      if(lastCount[ln]>topN){ topN=lastCount[ln]; topLast=ln; }
+      if(!sharedEmail&&members[p].email){ sharedEmail=members[p].email; }
+      if(!sharedPhone&&members[p].phone){ sharedPhone=members[p].phone; }
+      claimed[members[p].idx]=true;
+    }
+    fams.push({confidence:'strong', mode:exFid?'existing':'new', existingFamilyId:exFid,
+      name:(topLast?topLast+' Family':'New Family'), email:sharedEmail, phone:sharedPhone,
+      memberIdxs:members.map(function(x){return x.idx;}), defaultOn:true});
+  }
+  // Weak pass: same last name, not already in a strong family.
+  var byLast={};
+  for(var w=0;w<items.length;w++){
+    if(claimed[items[w].idx]) continue;
+    var lk=items[w].lastNorm; if(!lk) continue;
+    (byLast[lk]=byLast[lk]||[]).push(items[w]);
+  }
+  for(var lkey in byLast){
+    if(!byLast.hasOwnProperty(lkey)) continue;
+    var grp=byLast[lkey];
+    if(grp.length<2) continue;
+    var exFid2=null;
+    for(var q=0;q<grp.length;q++){ if(grp[q].matchedFamilyId){ exFid2=grp[q].matchedFamilyId; break; } }
+    fams.push({confidence:'weak', mode:exFid2?'existing':'new', existingFamilyId:exFid2,
+      name:((grp[0].last||'')?grp[0].last+' Family':'New Family'), email:'', phone:'',
+      memberIdxs:grp.map(function(x){return x.idx;}), defaultOn:false});
+  }
+  return fams;
+}
+
+// Build the full plan from current CSV data + column mapping + live roster.
+async function buildImportPlan(){
+  var mFirst=getMappedField('first_name'), mLast=getMappedField('last_name'),
+      mEmail=getMappedField('email'), mPhone=getMappedField('phone'),
+      mDob=getMappedField('date_of_birth'), mStatus=getMappedField('status');
+  var roster=await fetchImportRoster();
+  var rosterById={}; for(var ri=0;ri<roster.length;ri++){ rosterById[roster[ri].id]=roster[ri]; }
+  var rowsOut=[], items=[], counts={'new':0,merge:0,restore:0,conflict:0,skip:0};
+  for(var i=0;i<importCSVData.length;i++){
+    var row=importCSVData[i];
+    var c={ first:mFirst?row[mFirst]:'', last:mLast?row[mLast]:'', email:mEmail?row[mEmail]:'',
+            phone:mPhone?row[mPhone]:'', dob:mDob?row[mDob]:'', status:mStatus?row[mStatus]:'' };
+    if(!c.first||!c.last){ rowsOut.push({idx:i,category:'skip',reason:'missing name',c:c}); counts.skip++; continue; }
+    var m=matchImportRow(c,roster);
+    var matchedFamilyId=(m.matchedId&&rosterById[m.matchedId])?(rosterById[m.matchedId].family_id||null):null;
+    rowsOut.push({idx:i,category:m.category,matchedId:m.matchedId,matchedBy:m.matchedBy,
+      conflictFields:m.conflictFields,restore:m.restore,c:c});
+    counts[m.category]=(counts[m.category]||0)+1;
+    items.push({idx:i,first:c.first,last:c.last,email:normEmail(c.email),phone:normPhone(c.phone),
+      lastNorm:normName(c.last),matchedId:m.matchedId,matchedFamilyId:matchedFamilyId});
+  }
+  importPlan={rows:rowsOut, families:clusterImportFamilies(items), roster:roster, counts:counts};
+  return importPlan;
+}
+/* ===== end §SMART-IMPORT ENGINE ===== */
+
 // Stripe charge flow (J.4.4)
   /* ============================================================
    §CHECKOUT — unified "New charge / sell" engine
