@@ -2439,12 +2439,13 @@
           <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.5rem">Preview (first 5 rows)</div>
           <div class="table-wrap" style="border:1px solid var(--border);max-height:200px;overflow-y:auto"><table id="importPreviewTable"><thead id="importPreviewHead"></thead><tbody id="importPreviewBody"></tbody></table></div>
           <div style="display:flex;gap:0.75rem;margin-top:1.25rem;align-items:center">
-            <button class="panel-action" onclick="runImport()"><i class="fa-solid fa-play"></i> Run Import</button>
+            <button class="panel-action" onclick="openImportReview()"><i class="fa-solid fa-arrow-right"></i> Continue to Review</button>
             <div id="importConflictInfo" style="font-size:0.82rem;color:var(--muted)"></div>
           </div>
           <p class="form-msg" id="importMsg"></p>
         </div>
       </div>
+      <div id="importStepReview" style="display:none"></div>
       <div id="importStep2" style="display:none">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Import Summary</div>
         <div id="importSummaryStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem"></div>
@@ -6197,6 +6198,140 @@ async function buildImportPlan(){
   return importPlan;
 }
 /* ===== end §SMART-IMPORT ENGINE ===== */
+
+/* ============================================================
+   §SMART-IMPORT REVIEW (Bite 2) — render the plan, capture decisions.
+   Execute (applyImportPlan) is stubbed here; built in Bite 3.
+   ============================================================ */
+function impEsc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function impRowName(r){ return ((r.c.first||'')+' '+(r.c.last||'')).trim(); }
+function impChip(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid '+color+';padding:0.4rem 0.7rem;font-size:0.8rem"><span style="color:'+color+';font-weight:600">'+(n||0)+'</span> <span style="color:var(--muted)">'+label+'</span></div>'; }
+function impSectionHead(t){ return '<div style="font-size:0.74rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin:0.5rem 0 0.4rem">'+t+'</div>'; }
+
+function openImportReview(){
+  document.getElementById('importConflictInfo').textContent='Analyzing\u2026';
+  buildImportPlan().then(function(p){
+    var i;
+    for(i=0;i<p.rows.length;i++){
+      var r=p.rows[i];
+      if(r.category==='conflict'){ r.resolution=(r.matchedBy==='name')?'merge':'merge_keep'; }
+    }
+    for(i=0;i<p.families.length;i++){ p.families[i].accepted=!!p.families[i].defaultOn; }
+    renderImportReview();
+    document.getElementById('importStep1').style.display='none';
+    document.getElementById('importStepReview').style.display='block';
+  }).catch(function(err){ document.getElementById('importConflictInfo').textContent='Analysis error: '+((err&&err.message)?err.message:'unknown'); });
+}
+
+function backToImportStep1(){
+  document.getElementById('importStepReview').style.display='none';
+  document.getElementById('importStep1').style.display='block';
+}
+
+function renderImportReview(){
+  var p=importPlan; if(!p) return;
+  var c=p.counts, i;
+  var rosterById={}; for(i=0;i<p.roster.length;i++){ rosterById[p.roster[i].id]=p.roster[i]; }
+  var h='';
+  h+='<div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Review Import</div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">';
+  h+=impChip('#5A9A6A',c['new'],'new')+impChip('#4C8CE2',c.merge,'merge')+impChip('#9A6AD0',c.restore,'restore')+impChip('#E2A84C',c.conflict,'to review')+impChip('#E07070',c.skip,'skipped');
+  h+='</div>';
+
+  var news=p.rows.filter(function(r){return r.category==='new';});
+  if(news.length){
+    h+=impSectionHead('New students \u2014 will be created ('+news.length+')');
+    h+='<div style="max-height:150px;overflow-y:auto;border:1px solid var(--border);padding:0.5rem;margin-bottom:1rem">';
+    h+=news.map(function(r){return '<div style="font-size:0.82rem;color:var(--white);padding:0.18rem 0">'+impEsc(impRowName(r))+'</div>';}).join('');
+    h+='</div>';
+  }
+
+  var merges=p.rows.filter(function(r){return r.category==='merge'||r.category==='restore';});
+  if(merges.length){
+    h+=impSectionHead('Existing matches \u2014 will fill in blanks ('+merges.length+')');
+    h+='<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);padding:0.5rem;margin-bottom:1rem">';
+    h+=merges.map(function(r){
+      var badge=(r.category==='restore')?'<span style="color:#9A6AD0;font-size:0.66rem;border:1px solid #9A6AD0;border-radius:3px;padding:0 0.3rem;margin-left:0.4rem">RESTORE</span>':'';
+      return '<div style="font-size:0.82rem;color:var(--white);padding:0.22rem 0;display:flex;align-items:center;gap:0.5rem"><span>'+impEsc(impRowName(r))+'</span><span style="color:var(--muted);font-size:0.7rem">matched on '+impEsc(r.matchedBy)+'</span>'+badge+'</div>';
+    }).join('');
+    h+='</div>';
+  }
+
+  var conflicts=p.rows.filter(function(r){return r.category==='conflict';});
+  if(conflicts.length){
+    h+=impSectionHead('Needs your review ('+conflicts.length+')');
+    h+='<div style="margin-bottom:1rem">'+conflicts.map(function(r){ return renderConflictCard(r, rosterById[r.matchedId]||{}); }).join('')+'</div>';
+  }
+
+  if(p.families.length){
+    h+=impSectionHead('Potential families ('+p.families.length+')');
+    h+='<div style="margin-bottom:1rem">'+p.families.map(function(f,fi){ return renderFamilyCard(f,fi,p); }).join('')+'</div>';
+  }
+
+  h+='<div style="display:flex;gap:0.75rem;margin-top:0.5rem;align-items:center;flex-wrap:wrap">';
+  h+='<button class="btn-sm" onclick="backToImportStep1()"><i class="fa-solid fa-arrow-left"></i> Back</button>';
+  h+='<button class="panel-action" onclick="applyImportPlan()"><i class="fa-solid fa-check"></i> Apply Import</button>';
+  h+='<div id="importApplyMsg" style="font-size:0.82rem;color:var(--muted)"></div>';
+  h+='</div>';
+
+  document.getElementById('importStepReview').innerHTML=h;
+}
+
+function renderConflictCard(r, ex){
+  var idx=r.idx, nameOnly=(r.matchedBy==='name');
+  var exName=impEsc(((ex.first_name||'')+' '+(ex.last_name||'')).trim());
+  var h='<div style="border:1px solid var(--border);border-left:3px solid #E2A84C;padding:0.6rem 0.75rem;margin-bottom:0.5rem">';
+  h+='<div style="font-size:0.85rem;color:var(--white);margin-bottom:0.35rem">'+impEsc(impRowName(r))+'</div>';
+  if(nameOnly){
+    h+='<div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.45rem">A student named <b style="color:var(--white)">'+exName+'</b> already exists. Same person?</div>';
+    h+=impRadio(idx,'merge','Same person \u2014 merge')+impRadio(idx,'new','Different \u2014 import as new')+impRadio(idx,'skip','Skip');
+  }else{
+    h+='<div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.4rem">Matched <b style="color:var(--white)">'+exName+'</b> on '+impEsc(r.matchedBy)+', but '+impEsc((r.conflictFields||[]).join(', '))+' differs:</div>';
+    h+='<div style="font-size:0.74rem;margin-bottom:0.45rem">';
+    h+=impFieldDiff('email',ex.email,r.c.email,r.conflictFields);
+    h+=impFieldDiff('phone',ex.phone,r.c.phone,r.conflictFields);
+    h+=impFieldDiff('dob',ex.date_of_birth,r.c.dob,r.conflictFields);
+    h+='</div>';
+    h+=impRadio(idx,'merge_keep','Keep existing')+impRadio(idx,'merge_csv','Use CSV')+impRadio(idx,'skip','Skip');
+  }
+  h+='</div>';
+  return h;
+}
+
+function impFieldDiff(label,exV,csvV,fields){
+  if((fields||[]).indexOf(label)<0) return '';
+  return '<div style="color:var(--muted)">'+label+': <span style="color:#E07070">'+impEsc(exV||'\u2014')+'</span> \u2192 <span style="color:#5A9A6A">'+impEsc(csvV||'\u2014')+'</span></div>';
+}
+
+function impRadio(idx,val,label){
+  var r=importPlan.rows[idx];
+  var checked=(r&&r.resolution===val)?'checked':'';
+  return '<label style="display:inline-flex;align-items:center;gap:0.3rem;margin-right:0.9rem;font-size:0.78rem;color:var(--white);cursor:pointer"><input type="radio" name="imp-res-'+idx+'" '+checked+' onchange="setImportRes('+idx+',\''+val+'\')"> '+label+'</label>';
+}
+function setImportRes(idx,val){ if(importPlan&&importPlan.rows[idx]){ importPlan.rows[idx].resolution=val; } }
+
+function renderFamilyCard(f,fi,p){
+  var h='<div style="border:1px solid var(--border);border-left:3px solid '+(f.confidence==='strong'?'#4C8CE2':'var(--muted)')+';padding:0.6rem 0.75rem;margin-bottom:0.5rem">';
+  h+='<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">';
+  h+='<input type="checkbox" '+(f.accepted?'checked':'')+' onchange="toggleImportFamily('+fi+',this.checked)">';
+  h+='<input type="text" value="'+impEsc(f.name)+'" onchange="setImportFamilyName('+fi+',this.value)" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.3rem 0.5rem;flex:1">';
+  if(f.mode==='existing'){ h+='<span style="color:#5A9A6A;font-size:0.66rem;border:1px solid #5A9A6A;border-radius:3px;padding:0 0.3rem;white-space:nowrap">ADD TO EXISTING</span>'; }
+  if(f.confidence==='weak'){ h+='<span style="color:var(--muted);font-size:0.66rem;border:1px solid var(--border);border-radius:3px;padding:0 0.3rem;white-space:nowrap">LAST NAME \u2014 VERIFY</span>'; }
+  h+='</div>';
+  var names=f.memberIdxs.map(function(ix){ var row=p.rows.filter(function(rr){return rr.idx===ix;})[0]; return row?impRowName(row):('row '+(ix+1)); });
+  h+='<div style="font-size:0.76rem;color:var(--muted)">'+impEsc(names.join(' \u00b7 '))+'</div>';
+  if(f.email||f.phone){ h+='<div style="font-size:0.72rem;color:var(--muted2);margin-top:0.2rem">'+impEsc(f.email||'')+(f.phone?(' \u00b7 '+impEsc(f.phone)):'')+'</div>'; }
+  h+='</div>';
+  return h;
+}
+function toggleImportFamily(fi,checked){ if(importPlan&&importPlan.families[fi]){ importPlan.families[fi].accepted=!!checked; } }
+function setImportFamilyName(fi,val){ if(importPlan&&importPlan.families[fi]){ importPlan.families[fi].name=val; } }
+
+function applyImportPlan(){
+  setMsg('importApplyMsg','Execute is wired in the next step (Bite 3). Your choices are captured \u2014 check the console: window.importPlan','');
+  if(window.console){ console.log('REVIEWED PLAN (ready for execute)', importPlan); }
+}
+/* ===== end §SMART-IMPORT REVIEW ===== */
 
 // Stripe charge flow (J.4.4)
   /* ============================================================
