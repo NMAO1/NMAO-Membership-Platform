@@ -5975,7 +5975,7 @@ async function saveDiscount(){
 }
 
 // Import
-function openImportTool(){ document.getElementById('importFile').value='';document.getElementById('importPreviewSection').style.display='none';document.getElementById('importStep2').style.display='none';document.getElementById('importStep1').style.display='block';document.getElementById('importMsg').textContent='';document.getElementById('importConflictInfo').textContent='';importCSVData=[];importHeaders=[];document.getElementById('importModal').classList.add('active'); }
+function openImportTool(){ document.getElementById('importFile').value='';document.getElementById('importPreviewSection').style.display='none';document.getElementById('importStep2').style.display='none';document.getElementById('importStepReview').style.display='none';document.getElementById('importStep1').style.display='block';document.getElementById('importMsg').textContent='';document.getElementById('importConflictInfo').textContent='';importCSVData=[];importHeaders=[];document.getElementById('importModal').classList.add('active'); }
 function closeImportTool(){ document.getElementById('importModal').classList.remove('active'); }
 function handleImportFile(event){
   var file=event.target.files[0]; if(!file) return;
@@ -6327,10 +6327,90 @@ function renderFamilyCard(f,fi,p){
 function toggleImportFamily(fi,checked){ if(importPlan&&importPlan.families[fi]){ importPlan.families[fi].accepted=!!checked; } }
 function setImportFamilyName(fi,val){ if(importPlan&&importPlan.families[fi]){ importPlan.families[fi].name=val; } }
 
-function applyImportPlan(){
-  setMsg('importApplyMsg','Execute is wired in the next step (Bite 3). Your choices are captured \u2014 check the console: window.importPlan','');
-  if(window.console){ console.log('REVIEWED PLAN (ready for execute)', importPlan); }
+var importApplying=false;
+async function applyImportPlan(){
+  if(!importPlan || importApplying){ return; }
+  importApplying=true;
+  var msgEl=document.getElementById('importApplyMsg'); if(msgEl){ msgEl.textContent='Applying\u2026'; }
+  var p=importPlan;
+  var rosterById={}; for(var ri=0;ri<p.roster.length;ri++){ rosterById[p.roster[ri].id]=p.roster[ri]; }
+  var created=0, merged=0, restored=0, skipped=0, failed=0;
+  var log=[], resultId={};
+  function nm(r){ return ((r.c.first||'')+' '+(r.c.last||'')).trim(); }
+
+  for(var i=0;i<p.rows.length;i++){
+    var r=p.rows[i], action='skip';
+    if(r.category==='new'){ action='insert'; }
+    else if(r.category==='merge'){ action='fill'; }
+    else if(r.category==='restore'){ action='restore'; }
+    else if(r.category==='conflict'){
+      var res=r.resolution||'skip';
+      action=(res==='new')?'insert':((res==='merge'||res==='merge_keep')?'fill':((res==='merge_csv')?'overwrite':'skip'));
+    }
+    if(action==='skip'){ skipped++; log.push({row:r.idx+1,msg:nm(r)+' - skipped',status:'skip'}); continue; }
+
+    var dob=normDob(r.c.dob);
+    if(action==='insert'){
+      var payload={school_id:SID, first_name:(r.c.first||'').trim(), last_name:(r.c.last||'').trim(),
+        email:(r.c.email||'').trim()||null, phone:(r.c.phone||'').trim()||null,
+        date_of_birth:dob||null, status:(r.c.status||'').trim()||'active', source:'csv_import'};
+      var ins=await sb.from('students').insert(payload).select('id').single();
+      if(ins.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+ins.error.message,status:'warn'}); }
+      else { resultId[r.idx]=ins.data.id; created++; log.push({row:r.idx+1,msg:nm(r)+' - added',status:'ok'}); }
+    } else {
+      var ex=rosterById[r.matchedId]||{}, upd={};
+      if((r.c.email||'').trim() && !ex.email){ upd.email=(r.c.email||'').trim(); }
+      if((r.c.phone||'').trim() && !ex.phone){ upd.phone=(r.c.phone||'').trim(); }
+      if(dob && !ex.date_of_birth){ upd.date_of_birth=dob; }
+      if(action==='overwrite'){
+        var cf=r.conflictFields||[];
+        if(cf.indexOf('email')>=0 && (r.c.email||'').trim()){ upd.email=(r.c.email||'').trim(); }
+        if(cf.indexOf('phone')>=0 && (r.c.phone||'').trim()){ upd.phone=(r.c.phone||'').trim(); }
+        if(cf.indexOf('dob')>=0 && dob){ upd.date_of_birth=dob; }
+      }
+      var wasDeleted=!!ex.deleted_at;
+      if(action==='restore' || wasDeleted){ upd.deleted_at=null; }
+      var hasKeys=false; for(var k in upd){ if(upd.hasOwnProperty(k)){ hasKeys=true; break; } }
+      if(hasKeys){
+        var up=await sb.from('students').update(upd).eq('id',r.matchedId);
+        if(up.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+up.error.message,status:'warn'}); continue; }
+      }
+      resultId[r.idx]=r.matchedId;
+      if(action==='restore' || wasDeleted){ restored++; log.push({row:r.idx+1,msg:nm(r)+' - restored',status:'ok'}); }
+      else { merged++; log.push({row:r.idx+1,msg:nm(r)+' - merged',status:'ok'}); }
+    }
+  }
+
+  // Families — create (direct insert; no portal invite) or reuse existing, then link members.
+  var famCreated=0, famLinked=0;
+  for(var f=0;f<p.families.length;f++){
+    var fam=p.families[f];
+    if(!fam.accepted){ continue; }
+    var familyId=null;
+    if(fam.mode==='existing' && fam.existingFamilyId){ familyId=fam.existingFamilyId; famLinked++; }
+    else {
+      var fp={school_id:SID, name:(fam.name||'New Family').trim(), email:(fam.email||'').trim(), phone:(fam.phone||'').trim()||null};
+      var fins=await sb.from('families').insert(fp).select('id').single();
+      if(fins.error){ log.push({row:0,msg:'Family "'+(fam.name||'')+'" - '+fins.error.message,status:'warn'}); continue; }
+      familyId=fins.data.id; famCreated++;
+    }
+    var ids=[];
+    for(var m=0;m<fam.memberIdxs.length;m++){ var sid=resultId[fam.memberIdxs[m]]; if(sid){ ids.push(sid); } }
+    if(familyId && ids.length){ await sb.from('students').update({family_id:familyId}).in('id',ids); }
+  }
+
+  await loadStudents(); if(typeof buildHomeStats==='function'){ buildHomeStats(); }
+
+  document.getElementById('importSummaryStats').innerHTML=
+    impStat('#5A9A6A',created,'Added')+impStat('#4C8CE2',merged,'Merged')+impStat('#9A6AD0',restored,'Restored')+
+    impStat('#E07070',skipped,'Skipped')+(failed?impStat('#E07070',failed,'Failed'):'')+
+    impStat('var(--gold)',famCreated+famLinked,'Families');
+  document.getElementById('importLogList').innerHTML=log.map(function(e){return '<div class="import-log-entry '+e.status+'"><i class="fa-solid '+(e.status==='ok'?'fa-circle-check':(e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus'))+'"></i>'+(e.row?('Row '+e.row+': '):'')+e.msg+'</div>';}).join('');
+  document.getElementById('importStepReview').style.display='none';
+  document.getElementById('importStep2').style.display='block';
+  importApplying=false;
 }
+function impStat(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:center"><div style="font-family:var(--font-display);font-size:2rem;color:'+color+'">'+(n||0)+'</div><div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+label+'</div></div>'; }
 /* ===== end §SMART-IMPORT REVIEW ===== */
 
 // Stripe charge flow (J.4.4)
