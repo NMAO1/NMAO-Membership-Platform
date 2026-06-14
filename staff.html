@@ -320,6 +320,49 @@
 .btn-cancel-promote{flex:0 0 auto;height:var(--tap);padding:0 1.25rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;}
 
 /* ── TOAST ───────────────────────────────────── */
+/* ── NEW-STUDENT SIGNUP WIZARD ─────────────────── */
+.su-cta{display:flex;align-items:center;gap:0.85rem;background:var(--gold-bg);border:1px solid var(--gold);padding:0.95rem 1.1rem;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
+.su-cta:active{background:rgba(201,168,76,0.16);}
+.su-cta-icon{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--black);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.su-cta-text{flex:1;}
+.su-cta-title{font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:0.04em;}
+.su-cta-sub{font-size:0.74rem;color:var(--muted2);margin-top:0.1rem;}
+.su-cta-chev{color:var(--gold);font-size:0.9rem;}
+
+.su-overlay{position:fixed;inset:0;background:var(--black);z-index:500;display:none;flex-direction:column;}
+.su-overlay.open{display:flex;}
+.su-head{flex:0 0 auto;height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;}
+.su-head-title{font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:0.08em;}
+.su-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;width:var(--tap);height:var(--tap);}
+.su-steps{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.85rem 1rem;background:var(--near);border-bottom:1px solid var(--border);}
+.su-dot{display:flex;align-items:center;gap:0.4rem;font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.su-dot-num{width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:var(--muted);}
+.su-dot.active .su-dot-num{background:var(--gold);border-color:var(--gold);color:var(--black);}
+.su-dot.active{color:var(--gold);}
+.su-dot.done .su-dot-num{background:var(--green);border-color:var(--green);color:var(--white);}
+.su-dot-sep{width:14px;height:1px;background:var(--border2);}
+.su-body{flex:1;overflow-y:auto;padding:1.25rem 1rem 1.5rem;}
+.su-step{display:none;}
+.su-step.active{display:block;max-width:520px;margin:0 auto;}
+.su-step-head{font-family:var(--font-display);font-size:1.15rem;color:var(--white);margin-bottom:0.35rem;}
+.su-step-sub{font-size:0.8rem;color:var(--muted2);margin-bottom:1.25rem;line-height:1.5;}
+.su-field{margin-bottom:1rem;}
+.su-field label{display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.4rem;}
+.su-req{color:var(--gold);}
+.su-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.7rem 0.85rem;outline:none;}
+.su-input:focus{border-color:var(--gold);}
+.su-hint{font-size:0.7rem;color:var(--muted);margin-top:0.3rem;}
+.su-row{display:flex;gap:0.75rem;}
+.su-row .su-field{flex:1;}
+.su-msg{font-size:0.8rem;margin-top:0.5rem;min-height:1rem;}
+.su-msg.error{color:var(--red);}
+.su-msg.success{color:var(--green);}
+.su-foot{flex:0 0 auto;display:flex;gap:0.75rem;padding:0.85rem 1rem;background:var(--surface);border-top:1px solid var(--border);padding-bottom:calc(0.85rem + env(safe-area-inset-bottom,0));}
+.su-btn{flex:1;height:var(--tap);border:none;font-family:var(--font-ui);font-size:0.9rem;letter-spacing:0.05em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
+.su-btn-next{background:var(--gold);color:var(--black);font-weight:700;}
+.su-btn-back{flex:0 0 auto;padding:0 1.25rem;background:none;border:1px solid var(--border2);color:var(--muted2);}
+.su-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
 #toast{
   position:fixed;bottom:calc(var(--nav-h) + 1rem);left:1rem;right:1rem;
   background:var(--surface2);border:1px solid var(--border);padding:0.85rem 1rem;
@@ -403,6 +446,16 @@
   <div class="today-greeting">
     <div class="greeting-name" id="todayGreeting">Good morning</div>
     <div class="greeting-date" id="todayDate"></div>
+  </div>
+
+  <!-- New Student Sign-Up entry -->
+  <div class="su-cta" onclick="openSignup()">
+    <div class="su-cta-icon"><i class="fa-solid fa-user-plus"></i></div>
+    <div class="su-cta-text">
+      <div class="su-cta-title">New Student Sign-Up</div>
+      <div class="su-cta-sub">Enroll a new member at the front desk</div>
+    </div>
+    <i class="fa-solid fa-chevron-right su-cta-chev"></i>
   </div>
 
   <!-- Membership Alert Banner -->
@@ -549,6 +602,90 @@
   </nav>
 
 </div><!-- end staffApp -->
+
+<!-- ════════════════════════════════════════════
+     NEW-STUDENT SIGNUP WIZARD
+════════════════════════════════════════════ -->
+<div class="su-overlay" id="signupWizard">
+  <div class="su-head">
+    <div class="su-head-title">New Student Sign-Up</div>
+    <button class="su-close" onclick="closeSignup()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div class="su-steps">
+    <div class="su-dot active" id="suDot1"><span class="su-dot-num">1</span> Student</div>
+    <div class="su-dot-sep"></div>
+    <div class="su-dot" id="suDot2"><span class="su-dot-num">2</span> Plan</div>
+    <div class="su-dot-sep"></div>
+    <div class="su-dot" id="suDot3"><span class="su-dot-num">3</span> Payment</div>
+    <div class="su-dot-sep"></div>
+    <div class="su-dot" id="suDot4"><span class="su-dot-num">4</span> Done</div>
+  </div>
+
+  <div class="su-body">
+    <!-- STEP 1 — Student info -->
+    <div class="su-step active" id="suStep1">
+      <div class="su-step-head">Who are we signing up?</div>
+      <div class="su-step-sub">Enter the new student's details. Email is used for their portal login and welcome email; phone lets us text a card-save link.</div>
+
+      <div class="su-row">
+        <div class="su-field">
+          <label>First Name <span class="su-req">*</span></label>
+          <input class="su-input" id="suFirst" type="text" autocomplete="off" />
+        </div>
+        <div class="su-field">
+          <label>Last Name <span class="su-req">*</span></label>
+          <input class="su-input" id="suLast" type="text" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="su-field">
+        <label>Email</label>
+        <input class="su-input" id="suEmail" type="email" autocomplete="off" placeholder="name@example.com" />
+        <div class="su-hint">Recommended — required to send the portal login / welcome email.</div>
+      </div>
+
+      <div class="su-field">
+        <label>Phone</label>
+        <input class="su-input" id="suPhone" type="tel" autocomplete="off" placeholder="+1 555 555 1234" />
+        <div class="su-hint">Recommended — used to text the card-save link.</div>
+      </div>
+
+      <div class="su-field">
+        <label>Date of Birth</label>
+        <input class="su-input" id="suDob" type="date" />
+      </div>
+
+      <div class="su-msg" id="suMsg1"></div>
+    </div>
+
+    <!-- STEP 2 — Plan (Bite 2) -->
+    <div class="su-step" id="suStep2">
+      <div class="su-step-head">Choose a plan</div>
+      <div class="su-step-sub">Membership plan, class pack, or a custom membership.</div>
+      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Plan selection is added in the next build step.</div>
+    </div>
+
+    <!-- STEP 3 — Payment (Bite 3) -->
+    <div class="su-step" id="suStep3">
+      <div class="su-step-head">Payment</div>
+      <div class="su-step-sub">Collect a card now, send a card link, or record cash.</div>
+      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Payment is added in a later build step.</div>
+    </div>
+
+    <!-- STEP 4 — Done (Bite 4) -->
+    <div class="su-step" id="suStep4">
+      <div class="su-step-head">All set</div>
+      <div class="su-step-sub">Confirmation and welcome email.</div>
+      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Confirmation is added in a later build step.</div>
+    </div>
+  </div>
+
+  <div class="su-foot">
+    <button class="su-btn su-btn-back" id="suBackBtn" onclick="suBack()" style="display:none"><i class="fa-solid fa-chevron-left"></i> Back</button>
+    <button class="su-btn su-btn-next" id="suNextBtn" onclick="suNext()">Continue <i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════════════
      PROMOTE MODAL
@@ -1561,6 +1698,73 @@ function isLight(hex){
 }
 
 var toastTimer=null;
+/* ═══════════════ NEW-STUDENT SIGNUP WIZARD ═══════════════ */
+var signupState={ step:1, maxStep:2, student:{}, plan:null, payment:null, studentId:null };
+
+function openSignup(){
+  signupState={ step:1, maxStep:2, student:{}, plan:null, payment:null, studentId:null };
+  document.getElementById('suFirst').value='';
+  document.getElementById('suLast').value='';
+  document.getElementById('suEmail').value='';
+  document.getElementById('suPhone').value='';
+  document.getElementById('suDob').value='';
+  setSuMsg('suMsg1','','');
+  suRenderStep();
+  document.getElementById('signupWizard').classList.add('open');
+}
+
+function closeSignup(){
+  var hasData=document.getElementById('suFirst').value.trim()||document.getElementById('suLast').value.trim();
+  if(hasData && signupState.step<4){
+    if(!confirm('Discard this sign-up? Nothing has been saved yet.')) return;
+  }
+  document.getElementById('signupWizard').classList.remove('open');
+}
+
+function suRenderStep(){
+  var n=signupState.step;
+  var i;
+  for(i=1;i<=4;i++){
+    var st=document.getElementById('suStep'+i);
+    if(st) st.classList.toggle('active', i===n);
+    var dot=document.getElementById('suDot'+i);
+    if(dot){ dot.classList.toggle('active', i===n); dot.classList.toggle('done', i<n); }
+  }
+  document.getElementById('suBackBtn').style.display=(n>1 && n<4)?'flex':'none';
+  var body=document.querySelector('.su-body');
+  if(body) body.scrollTop=0;
+}
+
+function suBack(){
+  if(signupState.step>1){ signupState.step--; suRenderStep(); }
+}
+
+function suNext(){
+  if(signupState.step===1){ if(!suCommitStep1()) return; }
+  if(signupState.step<signupState.maxStep){ signupState.step++; suRenderStep(); }
+  else { showToast('Next step is added in the upcoming build','toast-ok'); }
+}
+
+function suCommitStep1(){
+  var first=document.getElementById('suFirst').value.trim();
+  var last=document.getElementById('suLast').value.trim();
+  var email=document.getElementById('suEmail').value.trim().toLowerCase();
+  var phone=document.getElementById('suPhone').value.trim();
+  var dob=document.getElementById('suDob').value||null;
+  if(!first||!last){ setSuMsg('suMsg1','First and last name are required.','error'); return false; }
+  if(email && email.indexOf('@')===-1){ setSuMsg('suMsg1','That email does not look right.','error'); return false; }
+  setSuMsg('suMsg1','','');
+  signupState.student={ first_name:first, last_name:last, email:email||null, phone:phone||null, date_of_birth:dob };
+  return true;
+}
+
+function setSuMsg(id,txt,cls){
+  var el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=txt;
+  el.className='su-msg'+(cls?(' '+cls):'');
+}
+
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
   document.getElementById('toastText').textContent=msg;
