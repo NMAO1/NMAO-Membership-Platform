@@ -362,6 +362,19 @@
 .su-btn-next{background:var(--gold);color:var(--black);font-weight:700;}
 .su-btn-back{flex:0 0 auto;padding:0 1.25rem;background:none;border:1px solid var(--border2);color:var(--muted2);}
 .su-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.su-seg{display:flex;gap:0.4rem;margin-bottom:1.1rem;background:var(--near);border:1px solid var(--border);padding:0.3rem;}
+.su-seg-btn{flex:1;height:42px;background:none;border:none;color:var(--muted2);font-family:var(--font-ui);font-size:0.82rem;letter-spacing:0.03em;cursor:pointer;}
+.su-seg-btn.active{background:var(--gold);color:var(--black);font-weight:700;}
+.su-mcard{display:flex;align-items:center;gap:0.75rem;background:var(--surface);border:1px solid var(--border);padding:0.85rem 0.95rem;margin-bottom:0.6rem;cursor:pointer;transition:border-color 0.15s;}
+.su-mcard:active{border-color:var(--gold);}
+.su-mcard.sel{border-color:var(--gold);background:var(--gold-bg);}
+.su-mcard-radio{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);}
+.su-mcard.sel .su-mcard-radio{border-color:var(--gold);background:var(--gold);box-shadow:inset 0 0 0 3px var(--surface);}
+.su-mcard-body{flex:1;}
+.su-mcard-name{font-size:0.92rem;color:var(--white);}
+.su-mcard-meta{font-size:0.74rem;color:var(--muted2);margin-top:0.15rem;}
+.su-mcard-price{flex:0 0 auto;text-align:right;color:var(--gold);font-size:0.95rem;font-family:var(--font-display);}
+.su-empty{color:var(--muted);font-style:italic;font-size:0.84rem;padding:1.25rem 0;text-align:center;}
 
 #toast{
   position:fixed;bottom:calc(var(--nav-h) + 1rem);left:1rem;right:1rem;
@@ -659,11 +672,58 @@
       <div class="su-msg" id="suMsg1"></div>
     </div>
 
-    <!-- STEP 2 — Plan (Bite 2) -->
+    <!-- STEP 2 — Plan -->
     <div class="su-step" id="suStep2">
       <div class="su-step-head">Choose a plan</div>
-      <div class="su-step-sub">Membership plan, class pack, or a custom membership.</div>
-      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Plan selection is added in the next build step.</div>
+      <div class="su-step-sub">Pick how this student will train and pay.</div>
+
+      <div class="su-seg">
+        <button type="button" class="su-seg-btn active" id="suMode-plan" onclick="suSetPlanMode('plan')">Membership</button>
+        <button type="button" class="su-seg-btn" id="suMode-pack" onclick="suSetPlanMode('pack')">Class Pack</button>
+        <button type="button" class="su-seg-btn" id="suMode-custom" onclick="suSetPlanMode('custom')">Custom</button>
+      </div>
+
+      <div class="su-field">
+        <label>Program <span class="su-req">*</span></label>
+        <select class="su-input" id="suProgram" onchange="suRenderMemberships()"></select>
+      </div>
+
+      <div id="suMembershipPick">
+        <div id="suMembershipList"></div>
+      </div>
+
+      <div id="suCustomForm" style="display:none">
+        <div class="su-field">
+          <label>Plan Name <span class="su-req">*</span></label>
+          <input class="su-input" id="suCustName" type="text" placeholder="e.g. 3x / week" autocomplete="off" />
+        </div>
+        <div class="su-row">
+          <div class="su-field">
+            <label>Price ($) <span class="su-req">*</span></label>
+            <input class="su-input" id="suCustPrice" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="su-field">
+            <label>Signup Fee ($)</label>
+            <input class="su-input" id="suCustSignup" type="number" min="0" step="0.01" value="0" />
+          </div>
+        </div>
+        <div class="su-row">
+          <div class="su-field">
+            <label>Bill Every</label>
+            <select class="su-input" id="suCustEvery"><option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select>
+          </div>
+          <div class="su-field">
+            <label>Class Access</label>
+            <select class="su-input" id="suCustLimitType" onchange="suToggleCustLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select>
+          </div>
+        </div>
+        <div class="su-field" id="suCustLimitCountField" style="display:none">
+          <label>Number of Classes</label>
+          <input class="su-input" id="suCustLimitCount" type="number" min="1" placeholder="e.g. 8" />
+        </div>
+      </div>
+
+      <div class="su-msg" id="suMsg2"></div>
     </div>
 
     <!-- STEP 3 — Payment (Bite 3) -->
@@ -1699,17 +1759,28 @@ function isLight(hex){
 
 var toastTimer=null;
 /* ═══════════════ NEW-STUDENT SIGNUP WIZARD ═══════════════ */
-var signupState={ step:1, maxStep:2, student:{}, plan:null, payment:null, studentId:null };
+var signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
+var suPlanLoaded=false, suPrograms=[], suMemberships=[], suMemProgs={};
 
 function openSignup(){
-  signupState={ step:1, maxStep:2, student:{}, plan:null, payment:null, studentId:null };
+  signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
   document.getElementById('suFirst').value='';
   document.getElementById('suLast').value='';
   document.getElementById('suEmail').value='';
   document.getElementById('suPhone').value='';
   document.getElementById('suDob').value='';
+  document.getElementById('suCustName').value='';
+  document.getElementById('suCustPrice').value='';
+  document.getElementById('suCustSignup').value='0';
+  document.getElementById('suCustEvery').value='1';
+  document.getElementById('suCustLimitType').value='unlimited';
+  document.getElementById('suCustLimitCount').value='';
+  suToggleCustLimit();
   setSuMsg('suMsg1','','');
+  setSuMsg('suMsg2','','');
+  suSetPlanMode('plan');
   suRenderStep();
+  suLoadPlanData();
   document.getElementById('signupWizard').classList.add('open');
 }
 
@@ -1731,6 +1802,7 @@ function suRenderStep(){
     if(dot){ dot.classList.toggle('active', i===n); dot.classList.toggle('done', i<n); }
   }
   document.getElementById('suBackBtn').style.display=(n>1 && n<4)?'flex':'none';
+  if(n===2 && typeof suEnterPlanStep==='function') suEnterPlanStep();
   var body=document.querySelector('.su-body');
   if(body) body.scrollTop=0;
 }
@@ -1741,6 +1813,7 @@ function suBack(){
 
 function suNext(){
   if(signupState.step===1){ if(!suCommitStep1()) return; }
+  if(signupState.step===2){ if(!suCommitStep2()) return; }
   if(signupState.step<signupState.maxStep){ signupState.step++; suRenderStep(); }
   else { showToast('Next step is added in the upcoming build','toast-ok'); }
 }
@@ -1764,6 +1837,127 @@ function setSuMsg(id,txt,cls){
   el.textContent=txt;
   el.className='su-msg'+(cls?(' '+cls):'');
 }
+
+/* ── Signup Step 2: plan / pack / custom ── */
+async function suLoadPlanData(){
+  if(suPlanLoaded) return;
+  try{
+    var progR=await sb.from('programs').select('id,name,color').eq('school_id',SID).order('name');
+    suPrograms=progR.data||[];
+    var memR=await sb.from('memberships').select('*').eq('school_id',SID).eq('active',true).order('name');
+    suMemberships=memR.data||[];
+    var ids=suMemberships.map(function(m){return m.id;});
+    suMemProgs={};
+    if(ids.length){
+      var mpR=await sb.from('membership_programs').select('membership_id,program_id').in('membership_id',ids);
+      (mpR.data||[]).forEach(function(r){ if(!suMemProgs[r.membership_id]) suMemProgs[r.membership_id]=[]; suMemProgs[r.membership_id].push(r.program_id); });
+    }
+    suPlanLoaded=true;
+    suPopulatePrograms();
+    suRenderMemberships();
+  }catch(e){ setSuMsg('suMsg2','Could not load plans. Check your connection.','error'); }
+}
+
+function suPopulatePrograms(){
+  var sel=document.getElementById('suProgram');
+  if(!sel) return;
+  var cur=sel.value;
+  var html='<option value="">Select a program...</option>';
+  suPrograms.forEach(function(p){ html+='<option value="'+p.id+'">'+suEsc(p.name)+'</option>'; });
+  sel.innerHTML=html;
+  if(cur) sel.value=cur;
+}
+
+function suEnterPlanStep(){
+  if(!suPlanLoaded){ document.getElementById('suMembershipList').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading plans...</div>'; }
+  else { suPopulatePrograms(); suRenderMemberships(); }
+}
+
+function suSetPlanMode(mode){
+  signupState.planMode=mode;
+  ['plan','pack','custom'].forEach(function(m){ var b=document.getElementById('suMode-'+m); if(b) b.classList.toggle('active', m===mode); });
+  var pick=document.getElementById('suMembershipPick'); if(pick) pick.style.display=(mode==='custom')?'none':'block';
+  var cf=document.getElementById('suCustomForm'); if(cf) cf.style.display=(mode==='custom')?'block':'none';
+  signupState.selMembershipId=null;
+  setSuMsg('suMsg2','','');
+  if(mode!=='custom') suRenderMemberships();
+}
+
+function suRenderMemberships(){
+  var list=document.getElementById('suMembershipList');
+  if(!list) return;
+  var mode=signupState.planMode||'plan';
+  if(mode==='custom') return;
+  var pid=document.getElementById('suProgram').value;
+  if(!pid){ list.innerHTML='<div class="su-empty">Select a program to see available '+(mode==='pack'?'class packs':'plans')+'.</div>'; return; }
+  var matches=suMemberships.filter(function(m){
+    var progs=suMemProgs[m.id]||[];
+    if(progs.indexOf(pid)===-1) return false;
+    var isPack=(m.billing_type==='class_pack');
+    return mode==='pack'?isPack:!isPack;
+  });
+  if(!matches.length){ list.innerHTML='<div class="su-empty">No '+(mode==='pack'?'class packs':'plans')+' set up for this program yet.</div>'; return; }
+  var html='';
+  matches.forEach(function(m){
+    var sel=(signupState.selMembershipId===m.id)?' sel':'';
+    var price=(m.price!=null)?('$'+Number(m.price).toFixed(2)):'--';
+    html+='<div class="su-mcard'+sel+'" onclick="suSelectMembership(\''+m.id+'\')">'+
+      '<div class="su-mcard-radio"></div>'+
+      '<div class="su-mcard-body"><div class="su-mcard-name">'+suEsc(m.name)+'</div><div class="su-mcard-meta">'+suMembershipMeta(m)+'</div></div>'+
+      '<div class="su-mcard-price">'+price+'</div>'+
+    '</div>';
+  });
+  list.innerHTML=html;
+}
+
+function suMembershipMeta(m){
+  if(m.billing_type==='class_pack'){
+    var n=m.class_limit_count?m.class_limit_count:'';
+    return (n?(n+'-class pack'):'Class pack')+((m.signup_fee>0)?(' + $'+Number(m.signup_fee).toFixed(2)+' signup'):'');
+  }
+  var cyc=(m.billing_type==='yearly')?'yr':'mo';
+  var access=(m.class_limit_type && m.class_limit_type!=='unlimited' && m.class_limit_count)?(m.class_limit_count+'x / '+String(m.class_limit_type).replace('per_','')):'Unlimited classes';
+  return access+' \u00b7 billed /'+cyc+((m.signup_fee>0)?(' \u00b7 $'+Number(m.signup_fee).toFixed(2)+' signup'):'');
+}
+
+function suSelectMembership(id){
+  signupState.selMembershipId=id;
+  suRenderMemberships();
+}
+
+function suToggleCustLimit(){
+  var el=document.getElementById('suCustLimitType');
+  if(!el) return;
+  document.getElementById('suCustLimitCountField').style.display=(el.value==='unlimited')?'none':'block';
+}
+
+function suCommitStep2(){
+  var mode=signupState.planMode||'plan';
+  var pid=document.getElementById('suProgram').value;
+  if(!pid){ setSuMsg('suMsg2','Select a program first.','error'); return false; }
+  var prog=suPrograms.find(function(p){return p.id===pid;});
+  if(mode==='custom'){
+    var name=document.getElementById('suCustName').value.trim();
+    var price=document.getElementById('suCustPrice').value;
+    var lt=document.getElementById('suCustLimitType').value;
+    var lc=document.getElementById('suCustLimitCount').value;
+    if(!name){ setSuMsg('suMsg2','Plan name is required.','error'); return false; }
+    if(price===''||isNaN(parseFloat(price))){ setSuMsg('suMsg2','Enter a price.','error'); return false; }
+    if(lt!=='unlimited' && !lc){ setSuMsg('suMsg2','Enter the number of classes.','error'); return false; }
+    signupState.plan={ mode:'custom', program_id:pid, program_name:prog?prog.name:'', is_pack:false,
+      custom:{ name:name, price:parseFloat(price)||0, signup_fee:parseFloat(document.getElementById('suCustSignup').value)||0, every_n:parseInt(document.getElementById('suCustEvery').value)||1, limit_type:lt, limit_count:lc?parseInt(lc):null } };
+    setSuMsg('suMsg2','','');
+    return true;
+  }
+  if(!signupState.selMembershipId){ setSuMsg('suMsg2','Pick a '+(mode==='pack'?'class pack':'plan')+'.','error'); return false; }
+  var m=suMemberships.find(function(x){return x.id===signupState.selMembershipId;});
+  if(!m){ setSuMsg('suMsg2','That plan is no longer available.','error'); return false; }
+  signupState.plan={ mode:mode, program_id:pid, program_name:prog?prog.name:'', membership_id:m.id, membership_name:m.name, price:m.price, signup_fee:m.signup_fee||0, is_pack:(m.billing_type==='class_pack') };
+  setSuMsg('suMsg2','','');
+  return true;
+}
+
+function suEsc(s){ s=(s==null)?'':String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
