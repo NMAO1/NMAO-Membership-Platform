@@ -14,7 +14,7 @@
     /* ── BASE ─────────────────────────────────────── */
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
     :root{
-      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.09);
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:color-mix(in srgb,var(--gold) 9%,transparent);
       --black:#0A0A0A;--near:#111111;--surface:#161616;--surface2:#1C1C1C;
       --border:#252525;--border2:#2E2E2E;
       --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;
@@ -322,7 +322,7 @@
 /* ── TOAST ───────────────────────────────────── */
 /* ── NEW-STUDENT SIGNUP WIZARD ─────────────────── */
 .su-cta{display:flex;align-items:center;gap:0.85rem;background:var(--gold-bg);border:1px solid var(--gold);padding:0.95rem 1.1rem;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
-.su-cta:active{background:rgba(201,168,76,0.16);}
+.su-cta:active{background:color-mix(in srgb,var(--gold) 16%,transparent);}
 .su-cta-icon{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--black);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
 .su-cta-text{flex:1;}
 .su-cta-title{font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:0.04em;}
@@ -883,10 +883,16 @@ async function init(){
 
 async function loadSchoolBranding(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,logo_url').eq('id',SID).single();
+    var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url').eq('id',SID).single();
     if(!r.data)return;
     schoolData=r.data;
-    if(r.data.color)document.documentElement.style.setProperty('--gold',r.data.color);
+    var ds=document.documentElement.style;
+    if(r.data.color)ds.setProperty('--gold',r.data.color);
+    if(r.data.bg_color)ds.setProperty('--black',r.data.bg_color);
+    if(r.data.border_color)ds.setProperty('--border',r.data.border_color);
+    if(r.data.surface_color)ds.setProperty('--surface',r.data.surface_color);
+    if(r.data.font_color)ds.setProperty('--white',r.data.font_color);
+    if(r.data.font_family)ds.setProperty('--font-display',"'"+r.data.font_family+"',serif");
     var sn=r.data.name||'NMAO';
     document.getElementById('staffSchoolName').textContent=sn;
     document.getElementById('loginMark').textContent=sn;
@@ -1842,7 +1848,7 @@ function setSuMsg(id,txt,cls){
 async function suLoadPlanData(){
   if(suPlanLoaded) return;
   try{
-    var progR=await sb.from('programs').select('id,name,color').eq('school_id',SID).order('name');
+    var progR=await sb.from('programs').select('id,name,color').eq('school_id',SID).eq('active',true).order('name');
     suPrograms=progR.data||[];
     var memR=await sb.from('memberships').select('*').eq('school_id',SID).eq('active',true).order('name');
     suMemberships=memR.data||[];
@@ -1891,6 +1897,7 @@ function suRenderMemberships(){
   var pid=document.getElementById('suProgram').value;
   if(!pid){ list.innerHTML='<div class="su-empty">Select a program to see available '+(mode==='pack'?'class packs':'plans')+'.</div>'; return; }
   var matches=suMemberships.filter(function(m){
+    if(m.is_custom) return false;
     var progs=suMemProgs[m.id]||[];
     if(progs.indexOf(pid)===-1) return false;
     var isPack=(m.billing_type==='class_pack');
