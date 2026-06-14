@@ -375,6 +375,23 @@
 .su-mcard-meta{font-size:0.74rem;color:var(--muted2);margin-top:0.15rem;}
 .su-mcard-price{flex:0 0 auto;text-align:right;color:var(--gold);font-size:0.95rem;font-family:var(--font-display);}
 .su-empty{color:var(--muted);font-style:italic;font-size:0.84rem;padding:1.25rem 0;text-align:center;}
+.su-summary{background:var(--surface);border:1px solid var(--border);padding:0.5rem 0.95rem;margin-bottom:1.25rem;}
+.su-sum-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--muted2);}
+.su-sum-row:last-child{border-bottom:none;}
+.su-sum-row b{color:var(--white);font-weight:600;text-align:right;}
+.su-sum-total b{color:var(--gold);font-size:1rem;font-family:var(--font-display);}
+.su-pay{display:flex;align-items:center;gap:0.7rem;background:var(--surface);border:1px solid var(--border);padding:0.85rem 0.95rem;margin-bottom:0.6rem;cursor:pointer;}
+.su-pay.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent);}
+.su-pay-radio{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);}
+.su-pay.sel .su-pay-radio{border-color:var(--gold);background:var(--gold);box-shadow:inset 0 0 0 3px var(--surface);}
+.su-pay-body{flex:1;}
+.su-pay-name{font-size:0.9rem;color:var(--white);}
+.su-pay-desc{font-size:0.72rem;color:var(--muted2);margin-top:0.1rem;}
+.su-pay-ic{flex:0 0 auto;color:var(--muted2);font-size:0.95rem;}
+.su-done{text-align:center;padding:1.5rem 0.5rem;max-width:420px;margin:0 auto;}
+.su-done-icon{font-size:2.75rem;margin-bottom:1rem;}
+.su-done-head{font-family:var(--font-display);font-size:1.35rem;color:var(--white);margin-bottom:0.5rem;}
+.su-done-sub{font-size:0.86rem;color:var(--muted2);line-height:1.6;}
 
 #toast{
   position:fixed;bottom:calc(var(--nav-h) + 1rem);left:1rem;right:1rem;
@@ -726,19 +743,32 @@
       <div class="su-msg" id="suMsg2"></div>
     </div>
 
-    <!-- STEP 3 — Payment (Bite 3) -->
+    <!-- STEP 3 — Payment -->
     <div class="su-step" id="suStep3">
       <div class="su-step-head">Payment</div>
-      <div class="su-step-sub">Collect a card now, send a card link, or record cash.</div>
-      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Payment is added in a later build step.</div>
+      <div class="su-step-sub">Review and choose how they will pay.</div>
+      <div class="su-summary" id="suSummary"></div>
+      <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.5rem">Payment Method</label>
+      <div class="su-pay" id="suPay-card_now" onclick="suSetPay('card_now')">
+        <div class="su-pay-radio"></div>
+        <div class="su-pay-body"><div class="su-pay-name">Collect card now</div><div class="su-pay-desc">Open Stripe checkout on this tablet</div></div>
+        <i class="fa-solid fa-tablet-screen-button su-pay-ic"></i>
+      </div>
+      <div class="su-pay" id="suPay-card_link" onclick="suSetPay('card_link')">
+        <div class="su-pay-radio"></div>
+        <div class="su-pay-body"><div class="su-pay-name">Send payment link</div><div class="su-pay-desc">Text the checkout link to the student</div></div>
+        <i class="fa-solid fa-message su-pay-ic"></i>
+      </div>
+      <div class="su-pay" id="suPay-cash" onclick="suSetPay('cash')">
+        <div class="su-pay-radio"></div>
+        <div class="su-pay-body"><div class="su-pay-name">Cash</div><div class="su-pay-desc">Record a cash payment and activate now</div></div>
+        <i class="fa-solid fa-money-bill su-pay-ic"></i>
+      </div>
+      <div class="su-msg" id="suMsg3"></div>
     </div>
 
-    <!-- STEP 4 — Done (Bite 4) -->
-    <div class="su-step" id="suStep4">
-      <div class="su-step-head">All set</div>
-      <div class="su-step-sub">Confirmation and welcome email.</div>
-      <div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">Confirmation is added in a later build step.</div>
-    </div>
+    <!-- STEP 4 — Done -->
+    <div class="su-step" id="suStep4"></div>
   </div>
 
   <div class="su-foot">
@@ -1808,7 +1838,12 @@ function suRenderStep(){
     if(dot){ dot.classList.toggle('active', i===n); dot.classList.toggle('done', i<n); }
   }
   document.getElementById('suBackBtn').style.display=(n>1 && n<4)?'flex':'none';
+  var next=document.getElementById('suNextBtn');
+  if(n===3){ next.innerHTML='Complete Sign-Up <i class="fa-solid fa-circle-check"></i>'; }
+  else if(n===4){ next.innerHTML='Done'; }
+  else { next.innerHTML='Continue <i class="fa-solid fa-chevron-right"></i>'; }
   if(n===2 && typeof suEnterPlanStep==='function') suEnterPlanStep();
+  if(n===3 && typeof suEnterPayStep==='function') suEnterPayStep();
   var body=document.querySelector('.su-body');
   if(body) body.scrollTop=0;
 }
@@ -1818,10 +1853,11 @@ function suBack(){
 }
 
 function suNext(){
-  if(signupState.step===1){ if(!suCommitStep1()) return; }
-  if(signupState.step===2){ if(!suCommitStep2()) return; }
-  if(signupState.step<signupState.maxStep){ signupState.step++; suRenderStep(); }
-  else { showToast('Next step is added in the upcoming build','toast-ok'); }
+  var s=signupState.step;
+  if(s===1){ if(!suCommitStep1()) return; signupState.step=2; suRenderStep(); return; }
+  if(s===2){ if(!suCommitStep2()) return; signupState.step=3; suRenderStep(); return; }
+  if(s===3){ suFinish(); return; }
+  if(s===4){ closeSignup(); return; }
 }
 
 function suCommitStep1(){
@@ -1965,6 +2001,116 @@ function suCommitStep2(){
 }
 
 function suEsc(s){ s=(s==null)?'':String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── Signup Step 3: payment + commit ── */
+function suEnterPayStep(){
+  var p=signupState.plan||{}; var stu=signupState.student||{};
+  var nm=((stu.first_name||'')+' '+(stu.last_name||'')).replace(/^\s+|\s+$/g,'');
+  var planLabel=(p.mode==='custom')?((p.custom&&p.custom.name)||'Custom plan'):(p.membership_name||'');
+  var priceNum=(p.mode==='custom')?((p.custom&&p.custom.price)||0):(p.price||0);
+  var typeLabel=p.is_pack?'Class pack (one-time)':'Membership (recurring)';
+  var html='';
+  html+='<div class="su-sum-row"><span>Student</span><b>'+suEsc(nm)+'</b></div>';
+  html+='<div class="su-sum-row"><span>Program</span><b>'+suEsc(p.program_name||'')+'</b></div>';
+  html+='<div class="su-sum-row"><span>Plan</span><b>'+suEsc(planLabel)+'</b></div>';
+  html+='<div class="su-sum-row"><span>Type</span><b>'+typeLabel+'</b></div>';
+  html+='<div class="su-sum-row su-sum-total"><span>'+(p.is_pack?'Price':'Per cycle')+'</span><b>$'+Number(priceNum||0).toFixed(2)+'</b></div>';
+  document.getElementById('suSummary').innerHTML=html;
+  suSetPay(signupState.payMethod||'card_now');
+  setSuMsg('suMsg3','','');
+}
+
+function suSetPay(method){
+  signupState.payMethod=method;
+  ['card_now','card_link','cash'].forEach(function(m){ var el=document.getElementById('suPay-'+m); if(el) el.classList.toggle('sel', m===method); });
+}
+
+async function suFinish(){
+  if(signupState._busy) return;
+  var method=signupState.payMethod||'card_now';
+  var plan=signupState.plan||{}; var stu=signupState.student||{};
+  if(method==='card_link' && !stu.phone){ setSuMsg('suMsg3','Add a phone number on Step 1 to text a link, or choose another method.','error'); return; }
+  signupState._busy=true;
+  var btn=document.getElementById('suNextBtn'); var origHtml=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch spin"></i> Working...';
+  setSuMsg('suMsg3','','');
+  var createdMembershipId=null;
+  try{
+    var membershipId, planName, price;
+    if(plan.mode==='custom'){
+      var c=plan.custom||{};
+      var cr=await sb.rpc('create_custom_membership',{ p_name:c.name, p_billing_type:'monthly', p_billing_length:c.every_n||1, p_billing_unit:'months', p_price:c.price||0, p_signup_fee:c.signup_fee||0, p_class_limit_type:c.limit_type, p_class_limit_count:c.limit_count||null, p_program_ids:[plan.program_id], p_class_ids:null });
+      if(cr.error||!cr.data) throw new Error(cr.error?cr.error.message:'Could not create the custom plan.');
+      membershipId=cr.data; createdMembershipId=membershipId; planName=c.name; price=c.price||0;
+    } else {
+      membershipId=plan.membership_id; planName=plan.membership_name; price=plan.price||0;
+    }
+    var nowIso=new Date().toISOString(); var today=nowIso.split('T')[0];
+    var stuPayload={ school_id:SID, first_name:stu.first_name, last_name:stu.last_name, email:stu.email||null, phone:stu.phone||null, date_of_birth:stu.date_of_birth||null, program_id:plan.program_id, plan_type:'membership', source:'manual', start_date:today, status:(method==='cash'?'active':'trial') };
+    var sr=await sb.from('students').insert(stuPayload).select('id').single();
+    if(sr.error||!sr.data){
+      if(createdMembershipId){ await sb.from('memberships').update({active:false}).eq('id',createdMembershipId); }
+      throw new Error(sr.error?sr.error.message:'Could not create the student.');
+    }
+    var studentId=sr.data.id; signupState.studentId=studentId;
+
+    if(method==='cash'){
+      await sb.from('student_memberships').insert({ school_id:SID, student_id:studentId, membership_id:membershipId, program_id:plan.program_id, status:'active', started_at:nowIso, start_date:today });
+      await sb.from('students').update({ membership_id:membershipId, status:'active' }).eq('id',studentId);
+      await sb.from('payments').insert({ school_id:SID, student_id:studentId, amount:price, type:'membership', status:'paid', description:'Cash - '+planName, created_at:nowIso, paid_at:nowIso });
+      suRenderDone('cash',{ name:stu.first_name, plan:planName, price:price });
+    } else {
+      var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify({ school_id:SID, student_id:studentId, membership_id:membershipId, success_url:window.location.origin+window.location.pathname+'?signup=paid', cancel_url:window.location.origin+window.location.pathname+'?signup=cancelled' }) });
+      var cd=await co.json();
+      if(!co.ok||cd.error||!cd.url) throw new Error(cd.error||'Could not start checkout.');
+      if(method==='card_now'){
+        window.open(cd.url,'_blank');
+        suRenderDone('card_now',{ name:stu.first_name });
+      } else {
+        await suSendCheckoutLink(stu, cd.url);
+        suRenderDone('card_link',{ name:stu.first_name, phone:stu.phone });
+      }
+    }
+    signupState.step=4;
+    suRenderStep();
+  }catch(e){
+    setSuMsg('suMsg3',(e&&e.message)?e.message:'Something went wrong. Nothing was charged.','error');
+  }finally{
+    signupState._busy=false; btn.disabled=false;
+    if(signupState.step!==4) btn.innerHTML=origHtml;
+  }
+}
+
+async function suSendCheckoutLink(stu, url){
+  var fn=stu.first_name||'there'; var ph=stu.phone||'';
+  if(!ph) throw new Error('No phone number to text.');
+  var token=SKEY;
+  try{ var sess=await sb.auth.getSession(); if(sess&&sess.data&&sess.data.session&&sess.data.session.access_token) token=sess.data.session.access_token; }catch(e){}
+  var r=await fetch(SURL+'/functions/v1/send-communication',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({ school_id:SID, channel:'sms', body:'Hi '+fn+', tap to complete your enrollment payment: '+url, recipients:[{phone:ph, first_name:fn}] }) });
+  var d=await r.json();
+  if(d&&d.error) throw new Error(d.error);
+  if(d&&d.sms_sent!==undefined && !d.sms_sent) throw new Error((d.errors&&d.errors[0]&&d.errors[0].reason)||'The text could not be sent.');
+  return true;
+}
+
+function suRenderDone(kind, info){
+  info=info||{};
+  var icon='fa-circle-check', color='var(--green)', head='', sub='';
+  if(kind==='cash'){
+    head='Enrolled';
+    sub=suEsc(info.name||'The student')+' is active on '+suEsc(info.plan||'their plan')+'. Cash payment of $'+Number(info.price||0).toFixed(2)+' recorded.';
+  } else if(kind==='card_now'){
+    icon='fa-up-right-from-square'; color='var(--gold)'; head='Payment page opened';
+    sub='Stripe checkout opened in a new tab. Once '+suEsc(info.name||'the student')+' completes payment, their membership and autopay activate automatically.';
+  } else if(kind==='card_link'){
+    icon='fa-paper-plane'; color='var(--gold)'; head='Payment link sent';
+    sub='Texted to '+suEsc(info.phone||'their phone')+'. Their membership activates once they complete payment.';
+  }
+  document.getElementById('suStep4').innerHTML=
+    '<div class="su-done"><div class="su-done-icon" style="color:'+color+'"><i class="fa-solid '+icon+'"></i></div>'+
+    '<div class="su-done-head">'+head+'</div><div class="su-done-sub">'+sub+'</div>'+
+    '<button class="su-btn su-btn-next" style="max-width:260px;margin:1.5rem auto 0" onclick="openSignup()"><i class="fa-solid fa-user-plus"></i> Sign up another</button></div>';
+}
 
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
