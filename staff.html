@@ -1471,7 +1471,7 @@ async function toggleCheckin(studentId,event){
           if(primary.classes_remaining!==null&&primary.classes_remaining!==undefined){
             var capBucketRem=parseInt(primary.classes_remaining)||0;
             if(capBucketRem<=0){
-              var capBucketTotal=(parseInt(primary.cycle_allowance)||0)+(parseInt(primary.rollover_balance)||0);
+              var capBucketTotal=(primary.class_limit_type==='class_pack')?capLimit:((parseInt(primary.cycle_allowance)||0)+(parseInt(primary.rollover_balance)||0));
               var capBucketUsed=capBucketTotal-capBucketRem;
               if(primary.class_limit_type==='class_pack'){
                 capMsg='Class pack used up — '+capBucketUsed+' of '+capBucketTotal+' classes used.';
