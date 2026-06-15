@@ -115,6 +115,12 @@
 .today-greeting{margin-bottom:1.5rem;}
 .greeting-name{font-family:var(--font-display);font-size:1.6rem;color:var(--white);line-height:1.2;}
 .greeting-date{font-size:0.82rem;color:var(--muted);margin-top:0.25rem;}
+.day-switch{display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;position:relative;flex-wrap:wrap;}
+.day-nav{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);color:var(--white);border-radius:8px;cursor:pointer;font-size:0.8rem;}
+.day-nav:active{background:var(--surface2);}
+.day-current{flex:0 1 auto;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);color:var(--white);border-radius:8px;cursor:pointer;font-size:0.82rem;padding:0.45rem 0.85rem;min-width:0;}
+.day-current:active{background:var(--surface2);}
+.day-today-pill{flex-shrink:0;background:var(--gold);color:#181818;border:none;border-radius:8px;cursor:pointer;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.45rem 0.7rem;font-weight:700;}
 .quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:1.5rem;}
 .qstat{background:var(--surface);border:1px solid var(--border);padding:0.85rem 0.6rem;text-align:center;}
 .qstat-num{font-family:var(--font-display);font-size:1.8rem;color:var(--gold);line-height:1;}
@@ -488,9 +494,15 @@
 ```
 <!-- TODAY TAB -->
 <div class="tab-panel active" id="tabToday">
-  <div class="today-greeting">
+ <div class="today-greeting">
     <div class="greeting-name" id="todayGreeting">Good morning</div>
-    <div class="greeting-date" id="todayDate"></div>
+    <div class="day-switch">
+      <button class="day-nav" id="dayPrev" onclick="shiftDay(-1)" aria-label="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="day-current" id="dayCurrentBtn" onclick="openDayPicker()"><span id="todayDate"></span><i class="fa-solid fa-caret-down" style="margin-left:0.4rem;opacity:0.55;font-size:0.7em"></i></button>
+      <button class="day-nav" id="dayNext" onclick="shiftDay(1)" aria-label="Next day"><i class="fa-solid fa-chevron-right"></i></button>
+      <button class="day-today-pill" id="dayTodayPill" onclick="goToday()" style="display:none">Today</button>
+      <input type="date" id="dayPickerInput" onchange="onDayPicked(this.value)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+    </div>
   </div>
 
   <!-- New Student Sign-Up entry -->
@@ -523,12 +535,12 @@
   </div>
 
   <div class="quick-stats">
-    <div class="qstat"><div class="qstat-num" id="qsClasses">—</div><div class="qstat-lbl">Classes Today</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsClasses">—</div><div class="qstat-lbl">Classes</div></div>
     <div class="qstat"><div class="qstat-num" id="qsExpected">—</div><div class="qstat-lbl">Expected</div></div>
     <div class="qstat"><div class="qstat-num" id="qsCheckedIn">—</div><div class="qstat-lbl">Checked In</div></div>
   </div>
 
-  <div class="section-head">Today's Classes</div>
+  <div class="section-head" id="todayClassesHead">Today's Classes</div>
   <div id="todayClassList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
 </div>
 
@@ -955,7 +967,8 @@ var promoteData=null;
 var eligibleStudentIds=new Set();// walk-in candidates: not RSVPd and not checked in
 var coveringStudentIds=new Set();// students whose active memberships cover the current class's program
 var membershipAlerts=[];   // students with inactive memberships who checked in today
-
+var viewDate=new Date();   // Today tab: the day currently being viewed (day switcher)
+function ymd(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 // ─────────────────────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────────────────────
@@ -1079,42 +1092,76 @@ async function loadCoreData(){
 // ─────────────────────────────────────────────────────────────
 async function buildTodayTab(){
   var now=new Date();
+  var vd=viewDate;                       // currently-viewed day (day switcher)
   var instrName=getInstrName(currentInstructor);
   var hour=now.getHours();
   var greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   document.getElementById('todayGreeting').textContent=greet+', '+instrName;
-  document.getElementById('todayDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var today=DAYS[now.getDay()];
-  var todayStr=now.toISOString().split('T')[0];
+  var todayStr=ymd(now);                 // real today (for is-today test)
+  var vdStr=ymd(vd);                      // the day being shown
+  var isToday=(vdStr===todayStr);
+  document.getElementById('todayDate').textContent=(isToday?'Today · ':'')+vd.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var dayPill=document.getElementById('dayTodayPill');if(dayPill)dayPill.style.display=isToday?'none':'inline-flex';
+  var headEl=document.getElementById('todayClassesHead');if(headEl)headEl.textContent=isToday?'Classes Today':('Classes · '+vd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}));
+  var today=DAYS[vd.getDay()];
   var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
   document.getElementById('qsClasses').textContent=todayClasses.length;
   // Live counts: union of RSVPs (class_enrollments) + check-ins (class_attendance)
-  var counts=await fetchEnrollmentCounts(todayStr,todayStr);
+  var counts=await fetchEnrollmentCounts(vdStr,vdStr);
   var totalExpected=0;
   todayClasses.forEach(function(c){
-    totalExpected+=(counts[c.id]&&counts[c.id][todayStr])||0;
+    totalExpected+=(counts[c.id]&&counts[c.id][vdStr])||0;
   });
   document.getElementById('qsExpected').textContent=totalExpected||'—';
-  var attR=await sb.from('class_attendance').select('student_id,session_id').eq('school_id',SID).gte('noted_at',todayStr+'T00:00:00');
-  var checkedInToday=(attR.data||[]).length;
-  document.getElementById('qsCheckedIn').textContent=checkedInToday||0;
-  await loadMembershipAlerts(attR.data||[]);
+  // Sessions for the viewed day — drives Live badges and the day-scoped checked-in count
+  var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',vdStr);
+  var sessMap={};var sessIds=[];(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;sessIds.push(s.id);});
+  var dayAtt=[];
+  if(sessIds.length){
+    var attR=await sb.from('class_attendance').select('student_id,session_id').eq('school_id',SID).in('session_id',sessIds);
+    dayAtt=attR.data||[];
+  }
+  document.getElementById('qsCheckedIn').textContent=dayAtt.length||0;
+  if(isToday){await loadMembershipAlerts(dayAtt);}
   var el=document.getElementById('todayClassList');
   if(!todayClasses.length){
-    el.innerHTML='<div class="no-classes"><i class="fa-regular fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-style:italic;color:var(--muted)">No classes scheduled today.</div></div>';
+    el.innerHTML='<div class="no-classes"><i class="fa-regular fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i><div style="font-style:italic;color:var(--muted)">No classes scheduled'+(isToday?' today':'')+'.</div></div>';
+    document.getElementById('psTodayClasses').textContent=todayClasses.length;
     return;
   }
-  var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',todayStr);
-  var sessMap={};(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;});
   el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
     var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
     var hasSess=!!sessMap[c.id];
-    var liveCount=(counts[c.id]&&counts[c.id][todayStr])||0;
+    var liveCount=(counts[c.id]&&counts[c.id][vdStr])||0;
     var cap=c.capacity||c.max_students||c.enrolled_count||0;
-    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+todayStr+'\')">'+'<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+'<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+'<div class="class-row-meta">'+enrollBadgeHTML(liveCount,cap)+(hasSess?'<span style="font-size:0.55rem;color:#7DBD7D">Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+'</div>';
+    return '<div class="class-row'+(hasSess?' active-session':'')+'" onclick="openClassView(\''+c.id+'\',\''+vdStr+'\')">'+'<div class="class-row-time">'+fmtTime(c.start_time)+'</div>'+'<div class="class-row-info"><div class="class-row-name">'+cn+'</div>'+(tags?'<div class="class-row-tags">'+tags+'</div>':'')+'</div>'+'<div class="class-row-meta">'+enrollBadgeHTML(liveCount,cap)+(hasSess?'<span style="font-size:0.55rem;color:#7DBD7D">Live</span>':'<span style="font-size:0.55rem;color:var(--muted)">Not started</span>')+'<i class="fa-solid fa-chevron-right class-chevron"></i></div>'+'</div>';
   }).join('');
   document.getElementById('psTodayClasses').textContent=todayClasses.length;
+}
+
+// ── Day switcher (Today tab) ──
+function shiftDay(delta){
+  var d=new Date(viewDate);
+  d.setDate(d.getDate()+delta);
+  viewDate=d;
+  buildTodayTab();
+}
+function goToday(){
+  viewDate=new Date();
+  buildTodayTab();
+}
+function openDayPicker(){
+  var el=document.getElementById('dayPickerInput');
+  if(!el)return;
+  el.value=ymd(viewDate);
+  try{el.showPicker();}catch(e){el.focus();el.click();}
+}
+function onDayPicked(val){
+  if(!val)return;
+  var p=val.split('-');
+  viewDate=new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
+  buildTodayTab();
 }
 
 
@@ -1516,10 +1563,20 @@ if(!classSessionId){
   if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
   classSessionId=cr.data.id;
 }
-    // Insert attendance
+    // Insert attendance — stamp the viewed day for off-today (back-fill / future) check-ins
+    var todayLocal=ymd(new Date());
+    var notedAt;
+    if(!currentClassData._dateStr||currentClassData._dateStr===todayLocal){
+      notedAt=new Date().toISOString();
+    }else{
+      var stp=currentClassData.start_time||'12:00:00';
+      var dP=currentClassData._dateStr.split('-');
+      var tP=stp.split(':');
+      notedAt=new Date(parseInt(dP[0],10),parseInt(dP[1],10)-1,parseInt(dP[2],10),parseInt(tP[0]||'12',10),parseInt(tP[1]||'0',10),parseInt(tP[2]||'0',10)).toISOString();
+    }
     var ir=await sb.from('class_attendance').insert({
       session_id:classSessionId,student_id:studentId,
-      school_id:SID,status:'present',noted_at:new Date().toISOString()
+      school_id:SID,status:'present',noted_at:notedAt
     });
     if(ir.error&&!ir.error.message.includes('duplicate')){
       showToast('Error: '+ir.error.message,'err');
