@@ -1041,6 +1041,15 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID=null;
+var SCHOOL_SLUG='';
+var SCHOOL_SLUG_KEY='nmao_school_slug';
+function getSlug(){
+  var p=new URLSearchParams(window.location.search);
+  var s=p.get('s');
+  if(s){s=s.trim().toLowerCase();}
+  if(!s){try{s=localStorage.getItem(SCHOOL_SLUG_KEY)||'';}catch(e){s='';}}
+  return s;
+}
 var PORTAL_URL=window.location.origin+window.location.pathname;
 var KEEP_SIGNED_IN_KEY='nmao_keep_signed_in';
 var keepSignedInPref=localStorage.getItem(KEEP_SIGNED_IN_KEY);
@@ -1185,12 +1194,27 @@ function updateWaiverBanner(){
 //  §JS: INIT
 // ─────────────────────────────────────────────────────────────
 async function init(){
+  var slug=getSlug();
+  if(!slug){showSchoolNotFound();return;}
+  try{
+    var br=await sb.rpc('get_school_branding_by_slug',{p_slug:slug});
+    if(br.error||!br.data||!br.data.length){showSchoolNotFound();return;}
+    var school=br.data[0];
+    SID=school.id;
+    SCHOOL_SLUG=slug;
+    try{localStorage.setItem(SCHOOL_SLUG_KEY,slug);}catch(e){}
+    await loadSchoolBranding(school);
+  }catch(e){
+    console.error('Slug resolve error:',e);
+    showSchoolNotFound();
+    return;
+  }
   try{
     var hash=window.location.hash;
     if(hash&&hash.includes('access_token')){
       var res=await sb.auth.getSession();
       if(res.data&&res.data.session){
-        window.history.replaceState(null,'',window.location.pathname);
+        window.history.replaceState(null,'',window.location.pathname+'?s='+SCHOOL_SLUG);
         await detectUserTypeAndRoute(res.data.session.user);
         return;
       }
@@ -1210,11 +1234,16 @@ async function init(){
 // ─────────────────────────────────────────────────────────────
 //  §JS: SCHOOL_BRANDING
 // ─────────────────────────────────────────────────────────────
-async function loadSchoolBranding(){
+async function loadSchoolBranding(pre){
   try{
-var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages,allow_member_card_updates').eq('id',SID).single();
-    if(!r.data)return;
-    var d=r.data;
+    var d;
+    if(pre){
+      d=pre;
+    }else{
+      var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages,allow_member_card_updates').eq('id',SID).single();
+      if(!r.data)return;
+      d=r.data;
+    }
     schoolData=d;
     if(d.color)document.documentElement.style.setProperty('--gold',d.color);
     if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
@@ -1254,9 +1283,9 @@ var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at,awaiting_card)').eq('email',user.email).maybeSingle(),
-      sb.from('families').select('*').eq('email',user.email).maybeSingle(),
-      sb.from('instructors').select('*').eq('email',user.email).eq('active',true).maybeSingle()
+sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at,awaiting_card)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
+      sb.from('families').select('*').eq('email',user.email).eq('school_id',SID).maybeSingle(),
+      sb.from('instructors').select('*').eq('email',user.email).eq('active',true).eq('school_id',SID).maybeSingle()
     ]);
     var studentR=results[0],familyR=results[1],instrR=results[2];
     if(!familyR.error&&familyR.data){
@@ -1289,6 +1318,11 @@ function showNoAccountError(email){
   hideAllScreens();
   document.getElementById('portalScreen').style.display='block';
   document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">No account found</div><div style="font-size:0.85rem;color:var(--muted)">No account found for <strong>'+email+'</strong>.<br>Please contact your school to make sure your email is on file.</div></div>';
+}
+function showSchoolNotFound(){
+  hideAllScreens();
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">School not found</div><div style="font-size:0.85rem;color:var(--muted)">We could not find your school from this link.<br>Please use the sign-in link your school sent you, or contact them for the correct link.</div></div>';
 }
 
 function hideAllScreens(){
@@ -1323,7 +1357,7 @@ async function sendMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
   if(!email||!email.includes('@')){setLoginMsg('Please enter your email address above first, then click this link again.','error');return;}
   setLoginMsg('Sending magic link...','');
-  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:PORTAL_URL}});
+  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:PORTAL_URL+'?s='+SCHOOL_SLUG}});
   if(r.error){setLoginMsg(r.error.message,'error');}
   else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
 }
