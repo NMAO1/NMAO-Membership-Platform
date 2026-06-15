@@ -1539,7 +1539,14 @@ if(!classSessionId){
       }
     }
 
-    showToast(student?student.first_name+' checked in':'Checked in','ok');
+    var doneMsg=student?student.first_name+' checked in':'Checked in';
+    var doneType='ok';
+    if(primary&&primary.class_limit_type==='class_pack'&&!primary.is_expired&&primary.classes_remaining!==null&&primary.classes_remaining!==undefined){
+      var leftAfter=Math.max(0,(parseInt(primary.classes_remaining)||0)-1);
+      doneMsg+=' \u00b7 '+leftAfter+' class'+(leftAfter===1?'':'es')+' left';
+      if(leftAfter<=1) doneType='warn';
+    }
+    showToast(doneMsg,doneType);
   }
 
  // Recompute walk-in eligible set (check-in status changed)
