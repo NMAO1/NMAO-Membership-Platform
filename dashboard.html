@@ -1185,6 +1185,17 @@
         <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
         <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
         <div class="field"><label>State</label><input type="text" id="settingState" /></div>
+        <div class="field">
+          <label>Member Portal Link</label>
+          <div class="booking-slug-row">
+            <span class="booking-slug-prefix">app.nmao.us/portal.html?s=</span>
+            <input type="text" class="booking-slug-input" id="settingSlug" placeholder="e.g. aosd" />
+          </div>
+          <div id="slugLinkPreview" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;word-break:break-all"></div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">This is the sign-in address members use. Changing it will break previously shared sign-in links.</div>
+          <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="saveSchoolSlug()"><i class="fa-solid fa-link"></i> Save Portal Link</button>
+          <p class="form-msg" id="slugMsg"></p>
+        </div>
         <div class="field"><label>School Logo</label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students</div></div></label></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card</div></div></label></div>
@@ -2988,6 +2999,7 @@ async function loadSchool() {
     document.getElementById('settingEmail').value = d.email || '';
     document.getElementById('settingPhone').value = d.phone || '';
     document.getElementById('settingCity').value  = d.city  || '';
+    if(document.getElementById('settingSlug')){var sg=(d.slug)||(window.schoolData&&window.schoolData.slug)||'';document.getElementById('settingSlug').value=sg;updateSlugPreview(sg);}
     document.getElementById('settingState').value = d.state || '';
     var col=d.color||'#C9A84C', bgCol=d.bg_color||'#0A0A0A', borderCol=d.border_color||'#2A2520';
     var surfaceCol=d.surface_color||'#141414', fontCol=d.font_color||'#F5F0E8', font=d.font_family||'Cormorant Garamond';
@@ -8584,6 +8596,27 @@ async function saveInstructorBookingToggle(){
   await sb.from('instructors').update({booking_link_enabled:enabled}).eq('id',currentInstructorProfile.id);
   currentInstructorProfile.booking_link_enabled=enabled;
   renderInstructors();
+}async function saveSchoolSlug(){
+  var raw=document.getElementById('settingSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  document.getElementById('settingSlug').value=raw;
+  updateSlugPreview(raw);
+  if(!raw){setMsg('slugMsg','Please enter a portal link name.','error');return;}
+  var dup=await sb.from('schools').select('id').eq('slug',raw).neq('id',SID).maybeSingle();
+  if(dup.data){setMsg('slugMsg','That link name is already taken, try another.','error');return;}
+  var r=await sb.from('schools').update({slug:raw}).eq('id',SID);
+  if(r.error){
+    if(r.error.message&&r.error.message.toLowerCase().indexOf('duplicate')!==-1){setMsg('slugMsg','That link name is already taken, try another.','error');}
+    else{setMsg('slugMsg',r.error.message,'error');}
+    return;
+  }
+  if(window.schoolData){window.schoolData.slug=raw;}
+  setMsg('slugMsg','Portal link saved!','success');
+  setTimeout(function(){var m=document.getElementById('slugMsg');if(m)m.textContent='';},3000);
+}
+function updateSlugPreview(slug){
+  var prev=document.getElementById('slugLinkPreview');
+  if(!prev)return;
+  prev.textContent=slug?('app.nmao.us/portal.html?s='+slug):'Enter a link name above';
 }
 async function saveInstructorSlug(){
   if(!currentInstructorProfile) return;
