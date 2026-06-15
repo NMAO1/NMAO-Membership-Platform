@@ -115,7 +115,7 @@
 .today-greeting{margin-bottom:1.5rem;}
 .greeting-name{font-family:var(--font-display);font-size:1.6rem;color:var(--white);line-height:1.2;}
 .greeting-date{font-size:0.82rem;color:var(--muted);margin-top:0.25rem;}
-.day-switch{display:flex;align-items:center;gap:0.4rem;margin-top:0.5rem;position:relative;flex-wrap:wrap;}
+.day-switch{display:flex;align-items:center;gap:0.4rem;margin-top:0;margin-bottom:0.85rem;position:relative;flex-wrap:wrap;}
 .day-nav{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);color:var(--white);border-radius:8px;cursor:pointer;font-size:0.8rem;}
 .day-nav:active{background:var(--surface2);}
 .day-current{flex:0 1 auto;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);color:var(--white);border-radius:8px;cursor:pointer;font-size:0.82rem;padding:0.45rem 0.85rem;min-width:0;}
@@ -496,13 +496,6 @@
 <div class="tab-panel active" id="tabToday">
  <div class="today-greeting">
     <div class="greeting-name" id="todayGreeting">Good morning</div>
-    <div class="day-switch">
-      <button class="day-nav" id="dayPrev" onclick="shiftDay(-1)" aria-label="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
-      <button class="day-current" id="dayCurrentBtn" onclick="openDayPicker()"><span id="todayDate"></span><i class="fa-solid fa-caret-down" style="margin-left:0.4rem;opacity:0.55;font-size:0.7em"></i></button>
-      <button class="day-nav" id="dayNext" onclick="shiftDay(1)" aria-label="Next day"><i class="fa-solid fa-chevron-right"></i></button>
-      <button class="day-today-pill" id="dayTodayPill" onclick="goToday()" style="display:none">Today</button>
-      <input type="date" id="dayPickerInput" onchange="onDayPicked(this.value)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
-    </div>
   </div>
 
   <!-- New Student Sign-Up entry -->
@@ -540,6 +533,13 @@
     <div class="qstat"><div class="qstat-num" id="qsCheckedIn">—</div><div class="qstat-lbl">Checked In</div></div>
   </div>
 
+  <div class="day-switch">
+    <button class="day-nav" id="dayPrev" onclick="shiftDay(-1)" aria-label="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="day-current" id="dayCurrentBtn" onclick="openDayPicker()"><span id="todayDate"></span><i class="fa-solid fa-caret-down" style="margin-left:0.4rem;opacity:0.55;font-size:0.7em"></i></button>
+    <button class="day-nav" id="dayNext" onclick="shiftDay(1)" aria-label="Next day"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="day-today-pill" id="dayTodayPill" onclick="goToday()" style="display:none">Today</button>
+    <input type="date" id="dayPickerInput" onchange="onDayPicked(this.value)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+  </div>
   <div class="section-head" id="todayClassesHead">Today's Classes</div>
   <div id="todayClassList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
 </div>
