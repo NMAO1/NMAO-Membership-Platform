@@ -221,6 +221,9 @@
 .mem-trial{background:var(--amber-bg);border:1px solid var(--amber-border);color:#D4A070;}
 .mem-warn{background:var(--red-bg);border:1px solid var(--red-border);color:#C07070;}
 .eligible-star{color:var(--gold);font-size:0.85rem;}
+.pack-chip{font-size:0.62rem;padding:0.15rem 0.5rem;border:1px solid var(--border2);color:var(--muted2);letter-spacing:0.04em;}
+.pack-chip.pk-low{color:var(--gold);border-color:var(--gold);}
+.pack-chip.pk-out{color:#E07070;border-color:rgba(224,112,112,0.4);}
 .student-action{flex-shrink:0;}
 .btn-checkin{
   height:44px;padding:0 1.1rem;background:var(--gold);color:var(--black);
@@ -965,6 +968,18 @@ var rsvpStudentIds=new Set();// student IDs RSVPd via class_enrollments for curr
 var cvActiveTab='rsvp';
 var promoteData=null;
 var eligibleStudentIds=new Set();// walk-in candidates: not RSVPd and not checked in
+var packBalanceMap={};
+function buildPackBalanceMap(rows){
+  packBalanceMap={};
+  (rows||[]).forEach(function(r){
+    if(r.classes_remaining===null||r.classes_remaining===undefined){return;}
+    var rem=parseInt(r.classes_remaining)||0; if(rem<0){rem=0;}
+    var tot=parseInt(r.class_limit_count)||0;
+    var cur=packBalanceMap[r.student_id]||{rem:0,tot:0};
+    cur.rem+=rem; cur.tot+=tot;
+    packBalanceMap[r.student_id]=cur;
+  });
+}
 var coveringStudentIds=new Set();// students whose active memberships cover the current class's program
 var membershipAlerts=[];   // students with inactive memberships who checked in today
 var viewDate=new Date();   // Today tab: the day currently being viewed (day switcher)
@@ -1073,16 +1088,18 @@ async function startStaffApp(user){
 //  CORE DATA — loaded once, used everywhere
 // ─────────────────────────────────────────────────────────────
 async function loadCoreData(){
-  var [studR,classR,instrR,levR]=await Promise.all([
+  var [studR,classR,instrR,levR,packR]=await Promise.all([
     sb.from('students').select('*, programs(name,color), memberships(name,billing_type,price)').eq('school_id',SID).in('status',['active','trial','paused']).order('first_name'),
     sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time'),
-    sb.from('instructors').select('id,first_name,last_name,email,active').eq('school_id',SID).eq('active',true),
-    sb.from('belt_levels').select('*').order('sort_order')
+    sb.from('instructors').select('id,first_name,last_name,name,email,active').eq('school_id',SID).eq('active',true),
+    sb.from('belt_levels').select('*').order('sort_order'),
+    sb.rpc('get_class_pack_balances',{p_school_id:SID})
   ]);
   allStudents=studR.data||[];
   allClasses=classR.data||[];
   allInstructors=instrR.data||[];
   allBeltLevels=levR.data||[];
+  buildPackBalanceMap(packR&&packR.data?packR.data:[]);
   // Assign color per instructor
   allInstructors.forEach(function(ins,i){ins._color=INSTR_COLORS[i%INSTR_COLORS.length];});
 }
@@ -1402,6 +1419,12 @@ function renderStudentRow(s,showCheckin){
   var memClass=st==='active'?'mem-active':st==='trial'?'mem-trial':'mem-warn';
   var memLabel=st==='active'?'Active':st==='trial'?'Trial':st.charAt(0).toUpperCase()+st.slice(1);
   var rsvpBadge=isRsvp?'<span style="font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(125,170,212,0.12);border:1px solid rgba(125,170,212,0.35);color:#7DAAD4;letter-spacing:0.08em;text-transform:uppercase">RSVP</span>':'';
+  var pb=packBalanceMap[s.id];
+  var packChip='';
+  if(pb&&pb.tot>0){
+    var pcCls=pb.rem<=0?' pk-out':(pb.rem<=3?' pk-low':'');
+    packChip='<span class="pack-chip'+pcCls+'">'+pb.rem+'/'+pb.tot+'</span>';
+  }
   var actionHtml='';
   if(showCheckin){
     actionHtml='<div class="student-action"><button class="btn-checkin'+(isIn?' checked':'')+'" id="chkbtn-'+s.id+'" onclick="toggleCheckin(\''+s.id+'\',event)">'+(isIn?'<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>In':'Check In')+'</button></div>';
@@ -1414,7 +1437,7 @@ function renderStudentRow(s,showCheckin){
     '</div>'+
     '<div class="student-info">'+
       '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
-      '<div class="student-meta">'+beltHtml+'<span class="mem-chip '+memClass+'">'+memLabel+'</span>'+rsvpBadge+'</div>'+
+      '<div class="student-meta">'+beltHtml+'<span class="mem-chip '+memClass+'">'+memLabel+'</span>'+packChip+rsvpBadge+'</div>'+
     '</div>'+
     actionHtml+
   '</div>';
