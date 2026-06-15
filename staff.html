@@ -2093,7 +2093,7 @@ async function suFinish(){
     var membershipId, planName, price;
     if(plan.mode==='custom'){
       var c=plan.custom||{};
-      var cr=await sb.rpc('create_custom_membership',{ p_name:c.name, p_billing_type:'monthly', p_billing_length:c.every_n||1, p_billing_unit:'months', p_price:c.price||0, p_signup_fee:c.signup_fee||0, p_class_limit_type:c.limit_type, p_class_limit_count:c.limit_count||null, p_program_ids:[plan.program_id], p_class_ids:null });
+      var cr=await sb.rpc('create_custom_membership',{ p_name:c.name, p_billing_type:'monthly', p_billing_length:c.every_n||1, p_billing_unit:'months', p_price:c.price||0, p_signup_fee:c.signup_fee||0, p_class_limit_type:c.limit_type, p_class_limit_count:c.limit_count||null, p_program_ids:[plan.program_id], p_class_ids:null, p_school_id:SID });
       if(cr.error||!cr.data) throw new Error(cr.error?cr.error.message:'Could not create the custom plan.');
       membershipId=cr.data; createdMembershipId=membershipId; planName=c.name; price=c.price||0;
     } else {
