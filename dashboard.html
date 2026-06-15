@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* ═══════════════════════════════════════════════════════════
@@ -1416,6 +1417,33 @@
   </div>
 </div>
 <!-- §MODAL-EVENT-DETAIL -->
+<div class="modal-overlay" id="qrModal" style="z-index:3000">
+  <div class="modal" style="width:460px;max-width:95vw;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div id="qrModalTitle" style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)">QR Code</div>
+      <button onclick="closeQrModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem;align-items:center;padding:1.25rem">
+      <div id="qrPreview" style="width:240px;height:240px;background:#ffffff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box"><span style="color:#999;font-size:0.8rem">Generating...</span></div>
+      <div style="width:100%;display:flex;gap:0.4rem;align-items:center">
+        <input id="qrUrlField" type="text" readonly style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.78rem;padding:0.5rem 0.65rem" />
+        <button class="panel-action" onclick="copyQrUrl()"><i class="fa-solid fa-link"></i></button>
+      </div>
+      <div style="width:100%;display:flex;gap:0.5rem">
+        <button class="panel-action" style="flex:1" onclick="downloadQr('svg')"><i class="fa-solid fa-download"></i> SVG</button>
+        <button class="panel-action" style="flex:1" onclick="downloadQr('png')"><i class="fa-solid fa-download"></i> PNG</button>
+        <button class="panel-action" style="flex:1" onclick="downloadQr('jpeg')"><i class="fa-solid fa-download"></i> JPEG</button>
+      </div>
+      <div id="qrFlyerWrap" style="width:100%;display:none">
+        <div style="font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.35rem">Suggested flyer text</div>
+        <div id="qrFlyerText" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:0.82rem;padding:0.65rem;white-space:pre-wrap"></div>
+        <button class="panel-action" style="margin-top:0.4rem;font-size:0.72rem" onclick="copyQrFlyer()"><i class="fa-solid fa-copy"></i> Copy text</button>
+      </div>
+      <div style="font-size:0.68rem;color:var(--muted);text-align:center;opacity:0.8">SVG &amp; PNG are best for print; JPEG for messaging &amp; social.</div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="eventDetailModal">
   <div class="modal" style="width:900px;max-width:97vw;display:flex;flex-direction:column;overflow:hidden">
     <div class="modal-header">
@@ -1425,6 +1453,7 @@
       </div>
       <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
         <button class="panel-action" id="evCopyLinkBtn" onclick="copyEventPublicLink()" style="display:none"><i class="fa-solid fa-link"></i> Copy Public Link</button>
+        <button class="panel-action" id="evQrBtn" onclick="openEventQr()" style="display:none"><i class="fa-solid fa-qrcode"></i> QR Code</button>
         <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invite</button>
         <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
     <button class="panel-action" style="border-color:#A04040;color:#E07070" onclick="window.deleteEvent(window.currentEventId)"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -2726,6 +2755,62 @@ var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SID = null;
 var ownerEmail = null;
 var APP_URL = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+
+// ── QR ENGINE (shared by events + memberships) ──
+var qrState={url:'',base:'qr-code'};
+function openQrModal(opts){
+  opts=opts||{};
+  qrState.url=opts.url||'';
+  qrState.base=(opts.filenameBase||'qr-code').toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')||'qr-code';
+  document.getElementById('qrModalTitle').textContent=opts.title||'QR Code';
+  document.getElementById('qrUrlField').value=qrState.url;
+  var fw=document.getElementById('qrFlyerWrap');
+  if(opts.flyerText){document.getElementById('qrFlyerText').textContent=opts.flyerText;fw.style.display='block';}
+  else{fw.style.display='none';}
+  document.getElementById('qrModal').classList.add('active');
+  renderQrPreview();
+}
+function closeQrModal(){document.getElementById('qrModal').classList.remove('active');}
+async function renderQrPreview(){
+  var box=document.getElementById('qrPreview');
+  if(typeof QRCode==='undefined'){box.innerHTML='<span style="color:#E07070;font-size:0.78rem">QR library not loaded</span>';return;}
+  try{
+    var dataUrl=await QRCode.toDataURL(qrState.url,{width:240,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+    box.innerHTML='<img src="'+dataUrl+'" alt="QR code" style="width:100%;height:100%;object-fit:contain" />';
+  }catch(e){box.innerHTML='<span style="color:#E07070;font-size:0.78rem">Could not generate</span>';}
+}
+function downloadDataUrl(dataUrl,filename){
+  var a=document.createElement('a');a.href=dataUrl;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+function downloadTextFile(text,filename,mime){
+  var blob=new Blob([text],{type:mime});var u=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(u);},1000);
+}
+async function downloadQr(fmt){
+  if(!qrState.url||typeof QRCode==='undefined')return;
+  try{
+    if(fmt==='svg'){
+      var svg=await QRCode.toString(qrState.url,{type:'svg',width:1024,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+      downloadTextFile(svg,qrState.base+'.svg','image/svg+xml');
+    }else if(fmt==='png'){
+      var png=await QRCode.toDataURL(qrState.url,{width:1024,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+      downloadDataUrl(png,qrState.base+'.png');
+    }else if(fmt==='jpeg'){
+      var canvas=document.createElement('canvas');
+      await QRCode.toCanvas(canvas,qrState.url,{width:1024,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+      var jpg=canvas.toDataURL('image/jpeg',0.92);
+      downloadDataUrl(jpg,qrState.base+'.jpg');
+    }
+  }catch(e){alert('Could not generate that format. Try another.');}
+}
+function copyQrUrl(){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(qrState.url);}
+}
+function copyQrFlyer(){
+  var t=document.getElementById('qrFlyerText').textContent;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}
+}
 var sb   = supabase.createClient(SURL, SKEY);
 // §SC_BEARER — current session token for owner/instructor-authenticated EF calls
 // (send-communication). Falls back to anon when signed out; the EF rejects anon, so the
@@ -12798,6 +12883,17 @@ window.closeWelcomeModal = async function() {
     var ev = (window.allEvents || []).find(function(x){ return x.id === eventId; });
     var btn = document.getElementById("evCopyLinkBtn");
     if (btn) btn.style.display = (ev && ev.public_signup_enabled) ? "inline-flex" : "none";
+    var qbtn = document.getElementById("evQrBtn");
+    if (qbtn) qbtn.style.display = (ev && ev.public_signup_enabled) ? "inline-flex" : "none";
+  };
+
+  // Open the QR / share modal for this event's public link
+  window.openEventQr = function(){
+    if (!window.currentEventId) return;
+    var ev = (window.allEvents || []).find(function(x){ return x.id === window.currentEventId; });
+    var title = (ev && ev.title) ? ev.title : "Event";
+    var url = APP_URL + "event.html?id=" + window.currentEventId;
+    openQrModal({title: "QR Code - " + title, url: url, filenameBase: title + "-qr", flyerText: "Scan to register for " + title + "."});
   };
 
   // Copy public link to clipboard
