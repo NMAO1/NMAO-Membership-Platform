@@ -221,9 +221,9 @@
 .mem-trial{background:var(--amber-bg);border:1px solid var(--amber-border);color:#D4A070;}
 .mem-warn{background:var(--red-bg);border:1px solid var(--red-border);color:#C07070;}
 .eligible-star{color:var(--gold);font-size:0.85rem;}
-.pack-chip{font-size:0.62rem;padding:0.15rem 0.5rem;border:1px solid var(--border2);color:var(--muted2);letter-spacing:0.04em;}
-.pack-chip.pk-low{color:var(--gold);border-color:var(--gold);}
-.pack-chip.pk-out{color:#E07070;border-color:rgba(224,112,112,0.4);}
+.pack-chip{flex:0 0 auto;font-size:1.6rem;font-weight:700;line-height:1;color:var(--white);letter-spacing:0.01em;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.pack-chip.pk-low{color:var(--gold);}
+.pack-chip.pk-out{color:#E07070;}
 .student-action{flex-shrink:0;}
 .btn-checkin{
   height:44px;padding:0 1.1rem;background:var(--gold);color:var(--black);
@@ -1437,8 +1437,9 @@ function renderStudentRow(s,showCheckin){
     '</div>'+
     '<div class="student-info">'+
       '<div class="student-name">'+s.first_name+' '+s.last_name+'</div>'+
-      '<div class="student-meta">'+beltHtml+'<span class="mem-chip '+memClass+'">'+memLabel+'</span>'+packChip+rsvpBadge+'</div>'+
+      '<div class="student-meta">'+beltHtml+'<span class="mem-chip '+memClass+'">'+memLabel+'</span>'+rsvpBadge+'</div>'+
     '</div>'+
+    packChip+
     actionHtml+
   '</div>';
 }
