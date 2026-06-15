@@ -392,6 +392,20 @@
 .su-done-icon{font-size:2.75rem;margin-bottom:1rem;}
 .su-done-head{font-family:var(--font-display);font-size:1.35rem;color:var(--white);margin-bottom:0.5rem;}
 .su-done-sub{font-size:0.86rem;color:var(--muted2);line-height:1.6;}
+.sl-result{display:flex;align-items:center;gap:0.7rem;padding:0.8rem 0.5rem;border-bottom:1px solid var(--border);cursor:pointer;}
+.sl-result:active{background:rgba(255,255,255,0.03);}
+.sl-result-av{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:0.8rem;font-weight:700;}
+.sl-result-name{flex:1;color:var(--white);font-size:0.92rem;}
+.sl-result-meta{color:var(--muted);font-size:0.8rem;}
+.sl-back{background:none;border:none;color:var(--muted2);font-size:0.8rem;cursor:pointer;padding:0.25rem 0;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem;}
+.sl-student{font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.25rem;}
+.sl-pack{display:flex;align-items:center;gap:0.7rem;background:var(--surface);border:1px solid var(--border);padding:0.8rem 0.95rem;margin-bottom:0.6rem;cursor:pointer;}
+.sl-pack.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent);}
+.sl-pack-body{flex:1;}
+.sl-pack-name{color:var(--white);font-size:0.9rem;}
+.sl-pack-bal{font-size:0.74rem;color:var(--muted2);margin-top:0.1rem;}
+.sl-pack-radio{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);}
+.sl-pack.sel .sl-pack-radio{border-color:var(--gold);background:var(--gold);box-shadow:inset 0 0 0 3px var(--surface);}
 
 #toast{
   position:fixed;bottom:calc(var(--nav-h) + 1rem);left:1rem;right:1rem;
@@ -484,6 +498,16 @@
     <div class="su-cta-text">
       <div class="su-cta-title">New Student Sign-Up</div>
       <div class="su-cta-sub">Enroll a new member at the front desk</div>
+    </div>
+    <i class="fa-solid fa-chevron-right su-cta-chev"></i>
+  </div>
+
+  <!-- Find a Student -->
+  <div class="su-cta" onclick="openStudentLookup()">
+    <div class="su-cta-icon" style="background:var(--surface2);color:var(--gold)"><i class="fa-solid fa-magnifying-glass"></i></div>
+    <div class="su-cta-text">
+      <div class="su-cta-title">Find a Student</div>
+      <div class="su-cta-sub">Add classes &amp; manage a member</div>
     </div>
     <i class="fa-solid fa-chevron-right su-cta-chev"></i>
   </div>
@@ -774,6 +798,36 @@
   <div class="su-foot">
     <button class="su-btn su-btn-back" id="suBackBtn" onclick="suBack()" style="display:none"><i class="fa-solid fa-chevron-left"></i> Back</button>
     <button class="su-btn su-btn-next" id="suNextBtn" onclick="suNext()">Continue <i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STUDENT LOOKUP — quick actions (Add Classes)
+════════════════════════════════════════════ -->
+<div class="su-overlay" id="studentLookup">
+  <div class="su-head">
+    <div class="su-head-title" id="slTitle">Find a Student</div>
+    <button class="su-close" onclick="closeStudentLookup()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="su-body">
+    <!-- LIST VIEW -->
+    <div id="slListView">
+      <div class="su-field"><input class="su-input" id="slSearch" type="search" placeholder="Search by name..." oninput="slRenderResults(this.value)" autocomplete="off" /></div>
+      <div id="slResults"></div>
+    </div>
+    <!-- DETAIL VIEW -->
+    <div id="slDetailView" style="display:none">
+      <button class="sl-back" onclick="slShowList()"><i class="fa-solid fa-chevron-left"></i> All students</button>
+      <div class="sl-student" id="slStudentName"></div>
+      <div class="su-step-sub">Add class credits to one of this student's packs.</div>
+      <div id="slPacks"></div>
+      <div id="slAddForm" style="display:none">
+        <div class="su-field"><label>Classes to add</label><input class="su-input" id="slQty" type="number" min="1" value="1" /></div>
+        <div class="su-field"><label>Reason (optional)</label><input class="su-input" id="slReason" type="text" placeholder="e.g. Buy 5 get 1 free, or goodwill" autocomplete="off" /></div>
+        <div class="su-msg" id="slMsg"></div>
+        <button class="su-btn su-btn-next" id="slAddBtn" style="width:100%" onclick="slAddClasses()"><i class="fa-solid fa-plus"></i> Add classes</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2111,6 +2165,106 @@ function suRenderDone(kind, info){
     '<div class="su-done-head">'+head+'</div><div class="su-done-sub">'+sub+'</div>'+
     '<button class="su-btn su-btn-next" style="max-width:260px;margin:1.5rem auto 0" onclick="openSignup()"><i class="fa-solid fa-user-plus"></i> Sign up another</button></div>';
 }
+
+/* ── Student lookup -> Add Classes ── */
+var slStudent=null, slPacks=[], slSelectedPackId=null;
+
+function openStudentLookup(){
+  slStudent=null; slPacks=[]; slSelectedPackId=null;
+  document.getElementById('slSearch').value='';
+  slShowList();
+  slRenderResults('');
+  document.getElementById('studentLookup').classList.add('open');
+}
+function closeStudentLookup(){ document.getElementById('studentLookup').classList.remove('open'); }
+
+function slShowList(){
+  document.getElementById('slDetailView').style.display='none';
+  document.getElementById('slListView').style.display='block';
+  document.getElementById('slTitle').textContent='Find a Student';
+}
+
+function slRenderResults(q){
+  q=(q||'').toLowerCase().trim();
+  var list=[].concat(allStudents).sort(function(a,b){ return (a.first_name+a.last_name)<(b.first_name+b.last_name)?-1:1; });
+  if(q) list=list.filter(function(s){ return (s.first_name+' '+s.last_name).toLowerCase().indexOf(q)!==-1; });
+  var el=document.getElementById('slResults');
+  if(!list.length){ el.innerHTML='<div class="su-empty">No students found.</div>'; return; }
+  el.innerHTML=list.slice(0,50).map(function(s){
+    var init=((s.first_name||' ').charAt(0)+(s.last_name||' ').charAt(0)).toUpperCase();
+    return '<div class="sl-result" onclick="slSelectStudent(\''+s.id+'\')">'+
+      '<div class="sl-result-av">'+suEsc(init)+'</div>'+
+      '<div class="sl-result-name">'+suEsc(s.first_name+' '+s.last_name)+'</div>'+
+      '<i class="fa-solid fa-chevron-right sl-result-meta"></i></div>';
+  }).join('');
+}
+
+function slSelectStudent(id){
+  slStudent=allStudents.find(function(s){ return s.id===id; });
+  if(!slStudent) return;
+  slSelectedPackId=null;
+  document.getElementById('slListView').style.display='none';
+  document.getElementById('slDetailView').style.display='block';
+  document.getElementById('slStudentName').textContent=slStudent.first_name+' '+slStudent.last_name;
+  document.getElementById('slTitle').textContent='Add Classes';
+  setSlMsg('','');
+  document.getElementById('slAddForm').style.display='none';
+  document.getElementById('slPacks').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading packs...</div>';
+  slLoadPacks(id);
+}
+
+async function slLoadPacks(id){
+  try{
+    var r=await sb.rpc('list_student_class_packs',{ p_student_id:id });
+    if(r.error) throw new Error(r.error.message);
+    slRenderPacks(r.data||[]);
+  }catch(e){ document.getElementById('slPacks').innerHTML='<div class="su-empty">Could not load packs.</div>'; }
+}
+
+function slRenderPacks(packs){
+  slPacks=packs||[];
+  var el=document.getElementById('slPacks');
+  if(!slPacks.length){
+    el.innerHTML='<div class="su-empty">No active class pack to add to. Sell or renew a pack first.</div>';
+    document.getElementById('slAddForm').style.display='none';
+    return;
+  }
+  if(slPacks.length===1 && !slSelectedPackId){ slSelectedPackId=slPacks[0].student_membership_id; }
+  var html='';
+  slPacks.forEach(function(p){
+    var avail=(p.classes_remaining!==null&&p.classes_remaining!==undefined)?p.classes_remaining:((p.class_limit_count||0)-(p.classes_used||0));
+    var sel=(slSelectedPackId===p.student_membership_id)?' sel':'';
+    html+='<div class="sl-pack'+sel+'" onclick="slSelectPack(\''+p.student_membership_id+'\')">'+
+      '<div class="sl-pack-body"><div class="sl-pack-name">'+suEsc(p.membership_name)+(p.status==='exhausted'?' (used up)':'')+'</div>'+
+      '<div class="sl-pack-bal">'+avail+' of '+(p.class_limit_count!=null?p.class_limit_count:'-')+' classes left</div></div>'+
+      '<div class="sl-pack-radio"></div></div>';
+  });
+  el.innerHTML=html;
+  document.getElementById('slAddForm').style.display=(slSelectedPackId?'block':'none');
+}
+
+function slSelectPack(smId){ slSelectedPackId=smId; slRenderPacks(slPacks); }
+
+async function slAddClasses(){
+  if(!slSelectedPackId){ setSlMsg('Pick a pack first.','error'); return; }
+  var qty=parseInt(document.getElementById('slQty').value)||0;
+  if(qty<1){ setSlMsg('Enter how many classes to add.','error'); return; }
+  var reason=document.getElementById('slReason').value;
+  var btn=document.getElementById('slAddBtn'); var oh=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch spin"></i> Adding...';
+  setSlMsg('','');
+  try{
+    var r=await sb.rpc('add_class_credits',{ p_student_membership_id:slSelectedPackId, p_qty:qty, p_reason:reason||null });
+    if(r.error) throw new Error(r.error.message);
+    showToast('Added '+qty+' class'+(qty>1?'es':'')+' for '+slStudent.first_name+'.');
+    document.getElementById('slReason').value='';
+    document.getElementById('slQty').value='1';
+    await slLoadPacks(slStudent.id);
+  }catch(e){ setSlMsg((e&&e.message)?e.message:'Could not add classes.','error'); }
+  finally{ btn.disabled=false; btn.innerHTML=oh; }
+}
+
+function setSlMsg(txt,cls){ var el=document.getElementById('slMsg'); if(!el) return; el.textContent=txt; el.className='su-msg'+(cls?(' '+cls):''); }
 
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
