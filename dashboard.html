@@ -6569,7 +6569,6 @@ async function saveCraftCustomMembership(){
     p_class_ids:classIds.length?classIds:null,
     p_school_id:SID
   });
-  });
   if(cr.error || !cr.data){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',(cr.error?cr.error.message:'Could not create membership.'),'error'); return; }
   var mid=cr.data;
 
