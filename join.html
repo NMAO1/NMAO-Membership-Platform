@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join</title>
+  <link rel="icon" type="image/png" href="https://app.nmao.us/favicon.png" />
+  <meta property="og:title" content="Join" />
+  <meta property="og:description" content="Sign up for a membership at our school." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --black: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold: #C9A84C;
+      --white: #ffffff;
+      --muted: #8a8278;
+      --font-display: "Cormorant Garamond", serif;
+      --font-ui: "Inter", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--white); font-family: var(--font-ui); min-height: 100vh; padding: 1.5rem; line-height: 1.5; }
+    .wrap { max-width: 460px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 1.75rem; padding-top: 1.25rem; }
+    .brand-logo { max-height: 70px; max-width: 200px; display: block; margin: 0 auto 0.75rem; }
+    .school-name { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 500; }
+    .header-rule { width: 60px; height: 1px; background: var(--gold); margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 1.25rem; }
+    .offer-headline { font-family: var(--font-display); font-size: 1.8rem; color: var(--white); margin-bottom: 0.5rem; line-height: 1.2; font-weight: 600; }
+    .offer-blurb { font-size: 0.95rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .plan-card { background: var(--black); border: 1px solid var(--border); padding: 1.1rem 1.25rem; margin-bottom: 1.75rem; }
+    .plan-name { font-family: var(--font-display); font-size: 1.25rem; color: var(--white); font-weight: 500; }
+    .plan-price { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); font-weight: 600; margin-top: 0.2rem; }
+    .plan-included { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
+    .section-label { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.5rem; font-family: var(--font-display); font-weight: 500; }
+    .section-rule { height: 1px; background: var(--border); margin-bottom: 1rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; font-weight: 500; }
+    .field input {
+      width: 100%; background: var(--black); border: 1px solid var(--border); color: var(--white);
+      padding: 0.75rem 0.9rem; font-family: var(--font-ui); font-size: 0.95rem;
+    }
+    .field input:focus { outline: none; border-color: var(--gold); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } }
+    .hp { position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .btn-primary {
+      width: 100%; padding: 1rem; background: var(--gold); color: var(--black); border: none;
+      font-family: var(--font-ui); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 600; cursor: pointer; transition: all 0.18s; margin-top: 0.25rem;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .fineprint { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 1rem; line-height: 1.5; }
+    .msg { margin-top: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem; text-align: center; }
+    .msg.error { background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.4); color: #E07070; }
+    .msg.success { background: rgba(125,189,125,0.12); border: 1px solid rgba(125,189,125,0.4); color: #7DBD7D; }
+    .loading-state { text-align: center; padding: 3rem 1rem; color: var(--muted); font-style: italic; font-size: 0.9rem; }
+    .footer { text-align: center; padding: 2rem 1rem 1rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; }
+    .success-screen { text-align: center; padding: 2.5rem 1.5rem; }
+    .success-screen i { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+    .success-screen h2 { font-family: var(--font-display); font-size: 1.75rem; color: var(--white); margin-bottom: 0.75rem; font-weight: 600; }
+    .success-screen p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+    .success-screen a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="root">
+      <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>
+    </div>
+    <div class="footer">Powered by NMAO</div>
+  </div>
+
+  <script>
+    var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var sb = supabase.createClient(SURL, SKEY);
+
+    var state = { offer: null, submitting: false };
+
+    function getParam(name){ var p = new URLSearchParams(window.location.search); return p.get(name); }
+
+    function escapeHtml(s){
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function applyBranding(d){
+      var r = document.documentElement;
+      if (d.color)         r.style.setProperty('--gold', d.color);
+      if (d.bg_color)      r.style.setProperty('--black', d.bg_color);
+      if (d.border_color)  r.style.setProperty('--border', d.border_color);
+      if (d.surface_color) r.style.setProperty('--surface', d.surface_color);
+      if (d.font_color)    r.style.setProperty('--white', d.font_color);
+      if (d.font_family)   r.style.setProperty('--font-display', "'" + d.font_family + "',serif");
+      document.title = (d.school_name || 'Join') + ' - Join';
+    }
+
+    function money(n){
+      var v = parseFloat(n) || 0;
+      return '$' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
+    }
+
+    function formatPrice(d){
+      var line;
+      if (d.billing_type === 'class_pack'){
+        line = money(d.price) + ' one-time';
+      } else if (d.billing_type === 'trial'){
+        line = (parseFloat(d.price) > 0) ? (money(d.price) + ' trial') : 'Free trial';
+      } else if (d.billing_type === 'yearly'){
+        line = money(d.price) + ' / year';
+      } else {
+        var len = parseInt(d.billing_length) || 1;
+        var unit = d.billing_unit || 'months';
+        if (len > 1){ line = money(d.price) + ' every ' + len + ' ' + unit; }
+        else { line = money(d.price) + ' / month'; }
+      }
+      if (parseFloat(d.signup_fee) > 0){ line = line + '  +  ' + money(d.signup_fee) + ' signup fee'; }
+      return line;
+    }
+
+    function formatIncluded(d){
+      var lt = d.class_limit_type;
+      var c = d.class_limit_count;
+      if (lt === 'unlimited' || !lt){ return 'Unlimited classes'; }
+      if (lt === 'per_day'){ return c + ' classes per day'; }
+      if (lt === 'per_week'){ return c + ' classes per week'; }
+      if (lt === 'per_month'){ return c + ' classes per month'; }
+      if (lt === 'per_year'){ return c + ' classes per year'; }
+      if (lt === 'class_pack'){
+        var s = c + ' classes';
+        if (d.pack_expiry_days){ s = s + ', valid ' + d.pack_expiry_days + ' days'; }
+        return s;
+      }
+      return '';
+    }
+
+    function renderError(msg){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-exclamation" style="color:#E07070"></i>' +
+        '<h2>Not available</h2><p>' + escapeHtml(msg) + '</p></div></div>';
+    }
+
+    function renderSuccess(){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-check"></i>' +
+        '<h2>You are all set</h2>' +
+        '<p>Check your email for a sign-in link to finish setting up your account and access your member portal.</p>' +
+        '</div></div>';
+    }
+
+    function renderAlreadyMember(portalUrl){
+      var link = portalUrl ? ('<p style="margin-top:1rem"><a href="' + escapeHtml(portalUrl) + '">Go to sign in</a></p>') : '';
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-info"></i>' +
+        '<h2>You already have an account</h2>' +
+        '<p>It looks like you are already registered with this school. Please sign in to your member portal.</p>' +
+        link + '</div></div>';
+    }
+
+    function renderOffer(d){
+      var headline = d.public_headline ? ('<div class="offer-headline">' + escapeHtml(d.public_headline) + '</div>') : '';
+      var blurb = d.public_blurb ? ('<div class="offer-blurb">' + escapeHtml(d.public_blurb) + '</div>') : '';
+      var logo = d.logo_url
+        ? ('<img class="brand-logo" src="' + escapeHtml(d.logo_url) + '" alt="' + escapeHtml(d.school_name || '') + '" />')
+        : '';
+      document.getElementById('root').innerHTML =
+        '<div class="header">' + logo +
+          '<div class="school-name">' + escapeHtml(d.school_name || 'Join') + '</div>' +
+          '<div class="header-rule"></div>' +
+        '</div>' +
+        '<div class="card">' +
+          headline + blurb +
+          '<div class="plan-card">' +
+            '<div class="plan-name">' + escapeHtml(d.name || 'Membership') + '</div>' +
+            '<div class="plan-price">' + escapeHtml(formatPrice(d)) + '</div>' +
+            '<div class="plan-included">' + escapeHtml(formatIncluded(d)) + '</div>' +
+          '</div>' +
+          '<div class="section-label">Your details</div>' +
+          '<div class="section-rule"></div>' +
+          '<div class="form-row">' +
+            '<div class="field"><label>First name</label><input id="jFirst" type="text" autocomplete="given-name" /></div>' +
+            '<div class="field"><label>Last name</label><input id="jLast" type="text" autocomplete="family-name" /></div>' +
+          '</div>' +
+          '<div class="field"><label>Email</label><input id="jEmail" type="email" autocomplete="email" /></div>' +
+          '<div class="field"><label>Phone</label><input id="jPhone" type="tel" autocomplete="tel" /></div>' +
+          '<input class="hp" id="jWebsite" name="website" tabindex="-1" autocomplete="off" />' +
+          '<button class="btn-primary" id="jSubmit" onclick="submitJoin()">Sign Up</button>' +
+          '<div id="joinMsg"></div>' +
+          '<div class="fineprint">By signing up you agree to be contacted by the school about your membership.</div>' +
+        '</div>';
+    }
+
+    function setMsg(text, type){
+      var el = document.getElementById('joinMsg');
+      if (!el) return;
+      el.className = 'msg ' + (type || '');
+      el.textContent = text;
+    }
+
+    async function submitJoin(){
+      if (state.submitting) return;
+      var first = (document.getElementById('jFirst').value || '').trim();
+      var last = (document.getElementById('jLast').value || '').trim();
+      var email = (document.getElementById('jEmail').value || '').trim();
+      var phone = (document.getElementById('jPhone').value || '').trim();
+      var hp = (document.getElementById('jWebsite').value || '').trim();
+      if (hp){ renderSuccess(); return; }
+      if (!first || !last){ setMsg('Please enter your first and last name.', 'error'); return; }
+      if (!email || email.indexOf('@') === -1){ setMsg('Please enter a valid email address.', 'error'); return; }
+
+      state.submitting = true;
+      var btn = document.getElementById('jSubmit');
+      btn.disabled = true; btn.textContent = 'Please wait...';
+      setMsg('', '');
+
+      try {
+        var res = await sb.functions.invoke('register-public-member', {
+          body: { membership_id: state.offer.membership_id, first_name: first, last_name: last, email: email, phone: phone }
+        });
+        var data = res.data || {};
+        if (res.error && !data.error){
+          setMsg('Something went wrong. Please try again.', 'error');
+          btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false; return;
+        }
+        if (data.checkout_url){ window.location.href = data.checkout_url; return; }
+        if (data.mode === 'free'){ renderSuccess(); return; }
+        if (data.error === 'already_member'){ renderAlreadyMember(data.portal_url); return; }
+        if (data.error){
+          setMsg(data.message || 'We could not complete your sign-up. Please try again.', 'error');
+          btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false; return;
+        }
+        renderSuccess();
+      } catch (e){
+        setMsg('Something went wrong. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false;
+      }
+    }
+
+    async function init(){
+      var m = getParam('m');
+      if (!m){ renderError('This sign-up link is missing its membership. Please use the link your school shared.'); return; }
+      try {
+        var res = await sb.rpc('get_public_membership', { p_membership_id: m });
+        if (res.error || !res.data || !res.data.length){
+          renderError('This membership is not available for public sign-up right now. Please contact the school.');
+          return;
+        }
+        state.offer = res.data[0];
+        applyBranding(state.offer);
+        renderOffer(state.offer);
+      } catch (e){
+        renderError('We could not load this offer. Please try again later.');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
