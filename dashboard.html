@@ -9962,7 +9962,8 @@ async function sendCommunication(){
       if(audience==='paused')  return s.status==='paused';
       if(audience==='expired') return s.status==='expired';
       if(audience==='tag')     return tagId&&s._tags&&s._tags.includes(tagId);
-      return true;
+      // "All Members" = current members only (active/trial/paused/past_due). Excludes expired/cancelled and any future status.
+      return ['active','trial','paused','past_due'].indexOf(s.status)!==-1;
     });
     emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name,phone:s.phone};});
     smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:s.first_name+' '+s.last_name,email:s.email};});
