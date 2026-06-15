@@ -5993,7 +5993,7 @@ function openEditStudent(){
   document.getElementById('stuStatus').value=s.status||'active';
   document.getElementById('studentMsg').textContent='';
   populateStudentProgramDropdown();
-  if(s.program_id){document.getElementById('stuProgram').value=s.program_id;filterMembershipsForProgram().then(function(){if(s.membership_id)document.getElementById('stuMembership').value=s.membership_id;});}
+  if(s.program_id){document.getElementById('stuProgram').value=s.program_id;filterMembershipsForProgram().then(function(){if(s.membership_id){var msel=document.getElementById('stuMembership');msel.value=s.membership_id;if(msel.value!==s.membership_id){var cm=(allMemberships||[]).find(function(m){return m.id===s.membership_id;});if(cm){var o=document.createElement('option');o.value=cm.id;o.textContent=cm.name+(cm.is_custom?' (custom)':'')+' - $'+parseFloat(cm.price||0).toFixed(2)+(cm.billing_type==='monthly'?'/mo':cm.billing_type==='yearly'?'/yr':'');msel.appendChild(o);msel.value=cm.id;}}}});}
   document.getElementById('addStudentModal').classList.add('active');
 }
 async function handlePhotoUpload(event){
