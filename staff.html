@@ -362,6 +362,7 @@
 .su-btn-next{background:var(--gold);color:var(--black);font-weight:700;}
 .su-btn-back{flex:0 0 auto;padding:0 1.25rem;background:none;border:1px solid var(--border2);color:var(--muted2);}
 .su-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.su-btn-sec{background:none;border:1px solid var(--border2);color:var(--white);}
 .su-seg{display:flex;gap:0.4rem;margin-bottom:1.1rem;background:var(--near);border:1px solid var(--border);padding:0.3rem;}
 .su-seg-btn{flex:1;height:42px;background:none;border:none;color:var(--muted2);font-family:var(--font-ui);font-size:0.82rem;letter-spacing:0.03em;cursor:pointer;}
 .su-seg-btn.active{background:var(--gold);color:var(--black);font-weight:700;}
@@ -825,7 +826,24 @@
         <div class="su-field"><label>Classes to add</label><input class="su-input" id="slQty" type="number" min="1" value="1" /></div>
         <div class="su-field"><label>Reason (optional)</label><input class="su-input" id="slReason" type="text" placeholder="e.g. Buy 5 get 1 free, or goodwill" autocomplete="off" /></div>
         <div class="su-msg" id="slMsg"></div>
-        <button class="su-btn su-btn-next" id="slAddBtn" style="width:100%" onclick="slAddClasses()"><i class="fa-solid fa-plus"></i> Add classes</button>
+       <button class="su-btn su-btn-next" id="slAddBtn" style="width:100%" onclick="slAddClasses()"><i class="fa-solid fa-plus"></i> Add classes</button>
+      </div>
+      <div id="slRenewToggle" style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
+        <button class="su-btn su-btn-sec" style="width:100%" onclick="openRenewPanel()"><i class="fa-solid fa-rotate-right"></i> Sell / Renew a pack</button>
+      </div>
+      <div id="slRenewPanel" style="display:none;margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem">
+          <div class="su-step-sub" style="margin:0">Sell a new class pack to this student.</div>
+          <button class="su-btn su-btn-back" style="height:auto;padding:0.3rem 0.9rem" onclick="closeRenewPanel()">Cancel</button>
+        </div>
+        <div id="renewPackList"></div>
+        <div id="renewActions" style="margin-top:0.85rem;display:grid;gap:0.5rem">
+          <button class="su-btn su-btn-next" id="renewCardBtn" disabled onclick="renewGo('card_file')"><i class="fa-solid fa-credit-card"></i> Charge card on file</button>
+          <button class="su-btn su-btn-sec" id="renewNewOpenBtn" disabled onclick="renewGo('card_open')"><i class="fa-solid fa-up-right-from-square"></i> New card &mdash; open payment page</button>
+          <button class="su-btn su-btn-sec" id="renewNewTextBtn" disabled onclick="renewGo('card_text')"><i class="fa-solid fa-paper-plane"></i> New card &mdash; text link</button>
+          <button class="su-btn su-btn-sec" id="renewCashBtn" disabled onclick="renewGo('cash')"><i class="fa-solid fa-money-bill-wave"></i> Record cash</button>
+        </div>
+        <div class="su-msg" id="renewMsg"></div>
       </div>
     </div>
   </div>
@@ -2271,6 +2289,127 @@ async function slAddClasses(){
 }
 
 function setSlMsg(txt,cls){ var el=document.getElementById('slMsg'); if(!el) return; el.textContent=txt; el.className='su-msg'+(cls?(' '+cls):''); }
+
+/* ── Student lookup -> Sell / Renew a class pack ── */
+var renewPacks=[], renewSelMemId=null, renewBusy=false, renewIdemKey=null;
+
+function renewNewIdem(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'idem_'+Date.now()+'_'+Math.random().toString(36).slice(2); }
+function setRenewMsg(txt,cls){ var el=document.getElementById('renewMsg'); if(!el) return; el.textContent=txt; el.className='su-msg'+(cls?(' '+cls):''); }
+function renewSetBusy(b){ renewBusy=b; renewUpdateActions(); }
+
+async function openRenewPanel(){
+  if(!slStudent) return;
+  renewSelMemId=null; renewIdemKey=null;
+  var t=document.getElementById('slRenewToggle'); if(t) t.style.display='none';
+  document.getElementById('slRenewPanel').style.display='block';
+  setRenewMsg('','');
+  document.getElementById('renewPackList').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading packs...</div>';
+  try{ await suLoadPlanData(); }catch(e){}
+  renewRenderPacks();
+}
+function closeRenewPanel(){
+  document.getElementById('slRenewPanel').style.display='none';
+  var t=document.getElementById('slRenewToggle'); if(t) t.style.display='block';
+  setRenewMsg('','');
+}
+
+function renewRenderPacks(){
+  renewPacks=(suMemberships||[]).filter(function(m){ return !m.is_custom && m.billing_type==='class_pack'; });
+  var el=document.getElementById('renewPackList');
+  if(!renewPacks.length){ el.innerHTML='<div class="su-empty">No class packs are set up yet. Create one in the dashboard first.</div>'; renewUpdateActions(); return; }
+  var html='';
+  renewPacks.forEach(function(m){
+    var sel=(renewSelMemId===m.id)?' sel':'';
+    var n=m.class_limit_count?m.class_limit_count:'';
+    var meta=(n?(n+'-class pack'):'Class pack')+((m.price!=null)?(' \u00b7 $'+Number(m.price).toFixed(2)):'')+((m.signup_fee>0)?(' + $'+Number(m.signup_fee).toFixed(2)+' signup'):'');
+    html+='<div class="sl-pack'+sel+'" onclick="renewSelectPack(\''+m.id+'\')">'+
+      '<div class="sl-pack-body"><div class="sl-pack-name">'+suEsc(m.name)+'</div>'+
+      '<div class="sl-pack-bal">'+suEsc(meta)+'</div></div>'+
+      '<div class="sl-pack-radio"></div></div>';
+  });
+  el.innerHTML=html;
+  renewUpdateActions();
+}
+function renewSelectPack(id){ if(renewBusy) return; renewSelMemId=id; renewIdemKey=null; renewRenderPacks(); }
+
+function renewUpdateActions(){
+  var on=!!renewSelMemId && !renewBusy;
+  ['renewCardBtn','renewNewOpenBtn','renewNewTextBtn','renewCashBtn'].forEach(function(bid){ var b=document.getElementById(bid); if(b) b.disabled=!on; });
+}
+function renewSelectedMembership(){ return renewPacks.find(function(m){ return m.id===renewSelMemId; }); }
+function renewProgramId(memId){ var pr=(suMemProgs&&suMemProgs[memId])?suMemProgs[memId]:null; return (pr&&pr.length)?pr[0]:null; }
+
+function renewFriendlyError(errStr){
+  errStr=String(errStr||'');
+  if(errStr.indexOf('NO_SAVED_CARD')===0) return 'No saved card on file. Use a new card or cash.';
+  if(errStr.indexOf('AUTHENTICATION_REQUIRED')===0) return 'That card needs 3-D Secure verification. Use New card (open page) instead.';
+  if(errStr.indexOf('PACK_ALREADY_ACTIVE')===0) return 'They already have an active pack of this plan. Add classes to it, or renew once it is used up.';
+  return errStr.replace(/^[A-Z_]+:\s*/,'')||'The charge did not go through.';
+}
+
+function renewDone(msg){ renewBusy=false; showToast(msg); closeRenewPanel(); if(slStudent) slLoadPacks(slStudent.id); }
+function renewPending(msg){ renewBusy=false; setRenewMsg(msg,'success'); renewUpdateActions(); }
+
+async function renewGo(method){
+  if(renewBusy) return;
+  var m=renewSelectedMembership();
+  if(!m){ setRenewMsg('Pick a pack first.','error'); return; }
+  var sid=slStudent.id, fn=slStudent.first_name||'there';
+  renewSetBusy(true);
+  setRenewMsg('Working...','');
+  try{
+    if(method==='cash'){
+      var nowIso=new Date().toISOString(); var today=nowIso.split('T')[0];
+      var pid=renewProgramId(m.id);
+      var jr=await sb.from('student_memberships').insert({ school_id:SID, student_id:sid, membership_id:m.id, program_id:pid, status:'active', started_at:nowIso, start_date:today });
+      if(jr.error){
+        var em=jr.error.message||'';
+        if(em.indexOf('uq_student_active_membership')!==-1 || jr.error.code==='23505'){ setRenewMsg('They already have an active '+m.name+'. Add classes to it instead.','error'); renewSetBusy(false); return; }
+        throw new Error(em||'Could not record the pack.');
+      }
+      await sb.from('students').update({ status:'active' }).eq('id',sid);
+      await sb.from('payments').insert({ school_id:SID, student_id:sid, amount:(m.price||0), type:'membership', status:'paid', description:'Cash - '+m.name, created_at:nowIso, paid_at:nowIso });
+      renewDone('Recorded. '+fn+' has a fresh '+m.name+'. Cash payment of $'+Number(m.price||0).toFixed(2)+' logged.');
+      return;
+    }
+    if(method==='card_file'){
+      if(!renewIdemKey) renewIdemKey=renewNewIdem();
+      var cr=await fetch(SURL+'/functions/v1/create-membership-subscription',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify({ school_id:SID, student_id:sid, membership_id:m.id, idempotency_key:renewIdemKey }) });
+      var cd=await cr.json();
+      if(!cr.ok||!cd||cd.error){ renewIdemKey=null; setRenewMsg(renewFriendlyError(cd&&cd.error?cd.error:''),'error'); renewSetBusy(false); return; }
+      renewIdemKey=null;
+      var brandLine=(cd.brand&&cd.last4)?(String(cd.brand).toUpperCase()+' \u2022\u2022\u2022\u2022'+cd.last4):'card on file';
+      renewDone('Charged '+brandLine+'. '+fn+' has a fresh '+m.name+'.');
+      return;
+    }
+    var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify({ school_id:SID, student_id:sid, membership_id:m.id, success_url:window.location.origin+window.location.pathname+'?renew=paid', cancel_url:window.location.origin+window.location.pathname+'?renew=cancelled' }) });
+    var cod=await co.json();
+    if(!co.ok||cod.error||!cod.url) throw new Error(cod.error||'Could not start checkout.');
+    if(method==='card_open'){
+      window.open(cod.url,'_blank');
+      renewPending('Payment page opened in a new tab. The pack activates automatically once '+fn+' completes payment.');
+      return;
+    }
+    if(method==='card_text'){
+      var ph=null;
+      try{ var sr=await sb.from('students').select('phone').eq('id',sid).single(); if(sr.data) ph=sr.data.phone; }catch(e){}
+      if(!ph){ setRenewMsg('No phone on file. Use Open payment page or Cash.','error'); renewSetBusy(false); return; }
+      var token=SKEY;
+      try{ var sess=await sb.auth.getSession(); if(sess&&sess.data&&sess.data.session&&sess.data.session.access_token) token=sess.data.session.access_token; }catch(e){}
+      var tr=await fetch(SURL+'/functions/v1/send-communication',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({ school_id:SID, channel:'sms', body:'Hi '+fn+', tap to pay for your class pack: '+cod.url, recipients:[{phone:ph, first_name:fn}] }) });
+      var td=await tr.json();
+      if(td&&td.error) throw new Error(td.error);
+      if(td&&td.sms_sent!==undefined && !td.sms_sent) throw new Error((td.errors&&td.errors[0]&&td.errors[0].reason)||'The text could not be sent.');
+      renewPending('Payment link texted to '+fn+'. The pack activates once they pay.');
+      return;
+    }
+  }catch(e){
+    setRenewMsg((e&&e.message)?e.message:'Something went wrong. Nothing was charged.','error');
+    renewSetBusy(false);
+    return;
+  }
+  renewSetBusy(false);
+}
 
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
