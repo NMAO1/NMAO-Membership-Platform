@@ -4343,7 +4343,7 @@ function renderClassPacks(){
     var classLabel=count+' class'+(count!==1?'es':'');
     var statusLabel=m.active?'Active':'Inactive';
     var price='$'+parseFloat(m.price||0).toFixed(2);
-    return '<div class="pack-template-card"><div><div class="pack-template-name">'+m.name+'</div><div class="pack-template-meta">'+classLabel+' \u00B7 '+statusLabel+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">'+price+'</div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div></div>';
+    return '<div class="pack-template-card"><div><div class="pack-template-name">'+m.name+'</div><div class="pack-template-meta">'+classLabel+' \u00B7 '+statusLabel+'</div></div><div style="display:flex;align-items:center;gap:1rem"><div class="pack-template-price">'+price+'</div><div style="display:flex;gap:0.5rem">'+(m.public_join_enabled?'<button class="btn-sm" onclick="openMembershipQr(\''+m.id+'\')"><i class="fa-solid fa-qrcode"></i> QR</button>':'')+'<button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div></div>';
   }).join('');
 }
 function populateSessionPackDropdowns(){
@@ -9406,7 +9406,7 @@ async function renderMemberships(){
     var autopayDay=m.autopay_day?({anniversary:'Anniversary',1:'1st',15:'15th'}[m.autopay_day]||'Day '+m.autopay_day):'Anniversary';
     var vis=m.visibility||'public';
     var visLabel=vis==='public'?'<span style="color:#5A9A6A;font-size:0.72rem">Public</span>':vis==='hidden'?'<span style="color:var(--muted);font-size:0.72rem">Hidden</span>':'<span style="color:var(--gold);font-size:0.72rem">Widget Only</span>';
-    return '<tr><td class="name">'+(m.featured?'<i class="fa-solid fa-star" style="color:var(--gold);margin-right:0.4rem;font-size:0.72rem"></i>':'')+m.name+'</td><td style="font-size:0.78rem;color:var(--muted2)">'+progNames+'</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td style="font-size:0.78rem;color:var(--muted)">'+autopayDay+'</td><td>'+visLabel+'</td><td><button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button> <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
+    return '<tr><td class="name">'+(m.featured?'<i class="fa-solid fa-star" style="color:var(--gold);margin-right:0.4rem;font-size:0.72rem"></i>':'')+m.name+'</td><td style="font-size:0.78rem;color:var(--muted2)">'+progNames+'</td><td><span class="chip chip-pending">'+tl+'</span></td><td style="color:var(--gold)">'+price+'</td><td>'+limit+'</td><td style="font-size:0.78rem;color:var(--muted)">'+autopayDay+'</td><td>'+visLabel+'</td><td>'+(m.public_join_enabled?'<button class="btn-sm" onclick="openMembershipQr(\''+m.id+'\')"><i class="fa-solid fa-qrcode"></i> QR</button> ':'')+'<button class="btn-sm" onclick="openEditMembership(\''+m.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button> <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="deleteMembership(\''+m.id+'\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
   }).join('');
 }
 function populateProgramCheckboxes(currentIds){
@@ -9415,6 +9415,15 @@ function populateProgramCheckboxes(currentIds){
   c.innerHTML=allPrograms.map(function(p){var checked=currentIds&&currentIds.includes(p.id)?'checked':'';return '<label class="check-item"><input type="checkbox" class="mem-prog-check" value="'+p.id+'" '+checked+'/><span style="width:8px;height:8px;border-radius:50%;background:'+(p.color||'#C9A84C')+';display:inline-block;margin-right:0.4rem"></span><span class="check-item-label">'+p.name+'</span></label>';}).join('');
 }
 function openAddMembership(){ document.getElementById('addMembershipTitle').textContent='Add New Membership';document.getElementById('memEditId').value='';document.getElementById('memName').value='';document.getElementById('memType').value='monthly';document.getElementById('memPackExpiry').value='';document.getElementById('memLength').value='1';document.getElementById('memUnit').value='months';document.getElementById('memPrice').value='';document.getElementById('memSignup').value='0';document.getElementById('memLimitType').value='unlimited';document.getElementById('memLimitCount').value='';document.getElementById('memAutopayDay').value='anniversary';document.getElementById('memCustomDayField').style.display='none';document.getElementById('memVisibility').value='public';document.getElementById('memAutoRenew').checked=true;document.getElementById('memAutopay').checked=true;document.getElementById('memFeatured').checked=false;document.getElementById('memTrial').checked=false;document.getElementById('memClassReservation').checked=false;document.getElementById('memRolloverEnabled').checked=false;document.getElementById('memCycleLength').value='';document.getElementById('memCycleUnit').value='';document.getElementById('classLimitField').style.display='none';document.getElementById('cycleAdvancedSection').style.display='none';document.getElementById('cycleOverrideField').style.display='none';document.getElementById('cycleAdvancedToggle').textContent='Show advanced settings';document.getElementById('membershipMsg').textContent='';populateProgramCheckboxes([]);setTimeout(function(){if(quillEditors['memDescEditor'])quillEditors['memDescEditor'].setText('');},50);applyMemPackMode();document.getElementById('addMembershipModal').classList.add('active'); }
+function openMembershipQr(mid){
+  var m=allMemberships.find(function(x){return x.id===mid;});
+  if(!m){return;}
+  var url=APP_URL+'join.html?m='+mid;
+  var flyer=(m.public_headline?m.public_headline:(m.name||'Membership'));
+  if(m.public_blurb){flyer=flyer+'\n'+m.public_blurb;}
+  flyer=flyer+'\nScan to sign up.';
+  openQrModal({title:'QR Code - '+(m.name||'Membership'), url:url, filenameBase:(m.name||'membership')+'-join-qr', flyerText:flyer});
+}
 async function openEditMembership(mid){
   var m=allMemberships.find(function(x){return x.id===mid;}); if(!m) return;
   document.getElementById('addMembershipTitle').textContent='Edit Membership';
