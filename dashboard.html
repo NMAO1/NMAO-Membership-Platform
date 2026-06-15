@@ -1168,6 +1168,7 @@
         <div class="report-type-card" onclick="openReport('expiring')"><div class="report-type-icon" style="color:#E07070"><i class="fa-solid fa-clock"></i></div><div class="report-type-name">Expiring Soon</div><div class="report-type-desc">Expiring in 30 days</div></div>
         <div class="report-type-card" onclick="openReport('birthdays')"><div class="report-type-icon" style="color:#5A9A6A"><i class="fa-solid fa-cake-candles"></i></div><div class="report-type-name">Birthdays</div><div class="report-type-desc">Next 30 days</div></div>
         <div class="report-type-card" onclick="openReport('session_packs')"><div class="report-type-icon" style="color:#9060D0"><i class="fa-solid fa-layer-group"></i></div><div class="report-type-name">Pack Balances</div><div class="report-type-desc">Student session pack usage</div></div>
+        <div class="report-type-card" onclick="openReport('comped_classes')"><div class="report-type-icon" style="color:var(--gold)"><i class="fa-solid fa-gift"></i></div><div class="report-type-name">Comped Classes</div><div class="report-type-desc">Classes added, and who gave them</div></div>
         <div class="report-type-card" onclick="openReport('retention')"><div class="report-type-icon" style="color:#E07070"><i class="fa-solid fa-person-walking-arrow-right"></i></div><div class="report-type-name">Retention Risk</div><div class="report-type-desc">Students not attended in 14, 30, or 60 days</div></div>
         <div class="report-type-card" onclick="openReport('utilization')"><div class="report-type-icon" style="color:#7DAAD4"><i class="fa-solid fa-chart-bar"></i></div><div class="report-type-name">Class Utilization</div><div class="report-type-desc">Fill rate and capacity per class</div></div>
         <div class="report-type-card" onclick="openReport('lead_funnel')"><div class="report-type-icon" style="color:#5A9A6A"><i class="fa-solid fa-filter"></i></div><div class="report-type-name">Lead Funnel</div><div class="report-type-desc">Conversion rate from lead to student</div></div>
@@ -10492,6 +10493,20 @@ async function buildInstructorComparison(){
 
 // Reports
 var REPORT_DEFS = [
+  { key:'comped_classes', title:'Comped Classes Report', desc:'Class credits added to students, with who issued them and why.',
+    table:'class_credit_grants', join:'students(first_name,last_name)', dateField:'created_at',
+    columns:[
+      {key:'date',label:'Date',compute:function(r){return r.created_at?new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--';}},
+      {key:'student_name',label:'Student',compute:function(r){var s=r.students;return s?s.first_name+' '+s.last_name:'--';}},
+      {key:'qty',label:'Classes Added'},
+      {key:'issued_by_name',label:'Given By',compute:function(r){return r.issued_by_name||'Owner';}},
+      {key:'reason',label:'Reason',compute:function(r){return r.reason||'--';}}
+    ],
+    filters:[
+      {key:'date_from',label:'Date From',type:'date'},
+      {key:'date_to',label:'Date To',type:'date'}
+    ]
+  },
   { key:'students', title:'Students Report', desc:'Full roster with program, membership and status.',
     table:'students', join:'programs(name),memberships(name)', dateField:'created_at',
     columns:[
