@@ -1063,7 +1063,7 @@ async function loadCoreData(){
   var [studR,classR,instrR,levR]=await Promise.all([
     sb.from('students').select('*, programs(name,color), memberships(name,billing_type,price)').eq('school_id',SID).in('status',['active','trial','paused']).order('first_name'),
     sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time'),
-    sb.from('instructors').select('id,first_name,last_name,name,email,active').eq('school_id',SID).eq('active',true),
+    sb.from('instructors').select('id,first_name,last_name,email,active').eq('school_id',SID).eq('active',true),
     sb.from('belt_levels').select('*').order('sort_order')
   ]);
   allStudents=studR.data||[];
@@ -1617,7 +1617,7 @@ async function buildSessionsTab(){
   var el=document.getElementById('sessionsBoard');
   try{
     // Try to load sessions from today forward
-    var r=await sb.from('sessions').select('*, session_types(name,color), instructors(first_name,last_name,name)').eq('school_id',SID).gte('session_date',new Date().toISOString().split('T')[0]).order('session_date').order('start_time').limit(30);
+    var r=await sb.from('sessions').select('*, session_types(name,color), instructors(first_name,last_name)').eq('school_id',SID).gte('session_date',new Date().toISOString().split('T')[0]).order('session_date').order('start_time').limit(30);
     var sessions=r.data||[];
     if(!sessions.length){
       el.innerHTML='<div class="empty-state"><i class="fa-solid fa-calendar-plus"></i><div class="empty-state-text">No sessions booked yet.</div><button onclick="openBookSession()" style="margin-top:1rem;height:var(--tap);padding:0 1.5rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase"><i class="fa-solid fa-plus" style="margin-right:0.4rem"></i>Book First Session</button></div>';
@@ -2347,7 +2347,14 @@ function renewFriendlyError(errStr){
   return errStr.replace(/^[A-Z_]+:\s*/,'')||'The charge did not go through.';
 }
 
-function renewDone(msg){ renewBusy=false; showToast(msg); closeRenewPanel(); if(slStudent) slLoadPacks(slStudent.id); }
+function renewDone(msg){
+  renewBusy=false;
+  showToast(msg);
+  setRenewMsg(msg,'success');
+  renewSelMemId=null;
+  renewRenderPacks();
+  if(slStudent) slLoadPacks(slStudent.id);
+}
 function renewPending(msg){ renewBusy=false; setRenewMsg(msg,'success'); renewUpdateActions(); }
 
 async function renewGo(method){
