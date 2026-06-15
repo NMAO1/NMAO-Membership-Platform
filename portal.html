@@ -1193,40 +1193,69 @@ function updateWaiverBanner(){
 // ─────────────────────────────────────────────────────────────
 //  §JS: INIT
 // ─────────────────────────────────────────────────────────────
+async function resolveSchoolForSession(user){
+  try{
+    var sidFound=null;
+    var fa=await sb.from('families').select('school_id').eq('email',user.email).maybeSingle();
+    if(fa.data&&fa.data.school_id){sidFound=fa.data.school_id;}
+    if(!sidFound){
+      var st=await sb.from('students').select('school_id').eq('email',user.email).maybeSingle();
+      if(st.data&&st.data.school_id){sidFound=st.data.school_id;}
+    }
+    if(!sidFound){
+      var ins=await sb.from('instructors').select('school_id').eq('email',user.email).eq('active',true).maybeSingle();
+      if(ins.data&&ins.data.school_id){sidFound=ins.data.school_id;}
+    }
+    if(!sidFound){return false;}
+    SID=sidFound;
+    var sl=await sb.from('schools').select('slug').eq('id',SID).maybeSingle();
+    if(sl.data&&sl.data.slug){SCHOOL_SLUG=sl.data.slug;try{localStorage.setItem(SCHOOL_SLUG_KEY,SCHOOL_SLUG);}catch(e){}}
+    await loadSchoolBranding();
+    return true;
+  }catch(e){
+    console.error('resolveSchoolForSession error:',e);
+    return false;
+  }
+}
 async function init(){
   var slug=getSlug();
-  if(!slug){showSchoolNotFound();return;}
-  try{
-    var br=await sb.rpc('get_school_branding_by_slug',{p_slug:slug});
-    if(br.error||!br.data||!br.data.length){showSchoolNotFound();return;}
-    var school=br.data[0];
-    SID=school.id;
-    SCHOOL_SLUG=slug;
-    try{localStorage.setItem(SCHOOL_SLUG_KEY,slug);}catch(e){}
-    await loadSchoolBranding(school);
-  }catch(e){
-    console.error('Slug resolve error:',e);
-    showSchoolNotFound();
-    return;
+  if(slug){
+    try{
+      var br=await sb.rpc('get_school_branding_by_slug',{p_slug:slug});
+      if(br.error||!br.data||!br.data.length){showSchoolNotFound();return;}
+      var school=br.data[0];
+      SID=school.id;
+      SCHOOL_SLUG=slug;
+      try{localStorage.setItem(SCHOOL_SLUG_KEY,slug);}catch(e){}
+      await loadSchoolBranding(school);
+    }catch(e){
+      console.error('Slug resolve error:',e);
+      showSchoolNotFound();
+      return;
+    }
   }
   try{
     var hash=window.location.hash;
     if(hash&&hash.includes('access_token')){
       var res=await sb.auth.getSession();
       if(res.data&&res.data.session){
-        window.history.replaceState(null,'',window.location.pathname+'?s='+SCHOOL_SLUG);
+        if(!SID){var okA=await resolveSchoolForSession(res.data.session.user);if(!okA){showNoAccountError(res.data.session.user.email);return;}}
+        window.history.replaceState(null,'',window.location.pathname+(SCHOOL_SLUG?'?s='+SCHOOL_SLUG:''));
         await detectUserTypeAndRoute(res.data.session.user);
         return;
       }
     }
     var r=await sb.auth.getSession();
     if(r.data&&r.data.session){
+      if(!SID){var okB=await resolveSchoolForSession(r.data.session.user);if(!okB){showNoAccountError(r.data.session.user.email);return;}}
       await detectUserTypeAndRoute(r.data.session.user);
     }else{
+      if(!SID){showSchoolNotFound();return;}
       document.getElementById('loginScreen').style.display='flex';
     }
   }catch(e){
     console.error('Init error:',e);
+    if(!SID){showSchoolNotFound();return;}
     document.getElementById('loginScreen').style.display='flex';
   }
 }
