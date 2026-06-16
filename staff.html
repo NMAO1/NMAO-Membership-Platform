@@ -931,6 +931,23 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     ATTENDANCE HISTORY MODAL
+════════════════════════════════════════════ -->
+<div id="attendanceHistoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.5rem;animation:slideUp 0.25s ease;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+      <div>
+        <div style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)">Attendance History</div>
+        <div id="attHistName" style="font-family:var(--font-display);font-size:1.15rem;color:var(--white);margin-top:0.2rem"></div>
+        <div id="attHistCount" style="font-size:0.72rem;color:var(--muted)"></div>
+      </div>
+      <button onclick="closeAttendanceHistory()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="attHistBody" style="overflow-y:auto;margin-top:0.5rem"></div>
+  </div>
+</div>
+
 <!-- Toast -->
 
 <div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastText">Done</span></div>
@@ -1423,7 +1440,7 @@ function renderStudentRow(s,showCheckin){
   var packChip='';
   if(pb&&pb.tot>0){
     var pcCls=pb.rem<=0?' pk-out':(pb.rem<=3?' pk-low':'');
-    packChip='<span class="pack-chip'+pcCls+'">'+pb.rem+'/'+pb.tot+'</span>';
+    packChip='<span class="pack-chip'+pcCls+'" style="cursor:pointer" title="View attendance history" onclick="event.stopPropagation();openAttendanceHistory(\''+s.id+'\')">'+pb.rem+'/'+pb.tot+'</span>';
   }
   var actionHtml='';
   if(showCheckin){
@@ -1730,6 +1747,43 @@ async function buildSessionsTab(){
   }
 }
 
+async function openAttendanceHistory(sid){
+  var stu=allStudents.find(function(s){return s.id===sid;});
+  document.getElementById('attHistName').textContent=stu?(stu.first_name+' '+stu.last_name):'Student';
+  document.getElementById('attHistCount').textContent='';
+  document.getElementById('attHistBody').innerHTML='<div style="text-align:center;color:var(--muted);padding:1.5rem 0">Loading...</div>';
+  document.getElementById('attendanceHistoryModal').style.display='flex';
+  try{
+    var ar=await sb.from('class_attendance').select('noted_at,status,session_id').eq('school_id',SID).eq('student_id',sid).order('noted_at',{ascending:false}).limit(200);
+    if(ar.error)throw ar.error;
+    var rows=ar.data||[];
+    if(!rows.length){document.getElementById('attHistBody').innerHTML='<div style="text-align:center;color:var(--muted);padding:1.5rem 0">No attendance recorded yet.</div>';return;}
+    var sessIds=[];rows.forEach(function(r){if(r.session_id&&sessIds.indexOf(r.session_id)===-1)sessIds.push(r.session_id);});
+    var sessMap={};var classIds=[];
+    if(sessIds.length){
+      var sr=await sb.from('class_sessions').select('id,class_id,session_date').in('id',sessIds);
+      (sr.data||[]).forEach(function(cs){sessMap[cs.id]={class_id:cs.class_id,session_date:cs.session_date};if(cs.class_id&&classIds.indexOf(cs.class_id)===-1)classIds.push(cs.class_id);});
+    }
+    var classMap={};
+    if(classIds.length){
+      var cr=await sb.from('classes').select('id,name').in('id',classIds);
+      (cr.data||[]).forEach(function(c){classMap[c.id]=c.name;});
+    }
+    var html='';
+    rows.forEach(function(r){
+      var sess=sessMap[r.session_id]||{};
+      var cname=classMap[sess.class_id]||'Class';
+      var d=r.noted_at?new Date(r.noted_at):(sess.session_date?new Date(sess.session_date+'T00:00:00'):null);
+      var dstr=d?d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'--';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div><div style="color:var(--white);font-size:0.9rem">'+cname+'</div><div style="color:var(--muted);font-size:0.72rem">'+dstr+'</div></div><span style="font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:#7DBD7D;border:1px solid rgba(125,189,125,0.35);padding:0.15rem 0.5rem">'+(r.status||'present')+'</span></div>';
+    });
+    document.getElementById('attHistCount').textContent=rows.length+' class'+(rows.length!==1?'es':'')+' attended';
+    document.getElementById('attHistBody').innerHTML=html;
+  }catch(e){
+    document.getElementById('attHistBody').innerHTML='<div style="text-align:center;color:#E07070;padding:1.5rem 0">Could not load history: '+(e.message||e)+'</div>';
+  }
+}
+function closeAttendanceHistory(){document.getElementById('attendanceHistoryModal').style.display='none';}
 function openBookSession(){
   var now=new Date();
   document.getElementById('bookDate').value=now.toISOString().split('T')[0];
