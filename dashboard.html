@@ -8253,7 +8253,7 @@ async function smsCheckoutLink() {
 
 async function loadLeads(){
   try{
-    var r=await sb.from('leads').select('*').eq('school_id',SID).order('created_at',{ascending:false});
+    var r=await sb.from('leads').select('*').eq('school_id',SID).is('deleted_at',null).order('created_at',{ascending:false});
     allLeads=r.data||[];
     renderLeads();
     document.getElementById('anaLeads').textContent=allLeads.length;
@@ -8268,7 +8268,7 @@ function renderLeads(){
     if(!filtered.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted);font-style:italic;padding:0.5rem">No leads</div>';return;}
     el.innerHTML=filtered.map(function(l){
       var prog=allPrograms.find(function(p){return p.id===l.program_id;});
-      return '<div class="lead-card" onclick="openEditLead(\''+l.id+'\')"><div class="lead-name">'+l.first_name+' '+l.last_name+'</div><div class="lead-meta">'+(prog?prog.name:'--')+' \u00B7 '+l.source+'</div><div style="display:flex;gap:0.4rem;margin-top:0.5rem"><button class="btn-sm" style="font-size:0.68rem" onclick="event.stopPropagation();bookTrialFromLead(\''+l.id+'\')"><i class="fa-solid fa-user-clock" style="margin-right:0.2rem"></i>Book Trial</button></div></div>';
+      return '<div class="lead-card" onclick="openEditLead(\''+l.id+'\')"><div class="lead-name">'+l.first_name+' '+l.last_name+'</div><div class="lead-meta">'+(prog?prog.name:'--')+' \u00B7 '+l.source+'</div><div style="display:flex;gap:0.4rem;margin-top:0.5rem"><button class="btn-sm" style="font-size:0.68rem" onclick="event.stopPropagation();bookTrialFromLead(\''+l.id+'\')"><i class="fa-solid fa-user-clock" style="margin-right:0.2rem"></i>Book Trial</button><button class="btn-sm" style="font-size:0.68rem;border-color:#A04040;color:#E07070" onclick="event.stopPropagation();deleteLead(\''+l.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
     }).join('');
   });
 }
@@ -8276,7 +8276,13 @@ function populateLeadProgramDropdown(){ var sel=document.getElementById('leadPro
 function openAddLead(){ document.getElementById('addLeadTitle').textContent='Add New Lead';document.getElementById('leadEditId').value='';document.getElementById('leadFirst').value='';document.getElementById('leadLast').value='';document.getElementById('leadEmail').value='';document.getElementById('leadPhone').value='';document.getElementById('leadSource').value='walk-in';document.getElementById('leadStatus').value='new';document.getElementById('leadNotes').value='';document.getElementById('leadMsg').textContent='';document.getElementById('convertLeadBtn').style.display='none';document.getElementById('bookTrialBtn').style.display='none';populateLeadProgramDropdown();document.getElementById('addLeadModal').classList.add('active'); }
 function openEditLead(lid){ var l=allLeads.find(function(x){return x.id===lid;}); if(!l) return; document.getElementById('addLeadTitle').textContent='Edit Lead';document.getElementById('leadEditId').value=l.id;document.getElementById('leadFirst').value=l.first_name||'';document.getElementById('leadLast').value=l.last_name||'';document.getElementById('leadEmail').value=l.email||'';document.getElementById('leadPhone').value=l.phone||'';document.getElementById('leadSource').value=l.source||'walk-in';document.getElementById('leadStatus').value=l.status||'new';document.getElementById('leadNotes').value=l.notes||'';document.getElementById('leadMsg').textContent='';document.getElementById('convertLeadBtn').style.display='inline-flex';document.getElementById('bookTrialBtn').style.display='inline-flex';populateLeadProgramDropdown();if(l.program_id)document.getElementById('leadProgram').value=l.program_id;document.getElementById('addLeadModal').classList.add('active'); }
 function closeAddLead(){ document.getElementById('addLeadModal').classList.remove('active'); }
-async function saveLead(){
+async function deleteLead(lid){
+  if(!confirm('Delete this lead? It will be removed from your pipeline.')) return;
+  var r=await sb.from('leads').update({deleted_at:new Date().toISOString()}).eq('id',lid);
+  if(r.error){alert('Could not delete lead: '+r.error.message);return;}
+  await loadLeads(); if(typeof buildHomeStats==='function'){buildHomeStats();}
+}
+  async function saveLead(){
   var eid=document.getElementById('leadEditId').value;
   var first=document.getElementById('leadFirst').value.trim(); var last=document.getElementById('leadLast').value.trim();
   if(!first||!last){setMsg('leadMsg','First and last name required.','error');return;}
@@ -10878,7 +10884,7 @@ var r=await sb.from('students').select('*').eq('school_id',SID).eq('status','act
   { key:'lead_funnel', title:'Lead Funnel', desc:'Conversion rate from lead to enrolled student.',
     table:'leads', join:null, dateField:'created_at',
     customQuery:async function(sb,SID){
-      var r=await sb.from('leads').select('*').eq('school_id',SID).order('created_at',{ascending:false});
+      var r=await sb.from('leads').select('*').eq('school_id',SID).is('deleted_at',null).order('created_at',{ascending:false});
       return r;
     },
     customFilter:function(data){
@@ -10907,7 +10913,7 @@ var r=await sb.from('students').select('*').eq('school_id',SID).eq('status','act
 async function buildLeadFunnel(){
   var el=document.getElementById('leadFunnelWidget'); if(!el) return;
   try{
-    var r=await sb.from('leads').select('status').eq('school_id',SID);
+    var r=await sb.from('leads').select('status').eq('school_id',SID).is('deleted_at',null);
     var data=r.data||[]; var total=data.length;
     if(!total){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;grid-column:1/-1">No leads yet.</div>';return;}
     var contacted=data.filter(function(l){return ['contacted','trial','converted'].includes(l.status);}).length;
