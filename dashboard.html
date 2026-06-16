@@ -1453,10 +1453,8 @@
       </div>
       <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
         <button class="panel-action" id="evCopyLinkBtn" onclick="copyEventPublicLink()" style="display:none"><i class="fa-solid fa-link"></i> Copy Public Link</button>
-        <button class="panel-action" id="evQrBtn" onclick="openEventQr()" style="display:none"><i class="fa-solid fa-qrcode"></i> QR Code</button>
         <button class="panel-action" onclick="openEventInvite()"><i class="fa-solid fa-paper-plane"></i> Send Invite</button>
         <button class="panel-action" onclick="openAddRegistration()"><i class="fa-solid fa-user-plus"></i> Add Registration</button>
-    <button class="panel-action" style="border-color:#A04040;color:#E07070" onclick="window.deleteEvent(window.currentEventId)"><i class="fa-solid fa-trash"></i> Delete</button>
     <button onclick="closeEventDetail()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
@@ -11679,9 +11677,12 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
           "</div>" +
           "<div style=\"font-size:0.78rem;color:var(--muted)\">" + dateStr + locStr + capStr + "</div>" +
         "</div>" +
-        "<div style=\"display:flex;align-items:center;gap:0.75rem;flex-shrink:0\">" +
-          "<div style=\"font-family:var(--font-display);font-size:1.1rem;color:var(--gold)\">" + priceStr + "</div>" +
+        "<div style=\"display:flex;align-items:center;gap:0.4rem;flex-shrink:0\">" +
+          "<div style=\"font-family:var(--font-display);font-size:1.1rem;color:var(--gold);margin-right:0.35rem\">" + priceStr + "</div>" +
           "<button class=\"btn-sm gold\" onclick=\"openEventDetail(&quot;" + ev.id + "&quot;)\"><i class=\"fa-solid fa-eye\"></i> Manage</button>" +
+          "<button class=\"btn-sm\" onclick=\"openEditEvent(&quot;" + ev.id + "&quot;)\"><i class=\"fa-solid fa-pen\"></i> Edit</button>" +
+          (ev.public_signup_enabled ? "<button class=\"btn-sm\" onclick=\"openEventQr(&quot;" + ev.id + "&quot;)\"><i class=\"fa-solid fa-qrcode\"></i> QR</button>" : "") +
+          "<button class=\"btn-sm\" style=\"border-color:#A04040;color:#E07070\" onclick=\"window.deleteEvent(&quot;" + ev.id + "&quot;)\"><i class=\"fa-solid fa-trash\"></i></button>" +
         "</div>" +
       "</div>";
     }).join("");
@@ -12908,11 +12909,12 @@ window.closeWelcomeModal = async function() {
   };
 
   // Open the QR / share modal for this event's public link
-  window.openEventQr = function(){
-    if (!window.currentEventId) return;
-    var ev = (window.allEvents || []).find(function(x){ return x.id === window.currentEventId; });
+  window.openEventQr = function(eventId){
+    var eid = eventId || window.currentEventId;
+    if (!eid) return;
+    var ev = (window.allEvents || []).find(function(x){ return x.id === eid; });
     var title = (ev && ev.title) ? ev.title : "Event";
-    var url = APP_URL + "event.html?id=" + window.currentEventId;
+    var url = APP_URL + "event.html?id=" + eid;
     openQrModal({title: "QR Code - " + title, url: url, filenameBase: title + "-qr", flyerText: "Scan to register for " + title + "."});
   };
 
