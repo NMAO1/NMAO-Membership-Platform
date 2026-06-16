@@ -300,16 +300,17 @@
     /* §CSS-FORMS */
     .check-group { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; margin-bottom: 1rem; }
     .check-item  { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 4px; background: var(--black); cursor: pointer; flex-shrink: 0; position: relative; transition: all 0.2s; }
-    .check-item input[type="checkbox"]:checked { background: var(--gold); border-color: var(--gold); }
-    .check-item input[type="checkbox"]:checked::after { content: 'x'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--black); font-size: 0.85rem; font-weight: 900; line-height: 1; }
+    .check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; border: none; border-radius: 24px; background: #333; cursor: pointer; flex-shrink: 0; position: relative; transition: 0.3s; }
+    .check-item input[type="checkbox"]::after { content: ''; position: absolute; width: 18px; height: 18px; top: 3px; left: 3px; background: #888; border-radius: 50%; transition: 0.3s; }
+    .check-item input[type="checkbox"]:checked { background: rgba(201,168,76,0.3); background: color-mix(in srgb, var(--gold) 30%, transparent); }
+    .check-item input[type="checkbox"]:checked::after { background: var(--gold); transform: translateX(20px); }
     .check-item-label { font-size: 0.88rem; color: var(--muted2); font-family: var(--font-ui); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .toggle-slider { position: absolute; inset: 0; background: #333; border-radius: 24px; cursor: pointer; transition: 0.3s; }
     .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #888; border-radius: 50%; transition: 0.3s; }
-    .toggle-switch input:checked + .toggle-slider { background: rgba(201,168,76,0.3); }
+    .toggle-switch input:checked + .toggle-slider { background: rgba(201,168,76,0.3); background: color-mix(in srgb, var(--gold) 30%, transparent); }
     .toggle-switch input:checked + .toggle-slider:before { background: var(--gold); transform: translateX(20px); }
     .auto-row        { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
     .auto-row-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
@@ -794,13 +795,13 @@
         </div>
         <div class="no-show-policy-box">
           <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders</div>
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /> <span>Text a confirmation when a session is booked</span></label>
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="checkbox" id="packReminderEnabled" checked /> <span>Text a reminder when a student's session pack runs low</span></label>
+          <label class="check-item" style="margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /><span class="check-item-label">Text a confirmation when a session is booked</span></label>
+          <label class="check-item"><input type="checkbox" id="packReminderEnabled" checked /><span class="check-item-label">Text a reminder when a student's session pack runs low</span></label>
         </div>
         <div class="no-show-policy-box">
           <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders</div>
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /> <span>Text a confirmation when a session is booked</span></label>
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="checkbox" id="packReminderEnabled" checked /> <span>Text a reminder when a student's session pack runs low</span></label>
+          <label class="check-item" style="margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /><span class="check-item-label">Text a confirmation when a session is booked</span></label>
+          <label class="check-item"><input type="checkbox" id="packReminderEnabled" checked /><span class="check-item-label">Text a reminder when a student's session pack runs low</span></label>
         </div>
         <button class="panel-action" onclick="saveSessionSettings()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save Session Settings</button>
         <p class="form-msg" id="sessSettingsMsg"></p>
