@@ -975,11 +975,6 @@
       </div>
  <!-- Alerts -->
 <div id="commTabAlerts" style="display:none">
-  <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Alert Settings</span></div><div class="panel-body" style="max-width:500px">
-    <div class="field"><label>Auto-Expire Alerts After</label><div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem"><input type="number" id="settingAlertExpireDays" min="0" placeholder="30" style="max-width:120px" /><span style="color:var(--muted);font-size:0.85rem">days</span></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">New alerts will automatically be hidden from member portals after this many days. Leave blank to disable auto-expiry (alerts visible until manually deleted).</div></div>
-    <button class="panel-action" style="margin-top:0.75rem" onclick="saveAlertSettings()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-    <p class="form-msg" id="alertSettingsMsg"></p>
-  </div></div>
 <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Create Alert</span></div><div class="panel-body">
           <div class="field" style="margin-bottom:1rem"><label>Alert Type</label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem">
             <button class="alert-type-btn selected" onclick="selectAlertType('announcement',this)"><i class="fa-solid fa-bullhorn"></i> Announcement</button>
@@ -999,9 +994,16 @@
             </div>
             <div><div class="field"><label>Message</label><div id="alertBodyEditor" style="margin-top:0.25rem"></div></div></div>
           </div>
-          <div style="display:flex;gap:0.75rem;margin-top:0.75rem">
+          <div style="display:flex;gap:0.75rem;margin-top:0.75rem;align-items:center">
             <button class="panel-action" id="alertSendBtn" onclick="sendAlert()"><i class="fa-solid fa-paper-plane"></i> Send Now</button>
             <button class="btn-sm" onclick="saveAlertDraft()"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:0.4rem">
+              <label for="settingAlertExpireDays" style="color:var(--muted);font-size:0.78rem;white-space:nowrap">Auto-expire after</label>
+              <input type="number" id="settingAlertExpireDays" min="0" placeholder="30" title="New alerts auto-hide from member portals after this many days. Leave blank to disable." style="max-width:64px" />
+              <span style="color:var(--muted);font-size:0.78rem">days</span>
+              <button class="btn-sm" onclick="saveAlertSettings()" title="Save auto-expire setting"><i class="fa-solid fa-floppy-disk"></i></button>
+              <span class="form-msg" id="alertSettingsMsg" style="font-size:0.75rem"></span>
+            </div>
           </div>
           <p class="form-msg" id="alertMsg"></p>
         </div></div>
