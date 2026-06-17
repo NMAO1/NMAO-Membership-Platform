@@ -140,7 +140,7 @@
 
     async function loadSchool(){
       var r = await sb.from('schools')
-        .select('id,name,logo_url,color,bg_color,border_color,font_family,public_booking_show_spots,public_booking_default_view,public_booking_headline')
+        .select('id,name,logo_url,color,bg_color,border_color,surface_color,font_color,font_family,public_booking_show_spots,public_booking_default_view,public_booking_headline')
         .eq('slug', slug).maybeSingle();
       if(r.error || !r.data){ showError('This schedule link is not active or does not exist. Please contact the school.'); return; }
       school = r.data;
@@ -153,6 +153,8 @@
       if(school.color)        document.documentElement.style.setProperty('--gold', school.color);
       if(school.bg_color)     document.documentElement.style.setProperty('--black', school.bg_color);
       if(school.border_color) document.documentElement.style.setProperty('--border', school.border_color);
+      if(school.surface_color){ document.documentElement.style.setProperty('--surface', school.surface_color); document.documentElement.style.setProperty('--surf2', school.surface_color); }
+      if(school.font_color)   document.documentElement.style.setProperty('--white', school.font_color);
       if(school.font_family)  document.documentElement.style.setProperty('--font-display', "'"+school.font_family+"',serif");
       document.getElementById('pageHeadline').textContent = school.public_booking_headline || '';
       showSpots = school.public_booking_show_spots !== false;
