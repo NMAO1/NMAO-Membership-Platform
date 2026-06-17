@@ -1222,16 +1222,18 @@ async function init(){
   if(slug){
     try{
       var br=await sb.rpc('get_school_branding_by_slug',{p_slug:slug});
-      if(br.error||!br.data||!br.data.length){showSchoolNotFound();return;}
-      var school=br.data[0];
-      SID=school.id;
-      SCHOOL_SLUG=slug;
-      try{localStorage.setItem(SCHOOL_SLUG_KEY,slug);}catch(e){}
-      await loadSchoolBranding(school);
+      if(br.error||!br.data||!br.data.length){
+        try{localStorage.removeItem(SCHOOL_SLUG_KEY);}catch(e){}
+      }else{
+        var school=br.data[0];
+        SID=school.id;
+        SCHOOL_SLUG=slug;
+        try{localStorage.setItem(SCHOOL_SLUG_KEY,slug);}catch(e){}
+        await loadSchoolBranding(school);
+      }
     }catch(e){
       console.error('Slug resolve error:',e);
-      showSchoolNotFound();
-      return;
+      try{localStorage.removeItem(SCHOOL_SLUG_KEY);}catch(e2){}
     }
   }
   try{
@@ -1250,12 +1252,10 @@ async function init(){
       if(!SID){var okB=await resolveSchoolForSession(r.data.session.user);if(!okB){showNoAccountError(r.data.session.user.email);return;}}
       await detectUserTypeAndRoute(r.data.session.user);
     }else{
-      if(!SID){showSchoolNotFound();return;}
       document.getElementById('loginScreen').style.display='flex';
     }
   }catch(e){
     console.error('Init error:',e);
-    if(!SID){showSchoolNotFound();return;}
     document.getElementById('loginScreen').style.display='flex';
   }
 }
