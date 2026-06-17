@@ -1198,6 +1198,20 @@
         <button class="panel-action" style="width:fit-content" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="settingsMsg"></p>
       </div></div>
+
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-calendar-check" style="margin-right:0.5rem;color:var(--gold)"></i>Public Booking Page</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+        <div class="field">
+          <label>Shareable Link</label>
+          <div id="bookingPageLinkPreview" style="font-size:0.8rem;color:var(--gold);word-break:break-all;padding:0.5rem;background:var(--surface);border:1px solid var(--border)"></div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">Share this on social or in your bio so members can reserve and prospects can book a trial. It uses the same link name as your member portal (set above).</div>
+          <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="copyBookingPageLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+        </div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="publicBookingShowSpots" /><div><div class="check-item-label">Show spots remaining on each class</div></div></label></div>
+        <div class="field"><label>Default View</label><select id="publicBookingDefaultView"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
+        <div class="field"><label>Headline (optional)</label><input type="text" id="publicBookingHeadline" placeholder="Train with us — reserve a class or try one free" /></div>
+        <button class="panel-action" style="width:fit-content" onclick="saveBookingPageSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Booking Page</button>
+        <p class="form-msg" id="bookingPageMsg"></p>
+      </div></div>
       <!-- Brand & Design -->
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-palette" style="margin-right:0.5rem;color:var(--gold)"></i>Brand &amp; Design</span></div><div class="panel-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:600px">
@@ -3086,6 +3100,10 @@ async function loadSchool() {
     document.getElementById('settingPhone').value = d.phone || '';
     document.getElementById('settingCity').value  = d.city  || '';
     if(document.getElementById('settingSlug')){var sg=(d.slug)||(window.schoolData&&window.schoolData.slug)||'';document.getElementById('settingSlug').value=sg;updateSlugPreview(sg);}
+    if(document.getElementById('publicBookingShowSpots')){document.getElementById('publicBookingShowSpots').checked=d.public_booking_show_spots!==false;}
+    if(document.getElementById('publicBookingDefaultView')){document.getElementById('publicBookingDefaultView').value=d.public_booking_default_view||'week';}
+    if(document.getElementById('publicBookingHeadline')){document.getElementById('publicBookingHeadline').value=d.public_booking_headline||'';}
+    if(document.getElementById('bookingPageLinkPreview')){var bsg=(d.slug)||(window.schoolData&&window.schoolData.slug)||'';document.getElementById('bookingPageLinkPreview').textContent=bsg?('app.nmao.us/classes.html?s='+bsg):'Set your link name above first, then save.';}
     document.getElementById('settingState').value = d.state || '';
     var col=d.color||'#C9A84C', bgCol=d.bg_color||'#0A0A0A', borderCol=d.border_color||'#2A2520';
     var surfaceCol=d.surface_color||'#141414', fontCol=d.font_color||'#F5F0E8', font=d.font_family||'Cormorant Garamond';
@@ -3223,6 +3241,23 @@ async function saveMembershipSettings(){
   if(r.error){setMsg('membershipSettingsMsg',r.error.message,'error');}else{setMsg('membershipSettingsMsg','Saved!','success');}
 }
 
+async function saveBookingPageSettings(){
+  setMsg('bookingPageMsg','Saving...','');
+  var payload={
+    public_booking_show_spots:document.getElementById('publicBookingShowSpots').checked,
+    public_booking_default_view:document.getElementById('publicBookingDefaultView').value,
+    public_booking_headline:document.getElementById('publicBookingHeadline').value.trim()||null
+  };
+  var r=await sb.from('schools').update(payload).eq('id',SID);
+  if(r.error){setMsg('bookingPageMsg',r.error.message,'error');}
+  else{setMsg('bookingPageMsg','Saved!','success');setTimeout(function(){var m=document.getElementById('bookingPageMsg');if(m)m.textContent='';},3000);}
+}
+function copyBookingPageLink(){
+  var el=document.getElementById('bookingPageLinkPreview');
+  var txt=el?el.textContent:'';
+  if(!txt||txt.indexOf('classes.html')===-1){setMsg('bookingPageMsg','Set your portal link name first (above), then save.','error');return;}
+  navigator.clipboard.writeText('https://'+txt).then(function(){setMsg('bookingPageMsg','Link copied!','success');setTimeout(function(){var m=document.getElementById('bookingPageMsg');if(m)m.textContent='';},2500);},function(){setMsg('bookingPageMsg','Could not copy — select and copy manually.','error');});
+}
 async function saveAlertSettings(){
   var v=document.getElementById('settingAlertExpireDays').value;
   var days=v===''?null:parseInt(v);
