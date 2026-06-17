@@ -549,7 +549,12 @@
 
 <!-- CLASSES TAB -->
 <div class="tab-panel" id="tabClasses">
-  <div class="section-head" style="margin-bottom:1rem">Full Weekly Schedule</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div class="section-head" style="margin-bottom:0">Full Weekly Schedule</div>
+    <button style="background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.45rem 0.85rem;cursor:pointer;" onclick="shareBookingPage()">
+      <i class="fa-solid fa-share-nodes" style="margin-right:0.3rem"></i>Share
+    </button>
+  </div>
   <div id="classesWeekList"><div class="loading-row"><i class="fa-solid fa-circle-notch spin"></i> Loading...</div></div>
 </div>
 
@@ -1030,7 +1035,7 @@ async function init(){
 
 async function loadSchoolBranding(){
   try{
-    var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url').eq('id',SID).single();
+    var r=await sb.from('schools').select('name,slug,color,bg_color,border_color,surface_color,font_color,font_family,logo_url').eq('id',SID).single();
     if(!r.data)return;
     schoolData=r.data;
     var ds=document.documentElement.style;
@@ -2560,6 +2565,18 @@ async function renewGo(method){
   renewSetBusy(false);
 }
 
+function shareBookingPage(){
+  var slug=(schoolData&&schoolData.slug)?schoolData.slug:'';
+  if(!slug){ showToast('No booking link yet — set the portal link in Settings first.','err'); return; }
+  var url='https://app.nmao.us/classes.html?s='+slug;
+  if(navigator.share){
+    navigator.share({title:(schoolData.name||'Class Schedule'),text:'Book a class with us!',url:url}).catch(function(){});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){showToast('Booking link copied!','ok');},function(){showToast('Could not copy — please copy manually.','err');});
+  }else{
+    showToast(url,'ok');
+  }
+}
 function showToast(msg,type){
   var t=document.getElementById('toast');var ic=document.getElementById('toast').querySelector('i');
   document.getElementById('toastText').textContent=msg;
