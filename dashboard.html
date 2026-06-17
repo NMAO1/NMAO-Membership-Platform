@@ -2000,6 +2000,8 @@
       </div>
       <div class="field"><label>Instructor</label><select id="classInstructor"><option value="">-- Select Instructor --</option></select></div>
       <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classShowInstructor" checked /><div><div class="check-item-label">Show instructor on member app</div></div></label></div>
+      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classPublicBooking" /><div><div class="check-item-label">Show on public booking page</div></div></label></div>
+      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classTrialEnabled" /><div><div class="check-item-label">Allow trial sign-ups (public)</div></div></label></div>
       <div class="form-row"><div class="field"><label>Start Time</label><input type="time" id="classStart" /></div><div class="field"><label>End Time</label><input type="time" id="classEnd" /></div></div>
       <div class="field"><label>Days of Week</label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
       <button class="btn-gold-full" onclick="saveClass()">Save Class</button>
@@ -3994,6 +3996,8 @@ function openAddClass(){
   document.getElementById('classStart').value='';
   document.getElementById('classEnd').value='';
   document.getElementById('classShowInstructor').checked=true;
+  document.getElementById('classPublicBooking').checked=false;
+  document.getElementById('classTrialEnabled').checked=false;
   document.getElementById('classInstructor').value='';
   document.getElementById('classProgram').value='';
   document.getElementById('classMsg').textContent='';
@@ -4018,6 +4022,8 @@ function openEditClass(cid){
   document.getElementById('classStart').value=c.start_time||'';
   document.getElementById('classEnd').value=c.end_time||'';
   document.getElementById('classShowInstructor').checked=c.show_instructor_on_app!==false;
+  document.getElementById('classPublicBooking').checked=c.public_booking_enabled===true;
+  document.getElementById('classTrialEnabled').checked=c.trial_enabled===true;
   document.getElementById('classInstructor').value=c.instructor_name||'';
   document.getElementById('classProgram').value=c.program_id||'';
   document.getElementById('classMsg').textContent='';
@@ -4042,7 +4048,7 @@ async function saveClass(){
   var days=[]; document.querySelectorAll('.day-btn.selected').forEach(function(b){days.push(b.dataset.day);});
 var programId=document.getElementById('classProgram').value;
 if(!title||!start||!end||!days.length||!programId){setMsg('classMsg','Fill in title, times, days, and program.','error');return;}  setMsg('classMsg','Saving...','');
-  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,program_id:programId};
+  var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,public_booking_enabled:document.getElementById('classPublicBooking').checked,trial_enabled:document.getElementById('classTrialEnabled').checked,program_id:programId};
   var r; if(eid){r=await sb.from('classes').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('classes').insert(payload);}
   if(r.error){setMsg('classMsg',r.error.message,'error');}else{setMsg('classMsg','Class saved!','success');await loadClasses();await fetchEnrollmentCounts();buildTodaySchedule();buildWeekGrid();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
 }
