@@ -1079,6 +1079,7 @@ var schoolData={};
 var celebrationTimeout=null;
 var particleInterval=null;
 var familyAllClasses=[];
+var familyChildProgIds={};
 var todayAttendance=[];
 var existingReservations={};
 var scheduleByDay={};
@@ -3187,6 +3188,16 @@ async function loadFamilyChildView(child){
       existingReservations[key]=res.id;
     });
   }catch(e){/* class_reservations table not yet created — see SQL comment in §SECTION: FAMILY_PORTAL */}
+  familyChildProgIds={};
+  for(var ci=0;ci<familyChildren.length;ci++){
+    var ch=familyChildren[ci];var pids=[];
+    if(ch.program_id)pids.push(ch.program_id);
+    try{
+      var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',ch.membership_id);
+      if(mpR.data)mpR.data.forEach(function(x){if(pids.indexOf(x.program_id)===-1)pids.push(x.program_id);});
+    }catch(e){}
+    familyChildProgIds[ch.id]=pids;
+  }
   familySelections={};
   updateFamilyConfirmBar();
   renderFamilySchedule();
@@ -3202,6 +3213,7 @@ function renderFamilySchedule(){
     var dayName=DAYS[d.getDay()];var isToday=i===0;
     var dayLabel=i===0?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
     var dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    dayClasses=dayClasses.filter(function(c){return familyChildren.some(function(child){return !c.program_id||(familyChildProgIds[child.id]||[]).indexOf(c.program_id)!==-1;});});
     if(!dayClasses.length)continue;
     hasAny=true;
     html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+dayLabel+'</div>';
@@ -3221,6 +3233,7 @@ function renderFamilySchedule(){
       html+='</div>';
       html+='<div class="family-children-list">';
       familyChildren.forEach(function(child){
+        if(cls.program_id&&(familyChildProgIds[child.id]||[]).indexOf(cls.program_id)===-1)return;
         var childKey=cls.id+'_'+dateStr+'_'+child.id;
         var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
         var isDone=false;
