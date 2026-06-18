@@ -3181,13 +3181,11 @@ async function loadFamilyChildView(child){
   var attR=await sb.rpc('family_attendance_state',{p_child_ids:childIds});
   todayAttendance=(attR.data||[]).map(function(a){return{student_id:a.student_id,class_sessions:{class_id:a.class_id,session_date:a.session_date}};});
   existingReservations={};
-  try{
-    var resR=await sb.from('class_reservations').select('*').eq('school_id',SID).in('student_id',childIds).gte('session_date',today).lte('session_date',weekEndStr);
-    (resR.data||[]).forEach(function(res){
-      var key=res.class_id+'_'+res.session_date+'_'+res.student_id;
-      existingReservations[key]=res.id;
-    });
-  }catch(e){/* class_reservations table not yet created — see SQL comment in §SECTION: FAMILY_PORTAL */}
+  var resR=await sb.rpc('family_reservation_state',{p_child_ids:childIds});
+  (resR.data||[]).forEach(function(res){
+    var key=res.class_id+'_'+res.session_date+'_'+res.student_id;
+    existingReservations[key]=true;
+  });
   familyChildProgIds={};
   for(var ci=0;ci<familyChildren.length;ci++){
     var ch=familyChildren[ci];var pids=[];
@@ -3314,12 +3312,9 @@ async function confirmFamilySelections(){
       }catch(e){errors.push('Check-in error: '+e.message);}
     }else{
       try{
-        var resInserts=studentIds.map(function(sid){return{school_id:SID,class_id:sel.classId,student_id:sid,session_date:sel.dateStr,status:'reserved'};});
-        await sb.from('class_reservations').insert(resInserts);
-      }catch(e){
-        console.warn('class_reservations insert failed. Run the SQL in §SECTION: FAMILY_PORTAL comments.',e);
-        errors.push('Reservation table not ready. Ask your admin to run the setup SQL.');
-      }
+        var rr=await sb.rpc('family_reserve',{p_class_id:sel.classId,p_session_date:sel.dateStr,p_student_ids:studentIds});
+        if(rr.error){errors.push('Reservation failed: '+rr.error.message);}
+      }catch(e){errors.push('Reservation error: '+e.message);}
     }
   }
   familySelections={};
