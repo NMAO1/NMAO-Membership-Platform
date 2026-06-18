@@ -3312,10 +3312,11 @@ async function confirmFamilySelections(){
         var sr=await sb.from('class_sessions').select('id').eq('class_id',sel.classId).eq('session_date',sel.dateStr).limit(1);
         var sessionId=null;
         if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
-        else{var cr=await sb.from('class_sessions').insert({class_id:sel.classId,school_id:SID,session_date:sel.dateStr,status:'scheduled'}).select().single();if(!cr.error)sessionId=cr.data.id;}
+        else{var cr=await sb.from('class_sessions').insert({class_id:sel.classId,school_id:SID,session_date:sel.dateStr,status:'scheduled'}).select().single();if(cr.error){console.error('class_sessions insert error:',cr.error);errors.push('Session create failed: '+cr.error.message);}else{sessionId=cr.data.id;}}
         if(sessionId){
       var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
-      await sb.from('class_attendance').insert(attInserts);
+      var attRes=await sb.from('class_attendance').insert(attInserts);
+      if(attRes.error){console.error('class_attendance insert error:',attRes.error);errors.push('Check-in failed: '+attRes.error.message);}
       // Sync class_enrollments: flip any matching enrolled rows to attended
       await sb.from('class_enrollments')
         .update({status:'attended'})
