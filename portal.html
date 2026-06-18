@@ -844,6 +844,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 
     </div><!-- end portalContent -->
   </div><!-- end portal-body -->
+  <div class="family-confirm-bar" id="familyConfirmBar">
+    <div class="family-confirm-summary" id="familyConfirmSummary"></div>
+    <button class="btn-family-confirm" id="familyConfirmBtn" onclick="confirmFamilySelections()">
+      <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
+    </button>
+  </div>
 </div><!-- end portalScreen -->
 
 <!-- ════════════════════════════════════════════
@@ -922,12 +928,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       </div>
     </div><!-- end portal-body -->
 
-    <div class="family-confirm-bar" id="familyConfirmBar">
-      <div class="family-confirm-summary" id="familyConfirmSummary"></div>
-      <button class="btn-family-confirm" id="familyConfirmBtn" onclick="confirmFamilySelections()">
-        <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
-      </button>
-    </div>
+   <!-- family-confirm-bar relocated to #portalScreen (CP2) -->
   </div><!-- end familyPortalContent -->
 </div>
 
@@ -1765,7 +1766,7 @@ if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))doc
   await buildTracker(s);
   await buildAttendance(s.id);
   await buildAnnouncements();
-  await buildSchedule(s);
+  if(isFamilyMode){await buildFamilySchedule();}else{await buildSchedule(s);}
   processAutoCheckIn();
 
   document.getElementById('portalLoading').style.display='none';
@@ -3166,8 +3167,8 @@ async function loadFamilyChildView(child){
 // ─────────────────────────────────────────────────────────────
 //  §JS: FAMILY_SCHEDULE
 // ─────────────────────────────────────────────────────────────
-async function buildFamilySchedule(){
-  var el=document.getElementById('familyScheduleList');
+  async function buildFamilySchedule(){
+  var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
   familyAllClasses=r.data||[];
@@ -3192,7 +3193,7 @@ async function buildFamilySchedule(){
 }
 
 function renderFamilySchedule(){
-  var el=document.getElementById('familyScheduleList');
+  var el=document.getElementById('scheduleList');
   var now=new Date();var todayStr=now.toISOString().split('T')[0];
   var html='';var hasAny=false;
   for(var i=0;i<7;i++){
