@@ -3301,6 +3301,7 @@ function updateFamilyConfirmBar(){
 }
 
 async function confirmFamilySelections(){
+  alert('DIAG confirm fired — '+Object.keys(familySelections).length+' selection group(s)');
   var btn=document.getElementById('familyConfirmBtn');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...';}
   var errors=[];
@@ -3316,6 +3317,7 @@ async function confirmFamilySelections(){
         if(sessionId){
       var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
       var attRes=await sb.from('class_attendance').insert(attInserts);
+      alert('DIAG today insert — sessionId='+sessionId+' | '+studentIds.length+' student(s) | err='+(attRes.error?attRes.error.message:'none'));
       if(attRes.error){console.error('class_attendance insert error:',attRes.error);errors.push('Check-in failed: '+attRes.error.message);}
       // Sync class_enrollments: flip any matching enrolled rows to attended
       await sb.from('class_enrollments')
