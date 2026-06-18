@@ -3178,8 +3178,8 @@ async function loadFamilyChildView(child){
   var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+6);
   var weekEndStr=weekEnd.toISOString().split('T')[0];
   var childIds=familyChildren.map(function(c){return c.id;});
-  var attR=await sb.from('class_attendance').select('student_id,class_sessions(class_id,session_date)').eq('school_id',SID).in('student_id',childIds).gte('noted_at',today+'T00:00:00');
-  todayAttendance=attR.data||[];
+  var attR=await sb.rpc('family_attendance_state',{p_child_ids:childIds});
+  todayAttendance=(attR.data||[]).map(function(a){return{student_id:a.student_id,class_sessions:{class_id:a.class_id,session_date:a.session_date}};});
   existingReservations={};
   try{
     var resR=await sb.from('class_reservations').select('*').eq('school_id',SID).in('student_id',childIds).gte('session_date',today).lte('session_date',weekEndStr);
