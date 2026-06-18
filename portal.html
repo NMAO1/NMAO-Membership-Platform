@@ -641,6 +641,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     </div>
     <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
   </div>
+  <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
+    <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
+    <select class="child-switcher-select" id="childSelect" onchange="switchChild()"></select>
+  </div>
   <div class="waiver-banner" id="waiverBanner" style="display:none">
     <i class="fa-solid fa-circle-exclamation waiver-banner-icon"></i>
     <div class="waiver-banner-text">
@@ -867,10 +871,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
   </div>
 
-  <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
-    <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
-    <select class="child-switcher-select" id="childSelect" onchange="switchChild()"></select>
-  </div>
+  <!-- child switcher relocated to #portalScreen (CP1) -->
 
   <div id="familyPortalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading family profile...</div>
 
@@ -1069,6 +1070,7 @@ var currentStudent=null;
 var currentFamily=null;
 var familyChildren=[];
 var selectedChildId=null;
+var isFamilyMode=false;
 var milestoneSettings={};
 var enrolledClasses={};
 var familySelections={};
@@ -1978,6 +1980,7 @@ async function toggleRSVP(classId,sessionDate,btn){
 //  This fires on portal load as a belt-and-suspenders backup
 // ─────────────────────────────────────────────────────────────
 async function processAutoCheckIn(){
+  if(isFamilyMode) return;
   if(!currentStudent) return;
   try{
     var now=new Date();
@@ -3037,31 +3040,42 @@ function clearShopBadge(){
 //  §JS: FAMILY_PORTAL
 // ─────────────────────────────────────────────────────────────
 async function showFamilyPortal(family){
+  isFamilyMode=true;
   hideAllScreens();
-  document.getElementById('familyPortalScreen').style.display='block';
-  // Fire badge check (non-blocking, completes after portal loads)
-  checkFamilyUpdatesNotif();
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,belt_system_id), memberships(name,billing_type,price)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('portalLoading').style.display='block';
+  document.getElementById('portalContent').style.display='none';
+  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at,awaiting_card)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
   familyChildren=r.data||[];
   if(!familyChildren.length){
-    document.getElementById('familyPortalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
+    document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
     return;
   }
   var sel=document.getElementById('childSelect');
   sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';var marker=c.waiver_signed?'':' \u26A0';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+marker+'</option>';}).join('');
   document.getElementById('childSwitcherBar').style.display='flex';
-  document.getElementById('familyPortalLoading').style.display='none';
-  document.getElementById('familyPortalContent').style.display='block';
   selectedChildId=familyChildren[0].id;
-  await loadFamilyChildView(familyChildren[0]);
-  await buildFamilyAnnouncements();
+  currentStudent=familyChildren[0];
+  updateWaiverBanner();
+  buildPortal(familyChildren[0]);
+  handlePackReturnParams();
+  handleShopReturnParams();
+  handleCardUpdateReturnParams();
 }
 
 async function switchChild(){
   var sel=document.getElementById('childSelect');if(!sel)return;
   selectedChildId=sel.value;
   var child=familyChildren.find(function(c){return c.id===selectedChildId;});
-  if(child)await loadFamilyChildView(child);
+  if(!child)return;
+  currentStudent=child;
+  var active=document.querySelector('.portal-tab.active');
+  var tabName=active?active.id.replace('ptab-',''):'';
+  document.getElementById('portalLoading').style.display='block';
+  document.getElementById('portalContent').style.display='none';
+  updateWaiverBanner();
+  buildPortal(child);
+  if(tabName==='sessions'||tabName==='book'||tabName==='shop'){switchPortalTab(tabName);}
 }
 
 
