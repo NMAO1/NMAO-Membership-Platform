@@ -3336,7 +3336,8 @@ async function buildFamilyAnnouncements(){
     el.innerHTML=data.map(function(a){
       var icon=typeIcons[a.type]||'fa-bullhorn';
       var dt=a.sent_at?new Date(a.sent_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-      return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+(a.type||'Announcement')+'</div><div class="announcement-subject">'+a.subject+'</div><div class="announcement-body">'+((a.body||'').replace(/\n/g,'<br>')).slice(0,300)+'</div><div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
+      var cta=(a.cta_label&&a.cta_url)?'<a href="'+a.cta_url+'" target="_blank" rel="noopener" class="announcement-cta"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.4rem"></i>'+a.cta_label+'</a>':'';
+      return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+(a.type||'Announcement')+'</div><div class="announcement-subject">'+a.subject+'</div><div class="announcement-body">'+((a.body||'').replace(/\n/g,'<br>')).slice(0,300)+'</div>'+cta+'<div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
     }).join('');
   }catch(e){document.getElementById('familyAnnouncementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
 }
