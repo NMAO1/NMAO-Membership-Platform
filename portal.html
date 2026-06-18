@@ -3301,7 +3301,6 @@ function updateFamilyConfirmBar(){
 }
 
 async function confirmFamilySelections(){
-  alert('DIAG confirm fired — '+Object.keys(familySelections).length+' selection group(s)');
   var btn=document.getElementById('familyConfirmBtn');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Processing...';}
   var errors=[];
@@ -3310,24 +3309,8 @@ async function confirmFamilySelections(){
     var studentIds=Array.from(sel.studentIds);
     if(sel.isToday){
       try{
-        var sr=await sb.from('class_sessions').select('id').eq('class_id',sel.classId).eq('session_date',sel.dateStr).limit(1);
-        var sessionId=null;
-        if(sr.data&&sr.data.length){sessionId=sr.data[0].id;}
-        else{var cr=await sb.from('class_sessions').insert({class_id:sel.classId,school_id:SID,session_date:sel.dateStr,status:'scheduled'}).select().single();if(cr.error){console.error('class_sessions insert error:',cr.error);errors.push('Session create failed: '+cr.error.message);}else{sessionId=cr.data.id;}}
-        if(sessionId){
-      var attInserts=studentIds.map(function(sid){return{session_id:sessionId,student_id:sid,school_id:SID,status:'present',noted_at:new Date().toISOString()};});
-      var attRes=await sb.from('class_attendance').insert(attInserts);
-      alert('DIAG today insert — sessionId='+sessionId+' | '+studentIds.length+' student(s) | err='+(attRes.error?attRes.error.message:'none'));
-      if(attRes.error){console.error('class_attendance insert error:',attRes.error);errors.push('Check-in failed: '+attRes.error.message);}
-      // Sync class_enrollments: flip any matching enrolled rows to attended
-      await sb.from('class_enrollments')
-        .update({status:'attended'})
-        .eq('school_id',SID)
-        .eq('class_id',sel.classId)
-        .eq('session_date',sel.dateStr)
-        .in('student_id',studentIds)
-        .eq('status','enrolled');
-    }
+        var ci=await sb.rpc('family_check_in',{p_class_id:sel.classId,p_session_date:sel.dateStr,p_student_ids:studentIds});
+        if(ci.error){errors.push('Check-in failed: '+ci.error.message);}
       }catch(e){errors.push('Check-in error: '+e.message);}
     }else{
       try{
