@@ -639,7 +639,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-school" id="portalSchoolName">Member Portal</div>
       </div>
     </div>
-    <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
+    <div style="display:flex;align-items:center;gap:0.5rem">
+      <button class="portal-signout" id="familyPwBtn" style="display:none" onclick="openFamilyPwModal()"><i class="fa-solid fa-key" style="margin-right:0.4rem"></i>Change Password</button>
+      <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
+    </div>
   </div>
   <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
     <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
@@ -746,7 +749,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="section-label"><i class="fa-solid fa-address-card"></i> Contact Info</div>
           <div class="info-card" id="contactCard"></div>
         </div>
-       <div class="portal-section">
+       <div class="portal-section" id="pwSection">
   <div class="section-label"><i class="fa-solid fa-key"></i> Update Password</div>
   <div class="info-card">
     <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Change the password you use to sign in to your portal.</p>
@@ -850,6 +853,19 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       <i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm
     </button>
   </div>
+<div id="familyPwModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:var(--surface);border:1px solid var(--border);max-width:380px;width:100%;padding:1.5rem">
+    <div class="section-label" style="margin-bottom:0.85rem"><i class="fa-solid fa-key"></i> Change Password</div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">This is the single login for your whole family.</p>
+    <div class="field"><label>New Password</label><input type="password" id="famNewPassword" placeholder="At least 6 characters" /></div>
+    <div class="field"><label>Confirm New Password</label><input type="password" id="famConfirmPassword" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')setFamilyPassword()" /></div>
+    <p class="form-msg" id="famPasswordMsg"></p>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem">
+      <button class="portal-signout" style="flex:1" onclick="closeFamilyPwModal()">Cancel</button>
+      <button class="btn-gold" id="famSetPasswordBtn" style="flex:1" onclick="setFamilyPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save</button>
+    </div>
+  </div>
+</div>
 </div><!-- end portalScreen -->
 
 <!-- ════════════════════════════════════════════
@@ -1502,6 +1518,29 @@ async function setPortalPassword(){
   else{msg.textContent='Password updated!';msg.className='form-msg success';document.getElementById('newPassword').value='';document.getElementById('confirmPassword').value='';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';}
 }
 
+function openFamilyPwModal(){
+  var m=document.getElementById('familyPwModal');if(!m)return;
+  document.getElementById('famNewPassword').value='';
+  document.getElementById('famConfirmPassword').value='';
+  var msg=document.getElementById('famPasswordMsg');if(msg){msg.textContent='';msg.className='form-msg';}
+  m.style.display='flex';
+}
+function closeFamilyPwModal(){
+  var m=document.getElementById('familyPwModal');if(m)m.style.display='none';
+}
+async function setFamilyPassword(){
+  var pwd=document.getElementById('famNewPassword').value;
+  var confirmPwd=document.getElementById('famConfirmPassword').value;
+  var msg=document.getElementById('famPasswordMsg');
+  msg.textContent='';msg.className='form-msg';
+  if(!pwd||pwd.length<6){msg.textContent='Password must be at least 6 characters.';msg.className='form-msg error';return;}
+  if(pwd!==confirmPwd){msg.textContent='Passwords do not match.';msg.className='form-msg error';return;}
+  var btn=document.getElementById('famSetPasswordBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Saving...';
+  var r=await sb.auth.updateUser({password:pwd});
+  if(r.error){msg.textContent=r.error.message;msg.className='form-msg error';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save';}
+  else{msg.textContent='Password updated!';msg.className='form-msg success';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save';setTimeout(closeFamilyPwModal,1200);}
+}
+
 function maybePromptFirstRunPassword(){
   if(!currentStudent) return;
   if(currentStudent.password_set) return;
@@ -1768,6 +1807,9 @@ if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))doc
   await buildAttendance(s.id);
   await buildAnnouncements();
   if(isFamilyMode){await buildFamilySchedule();}else{await buildSchedule(s);}
+  // CP3: one family-level password control (header button) instead of the per-child box
+  var _pwSec=document.getElementById('pwSection');if(_pwSec)_pwSec.style.display=isFamilyMode?'none':'';
+  var _fpb=document.getElementById('familyPwBtn');if(_fpb)_fpb.style.display=isFamilyMode?'inline-flex':'none';
   processAutoCheckIn();
 
   document.getElementById('portalLoading').style.display='none';
