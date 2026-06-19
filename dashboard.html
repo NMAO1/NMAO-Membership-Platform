@@ -6842,6 +6842,7 @@ function mdRender(sm,m,progNames,classNames,pays){
     h+=pays.map(function(p){ var col={paid:'#5A9A6A',pending:'#C9A84C',failed:'#E07070',refunded:'#7DAAD4'}[p.status]||'var(--muted)'; return '<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.3rem 0;font-size:0.76rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted);min-width:74px">'+smDateLabel(p.created_at)+'</span><span style="color:var(--white);flex:1">'+(p.description||'\u2014')+'</span><span style="color:var(--gold)">$'+parseFloat(p.amount||0).toFixed(2)+'</span><span style="color:'+col+';min-width:54px;text-align:right">'+(p.status||'')+'</span></div>'; }).join('');
   } else { h+='<div style="color:var(--muted);font-size:0.78rem;padding:0.3rem 0">No membership payments yet.</div>'; }
   h+='<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1.1rem">';
+  h+='<button class="btn-sm" onclick="mdEdit()" style="flex:1;min-width:120px"><i class="fa-solid fa-pen"></i> Edit</button>';
   h+='<button class="btn-sm" onclick="mdChangePlan()" style="flex:1;min-width:120px"><i class="fa-solid fa-right-left"></i> Change plan</button>';
   if(!sm.stripe_subscription_id){ h+='<button class="btn-sm" onclick="mdAddCard()" style="flex:1;min-width:120px"><i class="fa-solid fa-credit-card"></i> Add card</button>'; }
   h+='<button class="btn-sm" onclick="mdCancel()" style="flex:1;min-width:120px;border-color:#A04040;color:#E07070"><i class="fa-solid fa-ban"></i> Cancel</button>';
@@ -6851,6 +6852,108 @@ function mdRender(sm,m,progNames,classNames,pays){
 function mdCancel(){ closeMembershipDetail(); if(typeof openCancelMembership==='function') openCancelMembership(); }
 function mdChangePlan(){ closeMembershipDetail(); if(currentProfileStudent && typeof openCheckout==='function') openCheckout(currentProfileStudent.id,'membership'); }
 function mdAddCard(){ closeMembershipDetail(); if(currentProfileStudent && typeof replaceStudentCard==='function') replaceStudentCard(currentProfileStudent.id); }
+
+function mdEdit(){
+  var sm=_mdRow; if(!sm) return;
+  var m=sm.memberships||{};
+  var body=document.getElementById('mdBody'); if(!body) return;
+  var isCustom=!!m.is_custom;
+  var hasSub=!!sm.stripe_subscription_id;
+  function head(t){ return '<div style="margin:1rem 0 0.5rem;padding-bottom:0.3rem;border-bottom:1px solid var(--border);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:700">'+t+'</div>'; }
+  var inputCss='width:100%;padding:0.5rem;background:var(--black);border:1px solid var(--border);color:var(--white)';
+  var h='<div style="font-size:0.95rem;color:var(--gold);font-weight:600;margin-bottom:0.25rem">Edit membership</div>';
+
+  // Billing day
+  h+=head('Billing day');
+  if(hasSub){
+    var nd=smNextChargeDate(sm,m), ndVal='';
+    if(nd){ ndVal=nd.getFullYear()+'-'+('0'+(nd.getMonth()+1)).slice(-2)+'-'+('0'+nd.getDate()).slice(-2); }
+    var _t=new Date(Date.now()+86400000);
+    var tmwVal=_t.getFullYear()+'-'+('0'+(_t.getMonth()+1)).slice(-2)+'-'+('0'+_t.getDate()).slice(-2);
+    h+='<div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.4rem">Sets the next charge date; the subscription then bills on that day going forward. No proration, no charge today.</div>';
+    h+='<input type="date" id="mdEditChargeDate" value="'+ndVal+'" min="'+tmwVal+'" style="'+inputCss+'" />';
+    h+='<button class="btn-sm" onclick="mdSaveBillingDay()" style="margin-top:0.5rem"><i class="fa-solid fa-calendar-check"></i> Update billing day</button>';
+    h+='<div id="mdEditBillingMsg" style="font-size:0.78rem;margin-top:0.3rem"></div>';
+  } else {
+    h+='<div style="font-size:0.78rem;color:var(--muted)">This member is cash / manual (no auto-pay subscription), so there is no billing day to sync.</div>';
+  }
+
+  // Program
+  h+=head('Program');
+  var progOpts='<option value="">-- Select program --</option>';
+  (typeof allPrograms!=='undefined'&&allPrograms?allPrograms:[]).forEach(function(p){ progOpts+='<option value="'+p.id+'"'+(p.id===sm.program_id?' selected':'')+'>'+p.name+'</option>'; });
+  h+='<select id="mdEditProgram" style="'+inputCss+'">'+progOpts+'</select>';
+  h+='<button class="btn-sm" onclick="mdSaveProgram()" style="margin-top:0.5rem"><i class="fa-solid fa-people-group"></i> Update program</button>';
+  h+='<div id="mdEditProgramMsg" style="font-size:0.78rem;margin-top:0.3rem"></div>';
+
+  // Class allowance (custom only)
+  h+=head('Class allowance');
+  if(isCustom){
+    var curType=m.class_limit_type||'unlimited', curCount=(m.class_limit_count!=null?m.class_limit_count:'');
+    h+='<select id="mdEditLimitType" onchange="mdEditLimitTypeChange()" style="'+inputCss+'">';
+    [['unlimited','Unlimited'],['per_week','Per week'],['per_month','Per month'],['class_pack','Class pack (fixed count)']].forEach(function(o){ h+='<option value="'+o[0]+'"'+(curType===o[0]?' selected':'')+'>'+o[1]+'</option>'; });
+    h+='</select>';
+    h+='<input type="number" min="1" id="mdEditLimitCount" value="'+curCount+'" placeholder="Count" style="'+inputCss+';margin-top:0.4rem;display:'+(curType==='unlimited'?'none':'block')+'" />';
+    h+='<button class="btn-sm" onclick="mdSaveAllowance()" style="margin-top:0.5rem"><i class="fa-solid fa-gauge"></i> Update allowance</button>';
+    h+='<div id="mdEditAllowanceMsg" style="font-size:0.78rem;margin-top:0.3rem"></div>';
+  } else {
+    h+='<div style="font-size:0.78rem;color:var(--muted)">This plan is shared across members, so its allowance cannot be changed per-student. Switch them to a custom plan to set an individual allowance.</div>';
+  }
+
+  h+='<div style="margin-top:1.1rem"><button class="btn-sm" onclick="openMembershipDetail(\''+sm.id+'\')" style="width:100%"><i class="fa-solid fa-arrow-left"></i> Back to details</button></div>';
+  body.innerHTML=h;
+}
+function mdEditLimitTypeChange(){
+  var t=document.getElementById('mdEditLimitType').value;
+  document.getElementById('mdEditLimitCount').style.display=(t==='unlimited')?'none':'block';
+}
+async function mdSaveBillingDay(){
+  var sm=_mdRow; if(!sm||!sm.stripe_subscription_id) return;
+  var msg=document.getElementById('mdEditBillingMsg');
+  var d=document.getElementById('mdEditChargeDate').value;
+  if(!d){ msg.style.color='#E07070'; msg.textContent='Pick a date.'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='Updating Stripe\u2026';
+  try{
+    var r=await fetch(SURL+'/functions/v1/edit-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sm.stripe_subscription_id,new_charge_date:d})});
+    var data=await r.json();
+    if(!r.ok||!data||data.error){ msg.style.color='#E07070'; msg.textContent=(data&&data.error)?data.error:'Update failed.'; return; }
+    msg.style.color='#5A9A6A'; msg.textContent='Billing day updated.';
+    if(_mdRow) _mdRow.first_charge_date=d;
+  }catch(e){ msg.style.color='#E07070'; msg.textContent=e.message||'Update failed.'; }
+}
+async function mdSaveProgram(){
+  var sm=_mdRow; if(!sm) return;
+  var msg=document.getElementById('mdEditProgramMsg');
+  var pid=document.getElementById('mdEditProgram').value;
+  if(!pid){ msg.style.color='#E07070'; msg.textContent='Select a program.'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='Saving\u2026';
+  try{
+    var r1=await sb.from('student_memberships').update({program_id:pid}).eq('id',sm.id);
+    if(r1.error) throw new Error(r1.error.message);
+    await sb.from('students').update({program_id:pid}).eq('id',sm.student_id);
+    if(_mdRow) _mdRow.program_id=pid;
+    msg.style.color='#5A9A6A'; msg.textContent='Program updated.';
+  }catch(e){ msg.style.color='#E07070'; msg.textContent=e.message||'Save failed.'; }
+}
+async function mdSaveAllowance(){
+  var sm=_mdRow; if(!sm) return;
+  var m=sm.memberships||{};
+  if(!m.is_custom) return;
+  var msg=document.getElementById('mdEditAllowanceMsg');
+  var t=document.getElementById('mdEditLimitType').value;
+  var count=(t==='unlimited')?null:parseInt(document.getElementById('mdEditLimitCount').value,10);
+  if(t!=='unlimited' && (!count||count<1)){ msg.style.color='#E07070'; msg.textContent='Enter a valid count.'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='Saving\u2026';
+  try{
+    var r1=await sb.from('memberships').update({class_limit_type:t,class_limit_count:count}).eq('id',sm.membership_id);
+    if(r1.error) throw new Error(r1.error.message);
+    var rem=(t==='unlimited')?null:count;
+    await sb.from('student_memberships').update({classes_remaining:rem}).eq('id',sm.id);
+    if(_mdRow&&_mdRow.memberships){ _mdRow.memberships.class_limit_type=t; _mdRow.memberships.class_limit_count=count; }
+    if(_mdRow) _mdRow.classes_remaining=rem;
+    msg.style.color='#5A9A6A'; msg.textContent='Allowance updated.';
+  }catch(e){ msg.style.color='#E07070'; msg.textContent=e.message||'Save failed.'; }
+}
 
 /* ===== §UPCOMING-REVENUE — projected income (helpers shared with detail modal) ===== */
 function smParseDateLocal(s){ if(!s) return null; var str=''+s; if(str.indexOf('T')>-1){ var dd=new Date(str); return isNaN(dd.getTime())?null:dd; } var d=new Date(str+'T12:00:00'); return isNaN(d.getTime())?null:d; }
