@@ -259,7 +259,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 /* ══════════════════════════════════════════
    §CSS: FAMILY_PORTAL
 ══════════════════════════════════════════ */
-#familyPortalScreen{display:none;}
+
 .child-switcher-bar{background:var(--black);border-bottom:1px solid var(--border);padding:0.85rem 1.5rem;display:flex;align-items:center;gap:1rem;}
 .child-switcher-label{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
 .child-switcher-select{background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-display);font-size:1rem;padding:0.5rem 0.85rem;outline:none;cursor:pointer;flex:1;min-width:0;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:border-color 0.2s;}
@@ -852,85 +852,6 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div><!-- end portalScreen -->
 
-<!-- ════════════════════════════════════════════
-     §SECTION: FAMILY_PORTAL
-     Requires class_reservations table — see SQL comment below.
-     CREATE TABLE class_reservations (
-       id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-       school_id UUID REFERENCES schools(id),
-       class_id UUID REFERENCES classes(id),
-       student_id UUID REFERENCES students(id),
-       session_date DATE,
-       status TEXT DEFAULT 'reserved',
-       created_at TIMESTAMPTZ DEFAULT NOW()
-     );
-════════════════════════════════════════════ -->
-<div id="familyPortalScreen">
-  <div class="portal-header">
-    <div class="portal-header-left">
-      <img id="familyLogoImg" class="portal-header-logo" src="" alt="" style="display:none" />
-      <div>
-        <div class="portal-logo" id="familyLogoText">NMAO</div>
-        <div class="portal-school" id="familySchoolName">Family Portal</div>
-      </div>
-    </div>
-    <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
-  </div>
-
-  <!-- child switcher relocated to #portalScreen (CP1) -->
-
-  <div id="familyPortalLoading" style="text-align:center;padding:4rem 2rem;color:var(--muted);font-style:italic;font-size:0.92rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading family profile...</div>
-
-  <div id="familyPortalContent" style="display:none">
-    <div class="portal-body">
-      <div class="child-hero" id="familyChildHero"></div>
-
-      <div class="family-tabs">
-        <div class="family-tab active" id="ftab-overview"  onclick="switchFamilyTab('overview')"><i class="fa-solid fa-user"></i> Overview</div>
-        <div class="family-tab"        id="ftab-schedule"  onclick="switchFamilyTab('schedule')"><i class="fa-solid fa-calendar-week"></i> Schedule</div>
-        <div class="family-tab"        id="ftab-updates"   onclick="switchFamilyTab('updates')"><i class="fa-solid fa-bullhorn"></i> Alerts<span class="tab-badge-notif" id="familyUpdatesBadgeNotif" style="display:none">0</span></div>
-      </div>
-
-      <div id="familyTabOverview">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
-          <div class="tracker-card" id="familyChildTracker"></div>
-        </div>
-        <div class="portal-section" id="familyBeltSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-ranking-star"></i> Belt Progress</div>
-          <div class="belt-card" id="familyChildBelt"></div>
-        </div>
-          <div id="familyCurriculumSection" style="display:none;margin-top:1rem">
-  <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white);margin-bottom:0.6rem"><i class="fa-solid fa-graduation-cap" style="color:var(--gold);margin-right:0.4rem"></i>Curriculum</div>
-  <div id="familyCurriculumList"></div>
-</div>
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
-          <div class="info-card" id="familyChildMembership"></div>
-        </div>
-      </div>
-    
-
-      <div id="familyTabSchedule" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-calendar-week"></i> Weekly Schedule</div>
-          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Select children for each class. Today's classes will check them in immediately. Future classes will create a reservation.</p>
-          <div id="familyScheduleList"></div>
-          <div style="height:80px"></div>
-        </div>
-      </div>
-
-      <div id="familyTabUpdates" style="display:none">
-        <div class="portal-section">
-          <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
-          <div id="familyAnnouncementsList"></div>
-        </div>
-      </div>
-    </div><!-- end portal-body -->
-
-   <!-- family-confirm-bar relocated to #portalScreen (CP2) -->
-  </div><!-- end familyPortalContent -->
-</div>
 
 <!-- ════════════════════════════════════════════
      §SECTION: INSTRUCTOR_PORTAL
@@ -1286,7 +1207,7 @@ async function loadSchoolBranding(pre){
     if(d.font_color)document.documentElement.style.setProperty('--white',d.font_color);
     milestoneSettings=d.milestone_messages||{};
     var sn=d.name||'Member Portal';
-    ['loginSchoolName','portalSchoolName','familySchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
+    ['loginSchoolName','portalSchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.textContent=sn;
     });
     document.title=sn+' — Member Portal';
@@ -1297,9 +1218,6 @@ async function loadSchoolBranding(pre){
       document.getElementById('portalLogoImg').src=d.logo_url;
       document.getElementById('portalLogoImg').style.display='block';
       document.getElementById('portalLogoText').style.display='none';
-      document.getElementById('familyLogoImg').src=d.logo_url;
-      document.getElementById('familyLogoImg').style.display='block';
-      document.getElementById('familyLogoText').style.display='none';
       document.getElementById('instrLogoImg').src=d.logo_url;
       document.getElementById('instrLogoImg').style.display='block';
       document.getElementById('instrLogoText').style.display='none';
@@ -1359,7 +1277,7 @@ function showSchoolNotFound(){
 }
 
 function hideAllScreens(){
-  ['loginScreen','successScreen','onboardingScreen','portalScreen','familyPortalScreen','instructorPortalScreen'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+  ['loginScreen','successScreen','onboardingScreen','portalScreen','instructorPortalScreen'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1664,7 +1582,7 @@ async function signWaiver(){
     if(isFamilySign){
       if(selectedChildId === ctx.id){
         var signedChild = familyChildren.find(function(c){return c.id === ctx.id;});
-        if(signedChild) await loadFamilyChildView(signedChild);
+        if(signedChild) updateWaiverBanner();
       }
       // Re-render dropdown to drop the unsigned marker on this child
       var dd = document.getElementById('childSelect');
@@ -3085,91 +3003,6 @@ async function switchChild(){
   if(tabName==='sessions'||tabName==='book'||tabName==='shop'){switchPortalTab(tabName);}
 }
 
-
-async function loadFamilyChildView(child){
-  var ini=((child.first_name?child.first_name[0]:'')+(child.last_name?child.last_name[0]:'')).toUpperCase();
-  var prog=child.programs;var pc=prog?prog.color:'#C9A84C';var pn=prog?prog.name:'--';
-  var avatarHtml=child.photo_url?'<img src="'+child.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />':ini;
-  var mem=child.memberships;var memName=mem?mem.name:'--';
-  var st=child.status||'trial';
-  var statusClass=st==='active'?'chip-active':st==='paused'?'chip-paused':'chip-trial';
-
-  document.getElementById('familyChildHero').innerHTML=[
-    '<div class="child-hero-avatar" style="border-color:'+pc+'">'+avatarHtml+'</div>',
-    '<div style="flex:1">',
-      '<div class="hero-name">'+child.first_name+' '+child.last_name+'</div>',
-      '<div class="hero-tags">',
-        '<span class="chip '+statusClass+'">'+st+'</span>',
-       '<span class="prog-tag" style="border-color:'+pc+';color:'+pc+'">'+pn+'</span>',
-      '</div>',
-      (child.waiver_signed ? '' : '<div class="child-waiver-pill" onclick="openWaiverModalForChild(\''+child.id+'\')"><i class="fa-solid fa-signature"></i><span>Sign waiver</span></div>'),
-      '<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.4rem">',
-        '<i class="fa-solid fa-id-card" style="color:var(--gold);margin-right:0.35rem"></i>'+memName,
-      '</div>',
-    '</div>'
-  ].join('');
-
-  var attR=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',child.id);
-  var total=attR.count||0;
-  var nm=null;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]>total){nm=MILESTONES[i];break;}}
-  var pm=0;for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]<=total)pm=MILESTONES[i];}
-  var pct=nm?Math.round(((total-pm)/(nm-pm))*100):100;
-  document.getElementById('familyChildTracker').innerHTML=[
-    '<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.5rem">',
-      '<div class="tracker-number">'+total+'</div>',
-      '<div style="font-size:0.85rem;color:var(--muted)">classes attended</div>',
-    '</div>',
-    '<div class="milestone-bar"><div class="milestone-fill" style="width:'+pct+'%"></div></div>',
-    nm?'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem"><i class="fa-solid fa-flag" style="margin-right:0.3rem"></i>'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.75rem;color:var(--gold);margin-top:0.25rem"><i class="fa-solid fa-trophy" style="margin-right:0.3rem"></i>All milestones reached!</div>'
-  ].join('');
-
- document.getElementById('familyBeltSection').style.display='none';
-  var familyCurr=document.getElementById('familyCurriculumSection');
-  if(familyCurr) familyCurr.style.display='none';
-  if(prog&&prog.belt_system==='Belt Progression'&&prog.belt_system_id){
-    var br=await sb.from('belt_levels').select('id, name, color_hex, sort_order, belt_system_id, classes_required').eq('belt_system_id',prog.belt_system_id).order('sort_order');
-    var levels=br.data||[];
-    if(levels.length){
-      var levelIds=levels.map(function(l){return l.id;});
-      var vr=await sb.from('belt_level_videos').select('id, belt_level_id, youtube_url, description, sort_order').in('belt_level_id',levelIds);
-      var allVids=vr.data||[];
-      levels.forEach(function(l){
-        l.belt_level_videos=allVids.filter(function(v){return v.belt_level_id===l.id;});
-      });
-    }
-    if(levels.length){
-      var cb=levels.find(function(l){return l.id===child.current_belt_id;})||null;
-      var ci=cb?levels.indexOf(cb):-1;var nb=levels[ci+1]||null;
-      document.getElementById('familyBeltSection').style.display='block';
-      var bHtml='';
-      if(cb){
-        bHtml+='<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">';
-        bHtml+='<div style="width:40px;height:14px;border-radius:2px;background:'+cb.color_hex+';border:1px solid rgba(255,255,255,0.15)"></div>';
-        bHtml+='<div><div style="font-family:var(--font-display);font-size:0.95rem;color:var(--white)">'+cb.name+'</div>';
-        bHtml+=nb?'<div style="font-size:0.72rem;color:var(--muted)">Next: '+nb.name+'</div>':'<div style="font-size:0.72rem;color:var(--gold)">Highest rank!</div>';
-        bHtml+='</div></div>';
-      }
-      bHtml+='<div style="display:flex;flex-wrap:wrap;gap:0.35rem">';
-      levels.forEach(function(b){var isc=cb&&b.id===cb.id;bHtml+='<div class="belt-pip'+(isc?' current':'')+'"><div class="belt-pip-bar" style="background:'+b.color_hex+(isc?';box-shadow:0 0 0 2px var(--gold)':'')+'"></div><div class="belt-pip-label">'+b.name.slice(0,4)+'</div></div>';});
-      bHtml+='</div>';
-     document.getElementById('familyChildBelt').innerHTML=bHtml;
-      if(cb && familyCurr){
-        familyCurr.style.display='block';
-        renderCurriculumAccordion(levels, cb.id, 'familyCurriculumList');
-      }
-    }
-  }
-
-  document.getElementById('familyChildMembership').innerHTML=[
-    '<div class="info-row"><div class="info-label">Plan</div><div class="info-value">'+memName+'</div></div>',
-    mem?'<div class="info-row"><div class="info-label">Price</div><div class="info-value" style="color:var(--gold)">$'+parseFloat(mem.price||0).toFixed(2)+(mem.billing_type==='monthly'?'/month':mem.billing_type==='yearly'?'/year':'')+'</div></div>':'',
-    '<div class="info-row"><div class="info-label">Status</div><div class="info-value"><span class="chip '+statusClass+'">'+st+'</span></div></div>',
-    child.start_date?'<div class="info-row"><div class="info-label">Since</div><div class="info-value">'+new Date(child.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':''
-  ].join('');
-
-  await buildFamilySchedule();
-}
-
 // ─────────────────────────────────────────────────────────────
 //  §JS: FAMILY_SCHEDULE
 // ─────────────────────────────────────────────────────────────
@@ -3337,75 +3170,6 @@ async function confirmFamilySelections(){
   if(summary)summary.innerHTML='<span style="color:#7DBD7D"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>All confirmed!</span>';
   if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Confirm';}
   setTimeout(function(){if(bar)bar.style.display='none';},2000);
-}
-
-async function buildFamilyAnnouncements(){
-  try{
-    var nowIsoP2=new Date().toISOString();
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIsoP2).or('scheduled_for.is.null,scheduled_for.lte.'+nowIsoP2).order('sent_at',{ascending:false}).limit(5);
-    var el=document.getElementById('familyAnnouncementsList');
-    var data=r.data||[];
-    if(!data.length){el.innerHTML=emptyState('fa-bullhorn','No announcements yet.');return;}
-    var typeIcons={announcement:'fa-bullhorn',event:'fa-calendar-star',closing:'fa-door-closed',cancellation:'fa-xmark',custom:'fa-bolt'};
-    el.innerHTML=data.map(function(a){
-      var icon=typeIcons[a.type]||'fa-bullhorn';
-      var dt=a.sent_at?new Date(a.sent_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-      var cta=(a.cta_label&&a.cta_url)?'<a href="'+a.cta_url+'" target="_blank" rel="noopener" class="announcement-cta"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.4rem"></i>'+a.cta_label+'</a>':'';
-      return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+(a.type||'Announcement')+'</div><div class="announcement-subject">'+a.subject+'</div><div class="announcement-body">'+((a.body||'').replace(/\n/g,'<br>')).slice(0,300)+'</div>'+cta+'<div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
-    }).join('');
-  }catch(e){document.getElementById('familyAnnouncementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
-}
-
-// ─────────────────────────────────────────────────────────────
-//  §JS: FAMILY_UPDATES_BADGE_NOTIF — count of announcements sent
-//  since the family last viewed the Updates tab.
-//  Mirrors §JS: UPDATES_BADGE_NOTIF but keys on currentFamily.id.
-//  Key: nmao_family_updates_last_viewed_<familyId> — ISO timestamp.
-// ─────────────────────────────────────────────────────────────
-async function checkFamilyUpdatesNotif(){
-  if(!currentFamily) return;
-  var key='nmao_family_updates_last_viewed_'+currentFamily.id;
-  var lastViewed=localStorage.getItem(key);
-  if(!lastViewed){
-    // First-ever load — set baseline so badge only reflects future announcements
-    localStorage.setItem(key,new Date().toISOString());
-    return;
-  }
-  try{
-   var nowIso=new Date().toISOString();
-    var r=await sb.from('school_announcements').select('id',{count:'exact',head:true}).eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIso).or('scheduled_for.is.null,scheduled_for.lte.'+nowIso).gt('sent_at',lastViewed);
-    var count=r.count||0;
-    var badge=document.getElementById('familyUpdatesBadgeNotif');
-    if(!badge) return;
-    if(count>0){
-      badge.textContent=count>9?'9+':String(count);
-      badge.style.display='inline-flex';
-    }else{
-      badge.style.display='none';
-    }
-  }catch(e){
-    console.warn('checkFamilyUpdatesNotif error:',e);
-  }
-}
-
-function clearFamilyUpdatesBadge(){
-  if(!currentFamily) return;
-  var key='nmao_family_updates_last_viewed_'+currentFamily.id;
-  localStorage.setItem(key,new Date().toISOString());
-  var badge=document.getElementById('familyUpdatesBadgeNotif');
-  if(badge) badge.style.display='none';
-}
-
-function switchFamilyTab(tab){
-  var tabs=['overview','schedule','updates'];
-  tabs.forEach(function(t){
-    var panel=document.getElementById('familyTab'+t.charAt(0).toUpperCase()+t.slice(1));
-    if(panel)panel.style.display=t===tab?'block':'none';
-    var btn=document.getElementById('ftab-'+t);
-    if(btn)btn.classList.toggle('active',t===tab);
-  });
-  if(tab==='schedule')buildFamilySchedule();
-  if(tab==='updates')clearFamilyUpdatesBadge();
 }
 
 // ─────────────────────────────────────────────────────────────
