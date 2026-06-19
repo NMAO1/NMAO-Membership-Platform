@@ -1730,23 +1730,6 @@
   <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
   <div id="profileMembershipslist"></div>
 
-  <!-- Account credit (owner-only) -->
-  <div style="margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
-      <div><span style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Account Credit</span><div id="profileCreditBalance" style="font-size:1.1rem;color:#F5F0E8;margin-top:0.2rem">$0.00</div></div>
-      <button class="btn-sm" onclick="toggleIssueCreditForm()" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> Issue credit</button>
-    </div>
-    <div id="issueCreditForm" style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">
-      <div class="field"><label>Amount ($)</label><input type="number" id="issueCreditAmount" step="0.01" min="0" placeholder="0.00" /></div>
-      <div class="field"><label>Reason</label><input type="text" id="issueCreditReason" placeholder="e.g. Old-system overcharge adjustment" /></div>
-      <p id="issueCreditMsg" style="margin:0.25rem 0;font-size:0.8rem"></p>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <button class="btn-sm" onclick="toggleIssueCreditForm()" style="flex:1">Cancel</button>
-        <button class="btn-sm" id="issueCreditBtn" onclick="issueCredit()" style="flex:1;border-color:var(--gold);color:var(--gold)"><i class="fa-solid fa-check"></i> Issue</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Primary actions: payment processing -->
   <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
   </div>
@@ -1795,9 +1778,22 @@
       <i class="fa-solid fa-chevron-down" id="membershipMoreCaret" style="font-size:0.6rem"></i> More actions
     </button>
     <div id="membershipMoreActions" style="display:none;padding-top:0.5rem">
-      <a onclick="openChangeMembership()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Switch Plan (No Charge)</a>
-      <a onclick="openAddMembershipToProfile()" style="color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Comp Plan</a>
-      <a onclick="openCancelMembership()" style="color:#E07070;text-decoration:underline;cursor:pointer;font-size:0.78rem;display:block;padding:0.3rem 0">Cancel Membership</a>
+      <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">Account Credit <span id="profileCreditBalance" style="color:#F5F0E8;font-family:var(--font-display);font-size:0.95rem;margin-left:0.35rem">$0.00</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+        <button onclick="openChangeMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-right-left" style="color:var(--gold)"></i> Switch Plan</button>
+        <button onclick="openAddMembershipToProfile()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-gift" style="color:var(--gold)"></i> Comp Plan</button>
+        <button onclick="toggleIssueCreditForm()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-plus" style="color:var(--gold)"></i> Issue Credit</button>
+        <button onclick="openCancelMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid #5A2A2A;color:#E07070;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='#E07070'" onmouseout="this.style.borderColor='#5A2A2A'"><i class="fa-solid fa-ban"></i> Cancel Plan</button>
+      </div>
+      <div id="issueCreditForm" style="display:none;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+        <div class="field"><label>Amount ($)</label><input type="number" id="issueCreditAmount" step="0.01" min="0" placeholder="0.00" /></div>
+        <div class="field"><label>Reason</label><input type="text" id="issueCreditReason" placeholder="e.g. Old-system overcharge adjustment" /></div>
+        <p id="issueCreditMsg" style="margin:0.25rem 0;font-size:0.8rem"></p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn-sm" onclick="toggleIssueCreditForm()" style="flex:1">Cancel</button>
+          <button class="btn-sm" id="issueCreditBtn" onclick="issueCredit()" style="flex:1;border-color:var(--gold);color:var(--gold)"><i class="fa-solid fa-check"></i> Issue</button>
+        </div>
+      </div>
     </div>
   </div>
 
