@@ -2696,6 +2696,15 @@
           <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.65rem">Session Packs</div>
           <div id="posPacksGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem"></div>
         </div>
+        <!-- Custom Amount -->
+        <div id="posCustomSection" style="margin-top:1.25rem">
+          <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.65rem">Custom Amount</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+            <input type="text" id="posCustomName" placeholder="Description (e.g. Annual Membership)" style="flex:2;min-width:160px;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.5rem 0.7rem;outline:none" />
+            <input type="number" id="posCustomAmount" step="0.01" min="0" placeholder="$0.00" style="flex:1;min-width:90px;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.5rem 0.7rem;outline:none" />
+            <button class="btn-sm" onclick="addCustomToPOSCart()"><i class="fa-solid fa-plus"></i> Add</button>
+          </div>
+        </div>
       </div>
       <div style="padding:1.5rem;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch">
         <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Cart</div>
@@ -2706,6 +2715,17 @@
           <input type="text" id="posStudentSearch" placeholder="Search student or walk-in..." oninput="searchPOSStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" />
           <div id="posStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:140px;overflow-y:auto;margin-top:0.25rem"></div>
           <div id="posSelectedStudent" style="display:none;margin-top:0.4rem;font-size:0.82rem;color:var(--gold)"></div>
+        </div>
+        <div id="posCreditRow" style="display:none;padding:0.75rem;background:var(--black);border:1px solid var(--border);margin-bottom:0.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <span style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Account Credit</span>
+            <span id="posCreditAvail" style="font-size:0.85rem;color:#F5F0E8">$0.00 available</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <label style="font-size:0.78rem;color:var(--muted);white-space:nowrap">Apply $</label>
+            <input type="number" id="posCreditApply" step="0.01" min="0" value="0" oninput="onPosCreditInput()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.4rem 0.6rem;outline:none" />
+          </div>
+          <div id="posCreditCardLine" style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem"></div>
         </div>
         <button id="posBtnCardOnFile" class="btn-gold-full" style="margin-top:0.75rem;opacity:0.5;cursor:not-allowed" onclick="checkoutPOS_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Charge Card on File</button>
         <button id="posBtnPaymentLink" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Send Payment Link</button>
@@ -9753,7 +9773,7 @@ async function deleteProduct(pid){
 }
 
 // POS
-function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
+function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
 function closePOS(){ document.getElementById('posModal').classList.remove('active'); }
 function buildPOSQuickItems(){
   var quickItems=allProducts.filter(function(p){return p.quick_list&&p.active;});
@@ -9772,8 +9792,17 @@ function filterPOSProducts(){
 }
 function addToPOSCart(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='product';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name,price:parseFloat(p.retail_price||0),qty:1,type:'product'});} renderPOSCart(); }
 function addPackToPOSCart(pid){ var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='pack';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name+' ('+p.quantity+' sessions)',price:parseFloat(p.price||0),qty:1,type:'pack',pack:p});} renderPOSCart(); }
+function addCustomToPOSCart(){
+  var nameEl=document.getElementById('posCustomName'), amtEl=document.getElementById('posCustomAmount');
+  var name=(nameEl.value||'').trim(); var amt=parseFloat(amtEl.value);
+  if(!name){ setMsg('posMsg','Enter a description for the custom item.','error'); return; }
+  if(!isFinite(amt)||amt<=0){ setMsg('posMsg','Enter an amount greater than 0.','error'); return; }
+  posCart.push({id:'custom_'+Date.now()+'_'+Math.round(Math.random()*1000),name:name,price:amt,qty:1,type:'custom'});
+  nameEl.value=''; amtEl.value=''; document.getElementById('posMsg').textContent='';
+  renderPOSCart();
+}
 function updatePOSQty(pid,delta){ var item=posCart.find(function(c){return c.id===pid;}); if(!item) return; item.qty+=delta; if(item.qty<=0) posCart=posCart.filter(function(c){return c.id!==pid;}); renderPOSCart(); }
-function renderPOSCart(){
+  function renderPOSCart(){
   var el=document.getElementById('posCartList'); var total=posCart.reduce(function(sum,c){return sum+c.price*c.qty;},0);
   document.getElementById('posTotalAmount').textContent='$'+total.toFixed(2);
   if(!posCart.length){el.innerHTML='<div id="posCartEmpty" style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem 0">Cart is empty</div>';}
@@ -9781,8 +9810,8 @@ function renderPOSCart(){
   updatePOSCheckoutButtons();
 }
 function searchPOSStudent(){ var q=document.getElementById('posStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('posStudentResults'); if(!q||q.length<2){el.style.display='none';return;} var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="selectPOSStudent(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join(''); }
-function selectPOSStudent(sid,name){ posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+name; updatePOSCheckoutButtons(); }
-function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
+function selectPOSStudent(sid,name){ posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+name; updatePOSCheckoutButtons(); loadPosCredit(); }
+function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
 // §POS-CHECKOUT — Three payment paths (Phase N, 2026-05-11)
 
 function posCartTotal(){
@@ -9800,16 +9829,53 @@ function posCartLineItems(){
   //   'session_pack' -> pack credit into student_session_packs (same two paths)
   // product_id is the entity id: products.id for retail items, session_packs.id for pack templates.
   return posCart.map(function(c){
+    var isCustom = c.type === 'custom';
     return {
       name: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
       unit_amount: Math.round(c.price * 100),
       quantity: c.qty,
-      product_id: c.id,
-      item_type: c.type === 'pack' ? 'session_pack' : 'product',
+      product_id: isCustom ? null : c.id,
+      item_type: c.type === 'pack' ? 'session_pack' : (isCustom ? 'custom' : 'product'),
     };
   });
 }
 
+var posCreditBalanceCents = 0, posCreditApplyCents = 0;
+function posCartTotalCents(){ return posCart.reduce(function(s,c){return s+Math.round(c.price*100)*c.qty;},0); }
+async function loadPosCredit(){
+  posCreditBalanceCents=0; posCreditApplyCents=0;
+  if(posSelectedStudentId){
+    try{
+      var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',posSelectedStudentId);
+      var cents=0;(cr.data||[]).forEach(function(row){cents+=(row.amount_cents||0);});
+      posCreditBalanceCents=cents>0?cents:0;
+    }catch(e){ posCreditBalanceCents=0; }
+    var maxApply=Math.min(posCreditBalanceCents, posCartTotalCents());
+    posCreditApplyCents=maxApply>0?maxApply:0;
+    var inp=document.getElementById('posCreditApply'); if(inp) inp.value=(posCreditApplyCents/100).toFixed(2);
+  }
+  renderPosCreditRow();
+}
+function renderPosCreditRow(){
+  var row=document.getElementById('posCreditRow'); if(!row) return;
+  if(!posSelectedStudentId || posCreditBalanceCents<=0){ row.style.display='none'; posCreditApplyCents=0; return; }
+  row.style.display='block';
+  var av=document.getElementById('posCreditAvail'); if(av) av.textContent='$'+(posCreditBalanceCents/100).toFixed(2)+' available';
+  var maxApply=Math.min(posCreditBalanceCents, posCartTotalCents());
+  if(posCreditApplyCents>maxApply){ posCreditApplyCents=maxApply; var inp=document.getElementById('posCreditApply'); if(inp) inp.value=(posCreditApplyCents/100).toFixed(2); }
+  var line=document.getElementById('posCreditCardLine');
+  if(line){ var cardCents=posCartTotalCents()-posCreditApplyCents; line.textContent = posCreditApplyCents>0 ? ('Card: $'+(cardCents/100).toFixed(2)+(cardCents<=0?' (no card needed)':'')) : ''; }
+}
+function onPosCreditInput(){
+  var inp=document.getElementById('posCreditApply'); if(!inp) return;
+  var v=parseFloat(inp.value); if(!isFinite(v)||v<0) v=0;
+  var cents=Math.round(v*100);
+  var maxApply=Math.min(posCreditBalanceCents, posCartTotalCents());
+  if(cents>maxApply){ cents=maxApply; inp.value=(cents/100).toFixed(2); }
+  posCreditApplyCents=cents;
+  var line=document.getElementById('posCreditCardLine');
+  if(line){ var cardCents=posCartTotalCents()-cents; line.textContent = cents>0 ? ('Card: $'+(cardCents/100).toFixed(2)+(cardCents<=0?' (no card needed)':'')) : ''; }
+}
 function updatePOSCheckoutButtons(){
   var hasItems = posCart.length > 0;
   var hasPack = posCartHasPack();
@@ -9836,6 +9902,8 @@ function updatePOSCheckoutButtons(){
   cashBtn.disabled = !hasItems;
   cashBtn.style.opacity = hasItems ? '1' : '0.5';
   cashBtn.style.cursor = hasItems ? 'pointer' : 'not-allowed';
+
+  renderPosCreditRow();
 }
 
 // Cash path — preserves original direct-insert behavior
@@ -9896,6 +9964,8 @@ async function checkoutPOS_cardOnFile(){
 
   setMsg('posMsg','Charging card on file...','');
   try{
+    var _sess = await sb.auth.getSession();
+    var _uid = (_sess && _sess.data && _sess.data.session) ? _sess.data.session.user.id : null;
     var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
@@ -9903,6 +9973,8 @@ async function checkoutPOS_cardOnFile(){
         school_id: SID,
         student_id: posSelectedStudentId,
         line_items: posCartLineItems(),
+        credit_to_apply_cents: posCreditApplyCents,
+        applied_by: _uid,
       }),
     });
     var data = await r.json();
