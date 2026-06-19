@@ -2670,6 +2670,32 @@
 </div>
   
 <!-- §MODAL-POS -->
+<div class="modal-overlay" id="chargePlanModal">
+  <div class="modal" style="width:460px;max-width:95vw">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--white)"><i class="fa-solid fa-cash-register" style="color:var(--gold);margin-right:0.5rem"></i>Charge for this plan</div>
+      <button onclick="closeChargePlanModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="padding:1.4rem">
+      <div id="chargePlanName" style="font-size:0.95rem;color:var(--white)"></div>
+      <div style="border-top:1px solid var(--border);margin-top:0.85rem;padding-top:0.85rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem"><span>Plan</span><span id="chargePlanPrice" style="color:#F5F0E8"></span></div>
+        <div id="chargePlanCreditRow" style="display:none;justify-content:space-between;align-items:center;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">
+          <span>Credit applied <span id="chargePlanCreditAvail" style="color:var(--gold)"></span></span>
+          <span style="display:flex;align-items:center;gap:0.15rem;color:#F5F0E8">&minus; $<input type="number" id="chargePlanCreditInput" step="0.01" min="0" value="0" oninput="updateChargePlanBreakdown()" style="width:88px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.25rem 0.5rem;outline:none;text-align:right" /></span>
+        </div>
+        <div id="chargePlanFeeRow" style="display:none;justify-content:space-between;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem"><span>Processing fee</span><span id="chargePlanFee" style="color:#F5F0E8"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:0.6rem;padding-top:0.7rem"><span style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold)">Card will be charged</span><span id="chargePlanCardTotal" style="font-family:var(--font-display);font-size:1.35rem;color:var(--gold)">$0.00</span></div>
+      </div>
+      <p id="chargePlanMsg" style="margin:0.85rem 0 0;font-size:0.82rem"></p>
+      <div style="display:flex;gap:0.6rem;margin-top:1.1rem">
+        <button class="btn-sm" onclick="closeChargePlanModal()" style="flex:1">Cancel</button>
+        <button class="btn-gold-full" id="chargePlanBtn" onclick="confirmChargePlan()" style="flex:2;margin:0"><i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="posModal">
   <div class="modal" style="width:780px;max-width:97vw;padding:0">
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10">
@@ -5600,10 +5626,98 @@ async function loadProfileMemberships(sid) {
       var price=m?smPriceLabel(m):'--';
       var cl=m?smClassLine(m):'';
       var since=sm.start_date?('Member since '+smDateLabel(sm.start_date)):'';
-      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div></div>';
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
+var _chargePlan = null;
+async function chargeForPlan(smid){
+  try{
+    var mr = await sb.from('student_memberships').select('memberships(name,price)').eq('id',smid).single();
+    var m = (mr.data && mr.data.memberships) ? mr.data.memberships : null;
+    if(!m){ alert('Could not load the plan for this membership.'); return; }
+    if(!currentProfileStudent){ alert('No student loaded.'); return; }
+    var passFees=false;
+    try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
+    var balanceCents=0;
+    try{ var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',currentProfileStudent.id); (cr.data||[]).forEach(function(row){balanceCents+=(row.amount_cents||0);}); }catch(e){}
+    if(balanceCents<0) balanceCents=0;
+    var priceCents=Math.round((m.price||0)*100);
+    _chargePlan={ name:(m.name||'Plan'), priceCents:priceCents, balanceCents:balanceCents, passFees:passFees, applyCents:Math.min(balanceCents,priceCents), idemKey:'cp_'+Date.now()+'_'+Math.round(Math.random()*100000) };
+    document.getElementById('chargePlanName').textContent=_chargePlan.name;
+    document.getElementById('chargePlanPrice').textContent='$'+(priceCents/100).toFixed(2);
+    var crow=document.getElementById('chargePlanCreditRow');
+    if(balanceCents>0){
+      crow.style.display='flex';
+      document.getElementById('chargePlanCreditAvail').textContent='($'+(balanceCents/100).toFixed(2)+' available)';
+      document.getElementById('chargePlanCreditInput').value=(_chargePlan.applyCents/100).toFixed(2);
+    } else { crow.style.display='none'; }
+    document.getElementById('chargePlanMsg').textContent='';
+    var btn=document.getElementById('chargePlanBtn'); btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now';
+    updateChargePlanBreakdown();
+    document.getElementById('chargePlanModal').classList.add('active');
+  }catch(e){ alert('Could not open charge: '+(e&&e.message?e.message:e)); }
+}
+function updateChargePlanBreakdown(){
+  if(!_chargePlan) return;
+  var inp=document.getElementById('chargePlanCreditInput');
+  var applyCents=_chargePlan.applyCents;
+  if(inp){
+    var v=parseFloat(inp.value); if(!isFinite(v)||v<0) v=0;
+    applyCents=Math.round(v*100);
+    var maxA=Math.min(_chargePlan.balanceCents,_chargePlan.priceCents);
+    if(applyCents>maxA){ applyCents=maxA; inp.value=(applyCents/100).toFixed(2); }
+  }
+  _chargePlan.applyCents=applyCents;
+  var cardBase=_chargePlan.priceCents-applyCents;
+  var feeCents=0, grossCents=cardBase;
+  if(_chargePlan.passFees && cardBase>0){ grossCents=Math.round((cardBase+30)/(1-0.039)); feeCents=grossCents-cardBase; }
+  var feeRow=document.getElementById('chargePlanFeeRow');
+  if(feeCents>0){ feeRow.style.display='flex'; document.getElementById('chargePlanFee').textContent='+$'+(feeCents/100).toFixed(2); }
+  else { feeRow.style.display='none'; }
+  document.getElementById('chargePlanCardTotal').textContent='$'+(grossCents/100).toFixed(2);
+  _chargePlan.grossCents=grossCents;
+}
+function closeChargePlanModal(){ var el=document.getElementById('chargePlanModal'); if(el) el.classList.remove('active'); _chargePlan=null; }
+async function confirmChargePlan(){
+  if(!_chargePlan || !currentProfileStudent) return;
+  var msg=document.getElementById('chargePlanMsg'); msg.textContent=''; msg.style.color='';
+  var btn=document.getElementById('chargePlanBtn'); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Charging...';
+  try{
+    var sess=await sb.auth.getSession();
+    var uid=(sess&&sess.data&&sess.data.session)?sess.data.session.user.id:null;
+    var r=await fetch(SURL+'/functions/v1/create-pos-charge',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({
+        school_id:SID,
+        student_id:currentProfileStudent.id,
+        line_items:[{name:_chargePlan.name,unit_amount:_chargePlan.priceCents,quantity:1,product_id:null,item_type:'custom'}],
+        credit_to_apply_cents:_chargePlan.applyCents,
+        applied_by:uid,
+        idempotency_key:_chargePlan.idemKey
+      })
+    });
+    var data=await r.json();
+    if(!r.ok || !data || data.error){
+      var em=(data&&data.error)?data.error:'Charge failed.';
+      if(em.indexOf('NO_SAVED_CARD')===0) em='No saved card on file for the remaining balance. Add a card or send a payment link.';
+      else if(em.indexOf('AUTHENTICATION_REQUIRED')===0) em='Card needs verification (3D Secure). Use a payment link instead.';
+      else if(em.indexOf('INSUFFICIENT_CREDIT')===0) em='Credit balance changed - reopen and try again.';
+      msg.textContent=em; msg.style.color='#E07070';
+      btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now';
+      return;
+    }
+    msg.textContent='Charged $'+((data.gross_charged_cents||0)/100).toFixed(2)+' to card'+((data.credit_applied_cents||0)>0?(' ('+(data.credit_applied_cents/100).toFixed(2)+' credit applied)'):'')+'.';
+    msg.style.color='#70C070';
+    await loadStudentCredit(currentProfileStudent.id);
+    setTimeout(closeChargePlanModal,1500);
+  }catch(e){
+    msg.textContent='Charge error: '+(e&&e.message?e.message:e); msg.style.color='#E07070';
+    btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now';
+  }
+}
+
 async function removeStudentMembership(smid) {
   await sb.from('student_memberships').update({status:'cancelled'}).eq('id',smid);
   var sid=(currentProfileStudent&&currentProfileStudent.id)?currentProfileStudent.id:null;
