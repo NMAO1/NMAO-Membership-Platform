@@ -639,10 +639,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-school" id="portalSchoolName">Member Portal</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:0.5rem">
-      <button id="familyPwBtn" style="display:none;align-items:center;gap:0.35rem;background:none;border:none;color:var(--muted);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:0.5rem 0.4rem;white-space:nowrap" onclick="openFamilyPwModal()"><i class="fa-solid fa-key"></i><span>Password</span></button>
-      <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
-    </div>
+    <button class="portal-signout" onclick="portalSignOut()"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.4rem"></i>Sign Out</button>
   </div>
   <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
     <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
@@ -750,9 +747,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="info-card" id="contactCard"></div>
         </div>
        <div class="portal-section" id="pwSection">
-  <div class="section-label"><i class="fa-solid fa-key"></i> Update Password</div>
+  <div class="section-label" id="pwSectionLabel"><i class="fa-solid fa-key"></i> Update Password</div>
   <div class="info-card">
-    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Change the password you use to sign in to your portal.</p>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem" id="pwSectionHelp">Change the password you use to sign in to your portal.</p>
     <div class="field"><label>New Password</label><input type="password" id="newPassword" placeholder="At least 6 characters" /></div>
     <div class="field"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')setPortalPassword()" /></div>
     <button class="btn-gold" id="setPasswordBtn" onclick="setPortalPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Update Password</button>
@@ -1807,9 +1804,11 @@ if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))doc
   await buildAttendance(s.id);
   await buildAnnouncements();
   if(isFamilyMode){await buildFamilySchedule();}else{await buildSchedule(s);}
-  // CP3: one family-level password control (header button) instead of the per-child box
-  var _pwSec=document.getElementById('pwSection');if(_pwSec)_pwSec.style.display=isFamilyMode?'none':'';
-  var _fpb=document.getElementById('familyPwBtn');if(_fpb)_fpb.style.display=isFamilyMode?'inline-flex':'none';
+  // CP3.2: single password control lives on the Profile tab; relabel it for families
+  var _pwl=document.getElementById('pwSectionLabel');
+  var _pwh=document.getElementById('pwSectionHelp');
+  if(_pwl)_pwl.innerHTML='<i class="fa-solid fa-key"></i> '+(isFamilyMode?'Family Login':'Update Password');
+  if(_pwh)_pwh.textContent=isFamilyMode?'One password for your whole family, used to sign in. Updating it here changes the login for all your children.':'Change the password you use to sign in to your portal.';
   processAutoCheckIn();
 
   document.getElementById('portalLoading').style.display='none';
