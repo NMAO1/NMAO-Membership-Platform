@@ -1636,7 +1636,10 @@ function showStudentPortal(student){
   maybePromptFirstRunPassword();
 }
 
+var _portalBuildSeq=0;
 async function buildPortal(s){
+  var _mySeq=++_portalBuildSeq;
+  try{
   // Reset lazy-load flags each time portal builds
 sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   // Fire badge checks (non-blocking, complete after portal loads)
@@ -1692,9 +1695,14 @@ if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))doc
   if(_pwl)_pwl.innerHTML='<i class="fa-solid fa-key"></i> '+(isFamilyMode?'Family Login':'Update Password');
   if(_pwh)_pwh.textContent=isFamilyMode?'One password for your whole family, used to sign in. Updating it here changes the login for all your children.':'Change the password you use to sign in to your portal.';
   processAutoCheckIn();
-
-  document.getElementById('portalLoading').style.display='none';
-  document.getElementById('portalContent').style.display='block';
+  }catch(e){
+    console.error('buildPortal error:',e);
+  }finally{
+    if(_mySeq===_portalBuildSeq){
+      var _pl=document.getElementById('portalLoading');if(_pl)_pl.style.display='none';
+      var _pc=document.getElementById('portalContent');if(_pc)_pc.style.display='block';
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2999,7 +3007,7 @@ async function switchChild(){
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
   updateWaiverBanner();
-  buildPortal(child);
+  await buildPortal(child);
   if(tabName==='sessions'||tabName==='book'||tabName==='shop'){switchPortalTab(tabName);}
 }
 
