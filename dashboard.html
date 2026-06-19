@@ -2685,7 +2685,8 @@
           <span style="display:flex;align-items:center;gap:0.15rem;color:#F5F0E8">&minus; $<input type="number" id="chargePlanCreditInput" step="0.01" min="0" value="0" oninput="updateChargePlanBreakdown()" style="width:88px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.25rem 0.5rem;outline:none;text-align:right" /></span>
         </div>
         <div id="chargePlanFeeRow" style="display:none;justify-content:space-between;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem"><span>Processing fee</span><span id="chargePlanFee" style="color:#F5F0E8"></span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:0.6rem;padding-top:0.7rem"><span style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold)">Card will be charged</span><span id="chargePlanCardTotal" style="font-family:var(--font-display);font-size:1.35rem;color:var(--gold)">$0.00</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:0.6rem;padding-top:0.7rem"><span id="chargePlanTotalLabel" style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold)">Card will be charged</span><span id="chargePlanCardTotal" style="font-family:var(--font-display);font-size:1.35rem;color:var(--gold)">$0.00</span></div>
+        <div id="chargePlanRenewNote" style="display:none;font-size:0.75rem;color:var(--muted);margin-top:0.5rem;text-align:right"></div>
       </div>
       <p id="chargePlanMsg" style="margin:0.85rem 0 0;font-size:0.82rem"></p>
       <div style="display:flex;gap:0.6rem;margin-top:1.1rem">
@@ -5633,8 +5634,9 @@ async function loadProfileMemberships(sid) {
 var _chargePlan = null;
 async function chargeForPlan(smid){
   try{
-    var mr = await sb.from('student_memberships').select('memberships(name,price)').eq('id',smid).single();
+    var mr = await sb.from('student_memberships').select('membership_id, memberships(name,price,billing_type,class_limit_type,billing_length,billing_unit)').eq('id',smid).single();
     var m = (mr.data && mr.data.memberships) ? mr.data.memberships : null;
+    var planId = (mr.data && mr.data.membership_id) ? mr.data.membership_id : null;
     if(!m){ alert('Could not load the plan for this membership.'); return; }
     if(!currentProfileStudent){ alert('No student loaded.'); return; }
     var passFees=false;
@@ -5643,9 +5645,10 @@ async function chargeForPlan(smid){
     try{ var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',currentProfileStudent.id); (cr.data||[]).forEach(function(row){balanceCents+=(row.amount_cents||0);}); }catch(e){}
     if(balanceCents<0) balanceCents=0;
     var priceCents=Math.round((m.price||0)*100);
-    _chargePlan={ name:(m.name||'Plan'), priceCents:priceCents, balanceCents:balanceCents, passFees:passFees, applyCents:Math.min(balanceCents,priceCents), idemKey:'cp_'+Date.now()+'_'+Math.round(Math.random()*100000) };
-    document.getElementById('chargePlanName').textContent=_chargePlan.name;
-    document.getElementById('chargePlanPrice').textContent='$'+(priceCents/100).toFixed(2);
+    var isRecurring = !!INTERVAL_MAP[m.billing_type] && m.class_limit_type!=='class_pack';
+    _chargePlan={ name:(m.name||'Plan'), membershipId:planId, plan:m, isRecurring:isRecurring, priceCents:priceCents, balanceCents:balanceCents, passFees:passFees, applyCents:Math.min(balanceCents,priceCents), idemKey:'cp_'+Date.now()+'_'+Math.round(Math.random()*100000) };
+    document.getElementById('chargePlanName').textContent=_chargePlan.name+(isRecurring?(' (auto-renews '+smFreqWord(m)+')'):' (one-time)');
+    document.getElementById('chargePlanPrice').textContent=isRecurring?smPriceLabel(m):('$'+(priceCents/100).toFixed(2));
     var crow=document.getElementById('chargePlanCreditRow');
     if(balanceCents>0){
       crow.style.display='flex';
@@ -5669,14 +5672,30 @@ function updateChargePlanBreakdown(){
     if(applyCents>maxA){ applyCents=maxA; inp.value=(applyCents/100).toFixed(2); }
   }
   _chargePlan.applyCents=applyCents;
-  var cardBase=_chargePlan.priceCents-applyCents;
-  var feeCents=0, grossCents=cardBase;
-  if(_chargePlan.passFees && cardBase>0){ grossCents=Math.round((cardBase+30)/(1-0.039)); feeCents=grossCents-cardBase; }
+  var feeCents=0, totalCents=0;
+  var lblEl=document.getElementById('chargePlanTotalLabel');
+  var noteEl=document.getElementById('chargePlanRenewNote');
+  if(_chargePlan.isRecurring){
+    // Recurring: per-cycle price carries the fee (matches the subscription EF). Credit reduces the first invoice only.
+    var recurGross=_chargePlan.passFees?Math.round((_chargePlan.priceCents+30)/(1-0.039)):_chargePlan.priceCents;
+    feeCents=recurGross-_chargePlan.priceCents;
+    totalCents=recurGross-applyCents; if(totalCents<0) totalCents=0;
+    if(lblEl) lblEl.textContent='First charge today';
+    if(noteEl){ noteEl.style.display='block'; noteEl.textContent='Auto-renews at $'+(recurGross/100).toFixed(2)+' '+smFreqWord(_chargePlan.plan); }
+  } else {
+    // One-time: fee computed on the post-credit card amount.
+    var cardBase=_chargePlan.priceCents-applyCents;
+    var grossCents=cardBase;
+    if(_chargePlan.passFees && cardBase>0){ grossCents=Math.round((cardBase+30)/(1-0.039)); feeCents=grossCents-cardBase; }
+    totalCents=grossCents;
+    if(lblEl) lblEl.textContent='Card will be charged';
+    if(noteEl) noteEl.style.display='none';
+  }
   var feeRow=document.getElementById('chargePlanFeeRow');
   if(feeCents>0){ feeRow.style.display='flex'; document.getElementById('chargePlanFee').textContent='+$'+(feeCents/100).toFixed(2); }
   else { feeRow.style.display='none'; }
-  document.getElementById('chargePlanCardTotal').textContent='$'+(grossCents/100).toFixed(2);
-  _chargePlan.grossCents=grossCents;
+  document.getElementById('chargePlanCardTotal').textContent='$'+(totalCents/100).toFixed(2);
+  _chargePlan.totalCents=totalCents;
 }
 function closeChargePlanModal(){ var el=document.getElementById('chargePlanModal'); if(el) el.classList.remove('active'); _chargePlan=null; }
 async function confirmChargePlan(){
@@ -5686,32 +5705,41 @@ async function confirmChargePlan(){
   try{
     var sess=await sb.auth.getSession();
     var uid=(sess&&sess.data&&sess.data.session)?sess.data.session.user.id:null;
-    var r=await fetch(SURL+'/functions/v1/create-pos-charge',{
+    var endpoint, payload;
+    if(_chargePlan.isRecurring){
+      endpoint='create-membership-subscription';
+      payload={ school_id:SID, student_id:currentProfileStudent.id, membership_id:_chargePlan.membershipId, credit_to_apply_cents:_chargePlan.applyCents, applied_by:uid, idempotency_key:_chargePlan.idemKey };
+    } else {
+      endpoint='create-pos-charge';
+      payload={ school_id:SID, student_id:currentProfileStudent.id, line_items:[{name:_chargePlan.name,unit_amount:_chargePlan.priceCents,quantity:1,product_id:null,item_type:'custom'}], credit_to_apply_cents:_chargePlan.applyCents, applied_by:uid, idempotency_key:_chargePlan.idemKey };
+    }
+    var r=await fetch(SURL+'/functions/v1/'+endpoint,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({
-        school_id:SID,
-        student_id:currentProfileStudent.id,
-        line_items:[{name:_chargePlan.name,unit_amount:_chargePlan.priceCents,quantity:1,product_id:null,item_type:'custom'}],
-        credit_to_apply_cents:_chargePlan.applyCents,
-        applied_by:uid,
-        idempotency_key:_chargePlan.idemKey
-      })
+      body:JSON.stringify(payload)
     });
     var data=await r.json();
     if(!r.ok || !data || data.error){
       var em=(data&&data.error)?data.error:'Charge failed.';
-      if(em.indexOf('NO_SAVED_CARD')===0) em='No saved card on file for the remaining balance. Add a card or send a payment link.';
+      if(em.indexOf('NO_SAVED_CARD')===0) em='No saved card on file. Add a card or send a payment link.';
       else if(em.indexOf('AUTHENTICATION_REQUIRED')===0) em='Card needs verification (3D Secure). Use a payment link instead.';
       else if(em.indexOf('INSUFFICIENT_CREDIT')===0) em='Credit balance changed - reopen and try again.';
+      else if(em.indexOf('ALREADY_SUBSCRIBED')===0) em='This student already has an active subscription for this plan.';
       msg.textContent=em; msg.style.color='#E07070';
       btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now';
       return;
     }
-    msg.textContent='Charged $'+((data.gross_charged_cents||0)/100).toFixed(2)+' to card'+((data.credit_applied_cents||0)>0?(' ('+(data.credit_applied_cents/100).toFixed(2)+' credit applied)'):'')+'.';
+    var appliedC=(data.credit_applied_cents||0);
+    if(_chargePlan.isRecurring){
+      var firstCharge=(data.gross_charged_cents||0)-appliedC; if(firstCharge<0) firstCharge=0;
+      msg.textContent='Subscription started. First charge $'+(firstCharge/100).toFixed(2)+(appliedC>0?(' ($'+(appliedC/100).toFixed(2)+' credit applied)'):'')+'.';
+    } else {
+      msg.textContent='Charged $'+((data.gross_charged_cents||0)/100).toFixed(2)+' to card'+(appliedC>0?(' ($'+(appliedC/100).toFixed(2)+' credit applied)'):'')+'.';
+    }
     msg.style.color='#70C070';
     await loadStudentCredit(currentProfileStudent.id);
-    setTimeout(closeChargePlanModal,1500);
+    if(currentProfileStudent) await loadProfileMemberships(currentProfileStudent.id);
+    setTimeout(closeChargePlanModal,1800);
   }catch(e){
     msg.textContent='Charge error: '+(e&&e.message?e.message:e); msg.style.color='#E07070';
     btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge Now';
