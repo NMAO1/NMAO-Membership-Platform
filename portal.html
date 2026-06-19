@@ -1649,7 +1649,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var ini=((s.first_name?s.first_name[0]:'')+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var av=document.getElementById('heroAvatar');
   if(s.photo_url){av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /><div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>';}
-  else{document.getElementById('heroInitials').textContent=ini;}
+  else{av.innerHTML='<span id="heroInitials">'+ini+'</span>';}
   document.getElementById('heroName').textContent=s.first_name+' '+s.last_name;
   var st=s.status||'trial';
   var sc=document.getElementById('heroStatus');sc.textContent=st;sc.className='chip '+(st==='active'?'chip-active':'chip-trial');
