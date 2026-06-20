@@ -1851,7 +1851,7 @@
           <div id="profileNoteDisplay" style="font-size:0.88rem;color:var(--muted2);font-style:italic;margin-top:0.5rem"></div>
         </div>
         <div id="profileTabMessages" style="display:none">
-          <div class="field" style="margin-bottom:0.75rem"><textarea id="profileMsgInput" rows="4" placeholder="Send a message to this student..."></textarea></div>
+          <div class="field" style="margin-bottom:0.75rem"><textarea id="profileMsgInput" rows="4" placeholder="Text this student (sent as SMS)..."></textarea></div>
           <button class="panel-action" style="margin-bottom:1rem" onclick="sendStudentMessage()"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
           <p class="form-msg" id="profileMsgStatus"></p>
           <div id="profileMsgHistory" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem"></div>
@@ -6027,10 +6027,20 @@ async function sendStudentMessage(){
   if(!body){setMsg('profileMsgStatus','Please enter a message.','error');return;}
   setMsg('profileMsgStatus','Sending...','');
   try{
-    var sess=await sb.auth.getSession();
-    var r=await sb.from('messages').insert({school_id:SID,student_id:currentProfileStudent.id,sent_by:sess.data.session.user.id,body:body});
-    if(r.error){setMsg('profileMsgStatus',r.error.message,'error');}
-    else{setMsg('profileMsgStatus','Sent!','success');document.getElementById('profileMsgInput').value='';await loadMessageHistory(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMsgStatus').textContent='';},2000);}
+    var r=await fetch(SURL+'/functions/v1/send-sms',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({school_id:SID, student_id:currentProfileStudent.id, body:body})
+    });
+    if(r.ok){
+      setMsg('profileMsgStatus','Sent!','success');
+      document.getElementById('profileMsgInput').value='';
+      await loadMessageHistory(currentProfileStudent.id);
+      setTimeout(function(){document.getElementById('profileMsgStatus').textContent='';},2000);
+    } else {
+      var err={}; try{err=await r.json();}catch(e2){}
+      setMsg('profileMsgStatus', (err.error||'Message failed to send'), 'error');
+    }
   }catch(e){setMsg('profileMsgStatus','Error: '+e.message,'error');}
 }
 async function loadProfilePaymentHistory(sid){
