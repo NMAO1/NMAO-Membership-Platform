@@ -6015,11 +6015,12 @@ async function loadStudentSessions(sid){
 }
 async function loadMessageHistory(sid){
   try{
-    var r=await sb.from('messages').select('*').eq('student_id',sid).order('created_at',{ascending:false}).limit(20);
-    var data=r.data||[]; var el=document.getElementById('profileMsgHistory');
+    var r=await sb.from('sms_inbox').select('*').eq('school_id',SID).eq('student_id',sid).order('created_at',{ascending:false}).limit(50);
+    var data=(r.data||[]).reverse(); var el=document.getElementById('profileMsgHistory');
+    if(!el) return;
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No messages yet.</div>';return;}
-    el.innerHTML=data.map(function(m){var dt=new Date(m.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem"><div style="font-size:0.85rem;color:#F5F0E8;margin-bottom:0.2rem">'+m.body+'</div><div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div></div>';}).join('');
-  }catch(e){document.getElementById('profileMsgHistory').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Messages unavailable.</div>';}
+    el.innerHTML=data.map(function(m){var isOut=m.direction==='outbound';var dt=new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});return '<div class="sms-bubble '+(isOut?'outbound':'inbound')+'">'+escText(m.body||'')+'<div class="sms-bubble-meta">'+dt+'</div></div>';}).join('');
+  }catch(e){var eh=document.getElementById('profileMsgHistory');if(eh)eh.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Messages unavailable.</div>';}
 }
 async function sendStudentMessage(){
   if(!currentProfileStudent) return;
