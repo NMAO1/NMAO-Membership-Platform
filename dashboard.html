@@ -9455,6 +9455,8 @@ function switchBeltTestTab(tab){ var tabs=['students','results','payments'];tabs
 var beltTestPickerSearch="";
 var beltTestPickerSelected={};
 var beltTestNextFee={};
+var beltTestPromoInfo={};
+var beltTestInvited={};
 
 async function loadBeltTestStudents(){
   if(!currentBeltTestId)return;
@@ -9464,7 +9466,8 @@ async function loadBeltTestStudents(){
   var btsR=await sb.from("belt_test_students").select("*, students(id,first_name,last_name,program_id,current_belt_id,start_date)").eq("belt_test_id",currentBeltTestId).eq("school_id",SID);
   var invitedRows=btsR.data||[];
   var invitedIds={};
-  invitedRows.forEach(function(r){if(r.student_id)invitedIds[r.student_id]=r;});
+  beltTestInvited={};
+  invitedRows.forEach(function(r){if(r.student_id)invitedIds[r.student_id]=r;if(r.id)beltTestInvited[r.id]=r;});
 
   var attR=await sb.from("class_attendance").select("student_id,noted_at").eq("school_id",SID);
   var attendance={};
@@ -9488,7 +9491,7 @@ async function loadBeltTestStudents(){
     });
   }
 
-  var rows=[]; beltTestNextFee={};
+  var rows=[]; beltTestNextFee={}; beltTestPromoInfo={};
   (allStudents||[]).filter(function(s){return s.status!=="archived";}).forEach(function(s){
     var prog=(allPrograms||[]).find(function(p){return p.id===s.program_id;});
     var beltSystemId=prog?prog.belt_system_id:null;
@@ -9500,8 +9503,9 @@ async function loadBeltTestStudents(){
       var ci=current?belts.indexOf(current):-1;
       nextBelt=ci>=0?(belts[ci+1]||null):null;
     }
-    beltTestNextFee[s.id]=nextBelt?(nextBelt.promotion_fee||0):null;
-
+ beltTestNextFee[s.id]=nextBelt?(nextBelt.promotion_fee||0):null;
+    beltTestPromoInfo[s.id]={curId:current?current.id:null,nextId:nextBelt?nextBelt.id:null,fromName:current?current.name:"",toName:nextBelt?nextBelt.name:""};
+    
     var sinceISO=lastPromo[s.id]||(s.start_date?s.start_date+"T00:00:00":null);
     var attList=attendance[s.id]||[];
     if(sinceISO){
@@ -9682,7 +9686,38 @@ function renderBeltTestPaymentsTab(invitedRows,t){
 }
 
 async function markBeltTestResult(bsid,result){
-  await sb.from("belt_test_students").update({passed:result==="promoted"}).eq("id",bsid).eq("school_id",SID);
+  var bs=beltTestInvited[bsid]||null;
+  var sid=bs?bs.student_id:null;
+  if(result==="promoted"){
+    if(sid){
+      var info=beltTestPromoInfo[sid]||{};
+      var ex=await sb.from("belt_promotions").select("id").eq("school_id",SID).eq("belt_test_id",currentBeltTestId).eq("student_id",sid).limit(1);
+      var already=ex.data&&ex.data.length;
+      if(!already&&!info.nextId){
+        if(typeof showToast==="function")showToast("No next belt set for this student","err");
+      }else if(!already){
+        var su=await sb.from("students").update({current_belt_id:info.nextId}).eq("id",sid);
+        if(su.error){ if(typeof showToast==="function")showToast("Promote failed: "+su.error.message,"err"); }
+        else{
+          var pn=document.getElementById("userName");
+          await sb.from("belt_promotions").insert({school_id:SID,student_id:sid,belt_test_id:currentBeltTestId,belt_from:info.fromName||"",belt_to:info.toName||"",belt_from_id:info.curId||null,belt_to_id:info.nextId,promotion_date:localDateStr(new Date()),promoted_at:new Date().toISOString(),promoted_by:pn?pn.textContent:"",fee_charged:bs?(bs.fee_amount||0):0,fee_paid:bs?!!bs.fee_paid:false,notes:"Belt test"});
+          if(typeof showToast==="function")showToast("Promoted to "+(info.toName||"next belt"),"ok");
+        }
+      }
+    }
+    await sb.from("belt_test_students").update({passed:true}).eq("id",bsid).eq("school_id",SID);
+  }else{
+    if(sid){
+      var ex2=await sb.from("belt_promotions").select("id,belt_from_id").eq("school_id",SID).eq("belt_test_id",currentBeltTestId).eq("student_id",sid).limit(1);
+      if(ex2.data&&ex2.data.length){
+        var promo=ex2.data[0];
+        if(promo.belt_from_id){ await sb.from("students").update({current_belt_id:promo.belt_from_id}).eq("id",sid); }
+        await sb.from("belt_promotions").delete().eq("id",promo.id).eq("school_id",SID);
+        if(typeof showToast==="function")showToast("Promotion reversed","ok");
+      }
+    }
+    await sb.from("belt_test_students").update({passed:false}).eq("id",bsid).eq("school_id",SID);
+  }
   await loadBeltTestStudents();
 }
 
