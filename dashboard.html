@@ -3144,12 +3144,86 @@ async function init() {
   }
 }
 
+// ═══════════════ §TRIAL-GATE — trial countdown banner + soft expiry gate ═══════════════
+// Live $99 Payment Link from Stripe. REPLACE the placeholder below with your real link.
+var TRIAL_PAYMENT_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_99_LINK';
+
+function trialSubscribeUrl(d){
+  var base = TRIAL_PAYMENT_LINK;
+  var sep = base.indexOf('?') === -1 ? '?' : '&';
+  return base + sep + 'client_reference_id=' + encodeURIComponent(d.id) +
+         '&prefilled_email=' + encodeURIComponent(d.email || '');
+}
+
+function injectTrialGateStyles(){
+  if(document.getElementById('trialGateStyles')) return;
+  var st = document.createElement('style');
+  st.id = 'trialGateStyles';
+  st.textContent =
+    '.tg-banner{position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(90deg,#C9A84C,#b8932f);'+
+    'color:#0A0A0A;font-family:Lato,sans-serif;font-size:0.85rem;font-weight:700;padding:0.65rem 1rem;display:flex;'+
+    'align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;text-align:center;box-shadow:0 -2px 12px rgba(0,0,0,0.35);}'+
+    '.tg-banner.warn{background:linear-gradient(90deg,#d98a3a,#c0703a);}'+
+    '.tg-banner a{background:#0A0A0A;color:#C9A84C;text-decoration:none;padding:0.4rem 1.1rem;font-weight:700;'+
+    'letter-spacing:0.05em;text-transform:uppercase;font-size:0.74rem;white-space:nowrap;}'+
+    '.tg-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10001;background:rgba(8,8,8,0.93);'+
+    'display:flex;align-items:center;justify-content:center;padding:1.5rem;}'+
+    '.tg-card{max-width:440px;width:100%;background:#141414;border:1px solid rgba(201,168,76,0.45);'+
+    'border-top:3px solid #C9A84C;padding:2.5rem 2rem;text-align:center;font-family:Lato,sans-serif;}'+
+    '.tg-card h2{font-family:"Cormorant Garamond",Georgia,serif;color:#F5F0E8;font-size:1.8rem;margin:0 0 0.75rem;}'+
+    '.tg-card p{color:#9A8F80;font-size:0.92rem;line-height:1.6;margin:0 0 1.5rem;}'+
+    '.tg-sub{display:inline-block;background:#C9A84C;color:#0A0A0A;text-decoration:none;font-weight:700;'+
+    'letter-spacing:0.1em;text-transform:uppercase;font-size:0.8rem;padding:0.9rem 2rem;margin-bottom:1rem;}'+
+    '.tg-later{display:block;background:none;border:none;color:#7A7060;font-size:0.78rem;cursor:pointer;'+
+    'text-decoration:underline;margin:0.5rem auto 0;}';
+  document.head.appendChild(st);
+}
+
+function renderTrialGate(d){
+  try{
+    if(!d) return;
+    if(d.stripe_subscription_id) return;     // already paying
+    if(!d.trial_ends_at) return;             // comp / exempt school (e.g. AOSD)
+    var qp = new URLSearchParams(window.location.search);
+    if(qp.get('subscribed') === '1') return; // just paid; let the webhook catch up
+
+    var ms = new Date(d.trial_ends_at).getTime() - Date.now();
+    var days = Math.ceil(ms / 86400000);
+    var url = trialSubscribeUrl(d);
+    injectTrialGateStyles();
+
+    if(ms > 0){
+      var label = days === 1 ? '1 day left' : (days + ' days left');
+      var bar = document.createElement('div');
+      bar.className = 'tg-banner' + (days <= 7 ? ' warn' : '');
+      bar.innerHTML = 'Free trial: ' + label + ' \u00b7 $99/mo when it ends ' +
+                      '<a href="' + url + '">Subscribe now</a>';
+      document.body.appendChild(bar);
+    } else {
+      var ov = document.createElement('div');
+      ov.className = 'tg-overlay';
+      var card = document.createElement('div');
+      card.className = 'tg-card';
+      card.innerHTML =
+        '<h2>Your free trial has ended</h2>' +
+        '<p>Thanks for trying NMAO. Subscribe to keep your school running \u2014 $99/month, ' +
+        'cancel anytime. Your students and data are safe and waiting.</p>' +
+        '<a class="tg-sub" href="' + url + '">Subscribe \u2014 $99/mo</a>' +
+        '<button class="tg-later" type="button">Continue for now</button>';
+      ov.appendChild(card);
+      document.body.appendChild(ov);
+      card.querySelector('.tg-later').addEventListener('click', function(){ ov.remove(); });
+    }
+  }catch(e){ console.error('trial gate:', e); }
+}
+
 async function loadSchool() {
   try {
     var r = await sb.from('schools').select('*').eq('id',SID).single();
     if (r.error || !r.data) return;
     var d = r.data;
     window.schoolData = d;
+    renderTrialGate(d);
     if (d.welcomed === false) {
       setTimeout(openWelcomeModal, 800);
     }
