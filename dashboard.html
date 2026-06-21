@@ -9454,6 +9454,7 @@ function switchBeltTestTab(tab){ var tabs=['students','results','payments'];tabs
 // ─────────────────────────────────────────────────────────────
 var beltTestPickerSearch="";
 var beltTestPickerSelected={};
+var beltTestNextFee={};
 
 async function loadBeltTestStudents(){
   if(!currentBeltTestId)return;
@@ -9480,14 +9481,14 @@ async function loadBeltTestStudents(){
   (allPrograms||[]).forEach(function(p){if(p.belt_system_id)beltsBySystem[p.belt_system_id]=null;});
   var systemIds=Object.keys(beltsBySystem);
   if(systemIds.length){
-    var blR=await sb.from("belt_levels").select("id,name,color_hex,sort_order,classes_required,belt_system_id").in("belt_system_id",systemIds).order("sort_order");
+  var blR=await sb.from("belt_levels").select("id,name,color_hex,sort_order,classes_required,belt_system_id,promotion_fee").in("belt_system_id",systemIds).order("sort_order");
     (blR.data||[]).forEach(function(b){
       if(!beltsBySystem[b.belt_system_id])beltsBySystem[b.belt_system_id]=[];
       beltsBySystem[b.belt_system_id].push(b);
     });
   }
 
-  var rows=[];
+  var rows=[]; beltTestNextFee={};
   (allStudents||[]).filter(function(s){return s.status!=="archived";}).forEach(function(s){
     var prog=(allPrograms||[]).find(function(p){return p.id===s.program_id;});
     var beltSystemId=prog?prog.belt_system_id:null;
@@ -9499,6 +9500,7 @@ async function loadBeltTestStudents(){
       var ci=current?belts.indexOf(current):-1;
       nextBelt=ci>=0?(belts[ci+1]||null):null;
     }
+    beltTestNextFee[s.id]=nextBelt?(nextBelt.promotion_fee||0):null;
 
     var sinceISO=lastPromo[s.id]||(s.start_date?s.start_date+"T00:00:00":null);
     var attList=attendance[s.id]||[];
@@ -9632,8 +9634,12 @@ async function addSelectedToBeltTest(){
   var ids=Object.keys(beltTestPickerSelected);
   if(!ids.length)return;
   var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});
-  var feeAmount=t&&t.fee_enabled?(t.test_fee||0):0;
-  var inserts=ids.map(function(sid){return {school_id:SID,belt_test_id:currentBeltTestId,student_id:sid,status:"pending",fee_amount:feeAmount};});
+  var feeOn=!!(t&&t.fee_enabled); var flatFee=feeOn?(t.test_fee||0):0;
+  var inserts=ids.map(function(sid){
+    var rf=beltTestNextFee[sid];
+    var fee=feeOn?((rf!=null&&rf>0)?rf:flatFee):0;
+    return {school_id:SID,belt_test_id:currentBeltTestId,student_id:sid,status:"pending",fee_amount:fee};
+  });
   var r=await sb.from("belt_test_students").insert(inserts);
   if(r.error){
     if(typeof showToast==="function")showToast("Could not add students: "+r.error.message,"err");
@@ -9671,7 +9677,7 @@ function renderBeltTestPaymentsTab(invitedRows,t){
   if(!invitedRows.length){pl.innerHTML='<div class="no-classes">No students added yet.</div>';return;}
   pl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Fee</th><th>Paid</th><th>Actions</th></tr></thead><tbody>'+invitedRows.map(function(bs){
     var s=bs.students;var name=s?s.first_name+" "+s.last_name:"Unknown";
-    return '<tr><td class="name">'+escHtml(name)+'</td><td style="color:var(--gold)">$'+parseFloat(bs.fee_amount||t.test_fee||0).toFixed(2)+'</td><td>'+(bs.fee_paid?'<span style="color:#5A9A6A">Paid</span>':'<span style="color:#E07070">Unpaid</span>')+'</td><td><button class="btn-sm gold" onclick="markBeltTestFeePaid(\''+bs.id+'\')">Mark Paid</button></td></tr>';
+    return '<tr><td class="name">'+escHtml(name)+'</td><td><input type="number" id="btfee_'+bs.id+'" value="'+parseFloat(bs.fee_amount||t.test_fee||0).toFixed(2)+'" min="0" step="0.01" style="width:78px;padding:0.25rem"> <button class="btn-sm" onclick="saveBeltTestFee(\''+bs.id+'\')">Save</button></td><td>'+(bs.fee_paid?'<span style="color:#5A9A6A">Paid</span>':'<span style="color:#E07070">Unpaid</span>')+'</td><td><button class="btn-sm gold" onclick="markBeltTestFeePaid(\''+bs.id+'\')">Mark Paid</button> <button class="btn-sm" onclick="compBeltTestFee(\''+bs.id+'\')">Comp</button></td></tr>';
   }).join("")+'</tbody></table></div>';
 }
 
@@ -9682,6 +9688,21 @@ async function markBeltTestResult(bsid,result){
 
 async function markBeltTestFeePaid(bsid){
   await sb.from("belt_test_students").update({fee_paid:true,paid_at:new Date().toISOString()}).eq("id",bsid).eq("school_id",SID);
+  await loadBeltTestStudents();
+}
+async function saveBeltTestFee(bsid){
+  var inp=document.getElementById("btfee_"+bsid); if(!inp)return;
+  var v=parseFloat(inp.value)||0; if(v<0)v=0;
+  var r=await sb.from("belt_test_students").update({fee_amount:v}).eq("id",bsid).eq("school_id",SID);
+  if(r.error){ if(typeof showToast==="function")showToast("Could not update fee: "+r.error.message,"err"); return; }
+  if(typeof showToast==="function")showToast("Fee updated","ok");
+  await loadBeltTestStudents();
+}
+async function compBeltTestFee(bsid){
+  if(!confirm("Comp this test fee? It will be marked waived and paid."))return;
+  var r=await sb.from("belt_test_students").update({fee_amount:0,fee_paid:true,paid_at:new Date().toISOString()}).eq("id",bsid).eq("school_id",SID);
+  if(r.error){ if(typeof showToast==="function")showToast("Could not comp: "+r.error.message,"err"); return; }
+  if(typeof showToast==="function")showToast("Fee comped","ok");
   await loadBeltTestStudents();
 }
 
