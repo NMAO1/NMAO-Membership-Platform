@@ -11207,8 +11207,8 @@ async function loadRevenueChart(){
       labels.push(MONTHS[d.getMonth()].slice(0,3));
       var start=localDateStr(new Date(d.getFullYear(),d.getMonth(),1));
       var end=localDateStr(new Date(d.getFullYear(),d.getMonth()+1,0));
-      var r=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',start+'T00:00:00').lte('created_at',end+'T23:59:59').eq('status','paid');
-      var sum=(r.data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
+      var r=await sb.from('payments').select('amount,payment_tenders(tender_type,amount_cents)').eq('school_id',SID).gte('created_at',start+'T00:00:00').lte('created_at',end+'T23:59:59').eq('status','paid');
+      var sum=(r.data||[]).reduce(function(a,p){return a+netCashAmount(p);},0);
       values.push(sum); total+=sum;
     }
     var max=Math.max.apply(null,values)||1;
