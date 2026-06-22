@@ -10195,15 +10195,6 @@ async function saveMilestones(){
 async function deleteMembership(mid){
   var m=allMemberships.find(function(x){return x.id===mid;});
   var nm=m?m.name:'this membership';
-  if(!confirm('Delete '+nm+'? It will be hidden from your memberships list. Active subscribers keep their plans and their history is preserved.')) return;
-  var r=await sb.from('memberships').update({active:false}).eq('id',mid);
-  if(r.error){alert('Error: '+r.error.message);return;}
-  await loadMemberships();
-}
-
-async function deleteMembership(mid){
-  var m=allMemberships.find(function(x){return x.id===mid;});
-  var nm=m?m.name:'this membership';
   var inUse=await sb.from('student_memberships').select('id',{count:'exact',head:true}).eq('membership_id',mid).eq('status','active');
   var cnt=inUse.count||0;
   var msg='Delete '+nm+'?\n\n';
