@@ -658,8 +658,18 @@
           <button class="btn-sm" style="border-color:#7AAAD4;color:#7AAAD4" onclick="openSmsInboxFromBanner()"><i class="fa-solid fa-inbox" style="margin-right:0.3rem"></i>View Messages</button>
         </div>
       </div>
+      <!-- AT-RISK / RETENTION BANNER -->
+      <div id="atRiskBanner" style="display:none;margin-bottom:1.5rem">
+        <div style="background:var(--surface);border:1px solid rgba(224,112,112,0.3);border-left:4px solid #E07070;padding:1rem 1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+            <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:#E07070"><i class="fa-solid fa-user-clock" style="margin-right:0.4rem"></i><span id="atRiskBannerLabel">At-Risk Students</span></div>
+            <button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="navigate('members',null)"><i class="fa-solid fa-users" style="margin-right:0.3rem"></i>View All</button>
+          </div>
+          <div id="atRiskBannerList" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+        </div>
+      </div>
       <div class="setup-banner" id="setupBanner">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
           <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold)"><i class="fa-solid fa-rocket" style="margin-right:0.4rem"></i>Getting Started</div>
           <button onclick="dismissSetupBanner()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem"><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -3041,6 +3051,7 @@ var enrollmentCounts = {};
 
 // UI state
 var currentProfileStudent   = null, currentProfileBeltLevels = [], currentProfileTags = [];
+var atRiskStudents = [], atRiskById = {};
 var currentBeltSystemId     = null, currentBeltLevelId = null;
 var rosterRsvpIds = {};
 var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSessionId = null;
@@ -5548,6 +5559,7 @@ async function loadStudents() {
   document.getElementById('anaTotal').textContent  = allStudents.length;
   document.getElementById('anaActive').textContent = active;
   renderMembersTable();
+  loadAtRiskStudents();
 }
 
 var memberSort = { col:'name', dir:'asc' };
@@ -5595,6 +5607,48 @@ function filterMembers() {
   if (ce) ce.textContent = filtered.length !== allStudents.length ? filtered.length+' of '+allStudents.length+' shown' : '';
   renderMembersTableFiltered(sortMemberList(filtered)); updateMemberSortArrows();
 }
+function atRiskBadge(sid){
+  var d = atRiskById[sid];
+  if (d == null) return '';
+  return '<span title="No check-in in ' + d + ' days" style="display:inline-block;margin-right:0.4rem;font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:10px;background:rgba(224,112,112,0.15);border:1px solid rgba(224,112,112,0.5);color:#E07070;letter-spacing:0.05em;vertical-align:middle"><i class="fa-solid fa-flag" style="margin-right:0.25rem"></i>' + d + 'd</span>';
+}
+async function loadAtRiskStudents(){
+  try {
+    var r = await sb.rpc('get_at_risk_students', { p_days: 14 });
+    if (r.error){ return; }
+    atRiskStudents = r.data || [];
+    atRiskById = {};
+    atRiskStudents.forEach(function(s){ atRiskById[s.student_id] = s.days_since; });
+    renderAtRiskBanner();
+    if (typeof filterMembers === 'function') filterMembers();
+  } catch (e){}
+}
+function renderAtRiskBanner(){
+  var banner = document.getElementById('atRiskBanner');
+  var listEl = document.getElementById('atRiskBannerList');
+  var labelEl = document.getElementById('atRiskBannerLabel');
+  if (!banner || !listEl) return;
+  if (!atRiskStudents.length){ banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  var n = atRiskStudents.length;
+  if (labelEl) labelEl.textContent = n + (n === 1 ? ' student at risk' : ' students at risk');
+  var top = atRiskStudents.slice(0, 6);
+  listEl.innerHTML = top.map(function(s){
+    var name = (s.first_name || '') + ' ' + (s.last_name || '');
+    var sub = (s.last_attended) ? (s.days_since + ' days since check-in') : ('joined ' + s.days_since + ' days ago, never attended');
+    var textBtn = s.phone
+      ? '<button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="event.stopPropagation();openStudentProfile(\'' + s.student_id + '\')"><i class="fa-solid fa-comment" style="margin-right:0.3rem"></i>Text</button>'
+      : '';
+    return '<div onclick="openStudentProfile(\'' + s.student_id + '\')" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.5rem 0.65rem;background:var(--black);border:1px solid var(--border);cursor:pointer">' +
+      '<div><div style="font-size:0.85rem;color:var(--white)">' + name + '</div>' +
+      '<div style="font-size:0.68rem;color:var(--muted)">' + sub + '</div></div>' +
+      textBtn +
+    '</div>';
+  }).join('');
+  if (n > top.length){
+    listEl.innerHTML += '<div style="font-size:0.7rem;color:var(--muted);text-align:center;padding-top:0.3rem">and ' + (n - top.length) + ' more</div>';
+  }
+}
 function renderMembersTable() { filterMembers(); }
 function renderMembersTableFiltered(list) {
   var tb = document.getElementById('membersTableBody');
@@ -5611,7 +5665,7 @@ function renderMembersTableFiltered(list) {
       tagHtml = studentTags.map(function(t){ return '<span style="display:inline-block;font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:10px;background:'+t.color+'22;border:1px solid '+t.color+'66;color:'+t.color+';margin:0.1rem">'+t.name+'</span>'; }).join('');
     }
     return '<tr style="cursor:pointer" onclick="openStudentProfile(\''+s.id+'\')">' +
-      '<td class="name">'+s.first_name+' '+s.last_name+'</td>' +
+      '<td class="name">'+atRiskBadge(s.id)+s.first_name+' '+s.last_name+'</td>' +
       '<td>'+(s.email||'--')+'</td>' +
       '<td>'+pn+'</td>' +
       '<td>'+mn+'</td>' +
