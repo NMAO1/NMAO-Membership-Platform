@@ -5362,7 +5362,7 @@ async function buildProfileVitals(sid){
       }
     });
     if(smdata.some(function(m){return m.status==='past_due';})){ statusTxt='Past due'; statusColor='#E07070'; }
-    else if(smdata.some(function(m){return m.status==='active';})){ statusTxt='Active'; statusColor='#5A9A6A'; }
+    else if(smdata.some(function(m){return m.status==='active';}) || (hasSessionPack && sessionBalance>0)){ statusTxt='Active'; statusColor='#5A9A6A'; }
     else if(currentProfileStudent&&currentProfileStudent.status){ statusTxt=currentProfileStudent.status; }
   }catch(e){}
   var classesTotal=null, classesLeft=null;
@@ -14276,6 +14276,32 @@ var url = APP_URL + "event.html?id=" + window.currentEventId;
 
 })();
 </script>
+</script>
+<!-- §MOBILE-NOTICE (soft, dismissable; phones only) -->
+<div id="mobileNotice" style="display:none;position:fixed;inset:0;z-index:10050;background:var(--black,#0b0b0b);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;box-sizing:border-box">
+  <div style="max-width:340px">
+    <img src="nmao_logo.png" alt="NMAO" style="height:46px;margin-bottom:1.5rem;opacity:0.9" onerror="this.style.display='none'" />
+    <div style="font-family:var(--font-display,Georgia,serif);font-size:1.5rem;color:var(--gold,#c9a84c);margin-bottom:0.75rem">Best on Desktop</div>
+    <div style="font-size:0.95rem;line-height:1.55;color:var(--muted,#a8a8a8);margin-bottom:1.75rem">The NMAO dashboard is built for a larger screen. For the full experience, open <strong style="color:var(--white,#fff)">app.nmao.us</strong> on a computer.</div>
+    <button onclick="dismissMobileNotice()" style="background:var(--gold,#c9a84c);color:#0b0b0b;border:none;padding:0.7rem 1.6rem;font-size:0.9rem;font-weight:600;cursor:pointer;border-radius:3px;font-family:inherit">Continue anyway</button>
+  </div>
+</div>
+<script>
+(function(){
+  function showMobileNotice(){
+    try{ if(window.sessionStorage && sessionStorage.getItem('nmao_mobile_notice')==='1') return; }catch(e){}
+    var ua=navigator.userAgent||'';
+    var isPhone=/iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+    if((window.innerWidth && window.innerWidth<768) || isPhone){
+      var el=document.getElementById('mobileNotice'); if(el) el.style.display='flex';
+    }
+  }
+  window.dismissMobileNotice=function(){
+    var el=document.getElementById('mobileNotice'); if(el) el.style.display='none';
+    try{ if(window.sessionStorage) sessionStorage.setItem('nmao_mobile_notice','1'); }catch(e){}
+  };
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', showMobileNotice); } else { showMobileNotice(); }
+})();
 </script>
 </body>
 </html>
