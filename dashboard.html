@@ -4328,15 +4328,29 @@ function buildBirthdays(){
 }
 
 // Revenue
+// Actual cash taken in for a payment = billed amount minus any account-credit
+// tender. Applied credit is money received earlier (or a comp), never new
+// revenue, so it is not counted again here. Payment rows must be selected with:
+//   payment_tenders(tender_type,amount_cents)
+function netCashAmount(p){
+  var amt=parseFloat(p.amount||0);
+  var creditCents=0;
+  var t=(p&&p.payment_tenders)||[];
+  for(var i=0;i<t.length;i++){ if(t[i].tender_type==='credit') creditCents+=(t[i].amount_cents||0); }
+  var net=amt-(creditCents/100);
+  return net>0?net:0;
+}
+
 async function loadRevenue(){
   try{
     var now=new Date(); var todayStr=localDateStr(now);
     var yest=new Date(now); yest.setDate(now.getDate()-1); var yesterdayStr=localDateStr(yest);
     var monthStart=localDateStr(new Date(now.getFullYear(),now.getMonth(),1));
-    var rt=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',todayStr+'T00:00:00').eq('status','paid');
-    var ry=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',yesterdayStr+'T00:00:00').lt('created_at',todayStr+'T00:00:00').eq('status','paid');
-    var rm=await sb.from('payments').select('amount').eq('school_id',SID).gte('created_at',monthStart+'T00:00:00').eq('status','paid');
-    var sum=function(data){return(data||[]).reduce(function(a,p){return a+parseFloat(p.amount||0);},0);};
+    var _sel='amount,payment_tenders(tender_type,amount_cents)';
+    var rt=await sb.from('payments').select(_sel).eq('school_id',SID).gte('created_at',todayStr+'T00:00:00').eq('status','paid');
+    var ry=await sb.from('payments').select(_sel).eq('school_id',SID).gte('created_at',yesterdayStr+'T00:00:00').lt('created_at',todayStr+'T00:00:00').eq('status','paid');
+    var rm=await sb.from('payments').select(_sel).eq('school_id',SID).gte('created_at',monthStart+'T00:00:00').eq('status','paid');
+    var sum=function(data){return(data||[]).reduce(function(a,p){return a+netCashAmount(p);},0);};
     document.getElementById('revToday').textContent='$'+sum(rt.data).toFixed(2);
     document.getElementById('revYesterday').textContent='$'+sum(ry.data).toFixed(2);
     document.getElementById('revMonth').textContent='$'+sum(rm.data).toFixed(2);
@@ -4354,18 +4368,18 @@ async function openRevenueBreakdown(period){
   if(period==='today'){start=localDateStr(now)+'T00:00:00';end=localDateStr(now)+'T23:59:59';}
   else if(period==='yesterday'){var y=new Date(now);y.setDate(now.getDate()-1);start=localDateStr(y)+'T00:00:00';end=localDateStr(y)+'T23:59:59';}
   else{start=localDateStr(new Date(now.getFullYear(),now.getMonth(),1))+'T00:00:00';end=localDateStr(now)+'T23:59:59';}
-  var r=await sb.from('payments').select('*,students(first_name,last_name)').eq('school_id',SID).gte('created_at',start).lte('created_at',end).eq('status','paid').order('created_at',{ascending:false});
+  var r=await sb.from('payments').select('*,students(first_name,last_name),payment_tenders(tender_type,amount_cents)').eq('school_id',SID).gte('created_at',start).lte('created_at',end).eq('status','paid').order('created_at',{ascending:false});
   var data=r.data||[];
-  var total=data.reduce(function(a,p){return a+parseFloat(p.amount||0);},0);
+  var total=data.reduce(function(a,p){return a+netCashAmount(p);},0);
   document.getElementById('revBreakdownTotalAmt').textContent='$'+total.toFixed(2);
   var typeLabels={membership:'Membership',retail_sale:'Retail',session:'Session',session_pack:'Session Pack',belt_test:'Belt Test',other:'Other'};
   var html='';
   if(!data.length){html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No transactions found.</div>';}
   else{
-    var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=parseFloat(p.amount||0);});
+    var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=netCashAmount(p);});
     Object.keys(byType).sort().forEach(function(t){html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
     html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Transactions</div>';
-    data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+parseFloat(p.amount).toFixed(2)+'</div></div>';});
+    data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
   }
   document.getElementById('revBreakdownList').innerHTML=html;
 }
