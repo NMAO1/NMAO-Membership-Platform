@@ -1284,8 +1284,8 @@
       <div class="content-heading"><h2>Billing</h2><div class="rule-h"></div></div>
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-body">
         <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Current Plan</div>
-        <div id="billingPlanName" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">Professional</div>
-        <div id="billingPlanPrice" style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem">$79/month</div>
+        <div id="billingPlanName" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">NMAO Platform</div>
+        <div id="billingPlanPrice" style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem">$99/month</div>
         <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Change Plan</button>
       </div></div>
 
@@ -3533,12 +3533,20 @@ async function saveSessionSettings(){
 
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
 function updatePlanBadge(plan) {
-  var labels={starter:'Starter',professional:'Professional',elite:'Elite'};
-  var prices={starter:'$59/month',professional:'$79/month',elite:'$99/month'};
-  document.getElementById('billingPlanName').textContent=labels[plan]||plan;
-  document.getElementById('billingPlanPrice').textContent=prices[plan]||'';
+  var sd = window.schoolData || {};
+  var price = sd.plan_price ? sd.plan_price : 99;
+  var statusMap = {trialing:'Free Trial', active:'Active', past_due:'Past Due', cancelled:'Cancelled'};
+  var status = statusMap[sd.plan_status] || 'Active';
+  var line = '$' + price + '/month \u00b7 ' + status;
+  if (sd.plan_status === 'trialing' && sd.trial_ends_at) {
+    var ends = new Date(sd.trial_ends_at);
+    line = '$' + price + '/month \u00b7 Free trial ends ' +
+           ends.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+  }
+  document.getElementById('billingPlanName').textContent = 'NMAO Platform';
+  document.getElementById('billingPlanPrice').textContent = line;
   document.querySelectorAll('.plan-card').forEach(function(c){c.classList.remove('current');});
-  var cur=document.getElementById('planCard-'+plan); if(cur) cur.classList.add('current');
+  var cur = document.getElementById('planCard-' + plan); if (cur) cur.classList.add('current');
 }
 function openPlanModal()  { updatePlanBadge(currentPlan); document.getElementById('planModal').classList.add('active'); }
 function closePlanModal() { document.getElementById('planModal').classList.remove('active'); }
