@@ -1234,7 +1234,7 @@ async function loadSchoolBranding(pre){
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at,awaiting_card)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
+sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
       sb.from('families').select('*').eq('email',user.email).eq('school_id',SID).maybeSingle(),
       sb.from('instructors').select('*').eq('email',user.email).eq('active',true).eq('school_id',SID).maybeSingle()
     ]);
@@ -1665,7 +1665,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
-if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))document.getElementById('cardUpdateSection').style.display='';
+renderSelfCancel(s, _sm);   if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))document.getElementById('cardUpdateSection').style.display='';
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
@@ -2490,6 +2490,69 @@ function hidePackConfirm(packId){
   }
 }
 
+function selfCancelFee(sm, plan){
+  if(!sm||!sm.commitment_ends_at) return 0;
+  var end=new Date(sm.commitment_ends_at+'T00:00:00'); var now=new Date(); now.setHours(0,0,0,0);
+  if(end<=now) return 0;
+  var monthsLeft=Math.max(1,Math.round((end-now)/(1000*60*60*24*30.44)));
+  var t=sm.commit_fee_type||'none'; if(t==='none') return 0;
+  var n=parseInt(plan&&plan.billing_length)||1; var u=(plan&&plan.billing_unit)||'months';
+  var cycle=(u==='years')?n*12:(u==='weeks')?Math.max(1,Math.round(n/4.345)):(u==='days')?Math.max(1,Math.round(n/30.44)):n;
+  var periods=Math.ceil(monthsLeft/cycle); var price=parseFloat(plan&&plan.price)||0; var rv=periods*price;
+  var fee=0; if(t==='flat')fee=parseFloat(sm.commit_fee_amount)||0; else if(t==='remaining')fee=rv; else if(t==='percent')fee=rv*((parseFloat(sm.commit_fee_amount)||0)/100);
+  return Math.round(fee*100)/100;
+}
+function renderSelfCancel(s, smArr){
+  try{
+    var card=document.getElementById('membershipCard'); if(!card) return;
+    if(!(s&&s.memberships&&s.memberships.allow_member_self_cancel)) return;
+    var active=null;
+    if(smArr&&smArr.length){ for(var i=0;i<smArr.length;i++){ if(smArr[i]&&smArr[i].status!=='cancelled'){ active=smArr[i]; break; } } }
+    if(!active) return;
+    window._selfCancelSm=active; window._selfCancelPlan=s.memberships;
+    card.innerHTML += '<div style="margin-top:0.9rem;text-align:right"><button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="openSelfCancel()"><i class="fa-solid fa-circle-xmark" style="margin-right:0.3rem"></i>Cancel membership</button></div>';
+  }catch(e){}
+}
+function openSelfCancel(){
+  var sm=window._selfCancelSm, plan=window._selfCancelPlan; if(!sm) return;
+  var fee=selfCancelFee(sm,plan);
+  var feeHtml = (fee>0) ? '<div style="background:rgba(226,168,76,0.1);border:1px solid rgba(226,168,76,0.4);padding:0.7rem 0.9rem;margin:0.8rem 0;font-size:0.85rem;color:#E2A84C">You are still within your commitment term. An early-cancellation fee of <strong>$'+fee.toFixed(2)+'</strong> applies and will be billed by the school.</div>' : '<div style="font-size:0.85rem;color:var(--muted);margin:0.8rem 0">There is no early-cancellation fee.</div>';
+  var ov=document.createElement('div');
+  ov.id='selfCancelOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10060;padding:1rem';
+  ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);max-width:440px;width:100%;padding:1.4rem">'+
+    '<div style="font-size:1.05rem;color:var(--white);font-weight:600;margin-bottom:0.3rem">Cancel membership</div>'+
+    '<div style="font-size:0.85rem;color:var(--muted);line-height:1.5">This cancels your membership. Auto-renewal stops and you keep access through the end of your current paid period.</div>'+
+    feeHtml+
+    '<label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:0.84rem;color:var(--white);margin:0.6rem 0 1rem;cursor:pointer"><input type="checkbox" id="selfCancelAccept" style="margin-top:0.2rem" onchange="document.getElementById(\'selfCancelGo\').disabled=!this.checked" /> <span>I understand and accept the cancellation policy'+((fee>0)?' and the early-cancellation fee above':'')+'.</span></label>'+
+    '<div style="display:flex;gap:0.6rem;justify-content:flex-end">'+
+      '<button class="btn-sm" onclick="closeSelfCancel()">Keep membership</button>'+
+      '<button class="btn-sm" id="selfCancelGo" disabled style="border-color:#A04040;color:#E07070" onclick="doSelfCancel()">Cancel membership</button>'+
+    '</div>'+
+    '<div id="selfCancelMsg" style="font-size:0.8rem;margin-top:0.7rem"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+function closeSelfCancel(){ var o=document.getElementById('selfCancelOverlay'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+function doSelfCancel(){
+  var sm=window._selfCancelSm; if(!sm) return;
+  var go=document.getElementById('selfCancelGo'); var msg=document.getElementById('selfCancelMsg');
+  if(go) go.disabled=true; if(msg){ msg.textContent='Cancelling\u2026'; msg.style.color='var(--muted)'; }
+  sb.rpc('member_self_cancel',{p_sm_id:sm.id}).then(function(r){
+    if(r.error){ if(msg){msg.textContent=r.error.message||'Could not cancel.'; msg.style.color='#E07070';} if(go)go.disabled=false; return; }
+    var data=r.data||{};
+    var sub=data.stripe_subscription_id;
+    function finish(){
+      closeSelfCancel();
+      alert('Your membership has been cancelled.'+((data.fee&&data.fee>0)?(' An early-cancellation fee of $'+Number(data.fee).toFixed(2)+' will be billed by the school.'):''));
+      location.reload();
+    }
+    if(sub){
+      fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'period_end'})}).then(function(){ finish(); }).catch(function(){ finish(); });
+    } else { finish(); }
+  }).catch(function(e){ if(msg){msg.textContent=(e&&e.message)?e.message:'Could not cancel.'; msg.style.color='#E07070';} if(go)go.disabled=false; });
+}
+
 async function startMembership(){
   var msg=document.getElementById('startMembershipMsg');
   if(msg){msg.textContent='';msg.className='form-msg';}
@@ -2978,7 +3041,7 @@ async function showFamilyPortal(family){
   document.getElementById('portalScreen').style.display='block';
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type), student_memberships(status,stripe_subscription_id,ended_at,awaiting_card)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
+  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
   familyChildren=r.data||[];
   if(!familyChildren.length){
     document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
