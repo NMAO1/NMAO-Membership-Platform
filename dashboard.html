@@ -9031,6 +9031,18 @@ async function loadLeads(){
     document.getElementById('anaConverted').textContent=allLeads.filter(function(l){return l.status==='converted';}).length;
   }catch(e){allLeads=[];}
 }
+function leadAgo(ts){
+  if(!ts) return '';
+  var then=new Date(ts).getTime(); if(isNaN(then)) return '';
+  var days=Math.floor((Date.now()-then)/86400000);
+  if(days<=0) return 'today';
+  if(days===1) return 'yesterday';
+  if(days<7) return days+'d ago';
+  if(days<30) return Math.floor(days/7)+'w ago';
+  if(days<365) return Math.floor(days/30)+'mo ago';
+  return Math.floor(days/365)+'y ago';
+}
+
 function renderLeads(){
   var cols={new:'leads-new',contacted:'leads-contacted',trial:'leads-trial',converted:'leads-converted'};
   Object.keys(cols).forEach(function(status){
@@ -9039,7 +9051,7 @@ function renderLeads(){
     if(!filtered.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted);font-style:italic;padding:0.5rem">No leads</div>';return;}
     el.innerHTML=filtered.map(function(l){
       var prog=allPrograms.find(function(p){return p.id===l.program_id;});
-      return '<div class="lead-card" onclick="openEditLead(\''+l.id+'\')"><div class="lead-name">'+l.first_name+' '+l.last_name+'</div><div class="lead-meta">'+(prog?prog.name:'--')+' \u00B7 '+l.source+'</div><div style="display:flex;gap:0.4rem;margin-top:0.5rem"><button class="btn-sm" style="font-size:0.68rem" onclick="event.stopPropagation();bookTrialFromLead(\''+l.id+'\')"><i class="fa-solid fa-user-clock" style="margin-right:0.2rem"></i>Book Trial</button><button class="btn-sm" style="font-size:0.68rem;border-color:#A04040;color:#E07070" onclick="event.stopPropagation();deleteLead(\''+l.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
+      return '<div class="lead-card" onclick="openEditLead(\''+l.id+'\')"><div class="lead-name">'+l.first_name+' '+l.last_name+'</div><div class="lead-meta">'+(prog?prog.name:'--')+' \u00B7 '+l.source+'</div>'+(l.status==='converted'&&l.converted_at?'<div style="font-size:0.66rem;color:#5A9A6A;margin-top:0.25rem"><i class="fa-solid fa-clock" style="margin-right:0.2rem"></i>Converted '+leadAgo(l.converted_at)+'</div>':'')+'<div style="display:flex;gap:0.4rem;margin-top:0.5rem"><button class="btn-sm" style="font-size:0.68rem" onclick="event.stopPropagation();bookTrialFromLead(\''+l.id+'\')"><i class="fa-solid fa-user-clock" style="margin-right:0.2rem"></i>Book Trial</button><button class="btn-sm" style="font-size:0.68rem;border-color:#A04040;color:#E07070" onclick="event.stopPropagation();deleteLead(\''+l.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
     }).join('');
   });
 }
@@ -9059,7 +9071,9 @@ async function deleteLead(lid){
   if(!first||!last){setMsg('leadMsg','First and last name required.','error');return;}
   setMsg('leadMsg','Saving...','');
   var payload={first_name:first,last_name:last,email:document.getElementById('leadEmail').value.trim(),phone:document.getElementById('leadPhone').value.trim(),program_id:document.getElementById('leadProgram').value||null,source:document.getElementById('leadSource').value,status:document.getElementById('leadStatus').value,notes:document.getElementById('leadNotes').value.trim()};
-  var r; if(eid){r=await sb.from('leads').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('leads').insert(payload);}
+  var _exLead = eid ? allLeads.find(function(x){return x.id===eid;}) : null;
+  if(payload.status==='converted' && (!_exLead || !_exLead.converted_at)){ payload.converted_at = new Date().toISOString(); }
+    var r; if(eid){r=await sb.from('leads').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('leads').insert(payload);}
   if(r.error){setMsg('leadMsg',r.error.message,'error');}else{setMsg('leadMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadLeads();buildHomeStats();setTimeout(closeAddLead,1000);}
 }
 function bookTrialFromLead(lid){
