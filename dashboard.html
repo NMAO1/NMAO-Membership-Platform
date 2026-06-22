@@ -635,7 +635,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
         <div>
           <h1 style="font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.2rem" id="homeGreeting">Good morning</h1>
-          <div style="font-size:0.85rem;color:var(--muted)" id="homeDateSub"></div>
+       <span style="display:inline-flex;align-items:center;gap:0.15rem"><div style="font-size:0.85rem;color:var(--muted)" id="homeDateSub"></div><button class="help-hint-inline" onclick="openHelpPopover('home',this)" title="What is this page?">?</button></span>
         </div>
       </div>
             <!-- Membership Alert Banner -->
@@ -690,7 +690,7 @@
         <div id="setupStepsList"></div>
       </div>
       <div class="home-stats" id="homeStats"></div>
-      <div class="content-heading"><h2>Revenue</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Revenue</h2><button class="help-hint-inline" onclick="openHelpPopover('home.revenue',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:0.75rem">
         <div class="rev-card" onclick="openRevenueBreakdown('today')"><div class="rev-amount" id="revToday">$0</div><div class="rev-label">Today</div></div>
         <div class="rev-card" onclick="openRevenueBreakdown('yesterday')"><div class="rev-amount" id="revYesterday">$0</div><div class="rev-label">Yesterday</div></div>
@@ -699,7 +699,7 @@
         <div class="rev-card" onclick="openUpcomingBreakdown(30)"><div class="rev-amount" id="upc30">$0</div><div class="rev-label">Next 30 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc30sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
       </div>
       <div id="upcPastDue" style="display:none;font-size:0.78rem;color:#E07070;margin-bottom:1.5rem;text-align:center"></div>
-      <div class="content-heading"><h2>Calendar</h2><div class="rule-h"></div>
+      <div class="content-heading"><h2>Calendar</h2><button class="help-hint-inline" onclick="openHelpPopover('home.calendar',this)" title="Help">?</button><div class="rule-h"></div>
         <div class="cal-view-toggle">
           <button class="cal-view-btn" id="calViewWeek" onclick="setCalView('week')"><i class="fa-solid fa-calendar-week" style="margin-right:0.3rem"></i>Week</button>
           <button class="cal-view-btn" id="calViewMonth" onclick="setCalView('month')"><i class="fa-solid fa-calendar" style="margin-right:0.3rem"></i>Month</button>
@@ -727,7 +727,7 @@
           <div id="monthGridCells" style="display:contents"></div>
         </div>
       </div>
-      <div class="content-heading"><h2><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>Upcoming Birthdays</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>Upcoming Birthdays</h2><button class="help-hint-inline" onclick="openHelpPopover('home.birthdays',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div id="birthdaysList" style="margin-bottom:1.5rem"></div>
     </div>
 
@@ -3730,6 +3730,33 @@ var HELP_CONTENT = {
       'Glance at the revenue cards for a quick read on the day.'
     ],
     example: 'Example: a red banner reads 3 students at risk. Click it, expand, and send them a sign-in link to win them back.'
+  },
+  'home.revenue': {
+    title: 'Revenue',
+    purpose: 'A quick read on money in: what you have collected today, yesterday, and this month.',
+    actions: [
+      'Glance here each day for a pulse on revenue.',
+      'For the full breakdown and trends, open Analytics.'
+    ],
+    example: 'Example: Today shows 480 and This Month shows 7,200, so the month is tracking well.'
+  },
+  'home.calendar': {
+    title: 'Calendar',
+    purpose: 'A compact view of your class schedule right on the dashboard.',
+    actions: [
+      'See what is running today and this week at a glance.',
+      'For full scheduling and attendance, open the Schedule tab.'
+    ],
+    example: 'Example: you spot that tonight has three classes stacked and plan your floor coverage.'
+  },
+  'home.birthdays': {
+    title: 'Upcoming Birthdays',
+    purpose: 'Students with birthdays coming up, so you never miss a chance to make someone feel seen.',
+    actions: [
+      'Check who is celebrating soon.',
+      'Send a quick text or give a shout-out in class.'
+    ],
+    example: 'Example: a student has a birthday Friday; send a happy-birthday text and a free-class pass.'
   },
   members: {
     title: 'Members',
