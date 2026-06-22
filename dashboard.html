@@ -825,7 +825,7 @@
     <!-- ═══════════════ §PAGE-EVENTS ═══════════════ -->
     <div class="page" id="page-events">
       <div class="content-heading">
-        <h2>Events</h2>
+        <h2>Events</h2><button class="help-hint-inline" onclick="openHelpPopover('events',this)" title="Help">?</button>
         <div class="rule-h"></div>
         <button class="panel-action" onclick="openAddEvent()"><i class="fa-solid fa-plus"></i> Add Event</button>
       </div>
@@ -1343,7 +1343,7 @@
     <!-- Header -->
     <div style="padding:1.5rem 1.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
       <div>
-        <div id="addEventTitle" style="font-family:var(--font-display);font-size:1.25rem;color:var(--white);letter-spacing:0.05em">Create Event</div>
+        <div id="addEventTitle" style="font-family:var(--font-display);font-size:1.25rem;color:var(--white);letter-spacing:0.05em">Create Event</div><button class="help-hint-inline" onclick="openHelpPopover('events.event_form',this)" title="Help">?</button>
         <div id="evWizardStep" style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-top:0.25rem">Step 1 of 3 — Details</div>
       </div>
       <button class="modal-close" onclick="closeAddEvent()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -1368,7 +1368,7 @@
 
       <!-- TAB 1: DETAILS -->
       <div id="evWizPanelDetails">
-        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Event Type</div>
+        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Event Type <button class="help-hint-inline" onclick="openHelpPopover('events.ev_type',this)" title="Help">?</button></div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
         <div id="evTypeCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.6rem;margin-bottom:1.5rem">
           <!-- Cards rendered by JS -->
@@ -1378,33 +1378,33 @@
         <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Basic Info</div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
 
-        <div class="field"><label>Event Title</label><input type="text" id="evTitle" placeholder="e.g. Spring Camp" /></div>
+        <div class="field"><label>Event Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_title',this)" title="Help">?</button></label><input type="text" id="evTitle" placeholder="e.g. Spring Camp" /></div>
 
         <div class="form-row">
-          <div class="field"><label>Location</label><input type="text" id="evLocation" placeholder="Main Dojo or 123 Main St" /></div>
-          <div class="field"><label>Capacity</label><input type="number" id="evCapacity" placeholder="e.g. 30" min="1" /></div>
+          <div class="field"><label>Location <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_location',this)" title="Help">?</button></label><input type="text" id="evLocation" placeholder="Main Dojo or 123 Main St" /></div>
+          <div class="field"><label>Capacity <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_capacity',this)" title="Help">?</button></label><input type="number" id="evCapacity" placeholder="e.g. 30" min="1" /></div>
         </div>
 
         <div class="form-row">
-          <div class="field"><label>Visibility</label><select id="evVisibility"><option value="students">Students Only</option><option value="public">Public</option></select></div>
-          <div class="field"><label>Registration Deadline</label><input type="date" id="evRegistrationDeadline" /></div>
+          <div class="field"><label>Visibility <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_visibility',this)" title="Help">?</button></label><select id="evVisibility"><option value="students">Students Only</option><option value="public">Public</option></select></div>
+          <div class="field"><label>Registration Deadline <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_deadline',this)" title="Help">?</button></label><input type="date" id="evRegistrationDeadline" /></div>
         </div>
 
-        <div class="field"><label>Guest Instructor (optional)</label><input type="text" id="evGuestInstructor" placeholder="e.g. Instructor Name" /></div>
+        <div class="field"><label>Guest Instructor (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_guest',this)" title="Help">?</button></label><input type="text" id="evGuestInstructor" placeholder="e.g. Instructor Name" /></div>
 
-        <div class="field"><label>Description</label><textarea id="evDescription" rows="3" placeholder="What is this event about? Who is it for?"></textarea></div>
+        <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_desc',this)" title="Help">?</button></label><textarea id="evDescription" rows="3" placeholder="What is this event about? Who is it for?"></textarea></div>
         <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem;margin-top:1.25rem">Public Signup</div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
         <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">When enabled, anyone with the link can register. Use this to share via email, social media, or QR code.</p>
         <label class="check-item" style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.85rem;background:var(--black);border:1px solid var(--border);cursor:pointer">
           <input type="checkbox" id="evPublicSignupEnabled" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer" />
-          <span style="font-size:0.88rem;color:var(--white)">Enable public signup link for this event</span>
+          <span style="font-size:0.88rem;color:var(--white)">Enable public signup link for this event <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_public',this)" title="Help">?</button></span>
         </label>
       </div>
 
       <!-- TAB 2: SCHEDULE -->
       <div id="evWizPanelSchedule" style="display:none">
-        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Schedule Type</div>
+        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Schedule Type <button class="help-hint-inline" onclick="openHelpPopover('events.ev_schedule',this)" title="Help">?</button></div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
         <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Multi-session events let you track a single set of registrations across multiple dates — ideal for camps and clinics.</p>
 
@@ -1426,7 +1426,7 @@
 
       <!-- TAB 3: PRICING -->
       <div id="evWizPanelPricing" style="display:none">
-        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Pricing Tiers</div>
+        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem">Pricing Tiers <button class="help-hint-inline" onclick="openHelpPopover('events.ev_pricing',this)" title="Help">?</button></div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
         <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem">Add tiers for full event, single day, member rates, early bird, etc. Each tier defines how many sessions are included — students can purchase a partial-attendance pass.</p>
 
@@ -3791,6 +3791,35 @@ var HELP_CONTENT = {
   'classes.cl_start': { title: 'Start Time', purpose: 'When the class begins. Sets where it sits on the calendar.' },
   'classes.cl_end': { title: 'End Time', purpose: 'When the class ends. Together with the start time it blocks the slot on the calendar.' },
   'classes.cl_days': { title: 'Days of Week', purpose: 'Which days this class repeats. Tap each day it runs, and the class generates sessions on those days going forward.' },
+  events: {
+    title: 'Events',
+    purpose: 'One-off events with their own public sign-up page: seminars, workshops, tournaments, and community nights.',
+    actions: [
+      'Add an event with the Add Event button, which walks you through details, schedule, and pricing.',
+      'Share its public link so people can register and pay, then track who has signed up.'
+    ],
+    example: 'Example: set up a guest-instructor seminar, post the link, and watch registrations come in.'
+  },
+  'events.event_form': {
+    title: 'Create Event',
+    purpose: 'A three-step wizard to create an event: Details, Schedule, and Pricing.',
+    actions: [
+      'Fill in the details, set one or more session dates, then add your price tiers.',
+      'Use Next and Back to move between steps, and Save when done.'
+    ],
+    example: 'Example: a weekend camp with two session days and an early-bird tier.'
+  },
+  'events.ev_type': { title: 'Event Type', purpose: 'The kind of event you are running, like seminar, workshop, or tournament. Tap a card to pick. It helps members understand and filter what you offer.' },
+  'events.ev_title': { title: 'Event Title', purpose: 'The name people see, like Spring Camp or Special Seminar.' },
+  'events.ev_location': { title: 'Location', purpose: 'Where the event happens, your dojo or an address. Shown to registrants.' },
+  'events.ev_capacity': { title: 'Capacity', purpose: 'The most people who can register. Leave blank for no cap.' },
+  'events.ev_visibility': { title: 'Visibility', purpose: 'Who can see and register. Students Only keeps it internal; Public opens it to anyone with the link.' },
+  'events.ev_deadline': { title: 'Registration Deadline', purpose: 'The last day people can sign up. Leave blank to keep registration open until the event.' },
+  'events.ev_guest': { title: 'Guest Instructor', purpose: 'Optional. The name of a visiting instructor headlining the event, shown to registrants.' },
+  'events.ev_desc': { title: 'Description', purpose: 'What the event is about and who it is for. Shown on the public sign-up page.' },
+  'events.ev_public': { title: 'Public signup link', purpose: 'When on, the event gets a shareable public link so people can register and pay online. Off keeps it staff-managed only.' },
+  'events.ev_schedule': { title: 'Schedule', purpose: 'When the event happens. Choose Single for a one-day event, or Multi to track one registration across several dates, ideal for camps and clinics. Add each session date and time.' },
+  'events.ev_pricing': { title: 'Pricing Tiers', purpose: 'The ticket options for the event, like full event, single day, member rate, or early bird. Each tier sets a price and how many sessions it includes, so a student can buy a partial-attendance pass.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
