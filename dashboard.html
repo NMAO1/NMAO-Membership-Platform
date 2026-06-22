@@ -4378,13 +4378,42 @@ async function openRevenueBreakdown(period){
   if(!data.length){html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No transactions found.</div>';}
   else{
     var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=netCashAmount(p);});
-    window._revBreakdownData=data; window._memberDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
+    window._revBreakdownData=data; window._memberDrillBuilt=false; window._retailDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='retail_sale'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleRetailDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="retailDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="retailDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
     html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Transactions</div>';
     data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
   }
   document.getElementById('revBreakdownList').innerHTML=html;
 }
 function closeRevenueBreakdown(){ document.getElementById('revenueBreakdownModal').classList.remove('active'); }
+
+function toggleRetailDrill(){
+  var el=document.getElementById('retailDrill'); if(!el) return;
+  var chev=document.getElementById('retailDrillChev');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    if(chev) chev.style.transform='rotate(90deg)';
+    if(!window._retailDrillBuilt){ window._retailDrillBuilt=true; buildRetailDrill(); }
+  } else {
+    el.style.display='none';
+    if(chev) chev.style.transform='';
+  }
+}
+
+function buildRetailDrill(){
+  var el=document.getElementById('retailDrill'); if(!el) return;
+  var pays=(window._revBreakdownData||[]).filter(function(p){return (p.type||'')==='retail_sale';});
+  if(!pays.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.76rem;padding:0.4rem 0">No retail sales.</div>'; return; }
+  var html='';
+  pays.forEach(function(p){
+    var s=p.students; var buyer=s?(((s.first_name||'')+' '+(s.last_name||'')).trim()):'Walk-in'; if(!buyer) buyer='Walk-in';
+    var cash=netCashAmount(p);
+    var items=''; var li=p.line_items;
+    if(li && li.length){ var parts=[]; for(var i=0;i<li.length;i++){ var it=li[i]||{}; parts.push((it.quantity||1)+'\u00d7 '+(it.name||'Item')); } items=parts.join(', '); }
+    else { items=p.description||'Retail'; }
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+items+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
+  });
+  el.innerHTML=html;
+}
 
 function toggleMemberDrill(){
   var el=document.getElementById('memberDrill'); if(!el) return;
