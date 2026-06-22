@@ -1306,7 +1306,7 @@
         <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Current Plan</div>
         <div id="billingPlanName" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">NMAO Platform</div>
         <div id="billingPlanPrice" style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem">$99/month</div>
-        <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Change Plan</button>
+        <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Manage Billing</button>
       </div></div>
 
       <!-- §SMS-USAGE -->
@@ -3570,8 +3570,17 @@ function updatePlanBadge(plan) {
   document.querySelectorAll('.plan-card').forEach(function(c){c.classList.remove('current');});
   var cur = document.getElementById('planCard-' + plan); if (cur) cur.classList.add('current');
 }
-function openPlanModal()  { updatePlanBadge(currentPlan); document.getElementById('planModal').classList.add('active'); }
-function closePlanModal() { document.getElementById('planModal').classList.remove('active'); }
+function openPlanModal()  { openBillingPortal(); }
+async function openBillingPortal(){
+  try{
+    var ret = window.location.origin + window.location.pathname + '?billing=managed';
+    var r = await fetch(SURL+'/functions/v1/create-billing-portal-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID, return_url:ret})});
+    var d = await r.json();
+    if(d && d.url){ window.location.href = d.url; return; }
+    alert(d && d.error ? d.error : 'Could not open billing right now. Please contact support@nmao.us.');
+  }catch(e){ alert('Could not open billing right now. Please contact support@nmao.us.'); }
+}
+  function closePlanModal() { document.getElementById('planModal').classList.remove('active'); }
 async function selectPlan(plan) {
   setMsg('planMsg','Updating...','');
   var r=await sb.from('schools').update({plan:plan}).eq('id',SID);
