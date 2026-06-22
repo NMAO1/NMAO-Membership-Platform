@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pay</title>
+  <link rel="icon" type="image/png" href="https://app.nmao.us/favicon.png" />
+  <meta property="og:title" content="Pay" />
+  <meta property="og:description" content="Quick, secure payment." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --black: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold: #C9A84C;
+      --white: #ffffff;
+      --muted: #8a8278;
+      --font-display: "Cormorant Garamond", serif;
+      --font-ui: "Inter", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--white); font-family: var(--font-ui); min-height: 100vh; padding: 1.5rem; line-height: 1.5; }
+    .wrap { max-width: 460px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 1.75rem; padding-top: 1.25rem; }
+    .brand-logo { max-height: 70px; max-width: 200px; display: block; margin: 0 auto 0.75rem; }
+    .school-name { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 500; }
+    .header-rule { width: 60px; height: 1px; background: var(--gold); margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 1.25rem; }
+    .product-img { width: 100%; max-height: 240px; object-fit: cover; margin-bottom: 1.25rem; border: 1px solid var(--border); }
+    .offer-headline { font-family: var(--font-display); font-size: 1.8rem; color: var(--white); margin-bottom: 0.4rem; line-height: 1.2; font-weight: 600; }
+    .pay-price { font-family: var(--font-display); font-size: 2rem; color: var(--gold); font-weight: 600; margin-bottom: 1.25rem; }
+    .pay-desc { font-size: 0.95rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .btn-primary {
+      width: 100%; padding: 1rem; background: var(--gold); color: var(--black); border: none;
+      font-family: var(--font-ui); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 600; cursor: pointer; transition: all 0.18s; margin-top: 0.25rem;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .fineprint { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 1rem; line-height: 1.5; }
+    .msg { margin-top: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem; text-align: center; }
+    .msg.error { background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.4); color: #E07070; }
+    .msg.success { background: rgba(125,189,125,0.12); border: 1px solid rgba(125,189,125,0.4); color: #7DBD7D; }
+    .loading-state { text-align: center; padding: 3rem 1rem; color: var(--muted); font-style: italic; font-size: 0.9rem; }
+    .footer { text-align: center; padding: 2rem 1rem 1rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; }
+    .success-screen { text-align: center; padding: 2.5rem 1.5rem; }
+    .success-screen i { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+    .success-screen h2 { font-family: var(--font-display); font-size: 1.75rem; color: var(--white); margin-bottom: 0.75rem; font-weight: 600; }
+    .success-screen p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="root">
+      <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>
+    </div>
+    <div class="footer">Powered by NMAO</div>
+  </div>
+
+  <script>
+    var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var sb = supabase.createClient(SURL, SKEY);
+
+    var state = { slug: null, product_id: null, price: 0, paying: false };
+
+    function getParam(name){ var p = new URLSearchParams(window.location.search); return p.get(name); }
+
+    function escapeHtml(s){
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function stripHtml(s){
+      var t = document.createElement('div');
+      t.innerHTML = String(s == null ? '' : s);
+      return (t.textContent || t.innerText || '').trim();
+    }
+
+    function money(n){
+      var v = parseFloat(n) || 0;
+      return '$' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
+    }
+
+    function applyBranding(d){
+      var r = document.documentElement;
+      if (d.school_color) r.style.setProperty('--gold', d.school_color);
+      document.title = (d.school_name || 'Pay') + ' - Pay';
+    }
+
+    function setMsg(text, type){
+      var el = document.getElementById('payMsg');
+      if (!el) return;
+      el.className = 'msg ' + (type || '');
+      el.textContent = text;
+    }
+
+    function renderError(msg){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-exclamation" style="color:#E07070"></i>' +
+        '<h2>Not available</h2><p>' + escapeHtml(msg) + '</p></div></div>';
+    }
+
+    function renderPaid(){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-check"></i>' +
+        '<h2>Payment received</h2>' +
+        '<p>Thank you. A receipt has been emailed to you. You can close this page.</p>' +
+        '</div></div>';
+    }
+
+    function renderProduct(d){
+      var logo = d.school_logo
+        ? ('<img class="brand-logo" src="' + escapeHtml(d.school_logo) + '" alt="' + escapeHtml(d.school_name || '') + '" />')
+        : '';
+      var img = d.image_url
+        ? ('<img class="product-img" src="' + escapeHtml(d.image_url) + '" alt="' + escapeHtml(d.name || '') + '" />')
+        : '';
+      var descText = d.description ? stripHtml(d.description) : '';
+      var desc = descText ? ('<div class="pay-desc">' + escapeHtml(descText) + '</div>') : '';
+      var soldOut = (d.in_stock === false);
+      var btn = soldOut
+        ? '<button class="btn-primary" disabled>Sold Out</button>'
+        : '<button class="btn-primary" id="payBtn" onclick="payNow()">Pay ' + escapeHtml(money(d.retail_price)) + '</button>';
+
+      document.getElementById('root').innerHTML =
+        '<div class="header">' + logo +
+          '<div class="school-name">' + escapeHtml(d.school_name || '') + '</div>' +
+          '<div class="header-rule"></div>' +
+        '</div>' +
+        '<div class="card">' +
+          img +
+          '<div class="offer-headline">' + escapeHtml(d.name || 'Pay') + '</div>' +
+          '<div class="pay-price">' + escapeHtml(money(d.retail_price)) + '</div>' +
+          desc +
+          btn +
+          '<div id="payMsg"></div>' +
+          '<div class="fineprint">Secure checkout powered by Stripe. A receipt is emailed to you.</div>' +
+        '</div>';
+    }
+
+    async function payNow(){
+      if (state.paying) return;
+      state.paying = true;
+      var btn = document.getElementById('payBtn');
+      if (btn){ btn.disabled = true; btn.textContent = 'Please wait...'; }
+      setMsg('', '');
+      try {
+        var res = await sb.functions.invoke('create-public-product-checkout', {
+          body: { slug: state.slug, product_id: state.product_id }
+        });
+        var data = res.data || {};
+        if (data.checkout_url){ window.location.href = data.checkout_url; return; }
+        setMsg((data && data.message) ? data.message : 'Could not start checkout. Please try again.', 'error');
+        if (btn){ btn.disabled = false; btn.textContent = 'Pay ' + money(state.price); }
+        state.paying = false;
+      } catch (e){
+        setMsg('Something went wrong. Please try again.', 'error');
+        if (btn){ btn.disabled = false; btn.textContent = 'Pay ' + money(state.price); }
+        state.paying = false;
+      }
+    }
+
+    async function init(){
+      var slug = getParam('school');
+      var product = getParam('product');
+      state.slug = slug;
+      state.product_id = product;
+
+      if (getParam('paid')){ renderPaid(); return; }
+      if (!slug || !product){
+        renderError('This payment link is incomplete. Please use the code your school shared.');
+        return;
+      }
+      try {
+        var res = await sb.rpc('get_public_product', { p_slug: slug, p_product_id: product });
+        if (res.error || !res.data || !res.data.length){
+          renderError('This item is not available for purchase right now. Please contact the school.');
+          return;
+        }
+        var d = res.data[0];
+        state.price = d.retail_price;
+        applyBranding(d);
+        renderProduct(d);
+        if (getParam('cancelled')){ setMsg('Payment cancelled. You can try again.', ''); }
+      } catch (e){
+        renderError('We could not load this item. Please try again later.');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
