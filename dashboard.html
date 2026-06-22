@@ -4378,7 +4378,7 @@ async function openRevenueBreakdown(period){
   if(!data.length){html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No transactions found.</div>';}
   else{
     var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=netCashAmount(p);});
-    window._revBreakdownData=data; window._memberDrillBuilt=false; window._retailDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='retail_sale'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleRetailDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="retailDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="retailDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
+    window._revBreakdownData=data; window._memberDrillBuilt=false; window._packDrillBuilt=false; window._retailDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='session_pack'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="togglePackDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="packDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="packDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='retail_sale'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleRetailDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="retailDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="retailDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
     html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Transactions</div>';
     data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
   }
@@ -4411,6 +4411,47 @@ function buildRetailDrill(){
     if(li && li.length){ var parts=[]; for(var i=0;i<li.length;i++){ var it=li[i]||{}; parts.push((it.quantity||1)+'\u00d7 '+(it.name||'Item')); } items=parts.join(', '); }
     else { items=p.description||'Retail'; }
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+items+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+function togglePackDrill(){
+  var el=document.getElementById('packDrill'); if(!el) return;
+  var chev=document.getElementById('packDrillChev');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    if(chev) chev.style.transform='rotate(90deg)';
+    if(!window._packDrillBuilt){ window._packDrillBuilt=true; buildPackDrill(); }
+  } else {
+    el.style.display='none';
+    if(chev) chev.style.transform='';
+  }
+}
+
+async function buildPackDrill(){
+  var el=document.getElementById('packDrill'); if(!el) return;
+  el.innerHTML='<div style="color:var(--muted);font-size:0.76rem;padding:0.4rem 0">Loading...</div>';
+  var pays=(window._revBreakdownData||[]).filter(function(p){return (p.type||'')==='session_pack';});
+  if(!pays.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.76rem;padding:0.4rem 0">No session pack sales.</div>'; return; }
+  var sids=[]; pays.forEach(function(p){ if(p.student_id && sids.indexOf(p.student_id)===-1) sids.push(p.student_id); });
+  var packsByStudent={};
+  try{
+    var pr=await sb.from('student_session_packs').select('student_id,sessions_remaining,created_at,status,session_packs(name,quantity)').in('student_id',sids).order('created_at',{ascending:false});
+    (pr.data||[]).forEach(function(sp){ if(!packsByStudent[sp.student_id]) packsByStudent[sp.student_id]=[]; packsByStudent[sp.student_id].push(sp); });
+  }catch(e){}
+  var html='';
+  pays.forEach(function(p){
+    var s=p.students; var buyer=s?(((s.first_name||'')+' '+(s.last_name||'')).trim()):'Walk-in'; if(!buyer) buyer='Walk-in';
+    var cash=netCashAmount(p);
+    var packName='Session Pack'; var li=p.line_items;
+    if(li && li.length){ var parts=[]; for(var i=0;i<li.length;i++){ var it=li[i]||{}; parts.push((it.quantity||1)+'\u00d7 '+(it.name||'Pack')); } packName=parts.join(', '); }
+    else if(p.description){ packName=p.description; }
+    var list=packsByStudent[p.student_id]||[]; var sp=null;
+    for(var i=0;i<list.length;i++){ var spk=list[i].session_packs||{}; if(li && li.length && li[0] && spk.name===li[0].name){ sp=list[i]; break; } }
+    if(!sp && list.length) sp=list[0];
+    var balLabel='\u2014';
+    if(sp){ var pk=sp.session_packs||{}; var rem=(sp.sessions_remaining!=null)?sp.sessions_remaining:'?'; var tot=(pk.quantity!=null)?pk.quantity:'?'; balLabel=rem+' of '+tot+' left'; }
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+packName+' \u00b7 '+balLabel+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
   });
   el.innerHTML=html;
 }
