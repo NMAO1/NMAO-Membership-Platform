@@ -1002,7 +1002,7 @@
               <div class="field"><label>Subject</label><input type="text" id="alertSubject" placeholder="e.g. School Closed Saturday" /></div>
               <div class="field"><label>Audience</label><select id="alertAudience"><option value="all">All Members</option><option value="active">Active Only</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
               <div class="field" id="alertTagField" style="display:none"><label>Select Tag</label><select id="alertTag"><option value="">-- Select Tag --</option></select></div>
-              <div class="field"><label>CTA (optional)</label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div><div class="field"><label>Schedule for (optional)</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="date" id="alertScheduleDate" style="max-width:160px" /><input type="time" id="alertScheduleTime" style="max-width:120px" /></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">Leave blank to publish now. Pick a date (time optional) to schedule — it appears in member portals then.</div></div>
+              <div class="field"><label>Link to Event (optional)</label><select id="alertEventLink" onchange="alertEventSelected()" onfocus="populateAlertEventDropdown()"><option value="">-- None --</option></select></div><div class="field"><label>CTA (optional)</label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div><div class="field"><label>Schedule for (optional)</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="date" id="alertScheduleDate" style="max-width:160px" /><input type="time" id="alertScheduleTime" style="max-width:120px" /></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">Leave blank to publish now. Pick a date (time optional) to schedule — it appears in member portals then.</div></div>
             </div>
             <div><div class="field"><label>Message</label><div id="alertBodyEditor" style="margin-top:0.25rem"></div></div></div>
           </div>
@@ -11032,6 +11032,28 @@ function useTemplate(type){
   setTimeout(function(){document.getElementById('commMsg').textContent='';},3000);
 }
 
+function populateAlertEventDropdown(){
+  var sel=document.getElementById('alertEventLink'); if(!sel) return;
+  var cur=sel.value;
+  var evs=(window.allEvents||[]).filter(function(e){return e.public_signup_enabled;});
+  var html='<option value="">-- None --</option>';
+  for(var i=0;i<evs.length;i++){
+    var e=evs[i];
+    var t=(e.title||'Event').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html+='<option value="'+e.id+'">'+t+'</option>';
+  }
+  sel.innerHTML=html;
+  if(cur) sel.value=cur;
+}
+
+function alertEventSelected(){
+  var sel=document.getElementById('alertEventLink'); if(!sel||!sel.value) return;
+  var e=(window.allEvents||[]).find(function(x){return x.id===sel.value;});
+  if(!e) return;
+  document.getElementById('alertCtaLabel').value = e.title || 'Register';
+  document.getElementById('alertCtaUrl').value = APP_URL + 'event.html?id=' + e.id;
+}
+
 async function saveAlertDraft(){
   var subject=document.getElementById('alertSubject').value.trim();
   var body=getQuillContent('alertBodyEditor');
@@ -11067,7 +11089,7 @@ async function sendAlert(){
   }catch(e){}
   var r=await sb.from('school_announcements').insert({school_id:SID,type:selectedAlertType,subject:subject,body:body,audience:audience,status:'sent',sent_at:startIso,scheduled_for:startIso,expires_at:expiresAt,cta_label:ctaLabel||null,cta_url:ctaUrl||null});
   if(r.error){setMsg('alertMsg',r.error.message,'error');}
-else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';document.getElementById('alertCtaLabel').value='';document.getElementById('alertCtaUrl').value='';document.getElementById('alertScheduleDate').value='';document.getElementById('alertScheduleTime').value='';var _sbtn=document.getElementById('alertSendBtn');if(_sbtn)_sbtn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Now';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
+else{setMsg('alertMsg','Alert sent!','success');document.getElementById('alertSubject').value='';document.getElementById('alertCtaLabel').value='';document.getElementById('alertCtaUrl').value='';var _ael=document.getElementById('alertEventLink');if(_ael)_ael.value='';document.getElementById('alertScheduleDate').value='';document.getElementById('alertScheduleTime').value='';var _sbtn=document.getElementById('alertSendBtn');if(_sbtn)_sbtn.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send Now';if(quillEditors['alertBodyEditor'])quillEditors['alertBodyEditor'].setText('');await loadAlertHistory();setTimeout(function(){document.getElementById('alertMsg').textContent='';},3000);}
 }
 
 // SMS Inbox
