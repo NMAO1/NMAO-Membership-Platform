@@ -7292,6 +7292,17 @@ async function loadUpcomingRevenue(){
     try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
     var r=await sb.from('student_memberships').select('id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('status',['active','trialing','past_due']);
     var rows=r.data||[];
+    // Pull Stripe-exact next-charge dates for auto (card-on-file) members.
+    // Cash/manual members have no subscription and fall back to the computed due date.
+    var stripeDates={};
+    try{
+      var _hasSub=false; for(var z=0;z<rows.length;z++){ if(rows[z].stripe_subscription_id){ _hasSub=true; break; } }
+      if(_hasSub){
+        var _dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+        var _dd=await _dr.json();
+        if(_dd && _dd.dates) stripeDates=_dd.dates;
+      }
+    }catch(e){}
     var now=new Date();
     var d15=new Date(now.getTime()+15*86400000); var d30=new Date(now.getTime()+30*86400000);
     var a15=0,c15=0,a30=0,c30=0,pastDue=0,pastN=0; var list=[];
@@ -7303,7 +7314,10 @@ async function loadUpcomingRevenue(){
       var nm=sm.students?(((sm.students.first_name||'')+' '+(sm.students.last_name||'')).trim()):'Member';
       if(sm.status==='past_due'){ pastDue+=amt; pastN++; list.push({name:nm,date:null,amount:amt,mode:mode,status:'past_due'}); continue; }
       if(parseFloat(m.price||0)<=0) continue;
-      var next=smNextChargeDate(sm,m); if(!next) continue;
+      var next;
+      if(sm.stripe_subscription_id && stripeDates[sm.stripe_subscription_id]){ next=new Date(stripeDates[sm.stripe_subscription_id]*1000); }
+      else { next=smNextChargeDate(sm,m); }
+      if(!next) continue;
       if(next.getTime()>d30.getTime()) continue;
       if(mode==='auto'){ a30+=amt; if(next.getTime()<=d15.getTime()) a15+=amt; }
       else { c30+=amt; if(next.getTime()<=d15.getTime()) c15+=amt; }
