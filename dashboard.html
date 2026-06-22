@@ -756,15 +756,15 @@
 
     <!-- ═══════════════ §PAGE-SESSIONS ═══════════════ -->
     <div class="page" id="page-sessions">
-      <div class="content-heading"><h2>Sessions</h2><div class="rule-h"></div>
-        <button class="panel-action" onclick="openBookSession()"><i class="fa-solid fa-plus"></i> Book Session</button>
+      <div class="content-heading"><h2>Sessions</h2><button class="help-hint-inline" onclick="openHelpPopover('sessions',this)" title="Help">?</button><div class="rule-h"></div>
+      <button class="panel-action" onclick="openBookSession()"><i class="fa-solid fa-plus"></i> Book Session</button>
       </div>
       <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Private lessons, semi-private, assessments, and more.</p>
       <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap">
-        <button class="comm-tab active" id="stab-upcoming"  onclick="switchSessionTab('upcoming')"><i class="fa-solid fa-calendar-check"></i> Upcoming</button>
-        <button class="comm-tab"        id="stab-types"     onclick="switchSessionTab('types')"><i class="fa-solid fa-list"></i> Session Types</button>
-        <button class="comm-tab"        id="stab-packs"     onclick="switchSessionTab('packs')"><i class="fa-solid fa-layer-group"></i> Session Packs</button>
-        <button class="comm-tab"        id="stab-settings"  onclick="switchSessionTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button>
+        <button class="comm-tab active" id="stab-upcoming"  onclick="switchSessionTab('upcoming')"><i class="fa-solid fa-calendar-check"></i> Upcoming</button><button class="help-hint-inline" onclick="switchSessionTab('upcoming');openHelpPopover('sessions.upcoming',this)" title="Help">?</button>
+        <button class="comm-tab"        id="stab-types"     onclick="switchSessionTab('types')"><i class="fa-solid fa-list"></i> Session Types</button><button class="help-hint-inline" onclick="switchSessionTab('types');openHelpPopover('sessions.types',this)" title="Help">?</button>
+        <button class="comm-tab"        id="stab-packs"     onclick="switchSessionTab('packs')"><i class="fa-solid fa-layer-group"></i> Session Packs</button><button class="help-hint-inline" onclick="switchSessionTab('packs');openHelpPopover('sessions.packs',this)" title="Help">?</button>
+        <button class="comm-tab"        id="stab-settings"  onclick="switchSessionTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button><button class="help-hint-inline" onclick="switchSessionTab('settings');openHelpPopover('sessions.settings',this)" title="Help">?</button>
       </div>
       <!-- Upcoming Tab -->
       <div id="sessTabUpcoming">
@@ -2478,20 +2478,20 @@
 <!-- §MODAL-SESSTYPE -->
 <div class="modal-overlay" id="addSessionTypeModal">
   <div class="modal" style="width:460px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addSessionTypeTitle">New Session Type</span><button class="modal-close" onclick="closeAddSessionType()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addSessionTypeTitle">New Session Type</span><button class="help-hint-inline" onclick="openHelpPopover('sessions.type_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddSessionType()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="sessionTypeEditId" value="" />
-      <div class="field"><label>Type Name</label><input type="text" id="stName" placeholder="e.g. Private Lesson, Assessment" /></div>
+      <div class="field"><label>Type Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_name',this)" title="Help">?</button></label><input type="text" id="stName" placeholder="e.g. Private Lesson, Assessment" /></div>
       <div class="form-row">
-        <div class="field"><label>Duration (minutes)</label><input type="number" id="stDuration" value="60" min="15" step="15" /></div>
-        <div class="field"><label>Default Price</label><input type="number" id="stPrice" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Duration (minutes) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_duration',this)" title="Help">?</button></label><input type="number" id="stDuration" value="60" min="15" step="15" /></div>
+        <div class="field"><label>Default Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_price',this)" title="Help">?</button></label><input type="number" id="stPrice" value="0" min="0" step="0.01" /></div>
       </div>
       <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="stAvailableBooking" checked /><span class="check-item-label">Available for booking</span></label>
-        <label class="check-item"><input type="checkbox" id="stShowPortal" checked /><span class="check-item-label">Show in portal</span></label>
+        <label class="check-item"><input type="checkbox" id="stAvailableBooking" checked /><span class="check-item-label">Available for booking <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_booking',this)" title="Help">?</button></span></label>
+        <label class="check-item"><input type="checkbox" id="stShowPortal" checked /><span class="check-item-label">Show in portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_portal',this)" title="Help">?</button></span></label>
       </div>
-      <div class="field"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="stColor" value="#9060D0" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="stColorHex" value="#9060D0" style="flex:1" oninput="syncSessionTypeColor()" /></div></div>
-      <div class="field"><label>Description (optional)</label><textarea id="stDescription" rows="3" placeholder="What does this session include?"></textarea></div>
+      <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="stColor" value="#9060D0" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="stColorHex" value="#9060D0" style="flex:1" oninput="syncSessionTypeColor()" /></div></div>
+      <div class="field"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_desc',this)" title="Help">?</button></label><textarea id="stDescription" rows="3" placeholder="What does this session include?"></textarea></div>
       <button class="btn-gold-full" onclick="saveSessionType()">Save Session Type</button>
       <p class="form-msg" id="sessionTypeMsg"></p>
     </div>
@@ -2501,23 +2501,23 @@
 <!-- §MODAL-SESSPACK -->
 <div class="modal-overlay" id="addSessionPackModal">
   <div class="modal" style="width:480px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="help-hint-inline" onclick="openHelpPopover('sessions.pack_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
     <input type="hidden" id="sessPackEditId" value="" />
-    <div class="field"><label>Pack Name</label><input type="text" id="spName" placeholder="e.g. 10-Session Pack" /></div>
+    <div class="field"><label>Pack Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_name',this)" title="Help">?</button></label><input type="text" id="spName" placeholder="e.g. 10-Session Pack" /></div>
       <div class="form-row">
-        <div class="field"><label>Number of Sessions</label><input type="number" id="spQuantity" value="10" min="1" /></div>
-        <div class="field"><label>Price</label><input type="number" id="spPrice" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Number of Sessions <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_qty',this)" title="Help">?</button></label><input type="number" id="spQuantity" value="10" min="1" /></div>
+        <div class="field"><label>Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_price',this)" title="Help">?</button></label><input type="number" id="spPrice" value="0" min="0" step="0.01" /></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Expiry (days, blank = no expiry)</label><input type="number" id="spExpiryDays" placeholder="e.g. 90" min="1" /></div>
-<div class="field"><label>Session Type</label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Type --</option></select></div>
+        <div class="field"><label>Expiry (days, blank = no expiry) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_expiry',this)" title="Help">?</button></label><input type="number" id="spExpiryDays" placeholder="e.g. 90" min="1" /></div>
+<div class="field"><label>Session Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_type',this)" title="Help">?</button></label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Type --</option></select></div>
       </div>
       <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="spActive" checked /><span class="check-item-label">Active (available for purchase)</span></label>
-        <label class="check-item"><input type="checkbox" id="spShowPortal" checked /><span class="check-item-label">Show in member portal</span></label>
+        <label class="check-item"><input type="checkbox" id="spActive" checked /><span class="check-item-label">Active (available for purchase) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_active',this)" title="Help">?</button></span></label>
+        <label class="check-item"><input type="checkbox" id="spShowPortal" checked /><span class="check-item-label">Show in member portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_portal',this)" title="Help">?</button></span></label>
       </div>
-      <div class="field"><label>Description (optional)</label><textarea id="spDescription" rows="3" placeholder="What's included in this pack?"></textarea></div>
+      <div class="field"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_desc',this)" title="Help">?</button></label><textarea id="spDescription" rows="3" placeholder="What's included in this pack?"></textarea></div>
       <button class="btn-gold-full" onclick="saveSessionPack()">Save Session Pack</button>
       <p class="form-msg" id="sessPackMsg"></p>
     </div>
@@ -3749,7 +3749,88 @@ var HELP_CONTENT = {
       'Use it to confirm a payment cleared or to reconcile your books.'
     ],
     example: 'Example: a parent asks whether their monthly dues posted. Find their name here to confirm the charge and date.'
-  }
+  },
+  sessions: {
+    title: 'Sessions',
+    purpose: 'One-on-one and small-group offerings members book by appointment, like private lessons or assessments, plus the prepaid packs they buy to attend them.',
+    actions: [
+      'Use the tabs to move between Upcoming bookings, the Session Types you offer, the Packs you sell, and Settings.',
+      'Create a type first, then a pack that draws from it.'
+    ],
+    example: 'Example: offer Private Lesson as a type, sell a 10-Session Pack for it, and each booking spends one session from the members balance.'
+  },
+  'sessions.upcoming': {
+    title: 'Upcoming Sessions',
+    purpose: 'Every booked session on the calendar ahead, who booked it, and when.',
+    actions: [
+      'Scan upcoming bookings to prep your floor.',
+      'Open one to see the member, time, and payment status.',
+      'Use the filters to narrow by status, type, or instructor.'
+    ],
+    example: 'Example: you see three private lessons booked Thursday and plan the mats around them.'
+  },
+  'sessions.types': {
+    title: 'Session Types',
+    purpose: 'The kinds of sessions you offer for booking, each with its length, price, and color.',
+    actions: [
+      'Add a session type for each bookable offering.',
+      'Toggle availability to open or close it for booking.',
+      'Members pick from active types when they book.'
+    ],
+    example: 'Example: create Private Lesson at 60 minutes and Skills Assessment at 30 minutes; both become booking options.'
+  },
+  'sessions.packs': {
+    title: 'Session Packs',
+    purpose: 'Prepaid bundles of sessions members buy up front, like a 10-pack of private lessons, usually at a per-session discount.',
+    actions: [
+      'Create a pack tied to a session type, with a count and price.',
+      'Add an optional expiry to keep members booking.',
+      'Each booking of that type spends one session from the pack.'
+    ],
+    example: 'Example: sell a 10-Session Pack for private lessons at 500; after ten bookings the balance hits zero.'
+  },
+  'sessions.settings': {
+    title: 'Session Settings',
+    purpose: 'Rules for how session booking behaves, including your no-show policy.',
+    actions: [
+      'Set a grace period after which an unattended booking auto-completes.',
+      'Choose what a no-show does: nothing, deduct the session, or charge a fee.'
+    ],
+    example: 'Example: set a 1-hour grace period and Deduct Session, so a no-show still spends a pack session.'
+  },
+  'sessions.type_form': {
+    title: 'New Session Type',
+    purpose: 'Create or edit a bookable session type. These become the options members choose when booking.',
+    actions: [
+      'Give it a name, set the length and price, and choose where it shows.',
+      'Save it, and edit any time.'
+    ],
+    example: 'Example: Private Lesson, 60 minutes, 75 dollars, available for booking and shown in the portal.'
+  },
+  'sessions.st_name': { title: 'Type Name', purpose: 'The name members see when booking, like Private Lesson or Skills Assessment. Keep it clear and specific.' },
+  'sessions.st_duration': { title: 'Duration (minutes)', purpose: 'How long the session runs. It blocks that much time on the calendar, so set the real length. Defaults to 60.' },
+  'sessions.st_price': { title: 'Default Price', purpose: 'The standard charge for one session of this type, used when a member books and pays per session. A pack can cover the cost instead. Set 0 for free.' },
+  'sessions.st_booking': { title: 'Available for booking', purpose: 'When on, members can book this type. Turn it off to retire a type without deleting its history.' },
+  'sessions.st_portal': { title: 'Show in portal', purpose: 'When on, this type appears in the member portal so students can self-book. Off keeps it staff-only.' },
+  'sessions.st_color': { title: 'Color', purpose: 'A label color so this type is easy to spot on the calendar. Purely visual, pick anything.' },
+  'sessions.st_desc': { title: 'Description', purpose: 'Optional details members see when booking, like what to bring or what the session covers.' },
+  'sessions.pack_form': {
+    title: 'New Session Pack',
+    purpose: 'Create or edit a prepaid bundle of sessions tied to a session type. Members buy it once and draw down the balance as they book.',
+    actions: [
+      'Name it, set how many sessions and the price, and pick the session type it applies to.',
+      'Add an optional expiry, then save.'
+    ],
+    example: 'Example: 10-Session Pack, 500 dollars, for Private Lessons, expiring 90 days after purchase.'
+  },
+  'sessions.sp_name': { title: 'Pack Name', purpose: 'What the pack is called when members buy it, like 10-Session Pack. Include the count so it is obvious.' },
+  'sessions.sp_qty': { title: 'Number of Sessions', purpose: 'How many sessions the pack grants. This is the starting balance each booking draws down by one.' },
+  'sessions.sp_price': { title: 'Price', purpose: 'The one-time charge for the whole pack. Divide by the session count to see the per-session rate you are offering.' },
+  'sessions.sp_expiry': { title: 'Expiry (days)', purpose: 'How many days after purchase the pack expires. Leave blank for no expiry. Use it to keep members booking regularly.' },
+  'sessions.sp_type': { title: 'Session Type', purpose: 'Which session type this pack applies to. A booking of that type spends one session from the pack.' },
+  'sessions.sp_active': { title: 'Active', purpose: 'When on, the pack is available for purchase. Turn it off to stop selling it without affecting existing balances.' },
+  'sessions.sp_portal': { title: 'Show in member portal', purpose: 'When on, members can buy this pack themselves from the portal. Off keeps it staff-sold.' },
+  'sessions.sp_desc': { title: 'Description', purpose: 'Optional details about what the pack includes, shown when members view it.' }
 };
 var helpAnchorBtn = null;
 function helpHintsEnabled(){ return localStorage.getItem('nmao_help_hints') !== 'off'; }
@@ -3770,16 +3851,21 @@ function openHelpPopover(page, btn){
   var c = HELP_CONTENT[page];
   if(!c) return;
   helpAnchorBtn = btn;
-  var acts = c.actions.map(function(a){ return '<li style="margin-bottom:0.3rem">' + a + '</li>'; }).join('');
+  var howto = (c.actions && c.actions.length)
+    ? ('<div style="font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">How to use it</div>' +
+       '<ul style="font-size:0.8rem;color:var(--white);line-height:1.45;margin:0 0 0.85rem 1.1rem;padding:0">' +
+       c.actions.map(function(a){ return '<li style="margin-bottom:0.3rem">' + a + '</li>'; }).join('') + '</ul>')
+    : '';
+  var ex = c.example
+    ? ('<div style="font-size:0.8rem;color:var(--muted);line-height:1.5;font-style:italic;border-top:1px solid var(--border);padding-top:0.65rem">' + c.example + '</div>')
+    : '';
   pop.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem">' +
       '<div style="font-size:1.05rem;color:var(--gold);font-weight:600">' + c.title + '</div>' +
       '<button onclick="closeHelpPopover()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.15rem;line-height:1;margin-left:0.75rem">&times;</button>' +
     '</div>' +
-    '<div style="font-size:0.82rem;color:var(--white);line-height:1.5;margin-bottom:0.85rem">' + c.purpose + '</div>' +
-    '<div style="font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">How to use it</div>' +
-    '<ul style="font-size:0.8rem;color:var(--white);line-height:1.45;margin:0 0 0.85rem 1.1rem;padding:0">' + acts + '</ul>' +
-    '<div style="font-size:0.8rem;color:var(--muted);line-height:1.5;font-style:italic;border-top:1px solid var(--border);padding-top:0.65rem">' + c.example + '</div>' +
+    '<div style="font-size:0.82rem;color:var(--white);line-height:1.5;margin-bottom:' + ((howto || ex) ? '0.85rem' : '0.4rem') + '">' + c.purpose + '</div>' +
+    howto + ex +
     '<div style="text-align:right;margin-top:0.65rem"><a onclick="disableHelpHints()" style="font-size:0.7rem;color:var(--muted);cursor:pointer;text-decoration:underline">Turn off hints</a></div>';
   pop.style.display = 'block';
   positionHelpPopover();
