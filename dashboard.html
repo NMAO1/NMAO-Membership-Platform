@@ -6151,6 +6151,19 @@ function smTermLine(sm){
   return '<div style="font-size:0.7rem;color:#E2A84C;margin-top:0.1rem"><i class="fa-solid fa-file-signature" style="margin-right:0.3rem"></i>Term \u00b7 '+lbl+' \u00b7 ends '+endLabel+'</div>';
 }
 
+function smTermLine(sm){
+  if(!sm||!sm.commitment_ends_at) return '';
+  var end=new Date(sm.commitment_ends_at+'T00:00:00');
+  var now=new Date(); now.setHours(0,0,0,0);
+  var endLabel=end.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  if(end<=now){
+    return '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-circle-check" style="margin-right:0.3rem;color:#7BA86B"></i>Term complete \u00b7 month-to-month</div>';
+  }
+  var months=Math.max(1,Math.round((end-now)/(1000*60*60*24*30.44)));
+  var lbl=(months===1)?'1 mo left':(months+' mo left');
+  return '<div style="font-size:0.7rem;color:#E2A84C;margin-top:0.1rem"><i class="fa-solid fa-file-signature" style="margin-right:0.3rem"></i>Term \u00b7 '+lbl+' \u00b7 ends '+endLabel+'</div>';
+}
+
 async function loadProfileMemberships(sid) {
   try {
     var r = await sb.from('student_memberships').select('*, memberships(name,billing_type,price,billing_length,billing_unit,class_limit_type,class_limit_count,signup_fee,is_custom)').eq('student_id',sid).eq('status','active');
@@ -6166,7 +6179,7 @@ async function loadProfileMemberships(sid) {
       var price=m?smPriceLabel(m):'--';
       var cl=m?smClassLine(m):'';
       var since=sm.start_date?('Member since '+smDateLabel(sm.start_date)):'';
-      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
