@@ -1433,7 +1433,7 @@
       <button onclick="closeQrModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="display:flex;flex-direction:column;gap:1rem;align-items:center;padding:1.25rem">
-      <div id="qrPreview" style="width:240px;height:240px;background:#ffffff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box"><span style="color:#999;font-size:0.8rem">Generating...</span></div>
+      <div id="qrPreview" style="width:min(300px,76vw);height:min(300px,76vw);background:#ffffff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box"><span style="color:#999;font-size:0.8rem">Generating...</span></div>
       <div style="width:100%;display:flex;gap:0.4rem;align-items:center">
         <input id="qrUrlField" type="text" readonly style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.78rem;padding:0.5rem 0.65rem" />
         <button class="panel-action" onclick="copyQrUrl()"><i class="fa-solid fa-link"></i></button>
@@ -2851,7 +2851,7 @@ async function renderQrPreview(){
   var box=document.getElementById('qrPreview');
   if(typeof QRCode==='undefined'){box.innerHTML='<span style="color:#E07070;font-size:0.78rem">QR library not loaded</span>';return;}
   try{
-    var dataUrl=await QRCode.toDataURL(qrState.url,{width:240,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+    var dataUrl=await QRCode.toDataURL(qrState.url,{width:400,margin:2,color:{dark:'#000000',light:'#ffffff'}});
     box.innerHTML='<img src="'+dataUrl+'" alt="QR code" style="width:100%;height:100%;object-fit:contain" />';
   }catch(e){box.innerHTML='<span style="color:#E07070;font-size:0.78rem">Could not generate</span>';}
 }
@@ -4378,7 +4378,7 @@ async function openRevenueBreakdown(period){
   if(!data.length){html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No transactions found.</div>';}
   else{
     var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=netCashAmount(p);});
-    Object.keys(byType).sort().forEach(function(t){html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
+    window._revBreakdownData=data; window._memberDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
     html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Transactions</div>';
     data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
   }
@@ -4386,6 +4386,59 @@ async function openRevenueBreakdown(period){
 }
 function closeRevenueBreakdown(){ document.getElementById('revenueBreakdownModal').classList.remove('active'); }
 
+function toggleMemberDrill(){
+  var el=document.getElementById('memberDrill'); if(!el) return;
+  var chev=document.getElementById('memberDrillChev');
+  if(el.style.display==='none'){
+    el.style.display='block';
+    if(chev) chev.style.transform='rotate(90deg)';
+    if(!window._memberDrillBuilt){ window._memberDrillBuilt=true; buildMemberDrill(); }
+  } else {
+    el.style.display='none';
+    if(chev) chev.style.transform='';
+  }
+}
+
+async function buildMemberDrill(){
+  var el=document.getElementById('memberDrill'); if(!el) return;
+  el.innerHTML='<div style="color:var(--muted);font-size:0.76rem;padding:0.4rem 0">Loading...</div>';
+  var pays=(window._revBreakdownData||[]).filter(function(p){return (p.type||'')==='membership';});
+  if(!pays.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.76rem;padding:0.4rem 0">No membership payments.</div>'; return; }
+  var sids=[]; pays.forEach(function(p){ if(p.student_id && sids.indexOf(p.student_id)===-1) sids.push(p.student_id); });
+  var smByStudent={};
+  try{
+    var smr=await sb.from('student_memberships').select('student_id,stripe_subscription_id,first_charge_date,start_date,started_at,status,memberships(name,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('student_id',sids).in('status',['active','trialing','past_due']);
+    (smr.data||[]).forEach(function(sm){ if(!smByStudent[sm.student_id]) smByStudent[sm.student_id]=[]; smByStudent[sm.student_id].push(sm); });
+  }catch(e){}
+  var stripeDates={};
+  try{
+    var dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+    var dd=await dr.json(); if(dd&&dd.dates) stripeDates=dd.dates;
+  }catch(e){}
+  var html='';
+  pays.forEach(function(p){
+    var s=p.students; var name=s?(((s.first_name||'')+' '+(s.last_name||'')).trim()):'Member';
+    var plan=p.description||'Membership';
+    var cash=netCashAmount(p);
+    var list=smByStudent[p.student_id]||[]; var sm=null;
+    for(var i=0;i<list.length;i++){ var mm=list[i].memberships||{}; if(mm.name && mm.name===plan){ sm=list[i]; break; } }
+    if(!sm && list.length) sm=list[0];
+    var renewLabel='\u2014';
+    if(sm){
+      var m=sm.memberships||{};
+      if(m.class_limit_type==='class_pack'){ renewLabel='Pack'; }
+      else if(m.billing_type!=='monthly' && m.billing_type!=='yearly'){ renewLabel='One-time'; }
+      else{
+        var next=null;
+        if(sm.stripe_subscription_id && stripeDates[sm.stripe_subscription_id]){ next=new Date(stripeDates[sm.stripe_subscription_id]*1000); }
+        else{ next=smNextChargeDate(sm,m); }
+        renewLabel = next ? ('Renews '+next.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})) : 'Recurring';
+      }
+    }
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.68rem;color:var(--muted)">'+plan+' \u00b7 '+renewLabel+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+'</div></div>';
+  });
+  el.innerHTML=html;
+}
 // ─────────────────────────────── §SESSIONS ───────────────────────────────
 
 async function loadSessions(){
