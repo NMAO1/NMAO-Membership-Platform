@@ -3793,7 +3793,7 @@ window.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeHelp
 window.addEventListener('resize', function(){ var p = document.getElementById('helpPopover'); if(p && p.style.display === 'block') positionHelpPopover(); });
 (function(){
   var st = document.createElement('style');
-  st.textContent = '.help-hint-inline{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--gold);background:none;color:var(--gold);font-size:0.65rem;line-height:1;cursor:pointer;margin-left:0.5rem;flex:none;vertical-align:middle;padding:0}body.help-hints-off .help-hint-inline{display:none}';
+  st.textContent = '.help-hint-inline{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--gold);background:none;color:var(--gold);font-size:0.65rem;line-height:1;cursor:pointer;margin-left:0.25rem;flex:none;vertical-align:middle;align-self:center;padding:0}body.help-hints-off .help-hint-inline{display:none}';
   document.head.appendChild(st);
   var t = document.getElementById('helpHintsToggle'); if(t) t.checked = helpHintsEnabled();
   applyHelpHintsState();
