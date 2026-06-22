@@ -2652,6 +2652,7 @@
           <button class="btn-sm" onclick="loadStsTemplate('missyou')"><i class="fa-solid fa-person-walking-arrow-right" style="color:#E07070;margin-right:0.3rem"></i>We Miss You</button>
           <button class="btn-sm" onclick="loadStsTemplate('belttest')"><i class="fa-solid fa-trophy" style="color:#7DAAD4;margin-right:0.3rem"></i>Belt Test</button>
           <button class="btn-sm" onclick="loadStsTemplate('promotion')"><i class="fa-solid fa-ranking-star" style="color:#7DAAD4;margin-right:0.3rem"></i>Promotion</button>
+          <button class="btn-sm" onclick="loadStsTemplate('portal')"><i class="fa-solid fa-right-to-bracket" style="color:var(--gold);margin-right:0.3rem"></i>Portal Sign-In</button>
         </div>
       </div>
 
@@ -12374,13 +12375,16 @@ function updateSmsCounter(el){
 }
 function loadStsTemplate(type){
   var sn=document.getElementById('schoolName')?document.getElementById('schoolName').textContent:'our school';
+  var pslug=(window.schoolData&&window.schoolData.slug)?window.schoolData.slug:'';
+  var purl=APP_URL+'portal.html'+(pslug?('?s='+pslug):'');
   var T={
     checkin:{s:'We noticed you have not been in lately',e:'<p>Hi there,</p><p>We have missed seeing you on the mat! Your progress matters to us and we would love to have you back.</p><p>Come train with us this week.</p>',t:'Hey! We have missed you on the mat. Come train with us this week!'},
     birthday:{s:'Happy Birthday from '+sn+'!',e:'<p>Wishing you an amazing birthday!</p><p>We are so grateful to have you as part of our martial arts family.</p>',t:'Happy Birthday! We are so grateful to have you in our martial arts family!'},
     renewal:{s:'Your membership is expiring soon',e:'<p>Hi,</p><p>Your membership is expiring soon. We would love to have you continue training with us!</p><p>Please contact us or log into the member portal to renew.</p>',t:'Your membership is expiring soon! Contact us to renew.'},
     missyou:{s:'We miss you on the mat',e:'<p>Hi,</p><p>We have noticed you have not been in for a while. Whenever you are ready to come back, we will be here. Your spot on the mat is waiting.</p>',t:'We miss you on the mat! Whenever you are ready to come back, we will be here.'},
     belttest:{s:'You are invited to our upcoming Belt Test',e:'<p>Congratulations! You have been invited to participate in our upcoming belt test.</p><p>Please confirm your attendance. We believe in you!</p>',t:'You are invited to our upcoming belt test! Please confirm your attendance.'},
-    promotion:{s:'Congratulations on your promotion!',e:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are so proud of you!</p>',t:'Congratulations on your belt promotion! We are so proud of your hard work.'}
+    promotion:{s:'Congratulations on your promotion!',e:'<p>Congratulations on your recent belt promotion!</p><p>Your dedication and hard work have earned this achievement. We are so proud of you!</p>',t:'Congratulations on your belt promotion! We are so proud of your hard work.'},
+    portal:{s:'Sign in to your '+sn+' member portal',e:'<p>Hi there,</p><p>Welcome! You can manage your membership, view your schedule, and stay connected through your member portal.</p><p>Sign in here: <a href="'+purl+'">'+purl+'</a></p><p>Just enter your email on that page and we will send you a secure sign-in link.</p>',t:'Sign in to your '+sn+' member portal here: '+purl}
   };
   var t=T[type];if(!t)return;
   document.getElementById('stsSubject').value=t.s;
