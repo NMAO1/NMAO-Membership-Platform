@@ -750,7 +750,7 @@
 
     <!-- ═══════════════ §PAGE-CLASSES ═══════════════ -->
     <div class="page" id="page-classes">
-      <div class="content-heading"><h2>All Classes</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
+      <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
     </div>
 
@@ -2031,26 +2031,26 @@
 <!-- §MODAL-CLASS -->
 <div class="modal-overlay" id="addClassModal">
   <div class="modal" style="width:560px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addClassTitle">Add New Class</span><button class="modal-close" onclick="safeClose('addClassModal',closeAddClass)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addClassTitle">Add New Class</span><button class="help-hint-inline" onclick="openHelpPopover('classes.class_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addClassModal',closeAddClass)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="classEditId" value="" />
-      <div class="field"><label>Class Title</label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
-      <div class="field"><label>Description</label><div id="classDescEditor"></div></div>
-<div class="field"><label>Program</label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
+      <div class="field"><label>Class Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_title',this)" title="Help">?</button></label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
+      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_desc',this)" title="Help">?</button></label><div id="classDescEditor"></div></div>
+<div class="field"><label>Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_program',this)" title="Help">?</button></label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
 <div class="form-row">
-  <div class="field"><label id="classStyleLabel">Style</label><select id="classStyle"></select></div>
-  <div class="field"><label id="classAgeLabel">Age Group</label><select id="classAge"></select></div>
+  <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classStyleLabel">Style</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_style',this)" title="Help">?</button></span><select id="classStyle"></select></div>
+  <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classAgeLabel">Age Group</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_age',this)" title="Help">?</button></span><select id="classAge"></select></div>
 </div>
       <div class="form-row">
-      <div class="field"><label id="classLevelLabel">Level</label><select id="classLevel"></select></div>
-        <div class="field"><label>Capacity</label><input type="number" id="classCapacity" placeholder="20" /></div>
+      <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classLevelLabel">Level</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_level',this)" title="Help">?</button></span><select id="classLevel"></select></div>
+        <div class="field"><label>Capacity <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_capacity',this)" title="Help">?</button></label><input type="number" id="classCapacity" placeholder="20" /></div>
       </div>
-      <div class="field"><label>Instructor</label><select id="classInstructor"><option value="">-- Select Instructor --</option></select></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classShowInstructor" checked /><div><div class="check-item-label">Show instructor on member app</div></div></label></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classPublicBooking" /><div><div class="check-item-label">Show on public booking page</div></div></label></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classTrialEnabled" /><div><div class="check-item-label">Allow trial sign-ups (public)</div></div></label></div>
-      <div class="form-row"><div class="field"><label>Start Time</label><input type="time" id="classStart" /></div><div class="field"><label>End Time</label><input type="time" id="classEnd" /></div></div>
-      <div class="field"><label>Days of Week</label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
+      <div class="field"><label>Instructor <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_instructor',this)" title="Help">?</button></label><select id="classInstructor"><option value="">-- Select Instructor --</option></select></div>
+      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classShowInstructor" checked /><div><div class="check-item-label">Show instructor on member app <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_showinstr',this)" title="Help">?</button></div></div></label></div>
+      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classPublicBooking" /><div><div class="check-item-label">Show on public booking page <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_public',this)" title="Help">?</button></div></div></label></div>
+      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classTrialEnabled" /><div><div class="check-item-label">Allow trial sign-ups (public) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_trial',this)" title="Help">?</button></div></div></label></div>
+      <div class="form-row"><div class="field"><label>Start Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_start',this)" title="Help">?</button></label><input type="time" id="classStart" /></div><div class="field"><label>End Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_end',this)" title="Help">?</button></label><input type="time" id="classEnd" /></div></div>
+      <div class="field"><label>Days of Week <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_days',this)" title="Help">?</button></label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
       <button class="btn-gold-full" onclick="saveClass()">Save Class</button>
       <p class="form-msg" id="classMsg"></p>
     </div>
@@ -3758,6 +3758,39 @@ var HELP_CONTENT = {
     ],
     example: 'Example: a student has a birthday Friday; send a happy-birthday text and a free-class pass.'
   },
+  classes: {
+    title: 'All Classes',
+    purpose: 'Your recurring classes: the weekly slots that generate the dated sessions students book and check into.',
+    actions: [
+      'Add a class with its program, schedule, instructor, and capacity.',
+      'Edit one to change its time or details.',
+      'The Style, Age Group, and Level fields, and their dropdown choices, are yours to rename and customize in Settings under Class Fields.'
+    ],
+    example: 'Example: create Adult BJJ, Mon and Wed at 6pm, Coach Sara, capacity 20, and it lands on the schedule each week.'
+  },
+  'classes.class_form': {
+    title: 'Add / Edit Class',
+    purpose: 'Create or edit a class. This sets the schedule, who teaches it, and how it appears to members and the public.',
+    actions: [
+      'Fill in the title, program, schedule, and capacity.',
+      'Use the checkboxes to control where it shows, then save.'
+    ],
+    example: 'Example: Adult BJJ, 6 to 7pm, Mon and Wed, capacity 20, shown on the public booking page.'
+  },
+  'classes.cl_title': { title: 'Class Title', purpose: 'The name members and the public see, like Adult BJJ or Little Tigers. Keep it clear.' },
+  'classes.cl_desc': { title: 'Description', purpose: 'Optional details about the class, shown to members and on the public booking page.' },
+  'classes.cl_program': { title: 'Program', purpose: 'The program this class belongs to, like Brazilian Jiu-Jitsu. Links the class to that programs memberships and belts.' },
+  'classes.cl_style': { title: 'Style', purpose: 'A customizable class attribute, named Style by default. Rename it and set its dropdown options in Settings under Class Fields. Use it to tag a class by discipline or focus.' },
+  'classes.cl_age': { title: 'Age Group', purpose: 'A customizable class attribute, named Age Group by default. Rename it and edit its options in Settings under Class Fields. Use it to mark who the class is for.' },
+  'classes.cl_level': { title: 'Level', purpose: 'A customizable class attribute, named Level by default. Rename it and edit its options in Settings under Class Fields. Use it to mark difficulty, like Beginner or Advanced.' },
+  'classes.cl_capacity': { title: 'Capacity', purpose: 'The most students who can attend. Leave blank for no cap. Helps you manage space and bookings.' },
+  'classes.cl_instructor': { title: 'Instructor', purpose: 'The coach assigned to teach. Their name can show on the member app, set by the next toggle.' },
+  'classes.cl_showinstr': { title: 'Show instructor on member app', purpose: 'When on, members see who is teaching. Turn it off to keep the instructor private.' },
+  'classes.cl_public': { title: 'Show on public booking page', purpose: 'When on, this class appears on your public booking page so members and non-members can find and book it.' },
+  'classes.cl_trial': { title: 'Allow trial sign-ups (public)', purpose: 'When on, prospects can book a free trial of this class from the public page. A strong top-of-funnel tool.' },
+  'classes.cl_start': { title: 'Start Time', purpose: 'When the class begins. Sets where it sits on the calendar.' },
+  'classes.cl_end': { title: 'End Time', purpose: 'When the class ends. Together with the start time it blocks the slot on the calendar.' },
+  'classes.cl_days': { title: 'Days of Week', purpose: 'Which days this class repeats. Tap each day it runs, and the class generates sessions on those days going forward.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
