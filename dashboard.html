@@ -590,7 +590,7 @@
       <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.85rem;pointer-events:none"></i>
       <div id="globalSearchResults" style="display:none;position:absolute;top:calc(100% + 0.4rem);left:0;right:0;background:var(--surface);border:1px solid var(--border);max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
     </div>
-    <div style="display:inline-flex;align-items:center"><div class="topbar-title" id="pageTitle">Dashboard</div><button id="helpHintBtn" onclick="toggleHelpPopover()" title="What is this page?" style="display:none;align-items:center;justify-content:center;width:22px;height:22px;margin-left:0.5rem;border-radius:50%;border:1px solid var(--gold);background:none;color:var(--gold);font-size:0.72rem;line-height:1;cursor:pointer;flex:none">?</button></div>
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
     <div id="helpPopover" style="display:none;position:fixed;z-index:10000;background:var(--surface);border:1px solid var(--gold);box-shadow:0 8px 28px rgba(0,0,0,0.55);padding:1rem 1.1rem;max-width:92vw"></div>
     <div class="topbar-right">
       <span class="topbar-date" id="todayDate"></span>
@@ -876,8 +876,8 @@
 
     <!-- ═══════════════ §PAGE-MEMBERS ═══════════════ -->
     <div class="page" id="page-members">
-      <div class="content-heading"><h2>Members</h2><div class="rule-h"></div>
-        <div style="display:flex;gap:0.5rem">
+      <div class="content-heading"><h2>Members</h2><button class="help-hint-inline" onclick="openHelpPopover('members',this)" title="What is this page?">?</button><div class="rule-h"></div>
+      <div style="display:flex;gap:0.5rem">
           <button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add Student</button>
           <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openImportTool()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
         </div>
@@ -944,7 +944,7 @@
 
     <!-- ═══════════════ §PAGE-PAYMENTS ═══════════════ -->
     <div class="page" id="page-payments">
-      <div class="content-heading"><h2>Payments</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Payments</h2><button class="help-hint-inline" onclick="openHelpPopover('payments',this)" title="What is this page?">?</button><div class="rule-h"></div></div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No payments yet.</td></tr></tbody></table></div></div>
     </div>
 
@@ -3706,12 +3706,10 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
 if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
-  updateHelpHint(page);
 }
 
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
-/* ====== CONTEXTUAL HELP HINTS (anchored popover, localStorage toggle) ====== */
-var currentHelpPage = 'home';
+/* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
   home: {
     title: 'Dashboard',
@@ -3743,30 +3741,25 @@ var HELP_CONTENT = {
     example: 'Example: a parent asks whether their monthly dues posted. Find their name here to confirm the charge and date.'
   }
 };
+var helpAnchorBtn = null;
 function helpHintsEnabled(){ return localStorage.getItem('nmao_help_hints') !== 'off'; }
-function updateHelpHint(page){
-  currentHelpPage = page;
-  closeHelpPopover();
-  var btn = document.getElementById('helpHintBtn');
-  if(!btn) return;
-  btn.style.display = (helpHintsEnabled() && HELP_CONTENT[page]) ? 'inline-flex' : 'none';
-}
+function closeHelpPopover(){ var pop = document.getElementById('helpPopover'); if(pop) pop.style.display = 'none'; }
 function positionHelpPopover(){
-  var btn = document.getElementById('helpHintBtn');
   var pop = document.getElementById('helpPopover');
-  if(!btn || !pop) return;
-  var r = btn.getBoundingClientRect();
+  if(!pop || !helpAnchorBtn) return;
+  var r = helpAnchorBtn.getBoundingClientRect();
   var w = 340;
   pop.style.width = w + 'px';
   pop.style.top = (r.bottom + 8) + 'px';
   pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 16)) + 'px';
 }
-function toggleHelpPopover(){
+function openHelpPopover(page, btn){
   var pop = document.getElementById('helpPopover');
   if(!pop) return;
-  if(pop.style.display === 'block'){ closeHelpPopover(); return; }
-  var c = HELP_CONTENT[currentHelpPage];
+  if(pop.style.display === 'block' && helpAnchorBtn === btn){ closeHelpPopover(); return; }
+  var c = HELP_CONTENT[page];
   if(!c) return;
+  helpAnchorBtn = btn;
   var acts = c.actions.map(function(a){ return '<li style="margin-bottom:0.3rem">' + a + '</li>'; }).join('');
   pop.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem">' +
@@ -3781,23 +3774,31 @@ function toggleHelpPopover(){
   pop.style.display = 'block';
   positionHelpPopover();
 }
-function closeHelpPopover(){ var pop = document.getElementById('helpPopover'); if(pop) pop.style.display = 'none'; }
+function applyHelpHintsState(){
+  if(helpHintsEnabled()) document.body.classList.remove('help-hints-off');
+  else document.body.classList.add('help-hints-off');
+}
 function disableHelpHints(){
   localStorage.setItem('nmao_help_hints', 'off');
   closeHelpPopover();
-  var btn = document.getElementById('helpHintBtn'); if(btn) btn.style.display = 'none';
+  applyHelpHintsState();
   var t = document.getElementById('helpHintsToggle'); if(t) t.checked = false;
 }
 function setHelpHints(on){
   localStorage.setItem('nmao_help_hints', on ? 'on' : 'off');
-  updateHelpHint(currentHelpPage);
+  if(!on) closeHelpPopover();
+  applyHelpHintsState();
 }
 window.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeHelpPopover(); });
 window.addEventListener('resize', function(){ var p = document.getElementById('helpPopover'); if(p && p.style.display === 'block') positionHelpPopover(); });
 (function(){
+  var st = document.createElement('style');
+  st.textContent = '.help-hint-inline{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--gold);background:none;color:var(--gold);font-size:0.65rem;line-height:1;cursor:pointer;margin-left:0.5rem;flex:none;vertical-align:middle;padding:0}body.help-hints-off .help-hint-inline{display:none}';
+  document.head.appendChild(st);
   var t = document.getElementById('helpHintsToggle'); if(t) t.checked = helpHintsEnabled();
-  updateHelpHint('home');
+  applyHelpHintsState();
 })();
+
 function toggleQuickAdd()  { document.getElementById('quickAddMenu').classList.toggle('open'); }
 function closeQuickAdd()   { document.getElementById('quickAddMenu').classList.remove('open'); }
 document.addEventListener('click',function(e){
