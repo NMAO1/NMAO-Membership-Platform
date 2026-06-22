@@ -8851,6 +8851,36 @@ function ensureCancelModal(){
   document.body.appendChild(ov);
 }
 
+function cancelMonthsLeft(endsAt){
+  if(!endsAt) return 0;
+  var end=new Date(endsAt+'T00:00:00'); var now=new Date(); now.setHours(0,0,0,0);
+  if(end<=now) return 0;
+  return Math.max(0,Math.round((end-now)/(1000*60*60*24*30.44)));
+}
+function cancelCycleMonths(p){
+  if(!p) return 1;
+  var n=parseInt(p.billing_length)||1; var u=p.billing_unit||'months';
+  if(u==='years') return n*12;
+  if(u==='weeks') return Math.max(1,Math.round(n/4.345));
+  if(u==='days') return Math.max(1,Math.round(n/30.44));
+  return n;
+}
+function cancelFeeFor(row){
+  var monthsLeft=cancelMonthsLeft(row.commitEndsAt);
+  if(monthsLeft<=0) return {fee:0,monthsLeft:0,type:'none'};
+  var t=row.feeType||'none';
+  if(t==='none') return {fee:0,monthsLeft:monthsLeft,type:'none'};
+  var p=row.plan||{}; var price=parseFloat(p.price)||0;
+  var periodsLeft=Math.ceil(monthsLeft/cancelCycleMonths(p));
+  var remainingValue=periodsLeft*price;
+  var fee=0;
+  if(t==='flat') fee=parseFloat(row.feeAmount)||0;
+  else if(t==='remaining') fee=remainingValue;
+  else if(t==='percent') fee=remainingValue*((parseFloat(row.feeAmount)||0)/100);
+  fee=Math.round(fee*100)/100;
+  return {fee:fee,monthsLeft:monthsLeft,type:t};
+}
+
 async function openCancelMembership(){
   if (typeof currentProfileStudent === 'undefined' || !currentProfileStudent) return;
   var sid = currentProfileStudent.id;
@@ -8862,17 +8892,22 @@ async function openCancelMembership(){
   document.getElementById('cancelMembershipModal').classList.add('active');
   try {
     var r = await sb.from('student_memberships')
-      .select('id, membership_id, status, stripe_subscription_id')
+      .select('id, membership_id, status, stripe_subscription_id, commitment_ends_at, commit_fee_type, commit_fee_amount, memberships(price, billing_length, billing_unit, auto_charge_penalty)')
       .eq('student_id', sid).eq('school_id', SID)
       .in('status', ['active', 'past_due', 'trialing']);
     var rows = r.data || [];
     _cancelRows = [];
     for (var i=0;i<rows.length;i++){
-      _cancelRows.push({
+     _cancelRows.push({
         smId: rows[i].id,
         subId: rows[i].stripe_subscription_id || null,
         name: checkoutMembershipName(rows[i].membership_id),
-        status: rows[i].status
+        status: rows[i].status,
+        commitEndsAt: rows[i].commitment_ends_at || null,
+        feeType: rows[i].commit_fee_type || 'none',
+        feeAmount: rows[i].commit_fee_amount || 0,
+        plan: rows[i].memberships || null,
+        autoCharge: !!(rows[i].memberships && rows[i].memberships.auto_charge_penalty)
       });
     }
     renderCancelList();
@@ -8895,6 +8930,11 @@ function renderCancelList(){
     html += '<div style="border:1px solid var(--border);background:var(--black);padding:0.8rem 0.95rem;margin-bottom:0.7rem">';
     html += '<div style="font-size:0.9rem;color:var(--white)">' + escapeCheckout(row.name) + '</div>';
     html += '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.7rem">' + kind + statusTag + '</div>';
+    var fi = cancelFeeFor(row);
+    if (fi.monthsLeft>0){
+      if (fi.fee>0){ html += '<div style="font-size:0.74rem;color:#E2A84C;background:rgba(226,168,76,0.08);border:1px solid rgba(226,168,76,0.3);padding:0.45rem 0.6rem;margin-bottom:0.7rem">Under commitment \u00b7 '+fi.monthsLeft+' mo left. Early-cancel fee: <strong>$'+fi.fee.toFixed(2)+'</strong>'+(row.autoCharge?' (auto-charged to card on file)':' (collect manually)')+'</div>'; }
+      else { html += '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.7rem">Under commitment \u00b7 '+fi.monthsLeft+' mo left \u00b7 no early-cancel fee</div>'; }
+    }
     html += '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">';
     if (row.subId){
       html += '<button class="btn-sm" onclick="cancelConfirm(' + i + ',\'period_end\')">End at period close</button>';
@@ -8918,6 +8958,8 @@ function cancelConfirm(i, when){
   } else {
     msg = 'Cancel ' + row.name + ' at the end of the current billing period? They keep access until then and are not billed again.';
   }
+  var _fi = cancelFeeFor(row);
+  if (_fi.fee>0){ msg += '\n\nEarly-cancel fee: $'+_fi.fee.toFixed(2)+(row.autoCharge?' will be charged to the card on file.':' will be recorded as owed (collect manually).'); }
   if (!window.confirm(msg)) return;
   cancelMembershipDo(i, when);
 }
@@ -8935,7 +8977,27 @@ async function cancelMembershipDo(i, when){
   setCancelBusy(true);
   setMsg('cancelMsg', 'Working\u2026', '');
   try {
-    var successMsg;
+   var successMsg;
+    var penaltyNote = '';
+    var _fi = cancelFeeFor(row);
+    if (_fi.fee>0){
+      var _sid = (currentProfileStudent && currentProfileStudent.id) ? currentProfileStudent.id : null;
+      if (row.autoCharge && _sid){
+        var _cents = Math.round(_fi.fee*100);
+        var _sess = await sb.auth.getSession();
+        var _uid = (_sess && _sess.data && _sess.data.session) ? _sess.data.session.user.id : null;
+        var _pl = { school_id: SID, student_id: _sid, line_items: [{ name: 'Early-cancel fee - '+row.name, unit_amount: _cents, quantity: 1, product_id: null, item_type: 'custom' }], applied_by: _uid, idempotency_key: 'cancelfee-'+row.smId+'-'+_cents };
+        var _cr = await fetch(SURL + '/functions/v1/create-pos-charge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY }, body: JSON.stringify(_pl) });
+        var _cd = await _cr.json();
+        if (!_cr.ok || !_cd || _cd.error){
+          var _em = (_cd && _cd.error) ? _cd.error : 'Charge failed';
+          if (_em.indexOf('NO_SAVED_CARD')===0){ penaltyNote = ' Early-cancel fee of $'+_fi.fee.toFixed(2)+' could not be auto-charged (no card on file) \u2014 collect manually.'; }
+          else { throw new Error('Early-cancel fee charge failed: '+_em+'. Membership not cancelled.'); }
+        } else { penaltyNote = ' Early-cancel fee of $'+_fi.fee.toFixed(2)+' charged.'; }
+      } else {
+        penaltyNote = ' Early-cancel fee of $'+_fi.fee.toFixed(2)+' recorded as owed \u2014 collect manually.';
+      }
+    }
     if (row.subId){
       var r = await fetch(SURL + '/functions/v1/cancel-subscription', {
         method: 'POST',
@@ -8956,7 +9018,7 @@ async function cancelMembershipDo(i, when){
       successMsg = row.name + ' ended.';
     }
     cancelRefresh();
-    renderCancelSuccess(successMsg);
+    renderCancelSuccess(successMsg + penaltyNote);
   } catch (e){
     setMsg('cancelMsg', (e && e.message) ? e.message : 'Could not cancel.', 'error');
     setCancelBusy(false);
