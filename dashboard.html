@@ -658,14 +658,26 @@
           <button class="btn-sm" style="border-color:#7AAAD4;color:#7AAAD4" onclick="openSmsInboxFromBanner()"><i class="fa-solid fa-inbox" style="margin-right:0.3rem"></i>View Messages</button>
         </div>
       </div>
-      <!-- AT-RISK / RETENTION BANNER -->
+      <!-- AT-RISK / RETENTION BANNER (collapsible, merged) -->
       <div id="atRiskBanner" style="display:none;margin-bottom:1.5rem">
-        <div style="background:var(--surface);border:1px solid rgba(224,112,112,0.3);border-left:4px solid #E07070;padding:1rem 1.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
-            <div style="font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:#E07070"><i class="fa-solid fa-user-clock" style="margin-right:0.4rem"></i><span id="atRiskBannerLabel">At-Risk Students</span></div>
-            <button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="navigate('members',null)"><i class="fa-solid fa-users" style="margin-right:0.3rem"></i>View All</button>
+        <div style="background:var(--surface);border:1px solid rgba(224,112,112,0.3);border-left:4px solid #E07070">
+          <div onclick="toggleAtRiskBanner()" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 1.25rem;cursor:pointer">
+            <div style="display:flex;align-items:center;gap:0.75rem;min-width:0">
+              <i class="fa-solid fa-user-clock" style="color:#E07070"></i>
+              <div style="min-width:0">
+                <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#E07070"><span id="atRiskBannerLabel">At-Risk Students</span></div>
+                <div id="atRiskBannerTeaser" style="font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+              </div>
+            </div>
+            <i id="atRiskChevron" class="fa-solid fa-chevron-down" style="color:#E07070;transition:transform 0.18s"></i>
           </div>
-          <div id="atRiskBannerList" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+          <div id="atRiskBannerBody" style="display:none;padding:0 1.25rem 1rem">
+            <div id="atRiskBannerList" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem"></div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="textAllAtRisk()"><i class="fa-solid fa-comment-sms" style="margin-right:0.3rem"></i><span id="atRiskTextAllLabel">Text All</span></button>
+              <button class="btn-sm" onclick="navigate('members',null)"><i class="fa-solid fa-users" style="margin-right:0.3rem"></i>View All in Members</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="setup-banner" id="setupBanner">
@@ -713,10 +725,6 @@
           <div class="month-day-header">Sun</div><div class="month-day-header">Mon</div><div class="month-day-header">Tue</div><div class="month-day-header">Wed</div><div class="month-day-header">Thu</div><div class="month-day-header">Fri</div><div class="month-day-header">Sat</div>
           <div id="monthGridCells" style="display:contents"></div>
         </div>
-      </div>
-      <div id="retentionAlertsSection" style="display:none;margin-bottom:1.5rem">
-        <div class="content-heading"><h2><i class="fa-solid fa-triangle-exclamation" style="color:#E07070;margin-right:0.5rem"></i>Attendance Alerts</h2><div class="rule-h"></div></div>
-        <div id="retentionAlertsList"></div>
       </div>
       <div class="content-heading"><h2><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>Upcoming Birthdays</h2><div class="rule-h"></div></div>
       <div id="birthdaysList" style="margin-bottom:1.5rem"></div>
@@ -3051,7 +3059,7 @@ var enrollmentCounts = {};
 
 // UI state
 var currentProfileStudent   = null, currentProfileBeltLevels = [], currentProfileTags = [];
-var atRiskStudents = [], atRiskById = {};
+var atRiskStudents = [], atRiskById = {}; var atRiskExpanded = false;
 var currentBeltSystemId     = null, currentBeltLevelId = null;
 var rosterRsvpIds = {};
 var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSessionId = null;
@@ -3141,7 +3149,6 @@ async function init() {
     buildMembershipAlertBanner();
     buildCalendar();
     buildBirthdays();
-    buildRetentionAlerts();
     buildSetupChecklist();
     buildInstructorComparison();
   loadRevenue();
@@ -3158,7 +3165,7 @@ async function init() {
 
 // ═══════════════ §TRIAL-GATE — trial countdown banner + soft expiry gate ═══════════════
 // Live $99 Payment Link from Stripe. REPLACE the placeholder below with your real link.
-var TRIAL_PAYMENT_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_99_LINK';
+var TRIAL_PAYMENT_LINK = 'https://buy.stripe.com/cNi3cwdtogoiahta2E0VO03';
 
 function trialSubscribeUrl(d){
   var base = TRIAL_PAYMENT_LINK;
@@ -5656,14 +5663,23 @@ function renderAtRiskBanner(){
   var banner = document.getElementById('atRiskBanner');
   var listEl = document.getElementById('atRiskBannerList');
   var labelEl = document.getElementById('atRiskBannerLabel');
+  var teaserEl = document.getElementById('atRiskBannerTeaser');
+  var textAllLabel = document.getElementById('atRiskTextAllLabel');
   if (!banner || !listEl) return;
   if (!atRiskStudents.length){ banner.style.display = 'none'; return; }
   banner.style.display = 'block';
   var n = atRiskStudents.length;
   if (labelEl) labelEl.textContent = n + (n === 1 ? ' student at risk' : ' students at risk');
-  var top = atRiskStudents.slice(0, 6);
+  if (teaserEl){
+    var t1 = atRiskStudents[0];
+    var t1name = ((t1.first_name || '') + ' ' + (t1.last_name || '')).trim();
+    var t1sub = t1.last_attended ? (t1.days_since + 'd since check-in') : ('never attended, ' + t1.days_since + 'd in');
+    teaserEl.textContent = t1name + ' - ' + t1sub + (n > 1 ? ('    +' + (n - 1) + ' more') : '');
+  }
+  if (textAllLabel) textAllLabel.textContent = 'Text All (' + n + ')';
+  var top = atRiskStudents.slice(0, 10);
   listEl.innerHTML = top.map(function(s){
-    var name = (s.first_name || '') + ' ' + (s.last_name || '');
+    var name = ((s.first_name || '') + ' ' + (s.last_name || '')).trim();
     var sub = (s.last_attended) ? (s.days_since + ' days since check-in') : ('joined ' + s.days_since + ' days ago, never attended');
     var textBtn = s.phone
       ? '<button class="btn-sm" style="border-color:#E07070;color:#E07070" onclick="event.stopPropagation();openStudentProfile(\'' + s.student_id + '\')"><i class="fa-solid fa-comment" style="margin-right:0.3rem"></i>Text</button>'
@@ -5675,8 +5691,31 @@ function renderAtRiskBanner(){
     '</div>';
   }).join('');
   if (n > top.length){
-    listEl.innerHTML += '<div style="font-size:0.7rem;color:var(--muted);text-align:center;padding-top:0.3rem">and ' + (n - top.length) + ' more</div>';
+    listEl.innerHTML += '<div style="font-size:0.7rem;color:var(--muted);text-align:center;padding-top:0.3rem">and ' + (n - top.length) + ' more in Members</div>';
   }
+}
+function toggleAtRiskBanner(){
+  atRiskExpanded = !atRiskExpanded;
+  var body = document.getElementById('atRiskBannerBody');
+  var chev = document.getElementById('atRiskChevron');
+  if (body) body.style.display = atRiskExpanded ? 'block' : 'none';
+  if (chev) chev.style.transform = atRiskExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+function textAllAtRisk(){
+  if (!atRiskStudents.length) return;
+  var seen = {};
+  selectedReportRecipients = atRiskStudents.map(function(s){
+    var phone = s.phone || null, email = null;
+    var first = s.first_name || '', last = s.last_name || '';
+    var stu = allStudents.find(function(x){ return x.id === s.student_id; });
+    if (stu){ email = stu.email || null; if (!phone) phone = stu.phone || null; }
+    var name = (first + ' ' + last).trim() || 'Unknown';
+    var key = s.student_id || name;
+    if (seen[key]) return null; seen[key] = true;
+    return { id: s.student_id, name: name, email: email, phone: phone };
+  }).filter(Boolean);
+  if (!selectedReportRecipients.length) return;
+  openSendToSelected();
 }
 function renderMembersTable() { filterMembers(); }
 function renderMembersTableFiltered(list) {
