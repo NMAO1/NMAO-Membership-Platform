@@ -3862,6 +3862,13 @@ var HELP_CONTENT = {
 var helpAnchorBtn = null;
 function helpHintsEnabled(){ return localStorage.getItem('nmao_help_hints') !== 'off'; }
 function closeHelpPopover(){ var pop = document.getElementById('helpPopover'); if(pop) pop.style.display = 'none'; }
+document.addEventListener('click', function(e){
+  var pop = document.getElementById('helpPopover');
+  if(!pop || pop.style.display !== 'block') return;
+  if(pop.contains(e.target)) return;
+  if(e.target.closest && e.target.closest('.help-hint-inline')) return;
+  closeHelpPopover();
+});
 function positionHelpPopover(){
   var pop = document.getElementById('helpPopover');
   if(!pop || !helpAnchorBtn) return;
@@ -3874,6 +3881,7 @@ function positionHelpPopover(){
 function openHelpPopover(page, btn){
   var pop = document.getElementById('helpPopover');
   if(!pop) return;
+  if(pop.parentElement !== document.body){ document.body.appendChild(pop); }
   if(pop.style.display === 'block' && helpAnchorBtn === btn){ closeHelpPopover(); return; }
   var c = HELP_CONTENT[page];
   if(!c) return;
