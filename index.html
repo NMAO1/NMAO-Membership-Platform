@@ -510,8 +510,19 @@ async function doSignup() {
   btn.disabled = true; btn.textContent = 'Creating account...'; setMsg('', '');
 
   var auth = await sc.auth.signUp({ email: email, password: pass, options: { data: { full_name: name } } });
-  if (auth.error) { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Start Free Trial'; return; }
-
+  var userId = (auth.data && auth.data.user) ? auth.data.user.id : null;
+  var haveSession = !!(auth.data && auth.data.session);
+  if (auth.error) {
+    var lo = (auth.error.message || '').toLowerCase();
+    if (lo.indexOf('already registered') !== -1 || lo.indexOf('already been registered') !== -1 || lo.indexOf('user already') !== -1) {
+      var si = await sc.auth.signInWithPassword({ email: email, password: pass });
+      if (si.error) { setMsg('That email is already registered. Try signing in, or use a different email.', 'er'); btn.disabled = false; btn.textContent = 'Start Free Trial'; return; }
+      userId = si.data.user.id; haveSession = true;
+      var exist = await sc.from('schools').select('id').eq('owner_id', userId).limit(1);
+      if (exist.data && exist.data.length) { window.location.href = 'dashboard.html'; return; }
+    } else { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Start Free Trial'; return; }
+  }
+  
   var baseSlug = school.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
   var trialEnds = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -519,7 +530,7 @@ async function doSignup() {
     return {
       name: school,
       email: email,
-      owner_id: auth.data.user.id,
+      owner_id: userId,
       plan: 'standard',
       plan_price: 99,
       plan_status: 'trialing',
@@ -537,7 +548,7 @@ async function doSignup() {
     ins = await sc.from('schools').insert(buildObj(altSlug));
   }
   if (ins.error) {
-    setMsg('Signup failed: ' + ins.error.message, 'er');
+    setMsg('Signup failed: ' + ins.error.message + ' You can retry with the same email to finish setup.', 'er');
     btn.disabled = false; btn.textContent = 'Start Free Trial';
     return;
   }
@@ -547,7 +558,7 @@ async function doSignup() {
   setTimeout(function () {
     // Email confirmation off -> session exists -> straight into the dashboard.
     // Email confirmation on  -> no session yet -> ask them to confirm first.
-    if (auth.data.session) {
+    if (haveSession) {
       window.location.href = 'dashboard.html';
     } else {
       setMsg('Account created. Check your email to confirm your address, then sign in.', 'ok');
