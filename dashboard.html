@@ -899,7 +899,7 @@
 
     <!-- ═══════════════ §PAGE-LEADS ═══════════════ -->
     <div class="page" id="page-leads">
-      <div class="content-heading"><h2>Leads</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddLead()"><i class="fa-solid fa-user-plus"></i> Add Lead</button></div>
+      <div class="content-heading"><h2>Leads</h2><button class="help-hint-inline" onclick="openHelpPopover('leads',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddLead()"><i class="fa-solid fa-user-plus"></i> Add Lead</button></div>
       <div class="lead-pipeline">
         <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-star" style="color:var(--gold)"></i> New</div><div id="leads-new"></div></div>
         <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-phone" style="color:#7DBD7D"></i> Contacted</div><div id="leads-contacted"></div></div>
@@ -2202,17 +2202,17 @@
 <!-- §MODAL-LEAD -->
 <div class="modal-overlay" id="addLeadModal">
   <div class="modal" style="width:500px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addLeadTitle">Add New Lead</span><button class="modal-close" onclick="safeClose('addLeadModal',closeAddLead)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addLeadTitle">Add New Lead</span><button class="help-hint-inline" onclick="openHelpPopover('leads.lead_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addLeadModal',closeAddLead)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="leadEditId" value="" />
-      <div class="form-row"><div class="field"><label>First Name</label><input type="text" id="leadFirst" placeholder="First name" /></div><div class="field"><label>Last Name</label><input type="text" id="leadLast" placeholder="Last name" /></div></div>
-      <div class="form-row"><div class="field"><label>Email</label><input type="email" id="leadEmail" placeholder="email@example.com" /></div><div class="field"><label>Phone</label><input type="text" id="leadPhone" placeholder="(555) 555-5555" /></div></div>
+      <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_first',this)" title="Help">?</button></label><input type="text" id="leadFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_last',this)" title="Help">?</button></label><input type="text" id="leadLast" placeholder="Last name" /></div></div>
+      <div class="form-row"><div class="field"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_email',this)" title="Help">?</button></label><input type="email" id="leadEmail" placeholder="email@example.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_phone',this)" title="Help">?</button></label><input type="text" id="leadPhone" placeholder="(555) 555-5555" /></div></div>
       <div class="form-row">
-        <div class="field"><label>Interested Program</label><select id="leadProgram"><option value="">-- Select --</option></select></div>
-        <div class="field"><label>Source</label><select id="leadSource"><option value="walk-in">Walk-In</option><option value="referral">Referral</option><option value="social-media">Social Media</option><option value="website">Website</option><option value="phone">Phone Call</option><option value="event">Event</option><option value="other">Other</option></select></div>
+        <div class="field"><label>Interested Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_program',this)" title="Help">?</button></label><select id="leadProgram"><option value="">-- Select --</option></select></div>
+        <div class="field"><label>Source <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_source',this)" title="Help">?</button></label><select id="leadSource"><option value="walk-in">Walk-In</option><option value="referral">Referral</option><option value="social-media">Social Media</option><option value="website">Website</option><option value="phone">Phone Call</option><option value="event">Event</option><option value="other">Other</option></select></div>
       </div>
-      <div class="field"><label>Status</label><select id="leadStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="trial">Trial Scheduled</option><option value="converted">Converted</option></select></div>
-      <div class="field"><label>Notes</label><textarea id="leadNotes" rows="3" placeholder="Any notes about this lead..."></textarea></div>
+      <div class="field"><label>Status <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_status',this)" title="Help">?</button></label><select id="leadStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="trial">Trial Scheduled</option><option value="converted">Converted</option></select></div>
+      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_notes',this)" title="Help">?</button></label><textarea id="leadNotes" rows="3" placeholder="Any notes about this lead..."></textarea></div>
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
         <button class="btn-gold-full" style="flex:1" onclick="saveLead()">Save Lead</button>
         <button class="btn-sm gold" id="bookTrialBtn" style="display:none" onclick="bookTrialFromLead()"><i class="fa-solid fa-user-clock"></i> Book Trial</button>
@@ -3974,6 +3974,32 @@ var HELP_CONTENT = {
   'memberships.mem_autopay': { title: 'Autopay', purpose: 'When on, the members card on file is charged automatically each cycle.' },
   'memberships.mem_featured': { title: 'Featured', purpose: 'When on, this plan is highlighted on your signup pages to draw attention.' },
   'memberships.mem_trial': { title: 'Trial', purpose: 'When on, the plan shows a Trial badge on your public signup pages, marking it as a trial offer. This is separate from setting Type to Trial.' },
+  leads: {
+    title: 'Leads',
+    purpose: 'Your prospect pipeline: people who showed interest but have not joined yet, tracked from first contact to signup.',
+    actions: [
+      'Add a lead, then move them across the stages: New, Contacted, Trial Scheduled, and Converted.',
+      'Drag a card or open it to update, and convert them to a member once they join.'
+    ],
+    example: 'Example: a walk-in books a trial; move them to Trial Scheduled, and after a great class, convert them to an active member.'
+  },
+  'leads.lead_form': {
+    title: 'Add / Edit Lead',
+    purpose: 'Create or edit a lead: who they are, how to reach them, and where they are in your pipeline.',
+    actions: [
+      'Fill in their name and contact, note the program they want and how they found you.',
+      'Set a stage and save.'
+    ],
+    example: 'Example: Jane Doe, interested in Kids BJJ, found you on Instagram, status New.'
+  },
+  'leads.lead_first': { title: 'First Name', purpose: 'The leads first name. Used across the pipeline and in messages.' },
+  'leads.lead_last': { title: 'Last Name', purpose: 'The leads last name.' },
+  'leads.lead_email': { title: 'Email', purpose: 'Their email, for follow-up and to convert them later without re-entering details.' },
+  'leads.lead_phone': { title: 'Phone', purpose: 'Their phone, so you can text or call to follow up.' },
+  'leads.lead_program': { title: 'Interested Program', purpose: 'The program they are interested in, like Kids BJJ. Helps you tailor follow-up.' },
+  'leads.lead_source': { title: 'Source', purpose: 'How they found you, like Instagram, a referral, or a walk-in. Useful for seeing what marketing works.' },
+  'leads.lead_status': { title: 'Status', purpose: 'Their stage in the pipeline: New, Contacted, Trial Scheduled, or Converted. This sets which column they sit in.' },
+  'leads.lead_notes': { title: 'Notes', purpose: 'Anything useful about this lead, like what they asked for or when to follow up.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
