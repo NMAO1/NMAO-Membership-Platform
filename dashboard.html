@@ -1279,9 +1279,9 @@
         <p class="form-msg" id="referralSettingsMsg"></p>
       </div></div>
       <!-- Tags -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Tags</span><button class="panel-action" onclick="openAddTag()"><i class="fa-solid fa-plus"></i> New Tag</button></div><div class="panel-body"><div id="tagsManager"></div></div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Tags</span><button class="help-hint-inline" onclick="openHelpPopover('settings.tags',this)" title="Help">?</button><button class="panel-action" onclick="openAddTag()"><i class="fa-solid fa-plus"></i> New Tag</button></div><div class="panel-body"><div id="tagsManager"></div></div></div>
       <!-- Discounts -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-percent" style="margin-right:0.5rem;color:var(--gold)"></i>Discounts</span><button class="panel-action" onclick="openAddDiscount()"><i class="fa-solid fa-plus"></i> New Discount</button></div><div class="panel-body"><div id="discountsManager"></div></div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-percent" style="margin-right:0.5rem;color:var(--gold)"></i>Discounts</span><button class="help-hint-inline" onclick="openHelpPopover('settings.discounts',this)" title="Help">?</button><button class="panel-action" onclick="openAddDiscount()"><i class="fa-solid fa-plus"></i> New Discount</button></div><div class="panel-body"><div id="discountsManager"></div></div></div>
       <!-- Digital Waiver -->
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-file-signature" style="margin-right:0.5rem;color:var(--gold)"></i>Digital Waiver</span><button class="help-hint-inline" onclick="openHelpPopover('settings.waiver',this)" title="Help">?</button></div><div class="panel-body"><div class="field"><label>Waiver Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_title',this)" title="Help">?</button></label><input type="text" id="waiverTitle" placeholder="e.g. Liability Waiver" /></div><div class="field"><label>Waiver Content <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_content',this)" title="Help">?</button></label><div id="waiverEditor" style="margin-top:0.25rem"></div></div><button class="panel-action" style="width:fit-content;margin-top:1rem" onclick="saveWaiver()"><i class="fa-solid fa-floppy-disk"></i> Save Waiver</button><p class="form-msg" id="waiverMsg"></p></div></div>
       <!-- Milestones -->
@@ -1682,12 +1682,12 @@
 <!-- §MODAL-TAG -->
 <div class="modal-overlay" id="addTagModal">
   <div class="modal" style="width:440px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Tag</span><button class="modal-close" onclick="safeClose('addTagModal',closeAddTag)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title">Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.tag_add',this)" title="Help">?</button></span><button class="modal-close" onclick="safeClose('addTagModal',closeAddTag)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="tagEditId" value="" />
-      <div class="field"><label>Tag Name</label><input type="text" id="tagName" placeholder="e.g. Competition Team" /></div>
-      <div class="field"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="tagColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="tagColorHex" value="#C9A84C" style="flex:1" oninput="syncTagColor()" /></div></div>
-      <div class="field"><label>Description (optional)</label><textarea id="tagDescription" rows="3" placeholder="What is this tag for?"></textarea></div>
+      <div class="field"><label>Tag Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.tag_name',this)" title="Help">?</button></label><input type="text" id="tagName" placeholder="e.g. Competition Team" /></div>
+      <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.tag_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="tagColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="tagColorHex" value="#C9A84C" style="flex:1" oninput="syncTagColor()" /></div></div>
+      <div class="field"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.tag_desc',this)" title="Help">?</button></label><textarea id="tagDescription" rows="3" placeholder="What is this tag for?"></textarea></div>
       <button class="btn-gold-full" onclick="saveTag()">Save Tag</button>
       <p class="form-msg" id="tagMsg"></p>
     </div>
@@ -1697,25 +1697,25 @@
 <!-- §MODAL-DISCOUNT -->
 <div class="modal-overlay" id="addDiscountModal">
   <div class="modal" style="width:520px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Discount</span><button class="modal-close" onclick="safeClose('addDiscountModal',closeAddDiscount)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title">Discount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_add',this)" title="Help">?</button></span><button class="modal-close" onclick="safeClose('addDiscountModal',closeAddDiscount)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="discountEditId" value="" />
-      <div class="field"><label>Discount Name</label><input type="text" id="discountName" placeholder="e.g. Summer Special" /></div>
-      <div class="field"><label>Method</label><div class="check-group" style="margin-top:0.5rem"><label class="check-item"><input type="radio" name="discountMethod" value="percentage" id="discMethodPct" checked style="width:18px;height:18px;accent-color:var(--gold)" /><span class="check-item-label">Percentage</span></label><label class="check-item"><input type="radio" name="discountMethod" value="fixed" id="discMethodFixed" style="width:18px;height:18px;accent-color:var(--gold)" /><span class="check-item-label">Fixed Amount</span></label></div></div>
+      <div class="field"><label>Discount Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_name',this)" title="Help">?</button></label><input type="text" id="discountName" placeholder="e.g. Summer Special" /></div>
+      <div class="field"><label>Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_method',this)" title="Help">?</button></label><div class="check-group" style="margin-top:0.5rem"><label class="check-item"><input type="radio" name="discountMethod" value="percentage" id="discMethodPct" checked style="width:18px;height:18px;accent-color:var(--gold)" /><span class="check-item-label">Percentage</span></label><label class="check-item"><input type="radio" name="discountMethod" value="fixed" id="discMethodFixed" style="width:18px;height:18px;accent-color:var(--gold)" /><span class="check-item-label">Fixed Amount</span></label></div></div>
       <div class="form-row">
-        <div class="field"><label>Amount</label><input type="number" id="discountAmount" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Applies To</label><select id="discountAppliesTo"><option value="both">Signup + Monthly</option><option value="signup">Signup Fee Only</option><option value="recurring">Monthly Only</option></select></div>
+        <div class="field"><label>Amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_amount',this)" title="Help">?</button></label><input type="number" id="discountAmount" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Applies To <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_appliesto',this)" title="Help">?</button></label><select id="discountAppliesTo"><option value="both">Signup + Monthly</option><option value="signup">Signup Fee Only</option><option value="recurring">Monthly Only</option></select></div>
       </div>
-      <div class="field"><label>Promo Code (optional)</label><input type="text" id="discountCode" placeholder="e.g. SUMMER24" maxlength="20" style="text-transform:uppercase" /></div>
+      <div class="field"><label>Promo Code (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_code',this)" title="Help">?</button></label><input type="text" id="discountCode" placeholder="e.g. SUMMER24" maxlength="20" style="text-transform:uppercase" /></div>
       <div class="form-row">
-        <div class="field"><label>Valid From</label><input type="date" id="discountValidFrom" /></div>
-        <div class="field"><label>Valid Until</label><input type="date" id="discountValidUntil" /></div>
+        <div class="field"><label>Valid From <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_validfrom',this)" title="Help">?</button></label><input type="date" id="discountValidFrom" /></div>
+        <div class="field"><label>Valid Until <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_validuntil',this)" title="Help">?</button></label><input type="date" id="discountValidUntil" /></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Usage Limit</label><input type="number" id="discountUsageLimit" placeholder="Blank = unlimited" min="1" /></div>
-        <div class="field"><label>Visibility</label><select id="discountVisibility"><option value="staff">Staff Only</option><option value="public">Public</option></select></div>
+        <div class="field"><label>Usage Limit <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_usagelimit',this)" title="Help">?</button></label><input type="number" id="discountUsageLimit" placeholder="Blank = unlimited" min="1" /></div>
+        <div class="field"><label>Visibility <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_visibility',this)" title="Help">?</button></label><select id="discountVisibility"><option value="staff">Staff Only</option><option value="public">Public</option></select></div>
       </div>
-      <div class="check-group"><label class="check-item"><input type="checkbox" id="discountMultipleUse" checked /><span class="check-item-label">Allow multiple uses per student</span></label><label class="check-item"><input type="checkbox" id="discountActive" checked /><span class="check-item-label">Active</span></label></div>
+      <div class="check-group"><label class="check-item"><input type="checkbox" id="discountMultipleUse" checked /><span class="check-item-label">Allow multiple uses per student <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_multiuse',this)" title="Help">?</button></span></label><label class="check-item"><input type="checkbox" id="discountActive" checked /><span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.disc_active',this)" title="Help">?</button></span></label></div>
       <button class="btn-gold-full" onclick="saveDiscount()">Save Discount</button>
       <p class="form-msg" id="discountMsg"></p>
     </div>
@@ -4152,6 +4152,24 @@ var HELP_CONTENT = {
   'settings.waiver_title': { title: 'Waiver Title', purpose: 'The heading shown at the top of your waiver, like Liability Release or Assumption of Risk.' },
   'settings.waiver_content': { title: 'Waiver Content', purpose: 'The full text of your waiver that members read and agree to. Paste in the language your school uses.' },
   'settings.milestones': { title: 'Milestone Celebrations', purpose: 'Automatic recognition for student milestones, like attendance counts or anniversaries. Configure which ones trigger a celebration.' },
+  'settings.tags': { title: 'Tags', purpose: 'Labels you create and attach to members, like Competitor, Scholarship, or Front Desk. Use them to filter lists and target broadcasts and alerts to the right people.' },
+  'settings.tag_add': { title: 'Add Tag', purpose: 'Create a new tag or edit an existing one. Give it a name and a color so it is easy to spot.' },
+  'settings.tag_name': { title: 'Tag Name', purpose: 'What the tag is called, like VIP or Trial. Keep it short since it shows as a small label.' },
+  'settings.tag_color': { title: 'Color', purpose: 'The color of the tag label, so you can tell tags apart at a glance.' },
+  'settings.tag_desc': { title: 'Description', purpose: 'An optional note about what this tag is for, just for your own reference.' },
+  'settings.discounts': { title: 'Discounts', purpose: 'Discount codes and automatic price reductions you can apply to memberships and purchases. Set the amount, where it applies, and when it is valid.' },
+  'settings.disc_add': { title: 'Add Discount', purpose: 'Create or edit a discount. Choose how much it takes off, what it applies to, and any code or expiry.' },
+  'settings.disc_name': { title: 'Discount Name', purpose: 'An internal label for the discount, like Summer Promo or Family Plan. Members may not see this.' },
+  'settings.disc_method': { title: 'Method', purpose: 'Whether the discount is a percentage off or a fixed dollar amount off.' },
+  'settings.disc_amount': { title: 'Amount', purpose: 'How much comes off: a percent (like 20 for 20 percent) or a dollar figure, depending on the method you chose.' },
+  'settings.disc_appliesto': { title: 'Applies To', purpose: 'What the discount can be used on, such as memberships, retail, or everything.' },
+  'settings.disc_code': { title: 'Promo Code', purpose: 'An optional code a customer enters to claim the discount, like WELCOME10. Leave blank to apply it without a code.' },
+  'settings.disc_validfrom': { title: 'Valid From', purpose: 'The date the discount becomes usable. Leave blank to start it right away.' },
+  'settings.disc_validuntil': { title: 'Valid Until', purpose: 'The date the discount stops working. Leave blank for no expiry.' },
+  'settings.disc_usagelimit': { title: 'Usage Limit', purpose: 'The maximum number of times this discount can be used in total. Leave blank for unlimited.' },
+  'settings.disc_visibility': { title: 'Visibility', purpose: 'Whether the discount is shown publicly or kept private for you to apply manually.' },
+  'settings.disc_multiuse': { title: 'Allow Multiple Uses Per Student', purpose: 'When on, the same student can use this discount more than once. When off, it is one use per student.' },
+  'settings.disc_active': { title: 'Active', purpose: 'Whether the discount is currently live. Turn it off to pause the discount without deleting it.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
