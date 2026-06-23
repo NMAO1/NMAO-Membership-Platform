@@ -844,7 +844,7 @@
     
     <!-- ═══════════════ §PAGE-PROGRAMS ═══════════════ -->
     <div class="page" id="page-programs">
-      <div class="content-heading"><h2>Programs</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()"><i class="fa-solid fa-plus"></i> Add Program</button></div>
+      <div class="content-heading"><h2>Programs</h2><button class="help-hint-inline" onclick="openHelpPopover('programs',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddProgram()"><i class="fa-solid fa-plus"></i> Add Program</button></div>
       <div id="programsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>
     </div>
 
@@ -2060,17 +2060,17 @@
 <!-- §MODAL-PROGRAM -->
 <div class="modal-overlay" id="addProgramModal">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="addProgramTitle">Add New Program</span><button class="modal-close" onclick="safeClose('addProgramModal',closeAddProgram)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addProgramTitle">Add New Program</span><button class="help-hint-inline" onclick="openHelpPopover('programs.prog_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addProgramModal',closeAddProgram)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="progEditId" value="" />
-      <div class="field"><label>Program Name</label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
-      <div class="field"><label>Description</label><div id="progDescEditor"></div></div>
+      <div class="field"><label>Program Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_name',this)" title="Help">?</button></label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
+      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_desc',this)" title="Help">?</button></label><div id="progDescEditor"></div></div>
       <div class="form-row">
-        <div class="field"><label>Age Group</label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div>
-        <div class="field"><label>Belt Progression</label><select id="progBelt" onchange="toggleProgBeltSystem()"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
+        <div class="field"><label>Age Group <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_age',this)" title="Help">?</button></label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div>
+        <div class="field"><label>Belt Progression <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_belt',this)" title="Help">?</button></label><select id="progBelt" onchange="toggleProgBeltSystem()"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
       </div>
-      <div class="field" id="progBeltSystemField"><label>Belt System</label><select id="progBeltSystem"><option value="">-- Select Belt System --</option></select><div id="progBeltSystemHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;display:none"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No belt systems yet. Create one in the Belt Systems panel first.</div></div>
-      <div class="field"><label>Program Color</label><div style="display:flex;gap:0.75rem;align-items:center"><input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" /></div></div>
+      <div class="field" id="progBeltSystemField"><label>Belt System <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_beltsys',this)" title="Help">?</button></label><select id="progBeltSystem"><option value="">-- Select Belt System --</option></select><div id="progBeltSystemHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;display:none"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No belt systems yet. Create one in the Belt Systems panel first.</div></div>
+      <div class="field"><label>Program Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.75rem;align-items:center"><input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" /></div></div>
       <button class="btn-gold-full" onclick="saveProgram()">Save Program</button>
       <p class="form-msg" id="programMsg"></p>
     </div>
@@ -3845,6 +3845,30 @@ var HELP_CONTENT = {
   },
   'sessions.rem_session': { title: 'Booking confirmation text', purpose: 'When on, a student gets a text confirming each session they book.' },
   'sessions.rem_pack': { title: 'Low pack reminder text', purpose: 'When on, a student gets a text when their session pack is running low, nudging a re-up.' },
+  programs: {
+    title: 'Programs',
+    purpose: 'The disciplines your school offers, like Adult Karate or Kids BJJ. Programs are the top-level buckets that classes, memberships, and belts belong to.',
+    actions: [
+      'Add a program for each offering you run, then attach classes and memberships to it.',
+      'If it uses ranks, link a belt system.'
+    ],
+    example: 'Example: create Brazilian Jiu-Jitsu, give it a belt system, and build its classes and memberships under it.'
+  },
+  'programs.prog_form': {
+    title: 'Add / Edit Program',
+    purpose: 'Create or edit a program. This defines the offering, its age group, and whether it uses belt ranks.',
+    actions: [
+      'Name it, pick an age group, and choose whether it has a belt progression.',
+      'Set a color and save, then attach classes and memberships.'
+    ],
+    example: 'Example: Adult Karate, Adults 18+, with a belt system and a gold color.'
+  },
+  'programs.pr_name': { title: 'Program Name', purpose: 'The name of the discipline, like Adult Karate or Little Tigers. This is what students and staff see.' },
+  'programs.pr_desc': { title: 'Description', purpose: 'Optional details about the program, shown where the program appears.' },
+  'programs.pr_age': { title: 'Age Group', purpose: 'The age range this program is for, like Kids 7-12 or Adults 18+. Helps organize and filter your offerings.' },
+  'programs.pr_belt': { title: 'Belt Progression', purpose: 'Whether this program uses belt ranks. Choose Belt Progression to track promotions, or No Belt Progression for programs without ranks, like fitness classes.' },
+  'programs.pr_beltsys': { title: 'Belt System', purpose: 'Which belt ladder this program uses, set up under Belt Progressions. Shown when the program has a belt progression.' },
+  'programs.pr_color': { title: 'Program Color', purpose: 'A color used to tag this program across the calendar and reports. Pick anything; it is visual only.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
