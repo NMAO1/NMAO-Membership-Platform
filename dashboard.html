@@ -922,7 +922,7 @@
 
     <!-- ═══════════════ §PAGE-RETAIL ═══════════════ -->
     <div class="page" id="page-retail">
-     <div class="content-heading"><h2>Retail</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddProduct()"><i class="fa-solid fa-plus"></i> Add Product</button></div>
+     <div class="content-heading"><h2>Retail</h2><button class="help-hint-inline" onclick="openHelpPopover('retail',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddProduct()"><i class="fa-solid fa-plus"></i> Add Product</button></div>
       <!-- §FULFILLMENT-QUEUE -->
       <div id="fulfillmentQueuePanel" class="fulfillment-panel" style="display:none">
         <div class="fulfillment-header">
@@ -2380,32 +2380,32 @@
 <!-- §MODAL-PRODUCT -->
 <div class="modal-overlay" id="addProductModal">
   <div class="modal" style="width:580px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addProductTitle">Add Product</span><button class="modal-close" onclick="safeClose('addProductModal',closeAddProduct)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addProductTitle">Add Product</span><button class="help-hint-inline" onclick="openHelpPopover('retail.prod_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addProductModal',closeAddProduct)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
 <input type="hidden" id="productEditId" value="" />
       <input type="file" id="productImageInput" accept="image/*" style="display:none" onchange="handleProductPhotoUpload(event)" />
-      <div class="field"><label>Product Photo</label><div style="display:flex;gap:1rem;align-items:center"><div id="productImagePreview" onclick="document.getElementById('productImageInput').click()" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-box"></i></div><button type="button" class="panel-action" onclick="document.getElementById('productImageInput').click()"><i class="fa-solid fa-upload"></i> Upload Photo</button></div></div>
-      <div class="field"><label>Product Name</label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
+      <div class="field"><label>Product Photo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_photo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="productImagePreview" onclick="document.getElementById('productImageInput').click()" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-box"></i></div><button type="button" class="panel-action" onclick="document.getElementById('productImageInput').click()"><i class="fa-solid fa-upload"></i> Upload Photo</button></div></div>
+      <div class="field"><label>Product Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_name',this)" title="Help">?</button></label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
       <div class="form-row">
-        <div class="field"><label>Category</label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div>
-        <div class="field"><label>Subcategory (optional)</label><input type="text" id="productSubcategory" placeholder="e.g. Gi, Gloves" /></div>
+        <div class="field"><label>Category <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_category',this)" title="Help">?</button></label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div>
+        <div class="field"><label>Subcategory (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_subcategory',this)" title="Help">?</button></label><input type="text" id="productSubcategory" placeholder="e.g. Gi, Gloves" /></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Retail Price</label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Wholesale Price</label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Retail Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_retail',this)" title="Help">?</button></label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Wholesale Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_wholesale',this)" title="Help">?</button></label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div>
       </div>
-      <div class="field"><label>Description</label><div id="productDescEditor"></div></div>
+      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_desc',this)" title="Help">?</button></label><div id="productDescEditor"></div></div>
       <div class="check-group" style="margin-top:0.75rem">
-        <label class="check-item"><input type="checkbox" id="productTrackInventory" onchange="toggleInventoryFields()" /><span class="check-item-label">Track Inventory</span></label>
-        <label class="check-item"><input type="checkbox" id="productFeatured" /><span class="check-item-label">Featured</span></label>
-        <label class="check-item"><input type="checkbox" id="productQuickList" /><span class="check-item-label">Quick List</span></label>
-       <label class="check-item"><input type="checkbox" id="productMemberApp" /><span class="check-item-label">Show in Member App</span></label>
-        <label class="check-item"><input type="checkbox" id="productPublicPay" /><span class="check-item-label">Public Scan-to-Pay</span></label>
+        <label class="check-item"><input type="checkbox" id="productTrackInventory" onchange="toggleInventoryFields()" /><span class="check-item-label">Track Inventory <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_track',this)" title="Help">?</button></span></label>
+        <label class="check-item"><input type="checkbox" id="productFeatured" /><span class="check-item-label">Featured <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_featured',this)" title="Help">?</button></span></label>
+        <label class="check-item"><input type="checkbox" id="productQuickList" /><span class="check-item-label">Quick List <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_quicklist',this)" title="Help">?</button></span></label>
+       <label class="check-item"><input type="checkbox" id="productMemberApp" /><span class="check-item-label">Show in Member App <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_memberapp',this)" title="Help">?</button></span></label>
+        <label class="check-item"><input type="checkbox" id="productPublicPay" /><span class="check-item-label">Public Scan-to-Pay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_publicpay',this)" title="Help">?</button></span></label>
       </div>
       <div id="inventoryFields" style="display:none">
         <div class="form-row">
-          <div class="field"><label>Inventory Qty</label><input type="number" id="productInventoryQty" value="0" min="0" /></div>
-          <div class="field"><label>Reorder Alert Qty</label><input type="number" id="productReorderQty" value="0" min="0" /></div>
+          <div class="field"><label>Inventory Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_inventory',this)" title="Help">?</button></label><input type="number" id="productInventoryQty" value="0" min="0" /></div>
+          <div class="field"><label>Reorder Alert Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_reorder',this)" title="Help">?</button></label><input type="number" id="productReorderQty" value="0" min="0" /></div>
         </div>
       </div>
       <div style="font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.5rem">Product Badge (optional)</div>
@@ -2417,7 +2417,7 @@
         <button class="badge-style-btn" data-badge="blue" onclick="selectBadgeStyle('blue',this)" style="color:#90B4D4;border-color:#2A3A5A">Blue</button>
         <button class="badge-style-btn" data-badge="black" onclick="selectBadgeStyle('black',this)" style="color:var(--gold);border-color:var(--gold);background:#000">Black</button>
       </div>
-      <div class="field" id="badgeTextField" style="display:none"><label>Badge Text (max 20 chars)</label><input type="text" id="productBadgeText" placeholder="e.g. SALE, NEW" maxlength="20" style="text-transform:uppercase" /></div>
+      <div class="field" id="badgeTextField" style="display:none"><label>Badge Text (max 20 chars) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_badge',this)" title="Help">?</button></label><input type="text" id="productBadgeText" placeholder="e.g. SALE, NEW" maxlength="20" style="text-transform:uppercase" /></div>
       <button class="btn-gold-full" onclick="saveProduct()">Save Product</button>
       <p class="form-msg" id="productMsg"></p>
     </div>
@@ -4050,6 +4050,39 @@ var HELP_CONTENT = {
   'instructors.instr_payrate': { title: 'Payroll Rate', purpose: 'How much this instructor is paid, used with the payroll type beside it. Set 0 if you are not tracking pay.' },
   'instructors.instr_paytype': { title: 'Payroll Type', purpose: 'How the rate applies: Per Class, Per Session, Monthly Salary, or Hourly.' },
   'instructors.instr_notes': { title: 'Notes', purpose: 'Internal notes about the instructor, like their role or availability. Not shown to members.' },
+  retail: {
+    title: 'Retail',
+    purpose: 'Your in-school store: uniforms, gear, and merchandise you sell, with inventory tracking and a point-of-sale checkout.',
+    actions: [
+      'Add products with prices and stock, then ring up sales at the desk with POS.',
+      'Flag a product for public scan-to-pay to print a QR for self-serve buying.'
+    ],
+    example: 'Example: stock a 40 dollar rash guard, sell one through POS, and inventory drops by one.'
+  },
+  'retail.prod_form': {
+    title: 'Add / Edit Product',
+    purpose: 'Create or edit a product: its photo, pricing, inventory, and where it appears.',
+    actions: [
+      'Add a name, category, and prices, and set inventory if you track it.',
+      'Choose where it shows, then save.'
+    ],
+    example: 'Example: Adult Gi, Uniforms category, 90 retail, 45 wholesale, 12 in stock.'
+  },
+  'retail.prod_photo': { title: 'Product Photo', purpose: 'An image of the product, shown in your store, member app, and on scan-to-pay pages. Optional but recommended.' },
+  'retail.prod_name': { title: 'Product Name', purpose: 'The product name customers see, like Adult Gi or School T-Shirt.' },
+  'retail.prod_category': { title: 'Category', purpose: 'The group this product belongs to, like Uniforms or Apparel. Helps organize the store and filter.' },
+  'retail.prod_subcategory': { title: 'Subcategory', purpose: 'An optional finer grouping under the category, like Long Sleeve.' },
+  'retail.prod_retail': { title: 'Retail Price', purpose: 'The price customers pay. This is what is charged at checkout.' },
+  'retail.prod_wholesale': { title: 'Wholesale Price', purpose: 'What the product cost you. Used to track margin; not shown to customers.' },
+  'retail.prod_desc': { title: 'Description', purpose: 'Details about the product, shown in the member app and on scan-to-pay pages.' },
+  'retail.prod_track': { title: 'Track Inventory', purpose: 'When on, the system counts stock and decreases it with each sale. Off means unlimited or untracked.' },
+  'retail.prod_featured': { title: 'Featured', purpose: 'When on, the product is highlighted in your store to draw attention.' },
+  'retail.prod_quicklist': { title: 'Quick List', purpose: 'When on, the product appears in the quick-add list at POS for fast checkout of common items.' },
+  'retail.prod_memberapp': { title: 'Show in Member App', purpose: 'When on, members can see and browse this product in the app.' },
+  'retail.prod_publicpay': { title: 'Public Scan-to-Pay', purpose: 'When on, you can print a QR that lets anyone pay for this product from their phone, no account needed.' },
+  'retail.prod_inventory': { title: 'Inventory Qty', purpose: 'How many you have in stock. Used when Track Inventory is on, and decreases with each sale.' },
+  'retail.prod_reorder': { title: 'Reorder Alert Qty', purpose: 'When stock falls to this number, you get a low-stock alert so you can restock in time.' },
+  'retail.prod_badge': { title: 'Badge Text', purpose: 'A short label shown on the product, like Sale or New. Max 20 characters.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
