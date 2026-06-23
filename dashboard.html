@@ -850,19 +850,19 @@
 
     <!-- ═══════════════ §PAGE-BELTS ═══════════════ -->
     <div class="page" id="page-belts">
-      <div class="content-heading"><h2>Belt Progressions</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltSystem()"><i class="fa-solid fa-plus"></i> New Belt System</button></div>
+      <div class="content-heading"><h2>Belt Progressions</h2><button class="help-hint-inline" onclick="openHelpPopover('belts',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltSystem()"><i class="fa-solid fa-plus"></i> New Belt System</button></div>
       <div id="beltSystemsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem"></div>
     </div>
 
     <!-- ═══════════════ §PAGE-BELTTESTS ═══════════════ -->
     <div class="page" id="page-belttests">
-      <div class="content-heading"><h2>Belt Tests</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltTest()"><i class="fa-solid fa-plus"></i> Schedule Belt Test</button></div>
+      <div class="content-heading"><h2>Belt Tests</h2><button class="help-hint-inline" onclick="openHelpPopover('belttests',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltTest()"><i class="fa-solid fa-plus"></i> Schedule Belt Test</button></div>
       <div style="margin-bottom:1.5rem">
-        <div class="content-heading"><h2>Upcoming</h2><div class="rule-h"></div></div>
+        <div class="content-heading"><h2>Upcoming</h2><button class="help-hint-inline" onclick="openHelpPopover('belttests.upcoming',this)" title="Help">?</button><div class="rule-h"></div></div>
         <div id="beltTestsUpcomingList"></div>
       </div>
       <div>
-        <div class="content-heading"><h2>Past Tests</h2><div class="rule-h"></div></div>
+        <div class="content-heading"><h2>Past Tests</h2><button class="help-hint-inline" onclick="openHelpPopover('belttests.past',this)" title="Help">?</button><div class="rule-h"></div></div>
         <div id="beltTestsPastList"></div>
       </div>
     </div>
@@ -1634,23 +1634,23 @@
 <!-- §MODAL-BELTTEST -->
 <div class="modal-overlay" id="addBeltTestModal">
   <div class="modal" style="width:600px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Schedule Belt Test</span><button class="modal-close" onclick="safeClose('addBeltTestModal',closeAddBeltTest)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title">Schedule Belt Test</span><button class="help-hint-inline" onclick="openHelpPopover('belttests.test_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addBeltTestModal',closeAddBeltTest)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="beltTestEditId" value="" />
-      <div class="field"><label>Test Name</label><input type="text" id="btName" placeholder="e.g. Adult Karate Spring Belt Test" /></div>
+      <div class="field"><label>Test Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_name',this)" title="Help">?</button></label><input type="text" id="btName" placeholder="e.g. Adult Karate Spring Belt Test" /></div>
       <div class="form-row">
-        <div class="field"><label>Test Date</label><input type="date" id="btDate" /></div>
-        <div class="field"><label>Time</label><input type="time" id="btTime" /></div>
+        <div class="field"><label>Test Date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_date',this)" title="Help">?</button></label><input type="date" id="btDate" /></div>
+        <div class="field"><label>Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_time',this)" title="Help">?</button></label><input type="time" id="btTime" /></div>
       </div>
-      <div class="field"><label>Location</label><input type="text" id="btLocation" placeholder="e.g. Main School" /></div>
-      <div class="check-group"><label class="check-item"><input type="checkbox" id="btFeeEnabled" onchange="toggleBeltTestFee()" /><span class="check-item-label">Charge test fee</span></label></div>
+      <div class="field"><label>Location <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_location',this)" title="Help">?</button></label><input type="text" id="btLocation" placeholder="e.g. Main School" /></div>
+      <div class="check-group"><label class="check-item"><input type="checkbox" id="btFeeEnabled" onchange="toggleBeltTestFee()" /><span class="check-item-label">Charge test fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_enabled',this)" title="Help">?</button></span></label></div>
       <div id="btFeeFields" style="display:none">
         <div class="form-row">
-          <div class="field"><label>Fee Amount</label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div>
-          <div class="field"><label>Payment Method</label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div>
+          <div class="field"><label>Fee Amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_amount',this)" title="Help">?</button></label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div>
+          <div class="field"><label>Payment Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_payment',this)" title="Help">?</button></label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div>
         </div>
       </div>
-      <div class="field"><label>Notes</label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
+      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_notes',this)" title="Help">?</button></label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
       <button class="btn-gold-full" onclick="saveBeltTest()">Schedule Belt Test</button>
       <p class="form-msg" id="beltTestMsg"></p>
     </div>
@@ -1668,7 +1668,7 @@
     </div>
     <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
       <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
-        <button class="profile-tab active" id="bttab-students" onclick="switchBeltTestTab('students')">Students</button>
+        <button class="profile-tab" id="bttab-payments" onclick="switchBeltTestTab('payments')">Payments</button><button class="help-hint-inline" onclick="switchBeltTestTab('payments');openHelpPopover('belttests.tab_payments',this)" title="Help">?</button>
         <button class="profile-tab" id="bttab-results" onclick="switchBeltTestTab('results')">Results</button>
         <button class="profile-tab" id="bttab-payments" onclick="switchBeltTestTab('payments')">Payments</button>
       </div>
@@ -1958,10 +1958,10 @@
 <!-- §MODAL-BELTSYSTEM-ADD -->
 <div class="modal-overlay" id="addBeltSystemModal">
   <div class="modal" style="width:460px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">New Belt System</span><button class="modal-close" onclick="closeAddBeltSystem()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title">New Belt System</span><button class="help-hint-inline" onclick="openHelpPopover('belts.system_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddBeltSystem()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div class="field"><label>System Name</label><input type="text" id="bsName" placeholder="e.g. Karate Ranks" /></div>
-      <div class="field"><label>Description</label><div id="bsDescEditor"></div></div>
+      <div class="field"><label>System Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_name',this)" title="Help">?</button></label><input type="text" id="bsName" placeholder="e.g. Karate Ranks" /></div>
+      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_desc',this)" title="Help">?</button></label><div id="bsDescEditor"></div></div>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveBeltSystem()">Create Belt System</button>
       <p class="form-msg" id="beltSystemMsg"></p>
     </div>
@@ -1994,17 +1994,17 @@
 <!-- §MODAL-BELTLEVEL-ADD -->
 <div class="modal-overlay" id="addBeltLevelModal">
   <div class="modal" style="width:560px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title">Add Belt Level</span><button class="modal-close" onclick="closeAddBeltLevel()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title">Add Belt Level</span><button class="help-hint-inline" onclick="openHelpPopover('belts.level_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddBeltLevel()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="field"><label>Belt Name</label><input type="text" id="blName" placeholder="e.g. White Belt" /></div>
-        <div class="field"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="blColor" value="#FFFFFF" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="document.getElementById('blColorHex').value=this.value" /><input type="text" id="blColorHex" value="#FFFFFF" style="flex:1" oninput="syncBeltColor()" /></div></div>
+        <div class="field"><label>Belt Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_name',this)" title="Help">?</button></label><input type="text" id="blName" placeholder="e.g. White Belt" /></div>
+        <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="blColor" value="#FFFFFF" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="document.getElementById('blColorHex').value=this.value" /><input type="text" id="blColorHex" value="#FFFFFF" style="flex:1" oninput="syncBeltColor()" /></div></div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Promotion Fee</label><input type="number" id="blFee" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Classes Required</label><input type="number" id="blClassesRequired" value="0" min="0" /></div>
+        <div class="field"><label>Promotion Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_fee',this)" title="Help">?</button></label><input type="number" id="blFee" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Classes Required <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_classes',this)" title="Help">?</button></label><input type="number" id="blClassesRequired" value="0" min="0" /></div>
       </div>
-      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0">Curriculum Videos</div>
+      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0">Curriculum Videos <button class="help-hint-inline" onclick="openHelpPopover('belts.bl_videos',this)" title="Help">?</button></div>
       <div id="blVideoRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem"></div>
       <button class="btn-sm" onclick="addVideoRow()"><i class="fa-solid fa-plus"></i> Add Video</button>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveBeltLevel()">Save Belt Level</button>
@@ -3869,6 +3869,71 @@ var HELP_CONTENT = {
   'programs.pr_belt': { title: 'Belt Progression', purpose: 'Whether this program uses belt ranks. Choose Belt Progression to track promotions, or No Belt Progression for programs without ranks, like fitness classes.' },
   'programs.pr_beltsys': { title: 'Belt System', purpose: 'Which belt ladder this program uses, set up under Belt Progressions. Shown when the program has a belt progression.' },
   'programs.pr_color': { title: 'Program Color', purpose: 'A color used to tag this program across the calendar and reports. Pick anything; it is visual only.' },
+  belts: {
+    title: 'Belt Progressions',
+    purpose: 'The rank ladders for your programs. A belt system is an ordered set of belts students earn as they progress.',
+    actions: [
+      'Create a belt system, then add its belts in order with colors and promotion fees.',
+      'Link a system to a program so students advance through it.'
+    ],
+    example: 'Example: build a Karate system, White through Black, then attach it to your Karate program.'
+  },
+  'belts.system_form': {
+    title: 'Belt System',
+    purpose: 'Create or edit a belt system, the named ladder of ranks for a program.',
+    actions: [
+      'Name the system and add an optional description.',
+      'Save, then start adding belts to it.'
+    ],
+    example: 'Example: Karate Ranks, used by your Adult and Kids Karate programs.'
+  },
+  'belts.bs_name': { title: 'System Name', purpose: 'The name of this rank ladder, like Karate Ranks or BJJ Belts. You link it to programs.' },
+  'belts.bs_desc': { title: 'Description', purpose: 'Optional notes about the system, like its origin or how it is used.' },
+  'belts.level_form': {
+    title: 'Belt Level',
+    purpose: 'Create or edit a single belt within a system, with its color, promotion fee, and requirements.',
+    actions: [
+      'Name the belt and set its color and any promotion fee.',
+      'Set the classes required to test, and add curriculum videos if you use them.'
+    ],
+    example: 'Example: Blue Belt, blue color, 50 dollar promotion fee, 40 classes required.'
+  },
+  'belts.bl_name': { title: 'Belt Name', purpose: 'The name of this rank, like White Belt or Blue Belt. Belts appear in the order you add them.' },
+  'belts.bl_color': { title: 'Color', purpose: 'The belt color, shown on student profiles and progressions. Pick the real belt color.' },
+  'belts.bl_fee': { title: 'Promotion Fee', purpose: 'What you charge to promote a student to this belt. Used by the belt-test flow. Set 0 for free.' },
+  'belts.bl_classes': { title: 'Classes Required', purpose: 'How many classes a student should attend before testing for this belt. A guideline shown on their progression.' },
+  'belts.bl_videos': { title: 'Curriculum Videos', purpose: 'Optional technique videos for this belt, shown to students in their portal so they can study the requirements.' },
+  belttests: {
+    title: 'Belt Tests',
+    purpose: 'Schedule belt tests, invite the students testing, collect the fee, and promote whoever passes, all in one place.',
+    actions: [
+      'Schedule a test with the Add Belt Test button, then open it to add students.',
+      'Mark Pass or Hold, and charge fees. Upcoming tests sit up top, past ones below.'
+    ],
+    example: 'Example: run a Saturday test, mark 8 of 10 as Pass, and they advance a rank while their fees post.'
+  },
+  'belttests.upcoming': { title: 'Upcoming Tests', purpose: 'Belt tests that are scheduled but have not happened yet. Open one to manage its roster, results, and payments.' },
+  'belttests.past': { title: 'Past Tests', purpose: 'Belt tests that have already run. Open one to review who passed and what was charged.' },
+  'belttests.test_form': {
+    title: 'Schedule Belt Test',
+    purpose: 'Create or edit a belt test: when it happens, where, and whether you charge a fee.',
+    actions: [
+      'Set the name, date, and location, and decide on a fee.',
+      'Save, then open the test to add the students who are testing.'
+    ],
+    example: 'Example: Adult Karate Spring Belt Test, Saturday 10am, Main School, 50 dollar fee.'
+  },
+  'belttests.bt_name': { title: 'Test Name', purpose: 'A clear name for the test, like Adult Karate Spring Belt Test. Helps you find it later.' },
+  'belttests.bt_date': { title: 'Test Date', purpose: 'The day the test takes place. The upcoming and past lists sort by this.' },
+  'belttests.bt_time': { title: 'Time', purpose: 'When the test starts. Shown to the students testing.' },
+  'belttests.bt_location': { title: 'Location', purpose: 'Where the test happens, like Main School or an address.' },
+  'belttests.bt_fee_enabled': { title: 'Charge test fee', purpose: 'When on, a fee applies to this test and the fee fields appear. Off makes it free.' },
+  'belttests.bt_fee_amount': { title: 'Fee Amount', purpose: 'The amount each student pays to test. Belt-level promotion fees can also apply per rank.' },
+  'belttests.bt_payment': { title: 'Payment Method', purpose: 'How the fee is collected, like charging the card on file or marking it paid in person.' },
+  'belttests.bt_notes': { title: 'Notes', purpose: 'Any notes for the students testing, like what to bring or wear. Optional.' },
+  'belttests.tab_students': { title: 'Students', purpose: 'Add the students who are testing and see the roster for this test. Start here when you open a test.' },
+  'belttests.tab_results': { title: 'Results', purpose: 'Mark each student Pass or Hold. Pass promotes the student to the next belt and records the promotion; Hold leaves them at their current rank.' },
+  'belttests.tab_payments': { title: 'Payments', purpose: 'Collect the test fees. Charge cards on file individually or all at once, and see who has paid.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
