@@ -699,6 +699,7 @@
         <div class="rev-card" onclick="openUpcomingBreakdown(30)"><div class="rev-amount" id="upc30">$0</div><div class="rev-label">Next 30 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc30sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
       </div>
       <div id="upcPastDue" style="display:none;font-size:0.78rem;color:#E07070;margin-bottom:1.5rem;text-align:center"></div>
+      <div id="cancelFeesOwedPanel" style="display:none;margin-bottom:1.5rem"></div>
       <div class="content-heading"><h2>Calendar</h2><button class="help-hint-inline" onclick="openHelpPopover('home.calendar',this)" title="Help">?</button><div class="rule-h"></div>
         <div class="cal-view-toggle">
           <button class="cal-view-btn" id="calViewWeek" onclick="setCalView('week')"><i class="fa-solid fa-calendar-week" style="margin-right:0.3rem"></i>Week</button>
@@ -4782,9 +4783,58 @@ async function loadRevenue(){
     document.getElementById('revYesterday').textContent='$'+sum(ry.data).toFixed(2);
     document.getElementById('revMonth').textContent='$'+sum(rm.data).toFixed(2);
     loadUpcomingRevenue();
+    loadCancelFeesOwed();
     
   }catch(e){document.getElementById('revToday').textContent='$0.00';document.getElementById('revYesterday').textContent='$0.00';document.getElementById('revMonth').textContent='$0.00';}
 }
+async function loadCancelFeesOwed(){
+  var panel=document.getElementById('cancelFeesOwedPanel'); if(!panel) return;
+  try{
+    var r=await sb.from('student_memberships').select('id,student_id,early_cancel_fee_owed,students(first_name,last_name),memberships(name)').eq('school_id',SID).gt('early_cancel_fee_owed',0).is('early_cancel_fee_collected_at',null);
+    var rows=r.data||[];
+    window._cancelFeesOwed={};
+    if(!rows.length){ panel.style.display='none'; panel.innerHTML=''; return; }
+    var total=0;
+    var html='<div style="border:1px solid rgba(226,168,76,0.4);background:rgba(226,168,76,0.06);padding:0.9rem 1rem"><div style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em;color:#E2A84C;font-weight:600;margin-bottom:0.6rem"><i class="fa-solid fa-file-invoice-dollar" style="margin-right:0.4rem"></i>Early-Cancel Fees Owed</div>';
+    for(var i=0;i<rows.length;i++){
+      var row=rows[i]; var amt=parseFloat(row.early_cancel_fee_owed)||0; total+=amt;
+      window._cancelFeesOwed[row.id]={student_id:row.student_id,amount:amt,name:(row.memberships&&row.memberships.name)||'Membership'};
+      var sn=((row.students&&row.students.first_name)||'')+' '+((row.students&&row.students.last_name)||''); sn=sn.trim()||'Member';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:0.6rem;padding:0.5rem 0;border-top:1px solid var(--border);flex-wrap:wrap"><div><div style="font-size:0.88rem;color:var(--white)">'+escapeCheckout(sn)+'</div><div style="font-size:0.72rem;color:var(--muted)">'+escapeCheckout((row.memberships&&row.memberships.name)||'')+'</div></div><div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap"><span style="color:#E2A84C;font-weight:600">$'+amt.toFixed(2)+'</span><button class="btn-sm" style="border-color:var(--gold);color:var(--gold)" onclick="chargeCancelFee(\''+row.id+'\')">Charge card</button><button class="btn-sm" onclick="markCancelFeeCollected(\''+row.id+'\')">Mark collected</button><button class="btn-sm" style="color:var(--muted)" onclick="waiveCancelFee(\''+row.id+'\')">Waive</button></div></div>';
+    }
+    html+='<div style="text-align:right;font-size:0.78rem;color:var(--muted);margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--border)">Total owed: <strong style="color:#E2A84C">$'+total.toFixed(2)+'</strong></div></div>';
+    panel.innerHTML=html; panel.style.display='';
+  }catch(e){ panel.style.display='none'; }
+}
+
+async function chargeCancelFee(smId){
+  var info=window._cancelFeesOwed&&window._cancelFeesOwed[smId]; if(!info) return;
+  if(!window.confirm('Charge $'+info.amount.toFixed(2)+' to the card on file for '+info.name+'?')) return;
+  try{
+    var _sess=await sb.auth.getSession();
+    var _uid=(_sess&&_sess.data&&_sess.data.session)?_sess.data.session.user.id:null;
+    var cents=Math.round(info.amount*100);
+    var pl={school_id:SID,student_id:info.student_id,line_items:[{name:'Early-cancel fee - '+info.name,unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:_uid,idempotency_key:'cancelfeecollect-'+smId+'-'+cents};
+    var r=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify(pl)});
+    var d=await r.json();
+    if(!r.ok||!d||d.error){ var em=(d&&d.error)?d.error:'Charge failed'; if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file for this member. Use Mark collected after collecting manually.'); } else { alert('Charge failed: '+em); } return; }
+    await sb.from('student_memberships').update({early_cancel_fee_collected_at:new Date().toISOString()}).eq('id',smId);
+    await loadRevenue();
+  }catch(e){ alert('Could not charge: '+((e&&e.message)||'error')); }
+}
+
+async function markCancelFeeCollected(smId){
+  if(!window.confirm('Mark this early-cancel fee as collected? This clears it from the list without charging a card.')) return;
+  try{ await sb.from('student_memberships').update({early_cancel_fee_collected_at:new Date().toISOString()}).eq('id',smId); await loadRevenue(); }
+  catch(e){ alert('Could not update: '+((e&&e.message)||'error')); }
+}
+
+async function waiveCancelFee(smId){
+  if(!window.confirm('Waive this early-cancel fee? It will be cleared and not collected.')) return;
+  try{ await sb.from('student_memberships').update({early_cancel_fee_collected_at:new Date().toISOString(),early_cancel_fee_owed:0}).eq('id',smId); await loadRevenue(); }
+  catch(e){ alert('Could not update: '+((e&&e.message)||'error')); }
+}
+
 async function openRevenueBreakdown(period){
   currentRevPeriod=period; var now=new Date();
   var titles={today:'Today',yesterday:'Yesterday',month:'This Month'};
