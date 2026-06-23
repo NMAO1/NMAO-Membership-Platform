@@ -1260,6 +1260,14 @@
           <div id="brandTemplates"></div>
         </div>
       </div></div>
+      <!-- §SETTINGS: MEMBERSHIPS -->
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+        <div class="field"><label>Max Rollover Balance</label><input type="number" id="settingMaxRollover" min="0" placeholder="Leave blank for unlimited" /><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">When a student renews a membership with rollover enabled, unused classes carry forward up to this cap. Leave blank for no cap.</div></div>
+        <button class="panel-action" style="width:fit-content" onclick="saveMembershipSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+        <p class="form-msg" id="membershipSettingsMsg"></p>
+      </div></div>
+      <!-- Class Settings -->
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-sliders" style="margin-right:0.5rem;color:var(--gold)"></i>Class Field Settings</span></div><div class="panel-body"><div id="classFieldsEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveClassFieldSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Class Settings</button><p class="form-msg" id="classFieldsMsg"></p></div></div>
       <!-- Referral Settings -->
       <div class="panel" style="display:none;margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Referral Program</span></div><div class="panel-body" style="max-width:500px">
         <div class="form-row" style="margin-bottom:1rem">
