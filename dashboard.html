@@ -916,7 +916,7 @@
 
     <!-- ═══════════════ §PAGE-INSTRUCTORS ═══════════════ -->
     <div class="page" id="page-instructors">
-      <div class="content-heading"><h2>Instructors</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddInstructor()"><i class="fa-solid fa-plus"></i> Add Instructor</button></div>
+      <div class="content-heading"><h2>Instructors</h2><button class="help-hint-inline" onclick="openHelpPopover('instructors',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddInstructor()"><i class="fa-solid fa-plus"></i> Add Instructor</button></div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Instructor Roster</span></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Classes</th><th>Booking</th><th>Status</th><th>Actions</th></tr></thead><tbody id="instructorsTableBody"></tbody></table></div></div>
     </div>
 
@@ -2251,18 +2251,18 @@
 <!-- §MODAL-INSTRUCTOR-ADD -->
 <div class="modal-overlay" id="addInstructorModal">
   <div class="modal" style="width:480px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addInstructorTitle">Add Instructor</span><button class="modal-close" onclick="safeClose('addInstructorModal',closeAddInstructor)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addInstructorTitle">Add Instructor</span><button class="help-hint-inline" onclick="openHelpPopover('instructors.instr_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addInstructorModal',closeAddInstructor)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="instrEditId" value="" />
-      <div class="form-row"><div class="field"><label>First Name</label><input type="text" id="instrFirst" placeholder="First name" /></div><div class="field"><label>Last Name</label><input type="text" id="instrLast" placeholder="Last name" /></div></div>
-      <div class="form-row"><div class="field"><label>Email</label><input type="email" id="instrEmail" placeholder="instructor@email.com" /></div><div class="field"><label>Phone</label><input type="text" id="instrPhone" placeholder="(555) 555-5555" /></div></div>
-      <div class="field"><label>Specialties</label><input type="text" id="instrSpecialties" placeholder="e.g. BJJ, Kickboxing" /></div>
-      <div class="field"><label>Bio</label><textarea id="instrBio" rows="3" placeholder="Short instructor bio..."></textarea></div>
+      <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_first',this)" title="Help">?</button></label><input type="text" id="instrFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_last',this)" title="Help">?</button></label><input type="text" id="instrLast" placeholder="Last name" /></div></div>
+      <div class="form-row"><div class="field"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_email',this)" title="Help">?</button></label><input type="email" id="instrEmail" placeholder="instructor@email.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_phone',this)" title="Help">?</button></label><input type="text" id="instrPhone" placeholder="(555) 555-5555" /></div></div>
+      <div class="field"><label>Specialties <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_specialties',this)" title="Help">?</button></label><input type="text" id="instrSpecialties" placeholder="e.g. BJJ, Kickboxing" /></div>
+      <div class="field"><label>Bio <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_bio',this)" title="Help">?</button></label><textarea id="instrBio" rows="3" placeholder="Short instructor bio..."></textarea></div>
       <div class="form-row">
-        <div class="field"><label>Payroll Rate ($)</label><input type="number" id="instrPayrollRate" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Payroll Type</label><select id="instrPayrollType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="per_class">Per Class</option><option value="per_session">Per Session</option><option value="monthly">Monthly Salary</option><option value="hourly">Hourly</option></select></div>
+        <div class="field"><label>Payroll Rate ($) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_payrate',this)" title="Help">?</button></label><input type="number" id="instrPayrollRate" value="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Payroll Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_paytype',this)" title="Help">?</button></label><select id="instrPayrollType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="per_class">Per Class</option><option value="per_session">Per Session</option><option value="monthly">Monthly Salary</option><option value="hourly">Hourly</option></select></div>
       </div>
-      <div class="field"><label>Notes</label><textarea id="instrNotes" rows="3" placeholder="Role, notes..."></textarea></div>
+      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_notes',this)" title="Help">?</button></label><textarea id="instrNotes" rows="3" placeholder="Role, notes..."></textarea></div>
       <button class="btn-gold-full" onclick="saveInstructor()">Save Instructor</button>
       <p class="form-msg" id="instructorMsg"></p>
     </div>
@@ -4023,6 +4023,33 @@ var HELP_CONTENT = {
   'families.fam_email': { title: 'Primary Email', purpose: 'The main contact email for the household, usually a parent. Used for family communications.' },
   'families.fam_phone': { title: 'Phone', purpose: 'The household phone for calls and texts.' },
   'families.fam_notes': { title: 'Notes', purpose: 'Any notes about the family, like billing arrangements or preferences.' },
+   instructors: {
+    title: 'Instructors',
+    purpose: 'Your teaching staff: the coaches you assign to classes, each with their own portal login to see schedules and rosters.',
+    actions: [
+      'Add an instructor with their contact and pay details, then assign them to classes.',
+      'They can log in to the instructor portal to view their schedule.'
+    ],
+    example: 'Example: add Coach Sara, set her payroll rate, and assign her the Kids classes.'
+  },
+  'instructors.instr_form': {
+    title: 'Add / Edit Instructor',
+    purpose: 'Create or edit an instructor: their contact, specialties, bio, and pay setup.',
+    actions: [
+      'Enter their name and contact, add specialties and a bio for the member app.',
+      'Set how they are paid, and save.'
+    ],
+    example: 'Example: Sara Lopez, BJJ and Kickboxing, paid per class at 35 dollars.'
+  },
+  'instructors.instr_first': { title: 'First Name', purpose: 'The instructors first name, shown on classes and the member app.' },
+  'instructors.instr_last': { title: 'Last Name', purpose: 'The instructors last name.' },
+  'instructors.instr_email': { title: 'Email', purpose: 'Their email, used for their portal login and notifications.' },
+  'instructors.instr_phone': { title: 'Phone', purpose: 'Their phone, for scheduling and contact.' },
+  'instructors.instr_specialties': { title: 'Specialties', purpose: 'What they teach, like BJJ or Kickboxing. Shown on their profile.' },
+  'instructors.instr_bio': { title: 'Bio', purpose: 'A short bio shown to members on the app, introducing the instructor.' },
+  'instructors.instr_payrate': { title: 'Payroll Rate', purpose: 'How much this instructor is paid, used with the payroll type beside it. Set 0 if you are not tracking pay.' },
+  'instructors.instr_paytype': { title: 'Payroll Type', purpose: 'How the rate applies: Per Class, Per Session, Monthly Salary, or Hourly.' },
+  'instructors.instr_notes': { title: 'Notes', purpose: 'Internal notes about the instructor, like their role or availability. Not shown to members.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
