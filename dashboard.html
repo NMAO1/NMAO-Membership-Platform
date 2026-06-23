@@ -1178,6 +1178,7 @@
         <div class="report-type-card" onclick="openReport('attendance')"><div class="report-type-icon" style="color:#7DAAD4"><i class="fa-solid fa-clipboard-list"></i></div><div class="report-type-name">Attendance</div><div class="report-type-desc">Class check-ins</div></div>
         <div class="report-type-card" onclick="openReport('sessions')"><div class="report-type-icon" style="color:#9060D0"><i class="fa-solid fa-user-clock"></i></div><div class="report-type-name">Sessions</div><div class="report-type-desc">Private session history</div></div>
         <div class="report-type-card" onclick="openReport('memberships')"><div class="report-type-icon"><i class="fa-solid fa-id-card"></i></div><div class="report-type-name">Memberships</div><div class="report-type-desc">Active plans and pricing</div></div>
+        <div class="report-type-card" onclick="openReport('commitments')"><div class="report-type-icon" style="color:#E2A84C"><i class="fa-solid fa-file-signature"></i></div><div class="report-type-name">Commitments</div><div class="report-type-desc">Members under a term agreement</div></div>
         <div class="report-type-card" onclick="openReport('payments')"><div class="report-type-icon" style="color:#5A9A6A"><i class="fa-solid fa-credit-card"></i></div><div class="report-type-name">Payments</div><div class="report-type-desc">Transaction ledger</div></div>
         <div class="report-type-card" onclick="openReport('belt_promotions')"><div class="report-type-icon" style="color:#7DAAD4"><i class="fa-solid fa-ranking-star"></i></div><div class="report-type-name">Belt Promotions</div><div class="report-type-desc">Promotion history</div></div>
         <div class="report-type-card" onclick="openReport('leads')"><div class="report-type-icon" style="color:#5A9A6A"><i class="fa-solid fa-user-plus"></i></div><div class="report-type-name">Leads</div><div class="report-type-desc">Pipeline data</div></div>
@@ -12077,6 +12078,23 @@ async function buildInstructorComparison(){
 
 // Reports
 var REPORT_DEFS = [
+  { key:'commitments', title:'Commitments', desc:'Members under a commitment term, with months remaining and the cancellation terms.',
+    customQuery:async function(sb,SID){
+      var r=await sb.from('student_memberships').select('*,students(first_name,last_name,email,phone),memberships(name,price)').eq('school_id',SID).eq('status','active').not('commitment_ends_at','is',null).gte('commitment_ends_at',localDateStr(new Date())).order('commitment_ends_at');
+      return r;
+    },
+    columns:[
+      {key:'first_name',label:'First Name',compute:function(r){return r.students?r.students.first_name:'--';}},
+      {key:'last_name',label:'Last Name',compute:function(r){return r.students?r.students.last_name:'--';}},
+      {key:'email',label:'Email',compute:function(r){return r.students?(r.students.email||'--'):'--';}},
+      {key:'phone',label:'Phone',compute:function(r){return r.students?(r.students.phone||'--'):'--';}},
+      {key:'plan',label:'Plan',compute:function(r){return r.memberships?r.memberships.name:'--';}},
+      {key:'term_end',label:'Term Ends',compute:function(r){return r.commitment_ends_at?new Date(r.commitment_ends_at+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--';}},
+      {key:'months_left',label:'Months Left',compute:function(r){if(!r.commitment_ends_at)return '--';var d=Math.ceil((new Date(r.commitment_ends_at+'T00:00:00')-new Date())/(1000*60*60*24*30.44));return (d>0?d:0)+' mo';}},
+      {key:'fee_terms',label:'Early-Cancel Fee',compute:function(r){var t=r.commit_fee_type||'none';if(t==='none')return 'None';if(t==='flat')return '$'+parseFloat(r.commit_fee_amount||0).toFixed(2);if(t==='remaining')return 'Remaining months';if(t==='percent')return (parseFloat(r.commit_fee_amount||0))+'% of remaining';return t;}}
+    ],
+    filters:[]
+  },
   { key:'comped_classes', title:'Comped Classes Report', desc:'Class credits added to students, with who issued them and why.',
     table:'class_credit_grants', join:'students(first_name,last_name)', dateField:'created_at',
     columns:[
