@@ -910,7 +910,7 @@
 
     <!-- ═══════════════ §PAGE-FAMILIES ═══════════════ -->
     <div class="page" id="page-families">
-      <div class="content-heading"><h2>Families</h2><div class="rule-h"></div><button class="panel-action" onclick="openAddFamily()"><i class="fa-solid fa-plus"></i> Add Family</button></div>
+      <div class="content-heading"><h2>Families</h2><button class="help-hint-inline" onclick="openHelpPopover('families',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddFamily()"><i class="fa-solid fa-plus"></i> Add Family</button></div>
       <div id="familiesList"></div>
     </div>
 
@@ -2226,15 +2226,15 @@
 <!-- §MODAL-FAMILY -->
 <div class="modal-overlay" id="addFamilyModal">
   <div class="modal" style="width:560px;max-width:95vw">
-    <div class="modal-header"><span class="modal-title" id="addFamilyTitle">Add Family</span><button class="modal-close" onclick="safeClose('addFamilyModal',closeAddFamily)"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addFamilyTitle">Add Family</span><button class="help-hint-inline" onclick="openHelpPopover('families.fam_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addFamilyModal',closeAddFamily)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="familyEditId" value="" />
-      <div class="field"><label>Family Name</label><input type="text" id="familyName" placeholder="e.g. The Smith Family" /></div>
-      <div class="field"><label>Primary Email</label><input type="email" id="familyEmail" placeholder="parent@email.com" /></div>
-      <div class="field"><label>Phone</label><input type="text" id="familyPhone" placeholder="(555) 555-5555" /></div>
-      <div class="field"><label>Notes</label><textarea id="familyNotes" rows="3" placeholder="Any notes about this family..."></textarea></div>
+      <div class="field"><label>Family Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_name',this)" title="Help">?</button></label><input type="text" id="familyName" placeholder="e.g. The Smith Family" /></div>
+      <div class="field"><label>Primary Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_email',this)" title="Help">?</button></label><input type="email" id="familyEmail" placeholder="parent@email.com" /></div>
+      <div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_phone',this)" title="Help">?</button></label><input type="text" id="familyPhone" placeholder="(555) 555-5555" /></div>
+      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_notes',this)" title="Help">?</button></label><textarea id="familyNotes" rows="3" placeholder="Any notes about this family..."></textarea></div>
       <div id="familyLinkedStudentsSection" style="display:none">
-        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0 0.75rem">Linked Students</div>
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0 0.75rem">Linked Students <button class="help-hint-inline" onclick="openHelpPopover('families.fam_students',this)" title="Help">?</button></div>
         <div id="familyLinkedStudentsList" style="margin-bottom:0.75rem"></div>
         <div style="position:relative;margin-bottom:0.5rem">
           <input type="text" id="familyStudentSearch" placeholder="Search student to link..." oninput="searchFamilyStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.9rem 0.6rem 2.4rem;outline:none" />
@@ -4000,6 +4000,29 @@ var HELP_CONTENT = {
   'leads.lead_source': { title: 'Source', purpose: 'How they found you, like Instagram, a referral, or a walk-in. Useful for seeing what marketing works.' },
   'leads.lead_status': { title: 'Status', purpose: 'Their stage in the pipeline: New, Contacted, Trial Scheduled, or Converted. This sets which column they sit in.' },
   'leads.lead_notes': { title: 'Notes', purpose: 'Anything useful about this lead, like what they asked for or when to follow up.' },
+  families: {
+    title: 'Families',
+    purpose: 'Household accounts that group related students, like parents and kids, so they share contact details and can be managed together.',
+    actions: [
+      'Add a family, fill in the household contact, and link the students who belong to it.',
+      'Manage them as a unit from one place.'
+    ],
+    example: 'Example: the Lopez family with two kids enrolled; group them so one parent handles both.'
+  },
+  'families.fam_form': {
+    title: 'Add / Edit Family',
+    purpose: 'Create or edit a family: the household name, primary contact, and the students linked to it.',
+    actions: [
+      'Enter the family name and contact, add any notes, then link students.',
+      'Save to keep them grouped.'
+    ],
+    example: 'Example: Lopez Family, parent email and phone, with two children linked.'
+  },
+  'families.fam_students': { title: 'Linked Students', purpose: 'The students who belong to this family. Search and add each child or member so they are grouped under one household.' },
+  'families.fam_name': { title: 'Family Name', purpose: 'The household name, like Lopez Family. Used to group and find members.' },
+  'families.fam_email': { title: 'Primary Email', purpose: 'The main contact email for the household, usually a parent. Used for family communications.' },
+  'families.fam_phone': { title: 'Phone', purpose: 'The household phone for calls and texts.' },
+  'families.fam_notes': { title: 'Notes', purpose: 'Any notes about the family, like billing arrangements or preferences.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
