@@ -951,12 +951,12 @@
 
     <!-- ═══════════════ §PAGE-COMMUNICATIONS ═══════════════ -->
     <div class="page" id="page-communications">
-      <div class="content-heading"><h2>Communications</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Communications</h2><button class="help-hint-inline" onclick="openHelpPopover('communications',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap">
-        <button class="comm-tab active" id="ctab-broadcast"   onclick="switchCommTab('broadcast')"><i class="fa-solid fa-paper-plane"></i> Broadcast</button>
-        <button class="comm-tab"        id="ctab-automations" onclick="switchCommTab('automations')"><i class="fa-solid fa-robot"></i> Automations</button>
-        <button class="comm-tab"        id="ctab-alerts"      onclick="switchCommTab('alerts')"><i class="fa-solid fa-bullhorn"></i> Alerts</button>
-        <button class="comm-tab"        id="ctab-sms"         onclick="switchCommTab('sms')"><i class="fa-solid fa-comments"></i> SMS Inbox</button>
+        <button class="comm-tab active" id="ctab-broadcast"   onclick="switchCommTab('broadcast')"><i class="fa-solid fa-paper-plane"></i> Broadcast</button><button class="help-hint-inline" onclick="switchCommTab('broadcast');openHelpPopover('comm.broadcast',this)" title="Help">?</button>
+        <button class="comm-tab"        id="ctab-automations" onclick="switchCommTab('automations')"><i class="fa-solid fa-robot"></i> Automations</button><button class="help-hint-inline" onclick="switchCommTab('automations');openHelpPopover('comm.automations',this)" title="Help">?</button>
+        <button class="comm-tab"        id="ctab-alerts"      onclick="switchCommTab('alerts')"><i class="fa-solid fa-bullhorn"></i> Alerts</button><button class="help-hint-inline" onclick="switchCommTab('alerts');openHelpPopover('comm.alerts',this)" title="Help">?</button>
+        <button class="comm-tab"        id="ctab-sms"         onclick="switchCommTab('sms')"><i class="fa-solid fa-comments"></i> SMS Inbox</button><button class="help-hint-inline" onclick="switchCommTab('sms');openHelpPopover('comm.sms',this)" title="Help">?</button>
         <button class="comm-tab"        id="ctab-portalInvites" onclick="switchCommTab('portalInvites')"><i class="fa-solid fa-link"></i> Portal Invites</button>
       </div>
       <!-- Broadcast -->
@@ -964,14 +964,14 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
           <div class="panel"><div class="panel-header"><span class="panel-title">Send Broadcast</span></div><div class="panel-body"><div style="display:flex;flex-direction:column;gap:1rem">
           <div id="commRecipientBanner" style="display:none;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-left:3px solid var(--gold);padding:0.75rem 1rem;font-size:0.82rem;color:var(--white)"><i class="fa-solid fa-users" style="color:var(--gold);margin-right:0.5rem"></i><span id="commRecipientNames"></span><button onclick="clearReportSelection()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-left:0.75rem"><i class="fa-solid fa-xmark"></i> Clear</button></div>
-            <div class="field"><label>Subject</label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
-            <div class="field"><label>Audience</label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
-            <div class="field" id="commTagField" style="display:none"><label>Select Tag</label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
-            <div class="field"><label>Message</label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
+            <div class="field"><label>Subject <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_subject',this)" title="Help">?</button></label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
+            <div class="field"><label>Audience <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_audience',this)" title="Help">?</button></label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
+            <div class="field" id="commTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_tag',this)" title="Help">?</button></label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
+            <div class="field"><label>Message <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_message',this)" title="Help">?</button></label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
             <button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
-          <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span></div><div class="panel-body">
+          <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span><button class="help-hint-inline" onclick="openHelpPopover('comm.templates',this)" title="Help">?</button></div><div class="panel-body">
             <div style="background:var(--black);border:1px solid var(--border);padding:0.85rem;margin-bottom:0.5rem;cursor:pointer;border-left:2px solid var(--gold)" onclick="useTemplate('checkin')"><div style="font-size:0.88rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-heart" style="color:var(--gold);margin-right:0.5rem"></i>Check-In Message</div></div>
             <div style="background:var(--black);border:1px solid var(--border);padding:0.85rem;margin-bottom:0.5rem;cursor:pointer;border-left:2px solid #5A9A6A" onclick="useTemplate('birthday')"><div style="font-size:0.88rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>Birthday Message</div></div>
             <div style="background:var(--black);border:1px solid var(--border);padding:0.85rem;margin-bottom:0.5rem;cursor:pointer;border-left:2px solid #7DAAD4" onclick="useTemplate('promotion')"><div style="font-size:0.88rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-ranking-star" style="color:#7DAAD4;margin-right:0.5rem"></i>Promotion Congratulations</div></div>
@@ -989,7 +989,7 @@
  <!-- Alerts -->
 <div id="commTabAlerts" style="display:none">
 <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title">Create Alert</span></div><div class="panel-body">
-          <div class="field" style="margin-bottom:1rem"><label>Alert Type</label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem">
+          <div class="field" style="margin-bottom:1rem"><label>Alert Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_type',this)" title="Help">?</button></label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem">
             <button class="alert-type-btn selected" onclick="selectAlertType('announcement',this)"><i class="fa-solid fa-bullhorn"></i> Announcement</button>
             <button class="alert-type-btn" onclick="selectAlertType('event',this)"><i class="fa-solid fa-calendar-star"></i> Event</button>
             <button class="alert-type-btn" onclick="selectAlertType('closing',this)"><i class="fa-solid fa-door-closed"></i> Closing</button>
@@ -1000,12 +1000,12 @@
           </div></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
             <div>
-              <div class="field"><label>Subject</label><input type="text" id="alertSubject" placeholder="e.g. School Closed Saturday" /></div>
-              <div class="field"><label>Audience</label><select id="alertAudience"><option value="all">All Members</option><option value="active">Active Only</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
-              <div class="field" id="alertTagField" style="display:none"><label>Select Tag</label><select id="alertTag"><option value="">-- Select Tag --</option></select></div>
-              <div class="field"><label>Link to Event (optional)</label><select id="alertEventLink" onchange="alertEventSelected()" onfocus="populateAlertEventDropdown()"><option value="">-- None --</option></select></div><div class="field"><label>CTA (optional)</label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div><div class="field"><label>Schedule for (optional)</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="date" id="alertScheduleDate" style="max-width:160px" /><input type="time" id="alertScheduleTime" style="max-width:120px" /></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">Leave blank to publish now. Pick a date (time optional) to schedule — it appears in member portals then.</div></div>
+              <div class="field"><label>Subject <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_subject',this)" title="Help">?</button></label><input type="text" id="alertSubject" placeholder="e.g. School Closed Saturday" /></div>
+              <div class="field"><label>Audience <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_audience',this)" title="Help">?</button></label><select id="alertAudience"><option value="all">All Members</option><option value="active">Active Only</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
+              <div class="field" id="alertTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_tag',this)" title="Help">?</button></label><select id="alertTag"><option value="">-- Select Tag --</option></select></div>
+              <div class="field"><label>Link to Event (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_event',this)" title="Help">?</button></label><select id="alertEventLink" onchange="alertEventSelected()" onfocus="populateAlertEventDropdown()"><option value="">-- None --</option></select></div><div class="field"><label>CTA (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_cta',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem"><input type="text" id="alertCtaLabel" placeholder="Button label" style="flex:1" /><input type="text" id="alertCtaUrl" placeholder="https://..." style="flex:1" /></div></div><div class="field"><label>Schedule for (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_schedule',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="date" id="alertScheduleDate" style="max-width:160px" /><input type="time" id="alertScheduleTime" style="max-width:120px" /></div><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">Leave blank to publish now. Pick a date (time optional) to schedule — it appears in member portals then.</div></div>
             </div>
-            <div><div class="field"><label>Message</label><div id="alertBodyEditor" style="margin-top:0.25rem"></div></div></div>
+            <div><div class="field"><label>Message <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.al_message',this)" title="Help">?</button></label><div id="alertBodyEditor" style="margin-top:0.25rem"></div></div></div>
           </div>
           <div style="display:flex;gap:0.75rem;margin-top:0.75rem;align-items:center">
             <button class="panel-action" id="alertSendBtn" onclick="sendAlert()"><i class="fa-solid fa-paper-plane"></i> Send Now</button>
@@ -4083,6 +4083,31 @@ var HELP_CONTENT = {
   'retail.prod_inventory': { title: 'Inventory Qty', purpose: 'How many you have in stock. Used when Track Inventory is on, and decreases with each sale.' },
   'retail.prod_reorder': { title: 'Reorder Alert Qty', purpose: 'When stock falls to this number, you get a low-stock alert so you can restock in time.' },
   'retail.prod_badge': { title: 'Badge Text', purpose: 'A short label shown on the product, like Sale or New. Max 20 characters.' },
+  communications: {
+    title: 'Communications',
+    purpose: 'Your messaging hub: send email and text broadcasts, set up automated messages, post in-app alerts, and handle two-way SMS replies.',
+    actions: [
+      'Use the tabs to switch between Broadcast, Automations, Alerts, and the SMS Inbox.'
+    ],
+    example: 'Example: text everyone that the gym is closed for the holiday, then reply to the parents who follow up in the inbox.'
+  },
+  'comm.broadcast': { title: 'Broadcast', purpose: 'Send a one-time email or text to a group of people. Pick an audience, write your message, and send. Standard SMS rates apply to texts.' },
+  'comm.automations': { title: 'Automations', purpose: 'Messages that send themselves on a trigger, like a welcome text on signup or a birthday note. Turn each one on or off here.' },
+  'comm.alerts': { title: 'Alerts', purpose: 'In-app banners shown to members in their portal, good for announcements with a call-to-action button. Different from a broadcast, which goes to email or text.' },
+  'comm.sms': { title: 'SMS Inbox', purpose: 'Your two-way text inbox. See incoming replies and respond in a conversation thread, just like a messaging app.' },
+  'comm.templates': { title: 'Templates', purpose: 'Saved message starting points you can drop into a broadcast, like a check-in or renewal reminder, so you are not writing from scratch.' },
+  'comm.bc_subject': { title: 'Subject', purpose: 'The subject line for an email broadcast. Texts ignore it, but it is required for emails.' },
+  'comm.bc_audience': { title: 'Audience', purpose: 'Who receives this broadcast: everyone, a status group, or a specific tag. Choose Tag to narrow it down.' },
+  'comm.bc_tag': { title: 'Select Tag', purpose: 'When the audience is a tag, pick which tag here. Only members with that tag receive the message.' },
+  'comm.bc_message': { title: 'Message', purpose: 'The content of your broadcast. For texts, keep it short, since longer messages use more segments.' },
+  'comm.al_type': { title: 'Alert Type', purpose: 'The style and intent of the alert, like an announcement or a reminder. It sets how the banner looks to members.' },
+  'comm.al_subject': { title: 'Subject', purpose: 'The headline of the alert, shown at the top of the banner.' },
+  'comm.al_audience': { title: 'Audience', purpose: 'Who sees this alert: everyone, a status group, or a specific tag.' },
+  'comm.al_tag': { title: 'Select Tag', purpose: 'When the audience is a tag, pick which tag sees the alert.' },
+  'comm.al_event': { title: 'Link to Event', purpose: 'Optionally tie the alert to an event, which fills in the call-to-action so members can sign up in one tap.' },
+  'comm.al_cta': { title: 'CTA', purpose: 'An optional call-to-action button: a label and a link, like Sign Up pointing to a signup page.' },
+  'comm.al_schedule': { title: 'Schedule for', purpose: 'Optionally set a date and time for the alert to appear. Leave blank to post it right away.' },
+  'comm.al_message': { title: 'Message', purpose: 'The body of the alert, shown in the banner under the subject.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
