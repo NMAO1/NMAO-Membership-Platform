@@ -1134,7 +1134,7 @@
 
     <!-- ═══════════════ §PAGE-ANALYTICS ═══════════════ -->
     <div class="page" id="page-analytics">
-      <div class="content-heading"><h2>Analytics</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Analytics</h2><button class="help-hint-inline" onclick="openHelpPopover('analytics',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div class="stats-grid" style="margin-bottom:2rem">
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div class="stat-label">Total Members</div><div class="stat-value" id="anaTotal">0</div></div>
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div class="stat-label">Active Members</div><div class="stat-value" id="anaActive">0</div></div>
@@ -1144,7 +1144,7 @@
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div class="stat-label">Converted Leads</div><div class="stat-value" id="anaConverted">0</div></div>
       </div>
       <!-- Revenue Trend -->
-      <div class="content-heading"><h2>Revenue Trend</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Revenue Trend</h2><button class="help-hint-inline" onclick="openHelpPopover('analytics.revenue',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div class="panel" style="margin-bottom:1.5rem">
         <div class="panel-body">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
@@ -1157,11 +1157,11 @@
       </div>
 
       <!-- Instructor Comparison -->
-      <div class="content-heading"><h2>Instructor Comparison</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Instructor Comparison</h2><button class="help-hint-inline" onclick="openHelpPopover('analytics.instructors',this)" title="Help">?</button><div class="rule-h"></div></div>
 
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-body" id="instrCompareList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div></div></div>
       <!-- Lead Funnel Widget -->
-      <div class="content-heading"><h2>Lead Pipeline</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Lead Pipeline</h2><button class="help-hint-inline" onclick="openHelpPopover('analytics.leads',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div class="panel" style="margin-bottom:1.5rem">
         <div class="panel-body">
           <div id="leadFunnelWidget" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
@@ -1171,7 +1171,7 @@
       </div>
 
       <!-- Reports -->
-      <div class="content-heading"><h2>Reports</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Reports</h2><button class="help-hint-inline" onclick="openHelpPopover('analytics.reports',this)" title="Help">?</button><div class="rule-h"></div></div>
 
       <div class="report-type-grid">
         <div class="report-type-card" onclick="openReport('students')"><div class="report-type-icon"><i class="fa-solid fa-users"></i></div><div class="report-type-name">Students</div><div class="report-type-desc">Full roster with contact info</div></div>
@@ -4108,6 +4108,19 @@ var HELP_CONTENT = {
   'comm.al_cta': { title: 'CTA', purpose: 'An optional call-to-action button: a label and a link, like Sign Up pointing to a signup page.' },
   'comm.al_schedule': { title: 'Schedule for', purpose: 'Optionally set a date and time for the alert to appear. Leave blank to post it right away.' },
   'comm.al_message': { title: 'Message', purpose: 'The body of the alert, shown in the banner under the subject.' },
+  analytics: {
+    title: 'Analytics',
+    purpose: 'The numbers behind your school: revenue trends, instructor comparison, your lead funnel, and a library of detailed reports.',
+    actions: [
+      'Read the charts up top for trends at a glance.',
+      'Open a report below for the detail behind them.'
+    ],
+    example: 'Example: notice revenue dipped this month, then check the Lead Pipeline to see fewer trials converted.'
+  },
+  'analytics.revenue': { title: 'Revenue Trend', purpose: 'How your revenue has moved over time, so you can spot growth, dips, and seasonality at a glance.' },
+  'analytics.instructors': { title: 'Instructor Comparison', purpose: 'How your instructors compare on classes taught and attendance, useful for scheduling and recognizing your strongest coaches.' },
+  'analytics.leads': { title: 'Lead Pipeline', purpose: 'A funnel view of your leads, from new to converted, so you can see where prospects drop off and how well you are closing.' },
+  'analytics.reports': { title: 'Reports', purpose: 'A library of detailed, exportable reports: students, attendance, sessions, memberships, payments, belt promotions, leads, retention risk, class utilization, and more. Click any one to pull the full breakdown.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
