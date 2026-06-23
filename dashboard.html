@@ -793,29 +793,29 @@
       <!-- Settings Tab -->
       <div id="sessTabSettings" style="display:none">
         <div class="no-show-policy-box">
-          <div class="policy-section-title"><i class="fa-solid fa-user-slash" style="margin-right:0.4rem"></i>No-Show Policy</div>
+          <div class="policy-section-title"><i class="fa-solid fa-user-slash" style="margin-right:0.4rem"></i>No-Show Policy <button class="help-hint-inline" onclick="openHelpPopover('sessions.set_noshow',this)" title="Help">?</button></div>
           <div class="form-row" style="margin-bottom:1rem">
-          <div class="field"><label>Auto-Complete Grace Period (hours)</label><input type="number" id="noShowHours" value="1" min="0" /></div>
-            <div class="field"><label>Action</label><select id="noShowAction" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="none">No Action</option><option value="deduct">Deduct Session</option><option value="charge">Charge Fee</option></select></div>
+          <div class="field"><label>Auto-Complete Grace Period (hours) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.no_hours',this)" title="Help">?</button></label><input type="number" id="noShowHours" value="1" min="0" /></div>
+            <div class="field"><label>Action <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.no_action',this)" title="Help">?</button></label><select id="noShowAction" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="none">No Action</option><option value="deduct">Deduct Session</option><option value="charge">Charge Fee</option></select></div>
           </div>
-          <div class="field"><label>Grace Period (free no-shows before enforcement)</label><input type="number" id="noShowGrace" value="2" min="0" /></div>
+          <div class="field"><label>Grace Period (free no-shows before enforcement) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.no_grace',this)" title="Help">?</button></label><input type="number" id="noShowGrace" value="2" min="0" /></div>
         </div>
         <div class="no-show-policy-box">
-          <div class="policy-section-title"><i class="fa-solid fa-clock" style="margin-right:0.4rem"></i>Late Cancel Policy</div>
+          <div class="policy-section-title"><i class="fa-solid fa-clock" style="margin-right:0.4rem"></i>Late Cancel Policy <button class="help-hint-inline" onclick="openHelpPopover('sessions.set_latecancel',this)" title="Help">?</button></div>
           <div class="form-row" style="margin-bottom:1rem">
-            <div class="field"><label>Late Cancel Window (hours before)</label><input type="number" id="lateCancelHours" value="24" min="0" /></div>
-            <div class="field"><label>Action</label><select id="lateCancelAction" onchange="toggleLateCancelFee()" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="none">No Action</option><option value="deduct">Deduct Session</option><option value="charge">Charge Fee</option></select></div>
+            <div class="field"><label>Late Cancel Window (hours before) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.lc_hours',this)" title="Help">?</button></label><input type="number" id="lateCancelHours" value="24" min="0" /></div>
+            <div class="field"><label>Action <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.lc_action',this)" title="Help">?</button></label><select id="lateCancelAction" onchange="toggleLateCancelFee()" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="none">No Action</option><option value="deduct">Deduct Session</option><option value="charge">Charge Fee</option></select></div>
           </div>
-          <div class="field" id="lateCancelFeeField" style="display:none"><label>Late Cancel Fee ($)</label><input type="number" id="lateCancelFee" value="0" min="0" step="0.01" /></div>
+          <div class="field" id="lateCancelFeeField" style="display:none"><label>Late Cancel Fee ($) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.lc_fee',this)" title="Help">?</button></label><input type="number" id="lateCancelFee" value="0" min="0" step="0.01" /></div>
         </div>
         <div class="no-show-policy-box">
-          <div class="policy-section-title"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Low Pack Threshold</div>
-          <div class="field"><label>Alert student when sessions remaining falls below</label><input type="number" id="packLowThreshold" value="2" min="1" /></div>
+          <div class="policy-section-title"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Low Pack Threshold <button class="help-hint-inline" onclick="openHelpPopover('sessions.set_lowpack',this)" title="Help">?</button></div>
+          <div class="field"><label>Alert student when sessions remaining falls below <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.lp_threshold',this)" title="Help">?</button></label><input type="number" id="packLowThreshold" value="2" min="1" /></div>
         </div>
         <div class="no-show-policy-box">
-          <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders</div>
-          <label class="check-item" style="margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /><span class="check-item-label">Text a confirmation when a session is booked</span></label>
-          <label class="check-item"><input type="checkbox" id="packReminderEnabled" checked /><span class="check-item-label">Text a reminder when a student's session pack runs low</span></label>
+          <div class="policy-section-title"><i class="fa-solid fa-comment-sms" style="margin-right:0.4rem"></i>Text Reminders <button class="help-hint-inline" onclick="openHelpPopover('sessions.set_reminders',this)" title="Help">?</button></div>
+          <label class="check-item" style="margin-bottom:0.75rem"><input type="checkbox" id="sessionReminderEnabled" checked /><span class="check-item-label">Text a confirmation when a session is booked <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.rem_session',this)" title="Help">?</button></span></label>
+          <label class="check-item"><input type="checkbox" id="packReminderEnabled" checked /><span class="check-item-label">Text a reminder when a student's session pack runs low <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.rem_pack',this)" title="Help">?</button></span></label>
         </div>
         <button class="panel-action" onclick="saveSessionSettings()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.4rem"></i>Save Session Settings</button>
         <p class="form-msg" id="sessSettingsMsg"></p>
@@ -3820,6 +3820,31 @@ var HELP_CONTENT = {
   'events.ev_public': { title: 'Public signup link', purpose: 'When on, the event gets a shareable public link so people can register and pay online. Off keeps it staff-managed only.' },
   'events.ev_schedule': { title: 'Schedule', purpose: 'When the event happens. Choose Single for a one-day event, or Multi to track one registration across several dates, ideal for camps and clinics. Add each session date and time.' },
   'events.ev_pricing': { title: 'Pricing Tiers', purpose: 'The ticket options for the event, like full event, single day, member rate, or early bird. Each tier sets a price and how many sessions it includes, so a student can buy a partial-attendance pass.' },
+  'sessions.set_noshow': {
+    title: 'No-Show Policy',
+    purpose: 'What happens when a student books a session but does not show up. Set the grace period, the action taken, and how many free passes they get first.'
+  },
+  'sessions.no_hours': { title: 'Auto-Complete Grace Period (hours)', purpose: 'How long after a session ends before an unattended booking is auto-marked complete and the policy applies. Set 0 to apply right away.' },
+  'sessions.no_action': { title: 'No-Show Action', purpose: 'What a no-show triggers: No Action, Deduct Session (spend one from their pack), or Charge Fee.' },
+  'sessions.no_grace': { title: 'Grace Period (free no-shows)', purpose: 'How many no-shows a student gets before the action above kicks in. A buffer so one missed class is not penalized.' },
+  'sessions.set_latecancel': {
+    title: 'Late Cancel Policy',
+    purpose: 'How late cancellations are handled, so members give you enough notice to fill the spot.'
+  },
+  'sessions.lc_hours': { title: 'Late Cancel Window (hours before)', purpose: 'Cancel inside this many hours before the session and it counts as a late cancel. Outside the window it is free.' },
+  'sessions.lc_action': { title: 'Late Cancel Action', purpose: 'What a late cancel triggers: No Action, Deduct Session, or Charge Fee.' },
+  'sessions.lc_fee': { title: 'Late Cancel Fee ($)', purpose: 'The amount charged for a late cancel when the action is Charge Fee. Shown only when that action is selected.' },
+  'sessions.set_lowpack': {
+    title: 'Low Pack Threshold',
+    purpose: 'When to warn a student that their session pack is running low, so they can re-up before it runs out.'
+  },
+  'sessions.lp_threshold': { title: 'Low pack alert threshold', purpose: 'Alert the student once their remaining sessions fall to this number. For example, 2 warns them with two sessions left.' },
+  'sessions.set_reminders': {
+    title: 'Text Reminders',
+    purpose: 'Automatic texts tied to session booking and pack balances. Standard SMS rates apply.'
+  },
+  'sessions.rem_session': { title: 'Booking confirmation text', purpose: 'When on, a student gets a text confirming each session they book.' },
+  'sessions.rem_pack': { title: 'Low pack reminder text', purpose: 'When on, a student gets a text when their session pack is running low, nudging a re-up.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
