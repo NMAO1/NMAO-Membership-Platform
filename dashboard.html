@@ -1685,8 +1685,8 @@
     <div class="modal-header"><span class="modal-title">New Message</span><button class="modal-close" onclick="closeNewSmsModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem">
       <div class="field">
-        <label>To (student)</label>
-        <input type="text" id="newSmsSearch" oninput="searchNewSmsRecipient()" placeholder="Search a student by name or phone..." autocomplete="off" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" />
+        <label>To (student or lead)</label>
+        <input type="text" id="newSmsSearch" oninput="searchNewSmsRecipient()" placeholder="Search a student or lead by name or phone..." autocomplete="off" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" />
         <div id="newSmsResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto;margin-top:0.25rem;-webkit-overflow-scrolling:touch"></div>
         <div id="newSmsSelected" style="display:none;align-items:center;gap:0.4rem;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);padding:0.5rem 0.75rem;margin-top:0.4rem"></div>
       </div>
@@ -11917,7 +11917,7 @@ async function sendSmsReplyInline(){
 // EF: send-portal-invite. Custom-branded email delivery via Resend.
 
 var newSmsToStudentId=null, newSmsToName='', newSmsToPhone='';
-function openNewSmsModal(){
+async function openNewSmsModal(){
   newSmsToStudentId=null; newSmsToName=''; newSmsToPhone='';
   var s=document.getElementById('newSmsSearch'); if(s) s.value='';
   var r=document.getElementById('newSmsResults'); if(r){ r.style.display='none'; r.innerHTML=''; }
@@ -11926,35 +11926,47 @@ function openNewSmsModal(){
   var b=document.getElementById('newSmsBody'); if(b) b.value='';
   var m=document.getElementById('newSmsMsg'); if(m) m.textContent='';
   document.getElementById('newSmsModal').classList.add('active');
+  if(!allLeads||!allLeads.length){ try{ var lr=await sb.from('leads').select('*').eq('school_id',SID).is('deleted_at',null); if(lr&&lr.data) allLeads=lr.data; }catch(e){} }
 }
 function closeNewSmsModal(){ document.getElementById('newSmsModal').classList.remove('active'); }
 function searchNewSmsRecipient(){
   var q=(document.getElementById('newSmsSearch').value||'').trim().toLowerCase();
   var box=document.getElementById('newSmsResults');
   if(!q){ box.style.display='none'; box.innerHTML=''; return; }
-  var matches=allStudents.filter(function(s){
+  var results=[];
+  allStudents.forEach(function(s){
     var nm=((s.first_name||'')+' '+(s.last_name||'')).toLowerCase();
-    return nm.indexOf(q)>-1 || ((s.phone||'').indexOf(q)>-1);
-  }).slice(0,8);
-  if(!matches.length){ box.innerHTML='<div style="padding:0.5rem 0.75rem;color:var(--muted);font-size:0.8rem">No students found.</div>'; box.style.display='block'; return; }
-  box.innerHTML=matches.map(function(s){
-    var nm=escText(((s.first_name||'')+' '+(s.last_name||'')).trim());
-    var ph=escText(s.phone||'no phone');
-    return '<div onclick="selectNewSmsRecipient(\''+s.id+'\')" style="padding:0.5rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)">'+nm+'<span style="color:var(--muted);font-size:0.72rem;margin-left:0.4rem">'+ph+'</span></div>';
+    if(nm.indexOf(q)>-1 || ((s.phone||'').indexOf(q)>-1)) results.push({id:s.id,kind:'student',name:((s.first_name||'')+' '+(s.last_name||'')).trim(),phone:s.phone||''});
+  });
+  (allLeads||[]).forEach(function(l){
+    if(!l.phone) return;
+    var nm=((l.first_name||'')+' '+(l.last_name||'')).toLowerCase();
+    if(nm.indexOf(q)>-1 || ((l.phone||'').indexOf(q)>-1)) results.push({id:l.id,kind:'lead',name:((l.first_name||'')+' '+(l.last_name||'')).trim(),phone:l.phone||''});
+  });
+  results=results.slice(0,8);
+  if(!results.length){ box.innerHTML='<div style="padding:0.5rem 0.75rem;color:var(--muted);font-size:0.8rem">No matches found.</div>'; box.style.display='block'; return; }
+  box.innerHTML=results.map(function(x){
+    var nm=escText(x.name);
+    var ph=escText(x.phone||'no phone');
+    var badge=x.kind==='lead'?'<span style="font-size:0.58rem;font-weight:700;letter-spacing:0.08em;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.04rem 0.28rem;margin-left:0.4rem;vertical-align:middle">LEAD</span>':'';
+    return '<div onclick="selectNewSmsRecipient(\''+x.id+'\',\''+x.kind+'\')" style="padding:0.5rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)">'+nm+badge+'<span style="color:var(--muted);font-size:0.72rem;margin-left:0.4rem">'+ph+'</span></div>';
   }).join('');
   box.style.display='block';
 }
-function selectNewSmsRecipient(id){
-  var s=allStudents.find(function(x){return x.id===id;});
-  if(!s) return;
-  newSmsToStudentId=s.id;
-  newSmsToName=((s.first_name||'')+' '+(s.last_name||'')).trim();
-  newSmsToPhone=s.phone||'';
+function selectNewSmsRecipient(id,kind){
+  var rec=null;
+  if(kind==='lead'){ var l=(allLeads||[]).find(function(x){return x.id===id;}); if(l) rec={name:((l.first_name||'')+' '+(l.last_name||'')).trim(),phone:l.phone||'',isLead:true}; }
+  else { var s=allStudents.find(function(x){return x.id===id;}); if(s) rec={id:s.id,name:((s.first_name||'')+' '+(s.last_name||'')).trim(),phone:s.phone||'',isLead:false}; }
+  if(!rec) return;
+  newSmsToStudentId=rec.isLead?null:rec.id;
+  newSmsToName=rec.name;
+  newSmsToPhone=rec.phone;
   document.getElementById('newSmsSearch').value='';
   var box=document.getElementById('newSmsResults'); box.style.display='none'; box.innerHTML='';
   var ph=document.getElementById('newSmsPhone'); if(ph) ph.value='';
+  var tag=rec.isLead?'<span style="font-size:0.58rem;font-weight:700;letter-spacing:0.08em;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.04rem 0.28rem;margin-left:0.4rem">LEAD</span>':'';
   var sel=document.getElementById('newSmsSelected');
-  sel.innerHTML='<span style="color:var(--white);font-size:0.88rem">'+escText(newSmsToName)+'</span><span style="color:var(--muted);font-size:0.75rem;margin-left:0.5rem">'+escText(newSmsToPhone||'no phone on file')+'</span><button onclick="clearNewSmsRecipient()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;margin-left:auto"><i class="fa-solid fa-xmark"></i></button>';
+  sel.innerHTML='<span style="color:var(--white);font-size:0.88rem">'+escText(rec.name)+'</span>'+tag+'<span style="color:var(--muted);font-size:0.75rem;margin-left:0.5rem">'+escText(rec.phone||'no phone on file')+'</span><button onclick="clearNewSmsRecipient()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;margin-left:auto"><i class="fa-solid fa-xmark"></i></button>';
   sel.style.display='flex';
 }
 function clearNewSmsRecipient(){
@@ -11965,21 +11977,22 @@ async function composeSendSms(){
   var msgEl=document.getElementById('newSmsMsg');
   var body=(document.getElementById('newSmsBody').value||'').trim();
   var manualPhone=(document.getElementById('newSmsPhone').value||'').trim();
-  if(!newSmsToStudentId && !manualPhone){ msgEl.style.color='#E0857B'; msgEl.textContent='Pick a student or enter a phone number.'; return; }
+  var toPhone=newSmsToPhone||manualPhone;
+  if(!newSmsToStudentId && !toPhone){ msgEl.style.color='#E0857B'; msgEl.textContent='Pick a student or lead, or enter a phone number.'; return; }
   if(!body){ msgEl.style.color='#E0857B'; msgEl.textContent='Type a message.'; return; }
   msgEl.style.color='var(--muted)'; msgEl.textContent='Sending...';
   try{
     var payload={ school_id:SID, body:body };
     if(newSmsToStudentId){ payload.student_id=newSmsToStudentId; }
-    else { payload.to_phone=manualPhone; }
+    else { payload.to_phone=toPhone; }
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
       body:JSON.stringify(payload)
     });
     if(r.ok){
-      var key=newSmsToStudentId||manualPhone;
-      var nm=newSmsToStudentId?newSmsToName:manualPhone;
+      var key=newSmsToStudentId||toPhone;
+      var nm=newSmsToName||toPhone;
       closeNewSmsModal();
       await loadSmsInbox();
       if(typeof openSmsThread==='function') await openSmsThread(key,nm);
