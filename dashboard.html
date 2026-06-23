@@ -1301,9 +1301,9 @@
 
     <!-- ═══════════════ §PAGE-BILLING ═══════════════ -->
     <div class="page" id="page-billing">
-      <div class="content-heading"><h2>Billing</h2><div class="rule-h"></div></div>
+      <div class="content-heading"><h2>Billing</h2><button class="help-hint-inline" onclick="openHelpPopover('billing',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-body">
-        <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Current Plan</div>
+        <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Current Plan <button class="help-hint-inline" onclick="openHelpPopover('billing.plan',this)" title="Help">?</button></div>
         <div id="billingPlanName" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">NMAO Platform</div>
         <div id="billingPlanPrice" style="font-size:0.88rem;color:var(--muted);margin-bottom:1rem">$99/month</div>
         <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Manage Billing</button>
@@ -1313,7 +1313,7 @@
       <div class="panel" id="smsUsagePanel" style="margin-bottom:1.5rem;display:none"><div class="panel-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem">
           <div style="flex:1;min-width:0">
-            <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">SMS Usage — <span id="smsUsageMonth">—</span></div>
+            <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">SMS Usage <button class="help-hint-inline" onclick="openHelpPopover('billing.sms',this)" title="Help">?</button> — <span id="smsUsageMonth">—</span></div>
             <div id="smsUsageCount" style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);margin-bottom:0.2rem">0 / 0 used</div>
             <div id="smsUsageDays" style="font-size:0.78rem;color:var(--muted)">—</div>
           </div>
@@ -1325,7 +1325,7 @@
         <div id="smsUsageOverage" style="display:none;margin-top:0.85rem;padding:0.65rem 0.85rem;background:#E0707015;border-left:3px solid #E07070;font-size:0.82rem;color:#E07070"></div>
       </div></div>
 
-      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-brands fa-stripe" style="margin-right:0.5rem;color:#635BFF"></i>Payment Processing</span></div><div class="panel-body">
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-brands fa-stripe" style="margin-right:0.5rem;color:#635BFF"></i>Payment Processing</span><button class="help-hint-inline" onclick="openHelpPopover('billing.stripe',this)" title="Help">?</button></div><div class="panel-body">
         <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Connect your Stripe account to accept membership payments and retail sales directly from your students.</p>
         <div id="stripeConnectStatus"></div>
         <button class="panel-action" id="stripeConnectBtn" onclick="connectStripe()" style="margin-top:1rem"><i class="fa-solid fa-link"></i> Connect Stripe Account</button>
@@ -4170,6 +4170,17 @@ var HELP_CONTENT = {
   'settings.disc_visibility': { title: 'Visibility', purpose: 'Whether the discount is shown publicly or kept private for you to apply manually.' },
   'settings.disc_multiuse': { title: 'Allow Multiple Uses Per Student', purpose: 'When on, the same student can use this discount more than once. When off, it is one use per student.' },
   'settings.disc_active': { title: 'Active', purpose: 'Whether the discount is currently live. Turn it off to pause the discount without deleting it.' },
+  billing: {
+    title: 'Billing',
+    purpose: 'Your NMAO account billing: your platform subscription, your SMS usage for the period, and your Stripe connection for collecting payments from students.',
+    actions: [
+      'Review your plan and SMS usage here, and manage your Stripe connection under Payment Processing.'
+    ],
+    example: 'Example: check your SMS usage before a big broadcast so you know if you are close to your included amount.'
+  },
+  'billing.plan': { title: 'Current Plan', purpose: 'Your NMAO platform subscription and what it costs. NMAO charges a flat monthly rate plus a small platform fee on the payments you collect, capped each month. Stripe processing and SMS are passed through at cost with no markup.' },
+  'billing.sms': { title: 'SMS Usage', purpose: 'How many text segments you have used this billing period versus what is included. Longer messages use more segments, and any overage shows here, so you can keep an eye on texting costs.' },
+  'billing.stripe': { title: 'Payment Processing', purpose: 'Your Stripe connection, which is how you collect card payments from students and receive payouts. The status shows whether setup is complete; use the button to connect or manage your account.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
