@@ -1194,17 +1194,17 @@
 
     <!-- ═══════════════ §PAGE-SETTINGS ═══════════════ -->
     <div class="page" id="page-settings">
-     <div class="content-heading"><h2>Settings</h2><div class="rule-h"></div></div>
+     <div class="content-heading"><h2>Settings</h2><button class="help-hint-inline" onclick="openHelpPopover('settings',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-circle-question" style="margin-right:0.5rem;color:var(--gold)"></i>Help Hints</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;max-width:500px"><div class="field"><label class="check-item"><input type="checkbox" id="helpHintsToggle" onchange="setHelpHints(this.checked)" /><div><div class="check-item-label">Show help hints</div><div style="font-size:0.72rem;color:var(--muted)">Adds a small ? next to each page title with a quick explainer and example. Turn it off once you know your way around.</div></div></label></div></div></div>
       <!-- School Profile -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-school" style="margin-right:0.5rem;color:var(--gold)"></i>School Profile</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-school" style="margin-right:0.5rem;color:var(--gold)"></i>School Profile</span><button class="help-hint-inline" onclick="openHelpPopover('settings.profile',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
         <div class="field"><label>School Name</label><input type="text" id="settingName" /></div>
         <div class="field"><label>Email</label><input type="email" id="settingEmail" /></div>
         <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
         <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
         <div class="field"><label>State</label><input type="text" id="settingState" /></div>
         <div class="field">
-          <label>Member Portal Link</label>
+          <label>Member Portal Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.slug',this)" title="Help">?</button></label>
           <div class="booking-slug-row">
             <span class="booking-slug-prefix">app.nmao.us/portal.html?s=</span>
             <input type="text" class="booking-slug-input" id="settingSlug" placeholder="e.g. aosd" />
@@ -1214,28 +1214,28 @@
           <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="saveSchoolSlug()"><i class="fa-solid fa-link"></i> Save Portal Link</button>
           <p class="form-msg" id="slugMsg"></p>
         </div>
-        <div class="field"><label>School Logo</label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
-        <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students</div></div></label></div>
-        <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card</div></div></label></div>
+        <div class="field"><label>School Logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.logo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.passfees',this)" title="Help">?</button></div></div></label></div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.cardupdate',this)" title="Help">?</button></div></div></label></div>
         <button class="panel-action" style="width:fit-content" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="settingsMsg"></p>
       </div></div>
 
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-calendar-check" style="margin-right:0.5rem;color:var(--gold)"></i>Public Booking Page</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-calendar-check" style="margin-right:0.5rem;color:var(--gold)"></i>Public Booking Page</span><button class="help-hint-inline" onclick="openHelpPopover('settings.booking',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
         <div class="field">
-          <label>Shareable Link</label>
+          <label>Shareable Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_link',this)" title="Help">?</button></label>
           <div id="bookingPageLinkPreview" style="font-size:0.8rem;color:var(--gold);word-break:break-all;padding:0.5rem;background:var(--surface);border:1px solid var(--border)"></div>
           <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">Share this on social or in your bio so members can reserve and prospects can book a trial. It uses the same link name as your member portal (set above).</div>
           <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="copyBookingPageLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
         </div>
-        <div class="field"><label class="check-item"><input type="checkbox" id="publicBookingShowSpots" /><div><div class="check-item-label">Show spots remaining on each class</div></div></label></div>
-        <div class="field"><label>Default View</label><select id="publicBookingDefaultView"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
-        <div class="field"><label>Headline (optional)</label><input type="text" id="publicBookingHeadline" placeholder="Train with us — reserve a class or try one free" /></div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="publicBookingShowSpots" /><div><div class="check-item-label">Show spots remaining on each class <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_spots',this)" title="Help">?</button></div></div></label></div>
+        <div class="field"><label>Default View <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_view',this)" title="Help">?</button></label><select id="publicBookingDefaultView"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
+        <div class="field"><label>Headline (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_headline',this)" title="Help">?</button></label><input type="text" id="publicBookingHeadline" placeholder="Train with us — reserve a class or try one free" /></div>
         <button class="panel-action" style="width:fit-content" onclick="saveBookingPageSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Booking Page</button>
         <p class="form-msg" id="bookingPageMsg"></p>
       </div></div>
       <!-- Brand & Design -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-palette" style="margin-right:0.5rem;color:var(--gold)"></i>Brand &amp; Design</span></div><div class="panel-body">
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-palette" style="margin-right:0.5rem;color:var(--gold)"></i>Brand &amp; Design</span><button class="help-hint-inline" onclick="openHelpPopover('settings.branding',this)" title="Help">?</button></div><div class="panel-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:600px">
           <div class="field"><label>Background Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingBgColor" value="#0A0A0A" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncBgColor()" /><input type="text" id="settingBgColorHex" value="#0A0A0A" style="flex:1" oninput="syncBgColorText()" /></div></div>
           <div class="field"><label>Accent Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncAccentColor()" /><input type="text" id="settingColorHex" value="#C9A84C" style="flex:1" oninput="syncAccentColorText()" /></div></div>
@@ -1261,13 +1261,13 @@
         </div>
       </div></div>
       <!-- §SETTINGS: MEMBERSHIPS -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
-        <div class="field"><label>Max Rollover Balance</label><input type="number" id="settingMaxRollover" min="0" placeholder="Leave blank for unlimited" /><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">When a student renews a membership with rollover enabled, unused classes carry forward up to this cap. Leave blank for no cap.</div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.membership',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+        <div class="field"><label>Max Rollover Balance <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.maxrollover',this)" title="Help">?</button></label><input type="number" id="settingMaxRollover" min="0" placeholder="Leave blank for unlimited" /><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">When a student renews a membership with rollover enabled, unused classes carry forward up to this cap. Leave blank for no cap.</div></div>
         <button class="panel-action" style="width:fit-content" onclick="saveMembershipSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="membershipSettingsMsg"></p>
       </div></div>
       <!-- Class Settings -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-sliders" style="margin-right:0.5rem;color:var(--gold)"></i>Class Field Settings</span></div><div class="panel-body"><div id="classFieldsEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveClassFieldSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Class Settings</button><p class="form-msg" id="classFieldsMsg"></p></div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-sliders" style="margin-right:0.5rem;color:var(--gold)"></i>Class Field Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.classfields',this)" title="Help">?</button></div><div class="panel-body"><div id="classFieldsEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveClassFieldSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Class Settings</button><p class="form-msg" id="classFieldsMsg"></p></div></div>
       <!-- Referral Settings -->
       <div class="panel" style="display:none;margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Referral Program</span></div><div class="panel-body" style="max-width:500px">
         <div class="form-row" style="margin-bottom:1rem">
@@ -1283,9 +1283,9 @@
       <!-- Discounts -->
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-percent" style="margin-right:0.5rem;color:var(--gold)"></i>Discounts</span><button class="panel-action" onclick="openAddDiscount()"><i class="fa-solid fa-plus"></i> New Discount</button></div><div class="panel-body"><div id="discountsManager"></div></div></div>
       <!-- Digital Waiver -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-file-signature" style="margin-right:0.5rem;color:var(--gold)"></i>Digital Waiver</span></div><div class="panel-body"><div class="field"><label>Waiver Title</label><input type="text" id="waiverTitle" placeholder="e.g. Liability Waiver" /></div><div class="field"><label>Waiver Content</label><div id="waiverEditor" style="margin-top:0.25rem"></div></div><button class="panel-action" style="width:fit-content;margin-top:1rem" onclick="saveWaiver()"><i class="fa-solid fa-floppy-disk"></i> Save Waiver</button><p class="form-msg" id="waiverMsg"></p></div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-file-signature" style="margin-right:0.5rem;color:var(--gold)"></i>Digital Waiver</span><button class="help-hint-inline" onclick="openHelpPopover('settings.waiver',this)" title="Help">?</button></div><div class="panel-body"><div class="field"><label>Waiver Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_title',this)" title="Help">?</button></label><input type="text" id="waiverTitle" placeholder="e.g. Liability Waiver" /></div><div class="field"><label>Waiver Content <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_content',this)" title="Help">?</button></label><div id="waiverEditor" style="margin-top:0.25rem"></div></div><button class="panel-action" style="width:fit-content;margin-top:1rem" onclick="saveWaiver()"><i class="fa-solid fa-floppy-disk"></i> Save Waiver</button><p class="form-msg" id="waiverMsg"></p></div></div>
       <!-- Milestones -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-party-horn" style="margin-right:0.5rem;color:var(--gold)"></i>Milestone Celebrations</span></div><div class="panel-body"><div id="milestonesEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveMilestones()"><i class="fa-solid fa-floppy-disk"></i> Save Milestones</button><p class="form-msg" id="milestonesMsg"></p></div></div>
+      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-party-horn" style="margin-right:0.5rem;color:var(--gold)"></i>Milestone Celebrations</span><button class="help-hint-inline" onclick="openHelpPopover('settings.milestones',this)" title="Help">?</button></div><div class="panel-body"><div id="milestonesEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveMilestones()"><i class="fa-solid fa-floppy-disk"></i> Save Milestones</button><p class="form-msg" id="milestonesMsg"></p></div></div>
       <!-- Kiosk -->
       <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tablet-screen-button" style="margin-right:0.5rem;color:var(--gold)"></i>Kiosk Welcome Screen</span></div><div class="panel-body">
         <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Configure what prospective students see when they tap New Student on the kiosk.</p>
@@ -4119,6 +4119,39 @@ var HELP_CONTENT = {
   'analytics.instructors': { title: 'Instructor Comparison', purpose: 'How your instructors compare on classes taught and attendance, useful for scheduling and recognizing your strongest coaches.' },
   'analytics.leads': { title: 'Lead Pipeline', purpose: 'A funnel view of your leads, from new to converted, so you can see where prospects drop off and how well you are closing.' },
   'analytics.reports': { title: 'Reports', purpose: 'A library of detailed, exportable reports: students, attendance, sessions, memberships, payments, belt promotions, leads, retention risk, class utilization, and more. Click any one to pull the full breakdown.' },
+  settings: {
+    title: 'Settings',
+    purpose: 'Your school control panel: identity and branding, the public booking page, membership and class rules, waivers, discounts, and tags.',
+    actions: [
+      'Scroll the panels and save each one with its own Save button as you make changes.'
+    ],
+    example: 'Example: set your portal link, upload a logo, and pick brand colors so the member portal matches your school.'
+  },
+  'settings.profile': { title: 'School Profile', purpose: 'Your schools core identity: name, contact details, portal link, logo, and how card fees are handled. This shows up across the portal and public pages.' },
+  'settings.slug': { title: 'Member Portal Link', purpose: 'The custom web address members use to reach your portal and public booking page, like nmao.us/yourschool. Keep it short and recognizable.' },
+  'settings.logo': { title: 'School Logo', purpose: 'Your school logo, shown in the member portal and on public pages. A square image gives the cleanest fit.' },
+  'settings.passfees': { title: 'Pass Transaction Fees to Students', purpose: 'When on, the card processing fee is added to what the student pays, so it comes out of their charge instead of your revenue. When off, you absorb it.' },
+  'settings.cardupdate': { title: 'Allow Members to Update Payment Card', purpose: 'When on, members can change their own saved card from the portal. When off, only you can update it for them.' },
+  'settings.booking': { title: 'Public Booking Page', purpose: 'Controls for the public page where anyone can browse and book your classes with no login. Set how it looks and what it shows.' },
+  'settings.bk_link': { title: 'Shareable Link', purpose: 'The public address of your booking page. Copy it to share on social media, your website, or in messages so prospects can book directly.' },
+  'settings.bk_spots': { title: 'Show Spots Remaining', purpose: 'When on, the public page shows how many seats are left in each class, which can nudge people to book before it fills.' },
+  'settings.bk_view': { title: 'Default View', purpose: 'How the public booking page opens by default, such as a weekly calendar or a simple list of classes.' },
+  'settings.bk_headline': { title: 'Headline', purpose: 'An optional line of text at the top of your public booking page, like a welcome message or a current promotion.' },
+  'settings.branding': {
+    title: 'Brand & Design',
+    purpose: 'The colors that theme your member portal and public pages: background, accent, borders, surfaces, text, and sidebar.',
+    actions: [
+      'Set each color, then use Saved Schemes to keep a palette you can reuse.'
+    ],
+    example: 'Example: match the accent color to your logo so everything feels on-brand.'
+  },
+  'settings.membership': { title: 'Membership Settings', purpose: 'School-wide membership rules. Right now this sets your rollover cap for unused classes.' },
+  'settings.maxrollover': { title: 'Max Rollover Balance', purpose: 'The most unused classes a student can carry forward when they renew a membership with rollover enabled. Leave blank for no cap.' },
+  'settings.classfields': { title: 'Class Field Settings', purpose: 'Rename and set the options for your class fields, like Style, Age Group, and Level, so they match how your school describes classes. These appear when you add or edit a class.' },
+  'settings.waiver': { title: 'Digital Waiver', purpose: 'The liability waiver new members agree to. Set its title and content here, and members sign it digitally during signup.' },
+  'settings.waiver_title': { title: 'Waiver Title', purpose: 'The heading shown at the top of your waiver, like Liability Release or Assumption of Risk.' },
+  'settings.waiver_content': { title: 'Waiver Content', purpose: 'The full text of your waiver that members read and agree to. Paste in the language your school uses.' },
+  'settings.milestones': { title: 'Milestone Celebrations', purpose: 'Automatic recognition for student milestones, like attendance counts or anniversaries. Configure which ones trigger a celebration.' },
   members: {
     title: 'Members',
     purpose: 'Your full student roster: program, membership, status, and join date, all searchable in one table.',
