@@ -2000,7 +2000,7 @@ async function processAutoCheckIn(){
 async function buildAnnouncements(){
   try{
     var nowIsoP1=new Date().toISOString();
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIsoP1).or('scheduled_for.is.null,scheduled_for.lte.'+nowIsoP1).order('sent_at',{ascending:false}).limit(10);
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).eq('status','sent').is('deleted_at',null).or('expires_at.is.null,expires_at.gt.'+nowIsoP1).or('scheduled_for.is.null,scheduled_for.lte.'+nowIsoP1).order('pinned',{ascending:false}).order('sort_order',{ascending:true,nullsFirst:false}).order('sort_order',{ascending:true,nullsFirst:false}).order('sent_at',{ascending:false}).limit(10);
     var el=document.getElementById('announcementsList');
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-bullhorn" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';return;}
