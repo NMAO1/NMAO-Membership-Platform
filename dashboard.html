@@ -11698,11 +11698,12 @@ async function softDeleteAlert(alertId){
 
 async function loadAlertHistory(){
   try{
-    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).is('deleted_at',null).order('created_at',{ascending:false}).limit(20);
+    var r=await sb.from('school_announcements').select('*').eq('school_id',SID).is('deleted_at',null).order('pinned',{ascending:false}).order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false}).limit(20);
     var el=document.getElementById('alertHistory'); if(!el) return;
     var data=r.data||[];
     if(!data.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No alerts sent yet.</div>';return;}
     var nowIso=new Date().toISOString();
+    var pinnedArr=data.filter(function(x){return x.pinned;});
     el.innerHTML=data.map(function(a){
       var dt=new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       var isExpired=a.expires_at && a.expires_at < nowIso;
@@ -11715,10 +11716,26 @@ async function loadAlertHistory(){
           ? ' <span style="color:#E07070;font-size:0.7rem"><i class="fa-solid fa-clock-rotate-left"></i> Expired '+expDt+'</span>'
           : ' <span style="color:var(--muted);font-size:0.7rem"><i class="fa-solid fa-clock"></i> Expires '+expDt+'</span>';
       }
-      return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid '+(isExpired?'var(--muted)':'var(--gold)')+';margin-bottom:0.4rem;'+(isExpired?'opacity:0.6;':'')+'">'+
+      var canPin=(a.status==='sent' && !isExpired);
+      var pinBadge=a.pinned?'<span style="display:inline-block;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--black);background:var(--gold);padding:0.05rem 0.35rem;border-radius:2px;margin-right:0.4rem;vertical-align:middle"><i class="fa-solid fa-thumbtack" style="font-size:0.55rem"></i> Pinned</span>':'';
+      var orderCtrls='';
+      if(canPin){
+        if(a.pinned){
+          var pIdx=-1; for(var _pi=0;_pi<pinnedArr.length;_pi++){ if(pinnedArr[_pi].id===a.id){pIdx=_pi;break;} }
+          var upDis=(pIdx<=0); var dnDis=(pIdx>=pinnedArr.length-1);
+          orderCtrls=
+            '<button onclick="moveAlertOrder(\''+a.id+'\',-1)" '+(upDis?'disabled':'')+' title="Move up" style="background:none;border:none;cursor:'+(upDis?'default':'pointer')+';color:var(--muted);font-size:0.78rem;padding:0.1rem 0.25rem;opacity:'+(upDis?'0.3':'1')+'"><i class="fa-solid fa-chevron-up"></i></button>'+
+            '<button onclick="moveAlertOrder(\''+a.id+'\',1)" '+(dnDis?'disabled':'')+' title="Move down" style="background:none;border:none;cursor:'+(dnDis?'default':'pointer')+';color:var(--muted);font-size:0.78rem;padding:0.1rem 0.25rem;opacity:'+(dnDis?'0.3':'1')+'"><i class="fa-solid fa-chevron-down"></i></button>'+
+            '<button onclick="togglePinAlert(\''+a.id+'\',false)" title="Unpin from top" style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:0.78rem;padding:0.1rem 0.25rem"><i class="fa-solid fa-thumbtack"></i></button>';
+        } else {
+          orderCtrls='<button onclick="togglePinAlert(\''+a.id+'\',true)" title="Pin to top" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.78rem;padding:0.1rem 0.25rem;opacity:0.55"><i class="fa-solid fa-thumbtack"></i></button>';
+        }
+      }
+      return '<div style="padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:'+(a.pinned?'3px':'2px')+' solid '+(isExpired?'var(--muted)':'var(--gold)')+';margin-bottom:0.4rem;'+(isExpired?'opacity:0.6;':'')+'\">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem;gap:0.5rem">'+
-          '<div style="font-size:0.85rem;color:var(--white);flex:1">'+a.subject+schedNote+expNote+'</div>'+
+          '<div style="font-size:0.85rem;color:var(--white);flex:1">'+pinBadge+a.subject+schedNote+expNote+'</div>'+
           '<div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">'+
+            orderCtrls+
             '<div style="font-size:0.72rem;color:var(--muted)">'+dt+'</div>'+
             '<button class="alert-delete-btn" onclick="softDeleteAlert(\''+a.id+'\')" title="Delete alert"><i class="fa-solid fa-trash"></i></button>'+
           '</div>'+
@@ -11726,6 +11743,33 @@ async function loadAlertHistory(){
         '<div style="font-size:0.78rem;color:var(--muted2)">'+a.body+'</div>'+
       '</div>';
     }).join('');
+  }catch(e){}
+}
+
+async function togglePinAlert(id,pin){
+  try{
+    if(pin){
+      var pr=await sb.from('school_announcements').select('sort_order').eq('school_id',SID).eq('pinned',true).is('deleted_at',null);
+      var maxO=-1; (pr.data||[]).forEach(function(x){ if(x.sort_order!=null && x.sort_order>maxO) maxO=x.sort_order; });
+      await sb.from('school_announcements').update({pinned:true,sort_order:maxO+1}).eq('id',id);
+    } else {
+      await sb.from('school_announcements').update({pinned:false,sort_order:null}).eq('id',id);
+    }
+    await loadAlertHistory();
+  }catch(e){}
+}
+
+async function moveAlertOrder(id,dir){
+  try{
+    var pr=await sb.from('school_announcements').select('id').eq('school_id',SID).eq('pinned',true).is('deleted_at',null).order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
+    var arr=pr.data||[];
+    var idx=-1; for(var i=0;i<arr.length;i++){ if(arr[i].id===id){idx=i;break;} }
+    if(idx===-1) return;
+    var swap=idx+dir;
+    if(swap<0||swap>=arr.length) return;
+    var tmp=arr[idx]; arr[idx]=arr[swap]; arr[swap]=tmp;
+    for(var j=0;j<arr.length;j++){ await sb.from('school_announcements').update({sort_order:j}).eq('id',arr[j].id); }
+    await loadAlertHistory();
   }catch(e){}
 }
   async function saveAutomations(){
