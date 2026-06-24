@@ -117,6 +117,15 @@
         '</div></div>';
     }
 
+    function renderCancelled(){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="success-screen">' +
+        '<i class="fa-solid fa-circle-xmark" style="color:#E07070"></i>' +
+        '<h2>Payment cancelled</h2>' +
+        '<p>No charge was made. You can close this page, or contact your school to try again.</p>' +
+        '</div></div>';
+    }
+
     function renderProduct(d){
       var logo = d.school_logo
         ? ('<img class="brand-logo" src="' + escapeHtml(d.school_logo) + '" alt="' + escapeHtml(d.school_name || '') + '" />')
@@ -176,6 +185,7 @@
       state.product_id = product;
 
       if (getParam('paid')){ renderPaid(); return; }
+      if (getParam('cancelled') && (!slug || !product)){ renderCancelled(); return; }
       if (!slug || !product){
         renderError('This payment link is incomplete. Please use the code your school shared.');
         return;
