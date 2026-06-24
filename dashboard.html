@@ -5903,8 +5903,8 @@ async function bookSession_paymentLink(){
         school_id: SID,
         student_id: studentId,
         line_items: [bookSessionLineItem()],
-        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
-        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+        success_url: window.location.origin + '/pay.html?paid=1',
+        cancel_url: window.location.origin + '/pay.html?cancelled=1',
       }),
     });
     var data = await r.json();
@@ -8978,8 +8978,8 @@ async function checkoutCompleteLink(){
           school_id: SID,
           student_id: _checkout.studentId,
           membership_id: _checkout.cart[0].id,
-          success_url: window.location.origin + window.location.pathname + '?payment=success',
-          cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
+          success_url: window.location.origin + '/pay.html?paid=1',
+          cancel_url: window.location.origin + '/pay.html?cancelled=1'
         })
       });
       var data = await r.json();
@@ -8993,8 +8993,8 @@ async function checkoutCompleteLink(){
           school_id: SID,
           student_id: _checkout.studentId,
           line_items: checkoutPosLineItems(),
-          success_url: window.location.origin + window.location.pathname + '?pos_success=1',
-          cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1'
+          success_url: window.location.origin + '/pay.html?paid=1',
+          cancel_url: window.location.origin + '/pay.html?cancelled=1'
         })
       });
       var data2 = await r2.json();
@@ -9599,8 +9599,8 @@ async function createStripeCheckoutLink() {
         school_id: SID,
         student_id: currentProfileStudent.id,
         membership_id: membershipId,
-        success_url: window.location.origin + window.location.pathname + '?payment=success',
-        cancel_url: window.location.origin + window.location.pathname + '?payment=cancelled'
+        success_url: window.location.origin + '/pay.html?paid=1',
+        cancel_url: window.location.origin + '/pay.html?cancelled=1'
       })
     });
     var data = await r.json();
@@ -11442,8 +11442,8 @@ async function checkoutPOS_paymentLink(){
         school_id: SID,
         student_id: posSelectedStudentId || null,
         line_items: posCartLineItems(),
-        success_url: window.location.origin + window.location.pathname + '?pos_success=1',
-        cancel_url: window.location.origin + window.location.pathname + '?pos_cancel=1',
+        success_url: window.location.origin + '/pay.html?paid=1',
+        cancel_url: window.location.origin + '/pay.html?cancelled=1',
       }),
     });
     var data = await r.json();
@@ -14192,8 +14192,8 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
           amount_cents: Math.round(parseFloat(built.payload.amount) * 100),
           tier_label: built.payload.tier_label,
           save_card: saveCard,
-          success_url: window.location.origin + window.location.pathname + "?event_paid=1",
-          cancel_url: window.location.origin + window.location.pathname + "?event_cancelled=1"
+          success_url: window.location.origin + "/pay.html?paid=1",
+          cancel_url: window.location.origin + "/pay.html?cancelled=1"
         })
       });
       var data = await r.json();
