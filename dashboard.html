@@ -1336,10 +1336,51 @@
 
   <div class="page" id="page-shareembed">
     <h2>Share &amp; Embed</h2>
-    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable schedule views for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable views of your class schedule and membership pricing for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
     <div class="panel">
       <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds</span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
       <div class="panel-body"><div id="embedsList"><div class="empty">Loading...</div></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Embeds</span><button class="panel-action" onclick="openMemEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+      <div class="panel-body"><div id="memEmbedsList"><div class="empty">Loading...</div></div></div>
+    </div>
+
+    <div class="modal-overlay" id="memEmbedModal">
+      <div class="modal" style="width:520px;max-width:95vw">
+        <div class="modal-header"><span class="modal-title" id="memEmbedModalTitle">New Embed</span><button class="modal-close" onclick="safeClose('memEmbedModal',closeMemEmbedModal)"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="memEmbedEditId" value="" />
+          <div class="field"><label>Name</label><input type="text" id="memEmbedName" placeholder="e.g. Pricing" /></div>
+          <div class="field"><label>Plans to show</label><div id="memEmbedPlansPicker"><div class="empty">Loading plans...</div></div></div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedRespectVis" /> <span class="check-item-label">Only show plans that are publicly visible</span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedActive" checked /> <span class="check-item-label">Active</span></label>
+          <p class="form-msg" id="memEmbedMsg"></p>
+          <button class="btn-gold-full" onclick="saveMemEmbed()">Save Embed</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="memEmbedCodeModal">
+      <div class="modal" style="width:640px;max-width:95vw">
+        <div class="modal-header"><span class="modal-title" id="memEmbedCodeTitle">Embed code</span><button class="modal-close" onclick="safeClose('memEmbedCodeModal',closeMemEmbedCode)"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body">
+          <div class="field"><label>Paste this on your website</label>
+            <textarea id="memEmbedSnippet" rows="4" readonly style="width:100%;font-family:monospace;font-size:0.78rem"></textarea>
+            <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+              <button class="btn-sm gold" onclick="copyMemEmbedSnippet()">Copy code</button>
+              <button class="btn-sm" onclick="copyMemEmbedLinkFromModal()">Copy link only</button>
+            </div>
+          </div>
+          <div class="field"><label>Live preview</label>
+            <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--black)"><iframe id="memEmbedPreview" style="width:100%;height:420px;border:0" title="Preview"></iframe></div>
+          </div>
+          <div class="field"><label>How to paste it on common site builders</label>
+            <div id="memEmbedHostHelp" style="font-size:0.85rem;color:var(--muted);line-height:1.5"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="modal-overlay" id="embedCodeModal">
@@ -3945,7 +3986,141 @@ function copyEmbedSnippet(){
   alert('Embed code copied. Paste it into an HTML or embed block on your website.');
 }
 
-function copyEmbedLinkFromModal(){ if(embedCodeCurrentId) copyEmbedLink(embedCodeCurrentId); }
+  function copyEmbedLinkFromModal(){ if(embedCodeCurrentId) copyEmbedLink(embedCodeCurrentId); }
+
+// ===== MEMBERSHIP EMBEDS =====
+var allMemEmbeds = [];
+
+function memEmbedLinkFor(id){ return window.location.origin+'/plans.html?embed='+id; }
+
+async function loadMembershipEmbeds(){
+  var box=document.getElementById('memEmbedsList');
+  if(box) box.innerHTML='<div class="empty">Loading...</div>';
+  var r=await sb.from('membership_embeds').select('*').eq('school_id',SID).order('created_at',{ascending:false});
+  if(r.error){ if(box) box.innerHTML='<div class="empty">Could not load embeds.</div>'; return; }
+  allMemEmbeds=r.data||[];
+  renderMemEmbedsList();
+}
+
+function memEmbedPlanSummary(e){
+  var ids=e.membership_ids||[]; if(!ids.length) return 'No plans selected';
+  var n=ids.length; var label=n+(n===1?' plan':' plans');
+  if(e.respect_visibility) label+=' (public only)';
+  return label;
+}
+
+function renderMemEmbedsList(){
+  var box=document.getElementById('memEmbedsList'); if(!box) return;
+  if(!allMemEmbeds.length){ box.innerHTML='<div class="empty">No embeds yet. Create one to put your plans on your website.</div>'; return; }
+  var html='';
+  for(var i=0;i<allMemEmbeds.length;i++){
+    var e=allMemEmbeds[i];
+    var state=e.active?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.4rem">Active</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.4rem">Off</span>';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">';
+    html+='<div><div style="font-weight:600">'+embEsc(e.name)+state+'</div>';
+    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embEsc(memEmbedPlanSummary(e))+'</div></div>';
+    html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
+    html+='<button class="btn-sm gold" onclick="openMemEmbedCode(\''+e.id+'\')">Get code</button>';
+    html+='<button class="btn-sm" onclick="copyMemEmbedLink(\''+e.id+'\')">Copy link</button>';
+    html+='<button class="btn-sm" onclick="openMemEmbedModal(\''+e.id+'\')">Edit</button>';
+    html+='<button class="btn-sm" onclick="deleteMemEmbed(\''+e.id+'\')">Delete</button>';
+    html+='</div></div>';
+  }
+  box.innerHTML=html;
+}
+
+function copyMemEmbedLink(id){
+  var url=memEmbedLinkFor(id);
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url); }
+  alert('Embed link copied:\n'+url);
+}
+
+function renderMemEmbedPlansPicker(selected){
+  selected=selected||[];
+  var pick=document.getElementById('memEmbedPlansPicker'); if(!pick) return;
+  if(!allMemberships.length){ pick.innerHTML='<div class="empty">No memberships yet.</div>'; return; }
+  var html='<div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:0.5rem">';
+  for(var i=0;i<allMemberships.length;i++){
+    var m=allMemberships[i];
+    var off=!m.public_join_enabled;
+    html+='<label style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0'+(off?';opacity:0.6':'')+'">';
+    html+='<input type="checkbox" class="mem-embed-plan" value="'+m.id+'"'+(selected.indexOf(m.id)!==-1?' checked':'')+' /> ';
+    html+='<span>'+embEsc(m.name||'Plan')+(off?' <span style="font-size:0.72rem;color:var(--muted)">(public signup off)</span>':'')+'</span></label>';
+  }
+  html+='</div>';
+  html+='<div style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem">Plans with public signup off will not appear in the embed until you enable public signup on the plan.</div>';
+  pick.innerHTML=html;
+}
+
+function collectMemEmbedPlans(){
+  var out=[], boxes=document.querySelectorAll('#memEmbedPlansPicker .mem-embed-plan');
+  for(var i=0;i<boxes.length;i++){ if(boxes[i].checked) out.push(boxes[i].value); }
+  return out;
+}
+
+function openMemEmbedModal(id){
+  var e=id?embFindById(allMemEmbeds,id):null;
+  document.getElementById('memEmbedEditId').value=e?e.id:'';
+  document.getElementById('memEmbedModalTitle').textContent=e?'Edit Embed':'New Embed';
+  document.getElementById('memEmbedName').value=e?e.name:'';
+  document.getElementById('memEmbedRespectVis').checked=e?!!e.respect_visibility:false;
+  document.getElementById('memEmbedActive').checked=e?!!e.active:true;
+  setMsg('memEmbedMsg','','');
+  renderMemEmbedPlansPicker(e?(e.membership_ids||[]):[]);
+  document.getElementById('memEmbedModal').classList.add('active');
+}
+
+function closeMemEmbedModal(){ document.getElementById('memEmbedModal').classList.remove('active'); }
+
+async function saveMemEmbed(){
+  var name=document.getElementById('memEmbedName').value.trim();
+  if(!name){ setMsg('memEmbedMsg','Please enter a name.','error'); return; }
+  var ids=collectMemEmbedPlans();
+  if(!ids.length){ setMsg('memEmbedMsg','Please choose at least one plan to show.','error'); return; }
+  var id=document.getElementById('memEmbedEditId').value;
+  var row={ school_id:SID, name:name, membership_ids:ids, respect_visibility:document.getElementById('memEmbedRespectVis').checked, active:document.getElementById('memEmbedActive').checked, updated_at:new Date().toISOString() };
+  var r=id?(await sb.from('membership_embeds').update(row).eq('id',id)):(await sb.from('membership_embeds').insert(row));
+  if(r.error){ setMsg('memEmbedMsg',r.error.message,'error'); return; }
+  closeMemEmbedModal(); loadMembershipEmbeds();
+}
+
+async function deleteMemEmbed(id){
+  if(!confirm('Delete this embed? Any website using it will stop showing your plans.')) return;
+  var r=await sb.from('membership_embeds').delete().eq('id',id);
+  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  loadMembershipEmbeds();
+}
+
+var memEmbedCodeCurrentId = null;
+
+function memEmbedSnippetFor(id){
+  var origin=window.location.origin;
+  var src=origin+'/plans.html?embed='+id;
+  return '<iframe src="'+src+'" style="width:100%;border:0" height="700" title="Plans"></iframe>\n<script src="'+origin+'/embed.js" async></'+'script>';
+}
+
+function openMemEmbedCode(id){
+  memEmbedCodeCurrentId=id;
+  var e=embFindById(allMemEmbeds,id);
+  document.getElementById('memEmbedCodeTitle').textContent=e?('Embed code: '+e.name):'Embed code';
+  document.getElementById('memEmbedSnippet').value=memEmbedSnippetFor(id);
+  document.getElementById('memEmbedPreview').src=window.location.origin+'/plans.html?embed='+id;
+  document.getElementById('memEmbedHostHelp').innerHTML=embedHostInstructions();
+  document.getElementById('memEmbedCodeModal').classList.add('active');
+}
+
+function closeMemEmbedCode(){
+  document.getElementById('memEmbedCodeModal').classList.remove('active');
+  document.getElementById('memEmbedPreview').src='about:blank';
+}
+
+function copyMemEmbedSnippet(){
+  var t=document.getElementById('memEmbedSnippet'); t.select();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t.value); }
+  alert('Embed code copied. Paste it into an HTML or embed block on your website.');
+}
+
+function copyMemEmbedLinkFromModal(){ if(memEmbedCodeCurrentId) copyMemEmbedLink(memEmbedCodeCurrentId); }
 
 function navigate(page,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -3960,8 +4135,8 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
-  if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); }
-if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
+  if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
+  if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
 
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
