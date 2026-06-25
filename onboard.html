@@ -479,22 +479,24 @@
       var btn = document.getElementById('oSubmit');
       if (btn){ btn.disabled = true; btn.textContent = 'Reserving...'; }
 
-      // ---- Phase 3 SEAM --------------------------------------------------
-      // Phase 2 reserves the slot (status pending_payment) and confirms the hold.
-      // Phase 3 will, on ok, instead redirect to a Stripe Checkout (platform
-      // charge to NMAO, $99, coupon / $0-bypass) via a returned checkout_url,
-      // and let the webhook flip the booking to 'confirmed'.
+      // Phase 2 reserves the slot (pending_payment); Phase 3 then sends them to
+      // Stripe Checkout (platform charge to NMAO). The webhook flips the booking
+      // to 'confirmed' and the success_url returns here with ?booking=&paid=1.
       sb.functions.invoke('book-onboarding', { body: {
         scheduled_at: state.selected.iso,
         first: first, last: last, email: email, phone: phone, school: school,
         source: getSource(), website: hp
       } }).then(function (res){
         var data = (res && res.data) || {};
-        if (data.ok){ renderConfirmed(data, { first: first, last: last, email: email, school: school }); return; }
         if (data.error === 'slot_unavailable'){ renderTaken(); return; }
-        state.submitting = false;
-        if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
-        setMsg(data.error || 'Something went wrong. Please try again.', 'error');
+        if (!data.ok || !data.booking_id){
+          state.submitting = false;
+          if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
+          setMsg(data.error || 'Something went wrong. Please try again.', 'error');
+          return;
+        }
+        if (btn){ btn.textContent = 'Redirecting to payment...'; }
+        startCheckout(data.booking_id, btn);
       }).catch(function (){
         state.submitting = false;
         if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
@@ -502,25 +504,78 @@
       });
     }
 
-    function renderConfirmed(data, info){
-      document.getElementById('selBar').className = 'sel-bar';
-      var dt = new Date(data.scheduled_at || (state.selected && state.selected.iso));
-      var spec = data.specialist_first ? escapeHtml(data.specialist_first) : 'your specialist';
-      var who = '';
-      if (info.first || info.last) who += escapeHtml((info.first + ' ' + info.last).trim()) + '<br/>';
-      if (info.email) who += escapeHtml(info.email) + '<br/>';
-      if (info.school) who += escapeHtml(info.school);
+    function startCheckout(bookingId, btn){
+      sb.functions.invoke('create-onboarding-checkout', { body: { booking_id: bookingId } }).then(function (res){
+        var data = (res && res.data) || {};
+        if (data.ok && data.checkout_url){ window.location.href = data.checkout_url; return; }
+        if (data.ok && data.status === 'confirmed'){ handleReturn(bookingId); return; }
+        state.submitting = false;
+        if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
+        setMsg(data.error || 'Could not start checkout. Please try again.', 'error');
+      }).catch(function (){
+        state.submitting = false;
+        if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
+        setMsg('Network error starting checkout. Please try again.', 'error');
+      });
+    }
+
+    function renderConfirmed(b){
+      var dt = new Date(b.scheduled_at);
+      var spec = b.specialist_first ? escapeHtml(b.specialist_first) : 'your specialist';
+      var who = b.school_name ? ('<br/>' + escapeHtml(b.school_name)) : '';
       document.getElementById('root').innerHTML =
         headerHtml() +
         '<div class="card"><div class="review">' +
           '<i class="fa-regular fa-circle-check"></i>' +
-          '<h2>Your time is reserved</h2>' +
+          '<h2>Your onboarding call is confirmed</h2>' +
           '<div class="when">' + escapeHtml(dayLong(dt)) + ' at ' + escapeHtml(timeLabel(dt)) + '</div>' +
-          '<div class="who">with ' + spec + '<br/>' + who + '</div>' +
-          '<div class="note">This time is now held under your name. ' +
-          'Payment and email confirmation are added in the next build.</div>' +
+          '<div class="who">with ' + spec + who + '</div>' +
+          '<div class="note">You are on the schedule. A calendar invite and Zoom link ' +
+          'are added in the next build; for now we will be in touch with the details.</div>' +
         '</div></div>';
       window.scrollTo(0, 0);
+    }
+
+    function renderProcessing(){
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card"><div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Confirming your payment...</div></div>';
+    }
+
+    function renderCanceled(){
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card"><div class="empty-state">' +
+          '<i class="fa-regular fa-circle-xmark"></i>' +
+          '<h3>Payment canceled</h3>' +
+          '<p>No charge was made. Your held time will be released shortly.<br/>You can pick another time whenever you are ready.</p>' +
+          '<button type="button" class="btn-primary" style="max-width:240px;margin:1.25rem auto 0" onclick="window.location.href=\'onboard.html\'">Pick a time</button>' +
+        '</div></div>';
+      window.scrollTo(0, 0);
+    }
+
+    function handleReturn(bookingId){
+      renderProcessing();
+      var tries = 0;
+      var poll = function(){
+        tries++;
+        sb.functions.invoke('get-onboarding-booking', { body: { booking_id: bookingId } }).then(function (res){
+          var b = (res && res.data) || {};
+          if (b.ok && b.status === 'confirmed'){ renderConfirmed(b); return; }
+          if (tries >= 6){
+            // Reached the success URL, so payment completed; the webhook may still
+            // be in flight. Show confirmation from what we have.
+            if (b.ok){ renderConfirmed(b); }
+            else { renderError('We could not load your booking. If you were charged, please email support@nmao.us.'); }
+            return;
+          }
+          setTimeout(poll, 1500);
+        }).catch(function (){
+          if (tries >= 6){ renderError('We could not load your booking. Please email support@nmao.us.'); return; }
+          setTimeout(poll, 1500);
+        });
+      };
+      poll();
     }
 
     function renderTaken(){
@@ -538,6 +593,11 @@
 
     // ---- load ----
     function init(){
+      var params = new URLSearchParams(location.search || '');
+      var bookingId = params.get('booking');
+      if (bookingId && params.get('paid')){ handleReturn(bookingId); return; }
+      if (bookingId && params.get('canceled')){ renderCanceled(); return; }
+
       state.today = midnight(new Date());
       state.cursor = midnight(new Date());
       sb.functions.invoke('onboarding-availability', { body: {} }).then(function (res){
