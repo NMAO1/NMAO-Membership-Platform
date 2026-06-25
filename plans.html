@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --black: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold: #C9A84C;
+      --white: #ffffff;
+      --muted: #8a8278;
+      --font-display: "Cormorant Garamond", serif;
+      --font-ui: "Inter", system-ui, sans-serif;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; background:var(--black); color:var(--white);
+      font-family:var(--font-ui); -webkit-font-smoothing:antialiased;
+      min-height:100vh;
+    }
+    .wrap{ max-width:1080px; margin:0 auto; padding:2rem 1.25rem 2.5rem; }
+    .page-header{ text-align:center; margin-bottom:1.75rem; }
+    .page-header img{ max-height:64px; width:auto; margin-bottom:0.75rem; }
+    .page-header h1{
+      font-family:var(--font-display); font-weight:600; color:var(--gold);
+      font-size:2rem; margin:0;
+    }
+    .grid{
+      display:grid; gap:1rem;
+      grid-template-columns:repeat(auto-fit, minmax(255px, 1fr));
+      align-items:stretch;
+    }
+    .card{
+      position:relative; display:flex; flex-direction:column;
+      background:var(--surface); border:1px solid var(--border); border-radius:14px;
+      padding:1.5rem 1.35rem; min-height:100%;
+    }
+    .card.featured{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold); }
+    .badge{
+      position:absolute; top:-0.7rem; left:50%; transform:translateX(-50%);
+      background:var(--gold); color:var(--black); font-size:0.68rem; font-weight:600;
+      letter-spacing:0.06em; text-transform:uppercase; padding:0.25rem 0.7rem; border-radius:999px;
+      white-space:nowrap;
+    }
+    .card h2{
+      font-family:var(--font-display); font-weight:600; font-size:1.45rem;
+      margin:0.2rem 0 0.15rem; color:var(--white);
+    }
+    .card .headline{ color:var(--gold); font-size:0.9rem; font-weight:500; margin:0 0 0.6rem; }
+    .card .price{ font-size:1.5rem; font-weight:600; color:var(--white); margin:0.35rem 0 0.1rem; }
+    .card .blurb{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin:0.5rem 0 0.4rem; }
+    .card ul{ list-style:none; padding:0; margin:0.5rem 0 1rem; }
+    .card li{ color:var(--muted); font-size:0.85rem; padding:0.2rem 0; }
+    .card li::before{ content:"\2022"; color:var(--gold); margin-right:0.5rem; }
+    .card .spacer{ flex:1 1 auto; }
+    .join-btn{
+      display:block; text-align:center; text-decoration:none;
+      background:var(--gold); color:var(--black); font-weight:600; font-size:0.95rem;
+      padding:0.7rem 1rem; border-radius:9px; transition:opacity 0.15s ease;
+    }
+    .join-btn:hover{ opacity:0.88; }
+    .state{ text-align:center; color:var(--muted); padding:3rem 1rem; font-size:0.95rem; }
+    /* Embed mode: drop full-page chrome so it sits cleanly inside a host-site iframe. */
+    body.embed{ background:transparent; min-height:0; }
+    body.embed .wrap{ padding:0.75rem; }
+    body.embed .page-header{ display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="page-header" id="pageHeader" style="display:none">
+      <img id="hdrLogo" alt="" style="display:none" />
+      <h1 id="hdrTitle">Plans</h1>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="state" class="state">Loading plans...</div>
+  </div>
+
+  <script>
+    var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var sb = supabase.createClient(SURL, SKEY);
+
+    function getParam(k){ return new URLSearchParams(window.location.search).get(k); }
+    function isFramed(){ return window.parent && window.parent !== window; }
+
+    function money(n){
+      var v = parseFloat(n) || 0;
+      return '$' + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(2));
+    }
+
+    function formatPrice(d){
+      if (d.billing_type === 'class_pack'){ return money(d.price) + ' one-time'; }
+      if (d.billing_type === 'trial'){
+        return (parseFloat(d.price) > 0) ? (money(d.price) + ' trial') : 'Free trial';
+      }
+      if (d.billing_type === 'yearly'){ return money(d.price) + ' / year'; }
+      var len = parseInt(d.billing_length) || 1;
+      var unit = d.billing_unit || 'months';
+      if (len > 1){ return money(d.price) + ' every ' + len + ' ' + unit; }
+      return money(d.price) + ' / month';
+    }
+
+    function esc(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    function applyBranding(d){
+      var r = document.documentElement;
+      if (d.color)         r.style.setProperty('--gold', d.color);
+      if (d.bg_color)      r.style.setProperty('--black', d.bg_color);
+      if (d.border_color)  r.style.setProperty('--border', d.border_color);
+      if (d.surface_color) r.style.setProperty('--surface', d.surface_color);
+      if (d.font_color)    r.style.setProperty('--white', d.font_color);
+      if (d.font_family)   r.style.setProperty('--font-display', "'" + d.font_family + "',serif");
+      document.title = (d.embed_name || d.school_name || 'Plans');
+    }
+
+    function planDetails(d){
+      var out = [];
+      var cnt = parseInt(d.class_limit_count) || 0;
+      if (cnt > 0){ out.push(cnt + (d.billing_type === 'class_pack' ? ' classes' : ' classes per cycle')); }
+      else if (d.class_limit_type === 'unlimited'){ out.push('Unlimited classes'); }
+      var exp = parseInt(d.pack_expiry_days) || 0;
+      if (d.billing_type === 'class_pack' && exp > 0){ out.push('Expires ' + exp + ' days after purchase'); }
+      var fee = parseFloat(d.signup_fee) || 0;
+      if (fee > 0){ out.push(money(fee) + ' one-time signup fee'); }
+      return out;
+    }
+
+    function renderCards(rows){
+      var grid = document.getElementById('grid');
+      var html = '';
+      var i, d, details, j;
+      for (i = 0; i < rows.length; i++){
+        d = rows[i];
+        details = planDetails(d);
+        html += '<div class="card' + (d.featured ? ' featured' : '') + '">';
+        if (d.featured){ html += '<span class="badge">Most popular</span>'; }
+        html += '<h2>' + esc(d.name) + '</h2>';
+        if (d.public_headline){ html += '<p class="headline">' + esc(d.public_headline) + '</p>'; }
+        html += '<div class="price">' + esc(formatPrice(d)) + '</div>';
+        var blurb = d.public_blurb || d.description || '';
+        if (blurb){ html += '<p class="blurb">' + esc(blurb) + '</p>'; }
+        if (details.length){
+          html += '<ul>';
+          for (j = 0; j < details.length; j++){ html += '<li>' + esc(details[j]) + '</li>'; }
+          html += '</ul>';
+        }
+        html += '<div class="spacer"></div>';
+        html += '<a class="join-btn" href="join.html?m=' + encodeURIComponent(d.membership_id) +
+                '" target="_blank" rel="noopener">Join</a>';
+        html += '</div>';
+      }
+      grid.innerHTML = html;
+    }
+
+    function showState(msg){
+      var s = document.getElementById('state');
+      s.textContent = msg; s.style.display = '';
+    }
+    function hideState(){ document.getElementById('state').style.display = 'none'; }
+
+    function nmaoPostHeight(){
+      if (window.parent === window) return;
+      var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+      window.parent.postMessage({ nmaoEmbed:true, height:h }, '*');
+    }
+    function nmaoInitEmbed(){
+      window.addEventListener('resize', nmaoPostHeight);
+      if ('ResizeObserver' in window){ try{ new ResizeObserver(nmaoPostHeight).observe(document.body); }catch(e){} }
+      setTimeout(nmaoPostHeight, 300);
+    }
+
+    window.onload = async function(){
+      var embedId = getParam('embed');
+      if (isFramed()){ document.body.classList.add('embed'); }
+      nmaoInitEmbed();
+
+      if (!embedId){
+        showState('No plans link found. Please use the link provided by the school.');
+        return;
+      }
+      try {
+        var r = await sb.rpc('get_membership_embed', { p_embed_id: embedId });
+        if (r.error || !r.data || !r.data.length){
+          showState('These plans are not available right now. Please contact the school.');
+          return;
+        }
+        applyBranding(r.data[0]);
+        // Standalone (not iframed): show a header so a direct link looks presentable.
+        if (!isFramed()){
+          var hdr = document.getElementById('pageHeader');
+          var logo = document.getElementById('hdrLogo');
+          if (r.data[0].logo_url){ logo.src = r.data[0].logo_url; logo.style.display = ''; }
+          document.getElementById('hdrTitle').textContent =
+            r.data[0].embed_name || ((r.data[0].school_name || '') + ' Plans');
+          hdr.style.display = '';
+        }
+        hideState();
+        renderCards(r.data);
+        setTimeout(nmaoPostHeight, 50);
+      } catch (e){
+        showState('Something went wrong loading these plans. Please try again.');
+      }
+    };
+  </script>
+</body>
+</html>
