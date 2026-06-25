@@ -1342,8 +1342,28 @@
       <div class="panel-body"><div id="embedsList"><div class="empty">Loading...</div></div></div>
     </div>
 
+    <div class="modal-overlay" id="embedCodeModal">
+      <div class="modal" style="width:640px;max-width:95vw">
+        <div class="modal-header"><span class="modal-title" id="embedCodeTitle">Embed code</span><button class="modal-close" onclick="safeClose('embedCodeModal',closeEmbedCode)"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body">
+          <div class="field"><label>Paste this on your website</label>
+            <textarea id="embedSnippet" rows="4" readonly style="width:100%;font-family:monospace;font-size:0.78rem"></textarea>
+            <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+              <button class="btn-sm gold" onclick="copyEmbedSnippet()">Copy code</button>
+              <button class="btn-sm" onclick="copyEmbedLinkFromModal()">Copy link only</button>
+            </div>
+          </div>
+          <div class="field"><label>Live preview</label>
+            <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--black)"><iframe id="embedPreview" style="width:100%;height:420px;border:0" title="Preview"></iframe></div>
+          </div>
+          <div class="field"><label>How to paste it on common site builders</label>
+            <div id="embedHostHelp" style="font-size:0.85rem;color:var(--muted);line-height:1.5"></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="modal-overlay" id="embedModal">
-      <div class="modal" style="width:520px;max-width:95vw">
+    <div class="modal" style="width:520px;max-width:95vw">
         <div class="modal-header"><span class="modal-title" id="embedModalTitle">New Embed</span><button class="modal-close" onclick="safeClose('embedModal',closeEmbedModal)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="embedEditId" value="" />
@@ -3791,6 +3811,7 @@ function renderEmbedsList(){
     html+='<div><div style="font-weight:600">'+embEsc(e.name)+state+'</div>';
     html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embedFilterSummary(e)+'</div></div>';
     html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
+    html+='<button class="btn-sm gold" onclick="openEmbedCode(\''+e.id+'\')">Get code</button>';
     html+='<button class="btn-sm" onclick="copyEmbedLink(\''+e.id+'\')">Copy link</button>';
     html+='<button class="btn-sm" onclick="openEmbedModal(\''+e.id+'\')">Edit</button>';
     html+='<button class="btn-sm" onclick="deleteEmbed(\''+e.id+'\')">Delete</button>';
@@ -3883,6 +3904,48 @@ async function deleteEmbed(id){
   if(r.error){ alert('Could not delete: '+r.error.message); return; }
   loadScheduleEmbeds();
 }
+
+//  SHARE & EMBED — code, preview, host help 
+var embedCodeCurrentId = null;
+
+function embedSnippetFor(id){
+  var origin=window.location.origin;
+  var src=origin+'/classes.html?embed='+id;
+  return '<iframe src="'+src+'" style="width:100%;border:0" height="700" title="Class Schedule"></iframe>\n<script src="'+origin+'/embed.js" async></'+'script>';
+}
+
+function embedHostInstructions(){
+  return ''
+   +'<div style="margin-bottom:0.55rem"><strong>WordPress</strong> — add a Custom HTML block and paste the code.</div>'
+   +'<div style="margin-bottom:0.55rem"><strong>Squarespace</strong> — add a Code block (Business plan or higher) and paste the code.</div>'
+   +'<div style="margin-bottom:0.55rem"><strong>Wix</strong> — add Embed then Embed HTML, paste the code, and set a fixed height (auto-resize may not run inside Wix).</div>'
+   +'<div style="margin-bottom:0.55rem"><strong>Webflow</strong> — drag an Embed element onto the page and paste the code.</div>'
+   +'<div style="margin-bottom:0.55rem"><strong>Lower-tier builders that strip scripts</strong> — the schedule still shows at the fixed height; just adjust the height number in the code.</div>'
+   +'<div><strong>Any other site</strong> — paste into any HTML or embed block. For social media or email, use Copy link instead.</div>';
+}
+
+function openEmbedCode(id){
+  embedCodeCurrentId=id;
+  var e=embFindById(allEmbeds,id);
+  document.getElementById('embedCodeTitle').textContent=e?('Embed code: '+e.name):'Embed code';
+  document.getElementById('embedSnippet').value=embedSnippetFor(id);
+  document.getElementById('embedPreview').src=window.location.origin+'/classes.html?embed='+id;
+  document.getElementById('embedHostHelp').innerHTML=embedHostInstructions();
+  document.getElementById('embedCodeModal').classList.add('active');
+}
+
+function closeEmbedCode(){
+  document.getElementById('embedCodeModal').classList.remove('active');
+  document.getElementById('embedPreview').src='about:blank';
+}
+
+function copyEmbedSnippet(){
+  var t=document.getElementById('embedSnippet'); t.select();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t.value); }
+  alert('Embed code copied. Paste it into an HTML or embed block on your website.');
+}
+
+function copyEmbedLinkFromModal(){ if(embedCodeCurrentId) copyEmbedLink(embedCodeCurrentId); }
 
 function navigate(page,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
