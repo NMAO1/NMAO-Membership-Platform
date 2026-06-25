@@ -557,6 +557,7 @@
     <div class="nav-item" id="nav-analytics" onclick="navigate('analytics',this)"><i class="fa-solid fa-chart-line nav-icon"></i> Analytics</div>
 
     <div class="nav-section-label">Account</div>
+    <div class="nav-item" id="nav-shareembed" onclick="navigate('shareembed',this)"><i class="fa-solid fa-share-nodes nav-icon"></i> Share &amp; Embed</div>
     <div class="nav-item" id="nav-settings" onclick="navigate('settings',this)"><i class="fa-solid fa-gear nav-icon"></i> Settings</div>
     <div class="nav-item" id="nav-billing"  onclick="navigate('billing',this)"><i class="fa-solid fa-file-invoice-dollar nav-icon"></i> Billing</div>
 <div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>  </div>
@@ -1333,6 +1334,29 @@
       </div></div>
     </div>
 
+  <div class="page" id="page-shareembed">
+    <h2>Share &amp; Embed</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable schedule views for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds</span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+      <div class="panel-body"><div id="embedsList"><div class="empty">Loading...</div></div></div>
+    </div>
+
+    <div class="modal-overlay" id="embedModal">
+      <div class="modal" style="width:520px;max-width:95vw">
+        <div class="modal-header"><span class="modal-title" id="embedModalTitle">New Embed</span><button class="modal-close" onclick="safeClose('embedModal',closeEmbedModal)"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="embedEditId" value="" />
+          <div class="field"><label>Name</label><input type="text" id="embedName" placeholder="e.g. Kids Schedule" /></div>
+          <div class="field"><label>Show</label><select id="embedFilterType" onchange="onEmbedFilterTypeChange()"><option value="all">All classes</option><option value="program">A program</option><option value="classes">Specific classes</option><option value="style">A style</option><option value="age">An age group</option><option value="level">A level</option><option value="instructor">An instructor</option></select></div>
+          <div class="field" id="embedValuesField" style="display:none"><label id="embedValuesLabel">Selection</label><div id="embedValuesPicker"></div></div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedActive" checked /> <span class="check-item-label">Active</span></label>
+          <p class="form-msg" id="embedMsg"></p>
+          <button class="btn-gold-full" onclick="saveEmbed()">Save Embed</button>
+        </div>
+      </div>
+    </div>
+  </div>
   </div><!-- /.content -->
 </main><!-- /.main -->
 
@@ -3727,12 +3751,145 @@ async function saveClassFieldSettings(){
 
 // ─────────────────────────────── §NAV ───────────────────────────────
 
+//  SHARE & EMBED 
+var allEmbeds = [];
+
+function embEsc(s){ return (''+(s==null?'':s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function embFindById(arr,id){ for(var i=0;i<arr.length;i++){ if(arr[i].id===id) return arr[i]; } return null; }
+function embedDistinct(field){ var seen={},out=[]; for(var i=0;i<allClasses.length;i++){ var v=allClasses[i][field]; if(v&&!seen[v]){ seen[v]=true; out.push(v); } } out.sort(); return out; }
+function embedLinkFor(id){ return window.location.origin+'/classes.html?embed='+id; }
+
+async function loadScheduleEmbeds(){
+  var box=document.getElementById('embedsList');
+  if(box) box.innerHTML='<div class="empty">Loading...</div>';
+  var r=await sb.from('schedule_embeds').select('*').eq('school_id',SID).order('created_at',{ascending:false});
+  if(r.error){ if(box) box.innerHTML='<div class="empty">Could not load embeds.</div>'; return; }
+  allEmbeds=r.data||[];
+  renderEmbedsList();
+}
+
+function embedFilterSummary(e){
+  var t=e.filter_type, v=e.filter_values||[];
+  if(t==='all'||!v.length) return 'All classes';
+  if(t==='program'){ var p=embFindById(allPrograms,v[0]); return 'Program: '+embEsc(p?p.name:'unknown'); }
+  if(t==='classes') return v.length+(v.length===1?' class':' classes');
+  if(t==='style') return 'Style: '+embEsc(v[0]);
+  if(t==='age') return 'Age group: '+embEsc(v[0]);
+  if(t==='level') return 'Level: '+embEsc(v[0]);
+  if(t==='instructor') return 'Instructor: '+embEsc(v[0]);
+  return 'Filtered';
+}
+
+function renderEmbedsList(){
+  var box=document.getElementById('embedsList'); if(!box) return;
+  if(!allEmbeds.length){ box.innerHTML='<div class="empty">No embeds yet. Create one to put your schedule on your website.</div>'; return; }
+  var html='';
+  for(var i=0;i<allEmbeds.length;i++){
+    var e=allEmbeds[i];
+    var state=e.active?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.4rem">Active</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.4rem">Off</span>';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">';
+    html+='<div><div style="font-weight:600">'+embEsc(e.name)+state+'</div>';
+    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embedFilterSummary(e)+'</div></div>';
+    html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
+    html+='<button class="btn-sm" onclick="copyEmbedLink(\''+e.id+'\')">Copy link</button>';
+    html+='<button class="btn-sm" onclick="openEmbedModal(\''+e.id+'\')">Edit</button>';
+    html+='<button class="btn-sm" onclick="deleteEmbed(\''+e.id+'\')">Delete</button>';
+    html+='</div></div>';
+  }
+  box.innerHTML=html;
+}
+
+function copyEmbedLink(id){
+  var url=embedLinkFor(id);
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url); }
+  alert('Embed link copied:\n'+url);
+}
+
+function onEmbedFilterTypeChange(){ renderEmbedValuePicker(document.getElementById('embedFilterType').value, []); }
+
+function renderEmbedValuePicker(type, selected){
+  var field=document.getElementById('embedValuesField');
+  var label=document.getElementById('embedValuesLabel');
+  var pick=document.getElementById('embedValuesPicker');
+  selected=selected||[];
+  if(type==='all'){ field.style.display='none'; pick.innerHTML=''; return; }
+  field.style.display='';
+  var html='', i;
+  if(type==='program'){
+    label.textContent='Program'; html+='<select id="embedValSelect">';
+    for(i=0;i<allPrograms.length;i++){ var p=allPrograms[i]; html+='<option value="'+p.id+'"'+(selected.indexOf(p.id)!==-1?' selected':'')+'>'+embEsc(p.name)+'</option>'; }
+    html+='</select>';
+  } else if(type==='instructor'){
+    label.textContent='Instructor'; var ins=embedDistinct('instructor_name'); html+='<select id="embedValSelect">';
+    for(i=0;i<ins.length;i++){ html+='<option value="'+embEsc(ins[i])+'"'+(selected.indexOf(ins[i])!==-1?' selected':'')+'>'+embEsc(ins[i])+'</option>'; }
+    html+='</select>';
+  } else if(type==='style'||type==='age'||type==='level'){
+    var fieldName=(type==='age')?'age_group':type;
+    label.textContent=(type==='age')?'Age group':(type.charAt(0).toUpperCase()+type.slice(1));
+    var vals=embedDistinct(fieldName); html+='<select id="embedValSelect">';
+    for(i=0;i<vals.length;i++){ html+='<option value="'+embEsc(vals[i])+'"'+(selected.indexOf(vals[i])!==-1?' selected':'')+'>'+embEsc(vals[i])+'</option>'; }
+    html+='</select>';
+  } else if(type==='classes'){
+    label.textContent='Classes to include';
+    html+='<div style="max-height:200px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:0.5rem">';
+    for(i=0;i<allClasses.length;i++){ var c=allClasses[i]; var nm=c.name||c.title||'Class';
+      html+='<label style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0"><input type="checkbox" class="embed-cls" value="'+c.id+'"'+(selected.indexOf(c.id)!==-1?' checked':'')+' /> <span>'+embEsc(nm)+'</span></label>'; }
+    html+='</div>';
+  }
+  pick.innerHTML=html;
+}
+
+function collectEmbedValues(type){
+  if(type==='all') return [];
+  if(type==='classes'){
+    var out=[], boxes=document.querySelectorAll('#embedValuesPicker .embed-cls');
+    for(var i=0;i<boxes.length;i++){ if(boxes[i].checked) out.push(boxes[i].value); }
+    return out;
+  }
+  var sel=document.getElementById('embedValSelect');
+  return (sel&&sel.value)?[sel.value]:[];
+}
+
+function openEmbedModal(id){
+  var e=id?embFindById(allEmbeds,id):null;
+  document.getElementById('embedEditId').value=e?e.id:'';
+  document.getElementById('embedModalTitle').textContent=e?'Edit Embed':'New Embed';
+  document.getElementById('embedName').value=e?e.name:'';
+  document.getElementById('embedFilterType').value=e?e.filter_type:'all';
+  document.getElementById('embedActive').checked=e?!!e.active:true;
+  setMsg('embedMsg','','');
+  renderEmbedValuePicker(e?e.filter_type:'all', e?(e.filter_values||[]):[]);
+  document.getElementById('embedModal').classList.add('active');
+}
+
+function closeEmbedModal(){ document.getElementById('embedModal').classList.remove('active'); }
+
+async function saveEmbed(){
+  var name=document.getElementById('embedName').value.trim();
+  if(!name){ setMsg('embedMsg','Please enter a name.','error'); return; }
+  var type=document.getElementById('embedFilterType').value;
+  var values=collectEmbedValues(type);
+  if(type!=='all'&&!values.length){ setMsg('embedMsg','Please choose what this embed shows.','error'); return; }
+  var id=document.getElementById('embedEditId').value;
+  var row={ school_id:SID, name:name, filter_type:type, filter_values:values, active:document.getElementById('embedActive').checked, updated_at:new Date().toISOString() };
+  var r=id?(await sb.from('schedule_embeds').update(row).eq('id',id)):(await sb.from('schedule_embeds').insert(row));
+  if(r.error){ setMsg('embedMsg',r.error.message,'error'); return; }
+  closeEmbedModal(); loadScheduleEmbeds();
+}
+
+async function deleteEmbed(id){
+  if(!confirm('Delete this embed? Any website using it will stop showing the schedule.')) return;
+  var r=await sb.from('schedule_embeds').delete().eq('id',id);
+  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  loadScheduleEmbeds();
+}
+
 function navigate(page,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -3740,6 +3897,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
+  if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); }
 if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
 
