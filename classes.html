@@ -19,6 +19,9 @@
     body { background:var(--black); color:var(--white); font-family:var(--font-ui);
       min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:1.5rem 1rem 4rem; }
     .page-header { text-align:center; margin-bottom:1.25rem; }
+    /* Embed mode: drop full-page chrome so it sits cleanly inside a host-site iframe. */
+    body.embed { background:transparent; padding:0.5rem; min-height:0; }
+    body.embed .page-header { display:none; }
     .school-logo-img { max-height:52px; max-width:150px; object-fit:contain; margin-bottom:0.35rem; }
     .page-logo { font-family:var(--font-display); font-size:1.6rem; color:var(--gold);
       letter-spacing:0.22em; text-transform:uppercase; }
@@ -133,10 +136,50 @@
 
     window.onload = async function(){
       var p = new URLSearchParams(window.location.search);
+      var embedParam = p.get('embed');
       slug = p.get('s') || p.get('slug') || '';
+      if(embedParam){ document.body.classList.add('embed'); nmaoInitEmbed(); }
+      if(embedParam && embedParam !== '1'){
+        var ok = await loadEmbedConfig(embedParam);
+        if(!ok){ showError('This embed link is not available.'); return; }
+      }
       if(!slug){ showError('No schedule link found. Please use the link provided by the school.'); return; }
       await loadSchool();
     };
+
+    var embedFilter = null;
+
+    async function loadEmbedConfig(embedId){
+      try {
+        var r = await sb.rpc('get_schedule_embed', { p_embed_id: embedId });
+        if(r.error || !r.data || !r.data.length) return false;
+        var cfg = r.data[0];
+        slug = cfg.slug || '';
+        embedFilter = { type: cfg.filter_type || 'all', values: cfg.filter_values || [] };
+        if(cfg.embed_name){ document.title = cfg.embed_name; }
+        return !!slug;
+      } catch(e){ return false; }
+    }
+
+    function applyEmbedFilter(list){
+      if(!embedFilter || embedFilter.type === 'all') return list;
+      var vals = embedFilter.values || [];
+      if(!vals.length) return list;
+      var key = { program:'program_id', classes:'class_id', style:'style', age:'age_group', level:'level', instructor:'instructor_name' }[embedFilter.type];
+      if(!key) return list;
+      return list.filter(function(row){ return vals.indexOf(row[key]) !== -1; });
+    }
+
+    function nmaoPostHeight(){
+      if(window.parent === window) return;
+      var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+      window.parent.postMessage({ nmaoEmbed:true, height:h }, '*');
+    }
+    function nmaoInitEmbed(){
+      window.addEventListener('resize', nmaoPostHeight);
+      if('ResizeObserver' in window){ try{ new ResizeObserver(nmaoPostHeight).observe(document.body); }catch(e){} }
+      setTimeout(nmaoPostHeight, 300);
+    }
 
     async function loadSchool(){
       var r = await sb.from('schools')
@@ -195,6 +238,7 @@
       var r = await sb.rpc('get_public_class_schedule', { p_slug:slug, p_start:ymd(rg.start), p_end:ymd(rg.end) });
       if(r.error){ document.getElementById('scheduleBox').innerHTML='<div class="empty">Could not load the schedule.</div>'; return; }
       rows = r.data || [];
+      rows = applyEmbedFilter(rows);
       renderSchedule();
     }
 
