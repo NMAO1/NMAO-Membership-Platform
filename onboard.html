@@ -255,7 +255,7 @@
             '<div class="field"><label>Phone</label><input id="oPhone" type="tel" autocomplete="tel" /></div>' +
             '<div class="field"><label>School name</label><input id="oSchool" type="text" autocomplete="organization" /></div>' +
             '<input class="hp" id="oWebsite" name="website" tabindex="-1" autocomplete="off" />' +
-            '<button type="button" class="btn-primary" id="oSubmit" onclick="submitBooking()">Review Booking</button>' +
+            '<button type="button" class="btn-primary" id="oSubmit" onclick="submitBooking()">Reserve My Time</button>' +
             '<div id="oMsg"></div>' +
             '<div class="fineprint">A secure payment step follows to confirm your onboarding call.</div>' +
           '</div>' +
@@ -452,47 +452,86 @@
       el.textContent = text;
     }
 
-    // ---- Phase 2/3 SEAM -------------------------------------------------
-    // Phase 1 stops at a review screen. Phase 2 replaces the body of this
-    // function with a call to a "book-onboarding" EF that runs round-robin
-    // assignment and writes onboarding_bookings (status pending_payment),
-    // then Phase 3 redirects to a Stripe Checkout (platform charge to NMAO,
-    // $99, with coupon / $0-bypass) before the final confirmation.
+    // Entry-point tag (?src=sms / ?src=trial / etc.) drives Phase 3 waive logic.
+    function getSource(){
+      try {
+        var m = (location.search || '').match(/[?&](?:src|source)=([^&]+)/);
+        if (m) return decodeURIComponent(m[1]).slice(0, 40);
+      } catch (e) {}
+      return 'direct';
+    }
+
     function submitBooking(){
       if (state.submitting || !state.selected) return;
       var hp = (document.getElementById('oWebsite').value || '').trim();
-      if (hp){ renderReview({ first: '', last: '', email: '', phone: '', school: '' }); return; }
-
       var first = (document.getElementById('oFirst').value || '').trim();
       var last = (document.getElementById('oLast').value || '').trim();
       var email = (document.getElementById('oEmail').value || '').trim();
       var phone = (document.getElementById('oPhone').value || '').trim();
       var school = (document.getElementById('oSchool').value || '').trim();
 
+      if (hp){ return; } // honeypot: silently drop
       if (!first || !last){ setMsg('Please enter your first and last name.', 'error'); return; }
       if (!email || email.indexOf('@') === -1){ setMsg('Please enter a valid email address.', 'error'); return; }
 
-      // Phase 1: no persistence. Show a review of the selection + contact info.
-      renderReview({ first: first, last: last, email: email, phone: phone, school: school });
+      state.submitting = true;
+      setMsg('', '');
+      var btn = document.getElementById('oSubmit');
+      if (btn){ btn.disabled = true; btn.textContent = 'Reserving...'; }
+
+      // ---- Phase 3 SEAM --------------------------------------------------
+      // Phase 2 reserves the slot (status pending_payment) and confirms the hold.
+      // Phase 3 will, on ok, instead redirect to a Stripe Checkout (platform
+      // charge to NMAO, $99, coupon / $0-bypass) via a returned checkout_url,
+      // and let the webhook flip the booking to 'confirmed'.
+      sb.functions.invoke('book-onboarding', { body: {
+        scheduled_at: state.selected.iso,
+        first: first, last: last, email: email, phone: phone, school: school,
+        source: getSource(), website: hp
+      } }).then(function (res){
+        var data = (res && res.data) || {};
+        if (data.ok){ renderConfirmed(data, { first: first, last: last, email: email, school: school }); return; }
+        if (data.error === 'slot_unavailable'){ renderTaken(); return; }
+        state.submitting = false;
+        if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
+        setMsg(data.error || 'Something went wrong. Please try again.', 'error');
+      }).catch(function (){
+        state.submitting = false;
+        if (btn){ btn.disabled = false; btn.textContent = 'Reserve My Time'; }
+        setMsg('Network error. Please try again.', 'error');
+      });
     }
 
-    function renderReview(info){
-      var sel = state.selected;
+    function renderConfirmed(data, info){
       document.getElementById('selBar').className = 'sel-bar';
+      var dt = new Date(data.scheduled_at || (state.selected && state.selected.iso));
+      var spec = data.specialist_first ? escapeHtml(data.specialist_first) : 'your specialist';
       var who = '';
       if (info.first || info.last) who += escapeHtml((info.first + ' ' + info.last).trim()) + '<br/>';
       if (info.email) who += escapeHtml(info.email) + '<br/>';
-      if (info.phone) who += escapeHtml(info.phone) + '<br/>';
       if (info.school) who += escapeHtml(info.school);
       document.getElementById('root').innerHTML =
         headerHtml() +
         '<div class="card"><div class="review">' +
           '<i class="fa-regular fa-circle-check"></i>' +
-          '<h2>Review your booking</h2>' +
-          '<div class="when">' + escapeHtml(dayLong(sel.dateObj)) + ' at ' + escapeHtml(sel.label) + '</div>' +
-          '<div class="who">' + who + '</div>' +
-          '<div class="note">Next step: secure payment to confirm your onboarding call. ' +
-          'Booking and payment are wired up in the following build.</div>' +
+          '<h2>Your time is reserved</h2>' +
+          '<div class="when">' + escapeHtml(dayLong(dt)) + ' at ' + escapeHtml(timeLabel(dt)) + '</div>' +
+          '<div class="who">with ' + spec + '<br/>' + who + '</div>' +
+          '<div class="note">This time is now held under your name. ' +
+          'Payment and email confirmation are added in the next build.</div>' +
+        '</div></div>';
+      window.scrollTo(0, 0);
+    }
+
+    function renderTaken(){
+      state.submitting = false;
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card"><div class="empty-state">' +
+          '<i class="fa-regular fa-calendar-xmark"></i>' +
+          '<h3>That time was just taken</h3>' +
+          '<p>Sorry, someone reserved that slot a moment ago.<br/>Please pick another time.</p>' +
+          '<button type="button" class="btn-primary" style="max-width:240px;margin:1.25rem auto 0" onclick="location.reload()">Pick another time</button>' +
         '</div></div>';
       window.scrollTo(0, 0);
     }
