@@ -1354,8 +1354,8 @@
           <input type="hidden" id="memEmbedEditId" value="" />
           <div class="field"><label>Name</label><input type="text" id="memEmbedName" placeholder="e.g. Pricing" /></div>
           <div class="field"><label>Plans to show</label><div id="memEmbedPlansPicker"><div class="empty">Loading plans...</div></div></div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedRespectVis" /> <span class="check-item-label">Only show plans that are publicly visible</span></label>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedActive" checked /> <span class="check-item-label">Active</span></label>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedRespectVis" /><div class="toggle-slider"></div></label><span class="check-item-label">Only show plans that are publicly visible</span></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedActive" checked /><div class="toggle-slider"></div></label><span class="check-item-label">Active</span></div>
           <p class="form-msg" id="memEmbedMsg"></p>
           <button class="btn-gold-full" onclick="saveMemEmbed()">Save Embed</button>
         </div>
@@ -4035,20 +4035,36 @@ function copyMemEmbedLink(id){
   alert('Embed link copied:\n'+url);
 }
 
+function memMoney(n){ var v=parseFloat(n)||0; return '$'+(v%1===0?v.toFixed(0):v.toFixed(2)); }
+function memPlanMeta(m){
+  var bt=m.billing_type;
+  if(bt==='class_pack') return memMoney(m.price)+' (class pack)';
+  if(bt==='trial') return (parseFloat(m.price)>0?(memMoney(m.price)+' trial'):'Free trial');
+  if(bt==='yearly') return memMoney(m.price)+' / year';
+  var len=parseInt(m.billing_length)||1, unit=m.billing_unit||'months';
+  if(len>1) return memMoney(m.price)+' every '+len+' '+unit;
+  return memMoney(m.price)+' / month';
+}
 function renderMemEmbedPlansPicker(selected){
   selected=selected||[];
   var pick=document.getElementById('memEmbedPlansPicker'); if(!pick) return;
   if(!allMemberships.length){ pick.innerHTML='<div class="empty">No memberships yet.</div>'; return; }
-  var html='<div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:0.5rem">';
+  var html='<div style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:0 0.85rem">';
   for(var i=0;i<allMemberships.length;i++){
     var m=allMemberships[i];
     var off=!m.public_join_enabled;
-    html+='<label style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0'+(off?';opacity:0.6':'')+'">';
-    html+='<input type="checkbox" class="mem-embed-plan" value="'+m.id+'"'+(selected.indexOf(m.id)!==-1?' checked':'')+' /> ';
-    html+='<span>'+embEsc(m.name||'Plan')+(off?' <span style="font-size:0.72rem;color:var(--muted)">(public signup off)</span>':'')+'</span></label>';
+    var on=selected.indexOf(m.id)!==-1;
+    var last=(i===allMemberships.length-1);
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.75rem 0'+(last?'':';border-bottom:1px solid var(--border)')+(off?';opacity:0.55':'')+'">';
+    html+='<div style="min-width:0;text-align:left">';
+    html+='<div style="font-size:0.95rem;font-weight:600;color:var(--white);text-transform:none;letter-spacing:normal;line-height:1.3">'+embEsc(m.name||'Plan')+'</div>';
+    html+='<div style="font-size:0.8rem;color:var(--muted);text-transform:none;letter-spacing:normal;margin-top:0.15rem">'+embEsc(memPlanMeta(m))+(off?' \u00b7 public signup off':'')+'</div>';
+    html+='</div>';
+    html+='<label class="toggle-switch"><input type="checkbox" class="mem-embed-plan" value="'+m.id+'"'+(on?' checked':'')+' /><div class="toggle-slider"></div></label>';
+    html+='</div>';
   }
   html+='</div>';
-  html+='<div style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem">Plans with public signup off will not appear in the embed until you enable public signup on the plan.</div>';
+  html+='<div style="font-size:0.78rem;color:var(--muted);text-transform:none;letter-spacing:normal;margin-top:0.5rem">Plans with public signup off will not appear in the embed until you enable public signup on the plan.</div>';
   pick.innerHTML=html;
 }
 
