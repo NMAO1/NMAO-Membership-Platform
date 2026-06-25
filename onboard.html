@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Your Onboarding Call</title>
+  <link rel="icon" type="image/png" href="https://app.nmao.us/favicon.png" />
+  <meta property="og:title" content="NMAO Guided Onboarding" />
+  <meta property="og:description" content="Schedule your onboarding call with an NMAO specialist." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --black: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold: #C9A84C;
+      --gold-bright: #F5D462;
+      --white: #ffffff;
+      --muted: #8a8278;
+      --green: #7DBD7D;
+      --red: #E07070;
+      --font-display: "Cormorant Garamond", serif;
+      --font-ui: "Inter", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--white); font-family: var(--font-ui); min-height: 100vh; padding: 1.5rem; line-height: 1.5; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 1.5rem; padding-top: 1rem; }
+    .brand-logo { height: 46px; width: auto; display: block; margin: 0 auto 0.6rem; }
+    .brand-word { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; letter-spacing: 0.28em; color: var(--gold); text-transform: uppercase; }
+    .header-rule { width: 56px; height: 1px; background: var(--gold); margin: 0.9rem auto; }
+    .doc-title { font-family: var(--font-display); font-size: 2rem; color: var(--white); font-weight: 600; line-height: 1.15; }
+    .doc-sub { font-size: 0.92rem; color: var(--muted); margin-top: 0.35rem; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.25rem; }
+
+    .tz-line { font-size: 0.78rem; color: var(--muted); text-align: center; margin-bottom: 1.1rem; letter-spacing: 0.02em; }
+    .tz-line i { color: var(--gold); margin-right: 0.4rem; }
+
+    /* View switcher */
+    .switcher { display: flex; border: 1px solid var(--border); margin-bottom: 1rem; }
+    .switcher button { flex: 1; background: transparent; color: var(--muted); border: none; border-right: 1px solid var(--border); padding: 0.6rem 0; font-family: var(--font-ui); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .switcher button:last-child { border-right: none; }
+    .switcher button.on { background: var(--gold); color: var(--black); }
+
+    /* Nav row */
+    .navrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem; }
+    .navrow .period { font-family: var(--font-display); font-size: 1.2rem; color: var(--white); font-weight: 500; text-align: center; flex: 1; }
+    .navrow .navbtn { background: var(--black); border: 1px solid var(--border); color: var(--white); width: 2.3rem; height: 2.3rem; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; }
+    .navrow .navbtn:hover { border-color: var(--gold); color: var(--gold); }
+    .navrow .navbtn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .today-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0 0.7rem; height: 2.3rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; flex-shrink: 0; }
+    .today-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Month grid */
+    .dow-row, .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .dow-row { margin-bottom: 0.35rem; }
+    .dow { text-align: center; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0.3rem 0; }
+    .month-grid { gap: 4px; }
+    .cell { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border: 1px solid transparent; font-size: 0.9rem; color: var(--muted); }
+    .cell.empty { border: none; }
+    .cell.disabled { color: #4a463f; }
+    .cell.avail { color: var(--white); border-color: var(--border); background: var(--black); cursor: pointer; }
+    .cell.avail:hover { border-color: var(--gold); }
+    .cell.today .cell-num { color: var(--gold); font-weight: 600; }
+    .cell.active { border-color: var(--gold); background: rgba(201,168,76,0.12); }
+    .cell .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); margin-top: 3px; }
+    .cell.active .dot { background: var(--gold-bright); }
+
+    /* Times panel (month) */
+    .times-panel { margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
+    .times-head, .day-head { font-family: var(--font-display); font-size: 1.15rem; color: var(--white); font-weight: 500; margin-bottom: 0.85rem; }
+    .times-hint { font-size: 0.85rem; color: var(--muted); font-style: italic; text-align: center; padding: 0.5rem 0; }
+    .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 0.55rem; }
+    .time-btn { background: var(--black); border: 1px solid var(--border); color: var(--white); padding: 0.65rem 0.4rem; font-family: var(--font-ui); font-size: 0.9rem; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .time-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .time-btn.selected { background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 600; }
+    .no-times { font-size: 0.82rem; color: var(--muted); font-style: italic; padding: 0.4rem 0; }
+
+    /* Week list */
+    .week-list { display: flex; flex-direction: column; gap: 0.9rem; }
+    .week-day { border: 1px solid var(--border); padding: 0.85rem; background: var(--black); }
+    .week-day-head { font-family: var(--font-display); font-size: 1.02rem; color: var(--white); font-weight: 500; margin-bottom: 0.6rem; }
+    .week-day-head.today { color: var(--gold); }
+
+    .day-head.today { color: var(--gold); }
+
+    /* Selection bar */
+    .sel-bar { position: sticky; bottom: 0; margin: 1rem auto 0; max-width: 640px; background: var(--surface); border: 1px solid var(--gold); padding: 0.9rem 1rem; display: none; align-items: center; gap: 0.9rem; box-shadow: 0 -6px 24px rgba(0,0,0,0.5); }
+    .sel-bar.show { display: flex; }
+    .sel-info { flex: 1; font-size: 0.9rem; color: var(--white); }
+    .sel-info strong { color: var(--gold); font-weight: 600; }
+    .sel-bar button { background: var(--gold); color: var(--black); border: none; padding: 0.7rem 1.3rem; font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+    .sel-bar button:hover { opacity: 0.9; }
+
+    /* Details panel */
+    .details { display: none; margin-top: 1.25rem; }
+    .details.show { display: block; }
+    .section-label { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.5rem; font-family: var(--font-display); font-weight: 600; }
+    .section-rule { height: 1px; background: var(--border); margin-bottom: 1rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; font-weight: 500; }
+    .field input { width: 100%; background: var(--black); border: 1px solid var(--border); color: var(--white); padding: 0.75rem 0.9rem; font-family: var(--font-ui); font-size: 0.95rem; }
+    .field input:focus { outline: none; border-color: var(--gold); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 460px) { .form-row { grid-template-columns: 1fr; } }
+    .hp { position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .btn-primary { width: 100%; padding: 1rem; background: var(--gold); color: var(--black); border: none; font-family: var(--font-ui); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: all 0.18s; margin-top: 0.25rem; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .fineprint { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 1rem; line-height: 1.5; }
+
+    .msg { margin-top: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem; text-align: center; }
+    .msg.error { background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.4); color: var(--red); }
+
+    .loading-state { text-align: center; padding: 3rem 1rem; color: var(--muted); font-style: italic; font-size: 0.9rem; }
+    .empty-state { text-align: center; padding: 2.5rem 1rem; }
+    .empty-state i { font-size: 2.4rem; color: var(--gold); margin-bottom: 0.9rem; }
+    .empty-state h3 { font-family: var(--font-display); font-size: 1.4rem; color: var(--white); font-weight: 600; margin-bottom: 0.5rem; }
+    .empty-state p { color: var(--muted); font-size: 0.9rem; }
+    .empty-state a { color: var(--gold); text-decoration: none; }
+
+    .review { text-align: center; padding: 1rem; }
+    .review i { font-size: 2.8rem; color: var(--gold); margin-bottom: 0.9rem; }
+    .review h2 { font-family: var(--font-display); font-size: 1.75rem; color: var(--white); font-weight: 600; margin-bottom: 0.5rem; }
+    .review .when { font-size: 1rem; color: var(--gold); margin-bottom: 1.25rem; }
+    .review .who { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+    .review .note { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); font-style: italic; }
+
+    .footer { text-align: center; padding: 2rem 1rem 1rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="root">
+      <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading available times...</div>
+    </div>
+  </div>
+  <div class="sel-bar" id="selBar">
+    <div class="sel-info" id="selInfo"></div>
+    <button type="button" onclick="openDetails()">Continue</button>
+  </div>
+  <div class="wrap">
+    <div class="footer">Powered by NMAO</div>
+  </div>
+
+  <script>
+    // ============================================================
+    // onboard.html  -  NMAO Onboarding Scheduler, Phase 1
+    // Combined-availability booking calendar (day / week / month).
+    // Reads slots from the onboarding-availability Edge Function (which does
+    // all timezone + slot math). This page renders slots in the prospect's
+    // LOCAL time and lets them pick one. Persistence + round-robin specialist
+    // assignment are Phase 2; payment is Phase 3.  See submitBooking().
+    // iPad-safe JS: var, single quotes, function expressions, no arrows,
+    // no template literals, ASCII only.
+    // ============================================================
+
+    var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var sb = supabase.createClient(SURL, SKEY);
+
+    var state = {
+      view: 'month',
+      cursor: null,         // Date at local midnight (focal period)
+      today: null,          // Date at local midnight
+      windowEnd: null,      // Date (local midnight) of last bookable day
+      slotsByDate: {},      // 'YYYY-MM-DD' -> [ { iso, dateObj, label } ]
+      byIso: {},            // iso -> slot object
+      dayPanelKey: null,    // month view: which date's times are shown
+      selected: null,       // { iso, dateObj, label }
+      submitting: false
+    };
+
+    function pad(n){ return (n < 10 ? '0' : '') + n; }
+    function escapeHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function localKey(dt){ return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()); }
+    function midnight(dt){ return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()); }
+    function timeLabel(dt){ return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+    function dayLong(dt){ return dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
+    function dayMed(dt){ return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+    function monthLabel(dt){ return dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
+
+    function tzShort(){
+      try {
+        var parts = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(new Date());
+        for (var i = 0; i < parts.length; i++){ if (parts[i].type === 'timeZoneName') return parts[i].value; }
+      } catch (e) {}
+      return '';
+    }
+
+    function renderError(msg){
+      document.getElementById('root').innerHTML =
+        '<div class="card"><div class="empty-state">' +
+        '<i class="fa-solid fa-circle-exclamation" style="color:#E07070"></i>' +
+        '<h3>Not available</h3><p>' + escapeHtml(msg) + '</p></div></div>';
+    }
+
+    function renderEmpty(){
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card"><div class="empty-state">' +
+        '<i class="fa-regular fa-calendar-xmark"></i>' +
+        '<h3>No times available</h3>' +
+        '<p>There are no open onboarding slots in the next 30 days.<br/>Please email <a href="mailto:support@nmao.us">support@nmao.us</a> and we will find a time.</p>' +
+        '</div></div>';
+    }
+
+    function headerHtml(){
+      return '<div class="header">' +
+        '<img class="brand-logo" src="nmao_logo.png" alt="NMAO" onerror="this.style.display=\'none\'" />' +
+        '<div class="brand-word">NMAO</div>' +
+        '<div class="header-rule"></div>' +
+        '<div class="doc-title">Guided Onboarding</div>' +
+        '<div class="doc-sub">Schedule your 45-minute onboarding call.</div>' +
+      '</div>';
+    }
+
+    function buildShell(){
+      var tz = tzShort();
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card">' +
+          '<div class="tz-line"><i class="fa-regular fa-clock"></i>Times shown in your local time' + (tz ? ' (' + escapeHtml(tz) + ')' : '') + '</div>' +
+          '<div class="switcher" id="switcher">' +
+            '<button type="button" id="vw-day" onclick="switchView(\'day\')">Day</button>' +
+            '<button type="button" id="vw-week" onclick="switchView(\'week\')">Week</button>' +
+            '<button type="button" id="vw-month" onclick="switchView(\'month\')">Month</button>' +
+          '</div>' +
+          '<div class="navrow">' +
+            '<button type="button" class="navbtn" id="navPrev" onclick="navStep(-1)"><i class="fa-solid fa-chevron-left"></i></button>' +
+            '<div class="period" id="period"></div>' +
+            '<button type="button" class="navbtn" id="navNext" onclick="navStep(1)"><i class="fa-solid fa-chevron-right"></i></button>' +
+            '<button type="button" class="today-btn" onclick="goToday()">Today</button>' +
+          '</div>' +
+          '<div id="calRegion"></div>' +
+          '<div class="times-panel" id="timesPanel" style="display:none"></div>' +
+          '<div class="details" id="details">' +
+            '<div class="section-label">Your details</div>' +
+            '<div class="section-rule"></div>' +
+            '<div class="form-row">' +
+              '<div class="field"><label>First name</label><input id="oFirst" type="text" autocomplete="given-name" /></div>' +
+              '<div class="field"><label>Last name</label><input id="oLast" type="text" autocomplete="family-name" /></div>' +
+            '</div>' +
+            '<div class="field"><label>Email</label><input id="oEmail" type="email" autocomplete="email" /></div>' +
+            '<div class="field"><label>Phone</label><input id="oPhone" type="tel" autocomplete="tel" /></div>' +
+            '<div class="field"><label>School name</label><input id="oSchool" type="text" autocomplete="organization" /></div>' +
+            '<input class="hp" id="oWebsite" name="website" tabindex="-1" autocomplete="off" />' +
+            '<button type="button" class="btn-primary" id="oSubmit" onclick="submitBooking()">Review Booking</button>' +
+            '<div id="oMsg"></div>' +
+            '<div class="fineprint">A secure payment step follows to confirm your onboarding call.</div>' +
+          '</div>' +
+        '</div>';
+      setSwitcher();
+    }
+
+    function setSwitcher(){
+      var ids = { day: 'vw-day', week: 'vw-week', month: 'vw-month' };
+      for (var k in ids){
+        var el = document.getElementById(ids[k]);
+        if (el) el.className = (k === state.view) ? 'on' : '';
+      }
+    }
+
+    // ---- slot grouping ----
+    function ingestSlots(isoList){
+      state.slotsByDate = {};
+      state.byIso = {};
+      for (var i = 0; i < isoList.length; i++){
+        var iso = isoList[i];
+        var dt = new Date(iso);
+        var key = localKey(dt);
+        var obj = { iso: iso, dateObj: dt, label: timeLabel(dt) };
+        if (!state.slotsByDate[key]) state.slotsByDate[key] = [];
+        state.slotsByDate[key].push(obj);
+        state.byIso[iso] = obj;
+      }
+    }
+
+    function firstAvailableKey(){
+      var keys = [];
+      for (var k in state.slotsByDate){ keys.push(k); }
+      keys.sort();
+      return keys.length ? keys[0] : null;
+    }
+
+    // ---- rendering ----
+    function timeButtonsHtml(arr){
+      if (!arr || !arr.length) return '<div class="no-times">No open times this day.</div>';
+      var h = '<div class="time-grid">';
+      for (var i = 0; i < arr.length; i++){
+        var s = arr[i];
+        var sel = (state.selected && state.selected.iso === s.iso) ? ' selected' : '';
+        h += '<button type="button" class="time-btn' + sel + '" onclick="pickSlot(\'' + s.iso + '\')">' + escapeHtml(s.label) + '</button>';
+      }
+      return h + '</div>';
+    }
+
+    function render(){
+      setSwitcher();
+      var period = document.getElementById('period');
+      var tp = document.getElementById('timesPanel');
+      if (state.view === 'month'){ renderMonth(period, tp); }
+      else if (state.view === 'week'){ renderWeek(period, tp); }
+      else { renderDay(period, tp); }
+    }
+
+    function renderMonth(period, tp){
+      var c = state.cursor;
+      var year = c.getFullYear(), month = c.getMonth();
+      period.textContent = monthLabel(c);
+
+      var startWd = new Date(year, month, 1).getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+      var html = '<div class="dow-row">';
+      for (var w = 0; w < 7; w++){ html += '<div class="dow">' + dows[w] + '</div>'; }
+      html += '</div><div class="month-grid">';
+      for (var b = 0; b < startWd; b++){ html += '<div class="cell empty"></div>'; }
+
+      for (var day = 1; day <= daysInMonth; day++){
+        var dt = new Date(year, month, day);
+        var key = localKey(dt);
+        var has = !!state.slotsByDate[key];
+        var isPast = dt.getTime() < state.today.getTime();
+        var beyond = dt.getTime() > state.windowEnd.getTime();
+        var openDate = has && !isPast && !beyond;
+        var cls = 'cell';
+        if (key === localKey(state.today)) cls += ' today';
+        if (openDate) cls += ' avail'; else cls += ' disabled';
+        if (state.dayPanelKey === key && openDate) cls += ' active';
+        var click = openDate ? ' onclick="openDay(\'' + key + '\')"' : '';
+        html += '<div class="' + cls + '"' + click + '><span class="cell-num">' + day + '</span>' + (openDate ? '<span class="dot"></span>' : '') + '</div>';
+      }
+      html += '</div>';
+      document.getElementById('calRegion').innerHTML = html;
+
+      tp.style.display = 'block';
+      if (state.dayPanelKey && state.slotsByDate[state.dayPanelKey]){
+        var arr = state.slotsByDate[state.dayPanelKey];
+        tp.innerHTML = '<div class="times-head">' + escapeHtml(dayLong(arr[0].dateObj)) + '</div>' + timeButtonsHtml(arr);
+      } else {
+        tp.innerHTML = '<div class="times-hint">Select a highlighted date to see open times.</div>';
+      }
+    }
+
+    function renderWeek(period, tp){
+      tp.style.display = 'none';
+      var ws = new Date(state.cursor);
+      ws.setDate(ws.getDate() - ws.getDay());
+      var we = new Date(ws); we.setDate(ws.getDate() + 6);
+      period.textContent = ws.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' - ' +
+        we.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      var html = '<div class="week-list">';
+      for (var i = 0; i < 7; i++){
+        var dt = new Date(ws); dt.setDate(ws.getDate() + i);
+        var key = localKey(dt);
+        var isPast = dt.getTime() < state.today.getTime();
+        var beyond = dt.getTime() > state.windowEnd.getTime();
+        var arr = state.slotsByDate[key];
+        var headCls = 'week-day-head' + (key === localKey(state.today) ? ' today' : '');
+        html += '<div class="week-day"><div class="' + headCls + '">' + escapeHtml(dayMed(dt)) + '</div>';
+        if (arr && !isPast && !beyond){ html += timeButtonsHtml(arr); }
+        else { html += '<div class="no-times">' + (isPast ? '&mdash;' : 'No open times') + '</div>'; }
+        html += '</div>';
+      }
+      html += '</div>';
+      document.getElementById('calRegion').innerHTML = html;
+    }
+
+    function renderDay(period, tp){
+      tp.style.display = 'none';
+      var dt = state.cursor;
+      var key = localKey(dt);
+      period.textContent = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      var isPast = dt.getTime() < state.today.getTime();
+      var beyond = dt.getTime() > state.windowEnd.getTime();
+      var arr = state.slotsByDate[key];
+      var cls = 'day-head' + (key === localKey(state.today) ? ' today' : '');
+      var html = '<div class="' + cls + '">' + escapeHtml(dayLong(dt)) + '</div>';
+      if (arr && !isPast && !beyond){ html += timeButtonsHtml(arr); }
+      else { html += '<div class="no-times">No open times this day.</div>'; }
+      document.getElementById('calRegion').innerHTML = html;
+    }
+
+    // ---- interaction ----
+    function switchView(v){
+      state.view = v;
+      // When entering day/week, snap cursor onto a day that has availability if the
+      // current one is empty, so the prospect is not staring at a blank screen.
+      if ((v === 'day' || v === 'week') && !state.slotsByDate[localKey(state.cursor)]){
+        var fk = firstAvailableKey();
+        if (fk) state.cursor = midnight(new Date(fk + 'T12:00:00'));
+      }
+      render();
+    }
+
+    function navStep(dir){
+      var c = new Date(state.cursor);
+      if (state.view === 'month'){ c.setMonth(c.getMonth() + dir); c.setDate(1); state.dayPanelKey = null; }
+      else if (state.view === 'week'){ c.setDate(c.getDate() + 7 * dir); }
+      else { c.setDate(c.getDate() + dir); }
+      state.cursor = midnight(c);
+      render();
+    }
+
+    function goToday(){
+      state.cursor = midnight(state.today);
+      state.dayPanelKey = (state.view === 'month' && state.slotsByDate[localKey(state.today)]) ? localKey(state.today) : null;
+      render();
+    }
+
+    function openDay(key){
+      state.dayPanelKey = key;
+      render();
+      var tp = document.getElementById('timesPanel');
+      if (tp) tp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function pickSlot(iso){
+      var obj = state.byIso[iso];
+      if (!obj) return;
+      state.selected = obj;
+      render(); // re-highlight the chosen button
+      var bar = document.getElementById('selBar');
+      document.getElementById('selInfo').innerHTML =
+        'Selected <strong>' + escapeHtml(dayLong(obj.dateObj)) + '</strong> at <strong>' + escapeHtml(obj.label) + '</strong>';
+      bar.className = 'sel-bar show';
+    }
+
+    function openDetails(){
+      var d = document.getElementById('details');
+      d.className = 'details show';
+      d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function setMsg(text, type){
+      var el = document.getElementById('oMsg');
+      if (!el) return;
+      el.className = text ? ('msg ' + (type || '')) : '';
+      el.textContent = text;
+    }
+
+    // ---- Phase 2/3 SEAM -------------------------------------------------
+    // Phase 1 stops at a review screen. Phase 2 replaces the body of this
+    // function with a call to a "book-onboarding" EF that runs round-robin
+    // assignment and writes onboarding_bookings (status pending_payment),
+    // then Phase 3 redirects to a Stripe Checkout (platform charge to NMAO,
+    // $99, with coupon / $0-bypass) before the final confirmation.
+    function submitBooking(){
+      if (state.submitting || !state.selected) return;
+      var hp = (document.getElementById('oWebsite').value || '').trim();
+      if (hp){ renderReview({ first: '', last: '', email: '', phone: '', school: '' }); return; }
+
+      var first = (document.getElementById('oFirst').value || '').trim();
+      var last = (document.getElementById('oLast').value || '').trim();
+      var email = (document.getElementById('oEmail').value || '').trim();
+      var phone = (document.getElementById('oPhone').value || '').trim();
+      var school = (document.getElementById('oSchool').value || '').trim();
+
+      if (!first || !last){ setMsg('Please enter your first and last name.', 'error'); return; }
+      if (!email || email.indexOf('@') === -1){ setMsg('Please enter a valid email address.', 'error'); return; }
+
+      // Phase 1: no persistence. Show a review of the selection + contact info.
+      renderReview({ first: first, last: last, email: email, phone: phone, school: school });
+    }
+
+    function renderReview(info){
+      var sel = state.selected;
+      document.getElementById('selBar').className = 'sel-bar';
+      var who = '';
+      if (info.first || info.last) who += escapeHtml((info.first + ' ' + info.last).trim()) + '<br/>';
+      if (info.email) who += escapeHtml(info.email) + '<br/>';
+      if (info.phone) who += escapeHtml(info.phone) + '<br/>';
+      if (info.school) who += escapeHtml(info.school);
+      document.getElementById('root').innerHTML =
+        headerHtml() +
+        '<div class="card"><div class="review">' +
+          '<i class="fa-regular fa-circle-check"></i>' +
+          '<h2>Review your booking</h2>' +
+          '<div class="when">' + escapeHtml(dayLong(sel.dateObj)) + ' at ' + escapeHtml(sel.label) + '</div>' +
+          '<div class="who">' + who + '</div>' +
+          '<div class="note">Next step: secure payment to confirm your onboarding call. ' +
+          'Booking and payment are wired up in the following build.</div>' +
+        '</div></div>';
+      window.scrollTo(0, 0);
+    }
+
+    // ---- load ----
+    function init(){
+      state.today = midnight(new Date());
+      state.cursor = midnight(new Date());
+      sb.functions.invoke('onboarding-availability', { body: {} }).then(function (res){
+        var data = (res && res.data) || {};
+        if (res && res.error && !data.ok){
+          renderError('We could not load available times. Please try again later.');
+          return;
+        }
+        var slots = data.slots || [];
+        if (data.window_end_iso){ state.windowEnd = midnight(new Date(data.window_end_iso)); }
+        else { var w = new Date(); w.setDate(w.getDate() + 30); state.windowEnd = midnight(w); }
+
+        if (!slots.length){ renderEmpty(); return; }
+
+        ingestSlots(slots);
+        buildShell();
+        // Open the first available date in the month panel for a friendlier start.
+        var fk = firstAvailableKey();
+        if (fk){
+          var fd = midnight(new Date(fk + 'T12:00:00'));
+          state.cursor = new Date(fd.getFullYear(), fd.getMonth(), 1);
+          state.dayPanelKey = fk;
+        }
+        render();
+      }).catch(function (){
+        renderError('We could not load available times. Please try again later.');
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
