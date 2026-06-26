@@ -4346,6 +4346,39 @@ async function deleteScheduleShift(id){
   loadScheduleShifts();
 }
 
+function shiftDowName(dateStr){ var d=new Date(dateStr+'T00:00:00'); return DAYS[d.getDay()]; }
+function shiftForDate(dateStr){
+  for(var i=0;i<allShifts.length;i++){ var s=allShifts[i]; if(dateStr>=s.start_date && dateStr<=s.end_date) return s; }
+  return null;
+}
+// Effective classes on a date, applying any covering shift (mirrors get_public_class_schedule).
+function classesForDate(dateStr){
+  var dow=shiftDowName(dateStr);
+  var shift=shiftForDate(dateStr);
+  var ov={};
+  if(shift){ (allShiftClasses[shift.id]||[]).forEach(function(sc){ ov[sc.class_id]=sc; }); }
+  var out=[];
+  (allClasses||[]).forEach(function(c){
+    if(c.active===false) return;
+    var o=ov[c.id]||null, st=c.start_time, en=c.end_time, meets;
+    if(o){
+      if(o.action==='cancel') return;
+      if(o.days_of_week && o.days_of_week.length){ meets=o.days_of_week.indexOf(dow)!==-1; }
+      else { meets=c.days_of_week && c.days_of_week.indexOf(dow)!==-1; }
+      if(o.start_time) st=o.start_time;
+      if(o.end_time) en=o.end_time;
+    } else {
+      meets=c.days_of_week && c.days_of_week.indexOf(dow)!==-1;
+    }
+    if(!meets) return;
+    var clone={}; for(var k in c){ if(Object.prototype.hasOwnProperty.call(c,k)) clone[k]=c[k]; }
+    clone.start_time=st; clone.end_time=en; clone._shifted=!!o;
+    out.push(clone);
+  });
+  out.sort(function(a,b){ return (a.start_time>b.start_time)?1:((a.start_time<b.start_time)?-1:0); });
+  return out;
+}
+
 function navigate(page,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
@@ -5166,8 +5199,7 @@ function buildCalendar(){
     var dayEl=document.getElementById('calDay'+i); var dStr=localDateStr(d);
     dayEl.className='cal-day'+(dStr===todayStr?' today':'');
     var html='<div class="cal-day-num">'+d.getDate()+'</div>';
-    var dn=DAYS[d.getDay()];
-    var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    var dayClasses=classesForDate(dStr);
     dayClasses.forEach(function(c){var cname=(c.name||c.title||'Class').replace(/'/g,'');html+='<div class="cal-event class-event" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dStr+'\')" style="display:flex;align-items:center;gap:0.2rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+cname+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill',localDateStr(d))+'</div>';});
     var daySessions=allSessions.filter(function(s){return s.session_date===dStr;});
     daySessions.forEach(function(s){var st=allSessionTypes.find(function(t){return t.id===s.session_type_id;});var typeName=(st?st.name:'Session').replace(/'/g,'');html+='<div class="cal-event session-event" onclick="openBookSession(\''+s.id+'\')">'+fmtTime(s.start_time)+' '+typeName+'</div>';});
@@ -5190,8 +5222,7 @@ function buildMonthCalendar(){
     var isCurrent=cell.month==='current';
     var cellDate=new Date(target.getFullYear(),target.getMonth()+(cell.month==='prev'?-1:cell.month==='next'?1:0),cell.day);
     var cellStr=localDateStr(cellDate); var isToday=cellStr===todayStr;
-    var dn=DAYS[cellDate.getDay()];
-    var dayClasses=isCurrent?allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}):[];
+    var dayClasses=isCurrent?classesForDate(cellStr):[];
     var birthdays=isCurrent?allStudents.filter(function(s){if(!s.date_of_birth)return false;var dob=new Date(s.date_of_birth+'T00:00:00');return dob.getMonth()===cellDate.getMonth()&&dob.getDate()===cellDate.getDate();}):[];
     var tests=isCurrent?allBeltTests.filter(function(t){return t.test_date===cellStr;}):[];
     var sessions=isCurrent?allSessions.filter(function(s){return s.session_date===cellStr;}):[];
@@ -5213,7 +5244,7 @@ function buildMonthCalendar(){
 function openDayView(dateStr,dayName){
   var date=new Date(dateStr+'T00:00:00');
   document.getElementById('dayViewTitle').textContent=date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  var dayClasses=classesForDate(dateStr);
   var birthdays=allStudents.filter(function(s){if(!s.date_of_birth)return false;var dob=new Date(s.date_of_birth+'T00:00:00');return dob.getMonth()===date.getMonth()&&dob.getDate()===date.getDate();});
   var tests=allBeltTests.filter(function(t){return t.test_date===dateStr;});
   var daySessions=allSessions.filter(function(s){return s.session_date===dateStr;});
@@ -5451,7 +5482,7 @@ function closeClassRoster(){
 }
 // ─────────────────────────────── §SCHEDULE ───────────────────────────────
 
-function getTodayClasses(){ var today=DAYS[new Date().getDay()]; return allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;}); }
+function getTodayClasses(){ return classesForDate(localDateStr(new Date())); }
 
 function buildTodaySchedule(){
   var tc=getTodayClasses();
@@ -5468,8 +5499,8 @@ function classCardHTML(c){
 function buildWeekGrid(){
   var now=new Date(); var cur=now.getDay(); var ws=new Date(now); ws.setDate(now.getDate()-cur); var html='';
   for(var i=0;i<7;i++){
-    var d=new Date(ws); d.setDate(ws.getDate()+i); var dn=DAYS[i];
-    var dc=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    var d=new Date(ws); d.setDate(ws.getDate()+i);
+    var dc=classesForDate(localDateStr(d));
     html+='<div class="week-day '+(i===cur?'today':'')+'"><div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
     html+=dc.map(function(c){return '<div class="week-class-pill" onclick="openClassRosterFromCal(\''+c.id+'\',\''+localDateStr(d)+'\')" style="display:flex;align-items:center;gap:0.25rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';}).join('');
     html+='</div>';
@@ -5548,7 +5579,9 @@ var programId=document.getElementById('classProgram').value;
 if(!title||!start||!end||!days.length||!programId){setMsg('classMsg','Fill in title, times, days, and program.','error');return;}  setMsg('classMsg','Saving...','');
   var payload={name:title,title:title,description:getQuillContent('classDescEditor'),style:document.getElementById('classStyle').value,age_group:document.getElementById('classAge').value,level:document.getElementById('classLevel').value,capacity:document.getElementById('classCapacity').value?parseInt(document.getElementById('classCapacity').value):null,start_time:start,end_time:end,days_of_week:days,active:true,is_active:true,instructor_name:document.getElementById('classInstructor').value||null,show_instructor_on_app:document.getElementById('classShowInstructor').checked,public_booking_enabled:document.getElementById('classPublicBooking').checked,trial_enabled:document.getElementById('classTrialEnabled').checked,program_id:programId};
   var r; if(eid){r=await sb.from('classes').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('classes').insert(payload);}
-  if(r.error){setMsg('classMsg',r.error.message,'error');}else{setMsg('classMsg','Class saved!','success');await loadClasses();await fetchEnrollmentCounts();buildTodaySchedule();buildWeekGrid();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
+  if(r.error){setMsg('classMsg',r.error.message,'error');}else{setMsg('classMsg','Class saved!','success');await loadClasses();
+    await loadScheduleShifts();
+    await fetchEnrollmentCounts();buildTodaySchedule();buildWeekGrid();buildCalendar();if(calView==='month')buildMonthCalendar();setTimeout(function(){closeAddClass();document.getElementById('classMsg').textContent='';},1200);}
 }
 function populateInstructorDropdown(){
   var sel=document.getElementById('classInstructor'); if(!sel) return;
