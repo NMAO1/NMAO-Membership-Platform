@@ -754,6 +754,36 @@
     <div class="page" id="page-classes">
       <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
+
+      <div class="content-heading" style="margin-top:2rem"><h2>Schedule Shifts</h2><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
+      <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
+      <div id="shiftsList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="modal-overlay" id="shiftModal">
+      <div class="modal" style="width:640px;max-width:95vw;max-height:90vh;overflow-y:auto">
+        <div class="modal-header"><span class="modal-title" id="shiftModalTitle">New Shift</span><button class="modal-close" onclick="safeClose('shiftModal',closeShiftModal)"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="shiftEditId" value="" />
+          <div class="field"><label>Name</label><input type="text" id="shiftName" placeholder="e.g. Summer Hours" /></div>
+          <div style="display:flex;gap:0.75rem">
+            <div class="field" style="flex:1"><label>Start date</label><input type="date" id="shiftStart" /></div>
+            <div class="field" style="flex:1"><label>End date</label><input type="date" id="shiftEnd" /></div>
+          </div>
+          <div class="field"><label>Remind members this many days before</label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal</span></div>
+          <div class="field"><label>Notify via</label>
+            <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-top:0.3rem">
+              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="sms" /> <span class="check-item-label">Text</span></label>
+              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="email" /> <span class="check-item-label">Email</span></label>
+              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="alert" checked /> <span class="check-item-label">In-app alert</span></label>
+            </div>
+          </div>
+          <div class="field"><label>Which classes change during this shift?</label><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
+          <p class="form-msg" id="shiftMsg"></p>
+          <button class="btn-gold-full" onclick="saveScheduleShift()">Save Shift</button>
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════ §PAGE-SESSIONS ═══════════════ -->
@@ -4138,6 +4168,184 @@ function copyMemEmbedSnippet(){
 
 function copyMemEmbedLinkFromModal(){ if(memEmbedCodeCurrentId) copyMemEmbedLink(memEmbedCodeCurrentId); }
 
+// ===== SCHEDULE SHIFTS =====
+var allShifts = [];
+var allShiftClasses = {};
+var SHIFT_DAYS = [['monday','Mon'],['tuesday','Tue'],['wednesday','Wed'],['thursday','Thu'],['friday','Fri'],['saturday','Sat'],['sunday','Sun']];
+
+function shEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function shiftFmtDate(d){ var x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function shiftFmtRange(a,b){ return shiftFmtDate(a)+' \u2013 '+shiftFmtDate(b); }
+
+function shiftStatus(s){
+  var today=new Date().toISOString().slice(0,10);
+  if(s.end_date < today) return {label:'Ended', color:'var(--muted)'};
+  if(s.start_date > today) return {label:'Scheduled', color:'var(--gold)'};
+  return {label:'Active', color:'#7DBD7D'};
+}
+
+function classScheduleSummary(c){
+  var map={monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'};
+  var ds=(c.days_of_week||[]).map(function(d){ return map[d]||d; }).join(', ');
+  var t=c.start_time?fmtTime(c.start_time):'';
+  return (ds||'No days')+(t?(' \u00b7 '+t):'');
+}
+
+async function loadScheduleShifts(){
+  var box=document.getElementById('shiftsList');
+  if(box) box.innerHTML='<div class="empty">Loading...</div>';
+  var r=await sb.from('schedule_shifts').select('*').eq('school_id',SID).order('start_date',{ascending:true});
+  if(r.error){ if(box) box.innerHTML='<div class="empty">Could not load shifts.</div>'; return; }
+  allShifts=r.data||[];
+  allShiftClasses={};
+  var ids=allShifts.map(function(s){ return s.id; });
+  if(ids.length){
+    var rc=await sb.from('schedule_shift_classes').select('*').in('shift_id',ids);
+    (rc.data||[]).forEach(function(sc){ (allShiftClasses[sc.shift_id]=allShiftClasses[sc.shift_id]||[]).push(sc); });
+  }
+  renderShiftsList();
+}
+
+function renderShiftsList(){
+  var box=document.getElementById('shiftsList'); if(!box) return;
+  if(!allShifts.length){ box.innerHTML='<div class="empty">No schedule shifts yet. Create one for a holiday week or seasonal change.</div>'; return; }
+  var html='';
+  allShifts.forEach(function(s){
+    var st=shiftStatus(s);
+    var n=(allShiftClasses[s.id]||[]).length;
+    var changes=n?(n+' class'+(n!==1?'es':'')+' changed'):'No class changes';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">';
+    html+='<div><div style="font-weight:600">'+shEsc(s.name)+' <span style="font-size:0.7rem;color:'+st.color+';margin-left:0.3rem">'+st.label+'</span></div>';
+    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+shiftFmtRange(s.start_date,s.end_date)+' \u00b7 '+changes+'</div></div>';
+    html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
+    html+='<button class="btn-sm" onclick="openShiftModal(\''+s.id+'\')">Edit</button>';
+    html+='<button class="btn-sm" onclick="deleteScheduleShift(\''+s.id+'\')">Delete</button>';
+    html+='</div></div>';
+  });
+  box.innerHTML=html;
+}
+
+function buildShiftClassEditor(overrides){
+  overrides=overrides||{};
+  var box=document.getElementById('shiftClassEditor'); if(!box) return;
+  var cls=(allClasses||[]).filter(function(c){ return c.active!==false; });
+  if(!cls.length){ box.innerHTML='<div class="empty">No classes yet.</div>'; return; }
+  var html='';
+  cls.forEach(function(c){
+    var ov=overrides[c.id]||null;
+    var action=ov?ov.action:'normal';
+    var ovDays=(ov&&ov.days_of_week)?ov.days_of_week:(c.days_of_week||[]);
+    var stVal=((ov&&ov.start_time)?ov.start_time:(c.start_time||'')).slice(0,5);
+    var enVal=((ov&&ov.end_time)?ov.end_time:(c.end_time||'')).slice(0,5);
+    html+='<div class="shift-class-row" data-class="'+c.id+'" style="padding:0.7rem 0;border-bottom:1px solid var(--border)">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">';
+    html+='<div style="min-width:0"><div style="font-weight:600">'+shEsc(c.name||c.title||'Class')+'</div>';
+    html+='<div style="font-size:0.78rem;color:var(--muted)">'+shEsc(classScheduleSummary(c))+'</div></div>';
+    html+='<select class="shift-class-action" onchange="onShiftActionChange(this)" style="background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.4rem 0.6rem;font-family:var(--font-ui)">';
+    html+='<option value="normal"'+(action==='normal'?' selected':'')+'>Normal</option>';
+    html+='<option value="retime"'+(action==='retime'?' selected':'')+'>Retime</option>';
+    html+='<option value="cancel"'+(action==='cancel'?' selected':'')+'>Cancel</option>';
+    html+='</select></div>';
+    html+='<div class="shift-retime" style="display:'+(action==='retime'?'block':'none')+';margin-top:0.6rem">';
+    html+='<div class="shift-days" style="display:flex;gap:0.3rem;flex-wrap:wrap">';
+    SHIFT_DAYS.forEach(function(d){
+      var sel=(ovDays.indexOf(d[0])!==-1)?' selected':'';
+      html+='<button type="button" class="day-btn'+sel+'" data-day="'+d[0]+'" onclick="toggleShiftDay(this)">'+d[1]+'</button>';
+    });
+    html+='</div>';
+    html+='<div style="display:flex;gap:0.75rem;margin-top:0.5rem">';
+    html+='<div class="field" style="margin:0;flex:1"><label>Start</label><input type="time" class="shift-start" value="'+stVal+'"></div>';
+    html+='<div class="field" style="margin:0;flex:1"><label>End</label><input type="time" class="shift-end" value="'+enVal+'"></div>';
+    html+='</div></div></div>';
+  });
+  box.innerHTML=html;
+}
+
+function onShiftActionChange(sel){
+  var row=sel.closest('.shift-class-row'); if(!row) return;
+  var rt=row.querySelector('.shift-retime');
+  if(rt) rt.style.display=(sel.value==='retime')?'block':'none';
+}
+
+function toggleShiftDay(btn){ btn.classList.toggle('selected'); }
+
+function collectShiftClasses(){
+  var out=[];
+  document.querySelectorAll('#shiftClassEditor .shift-class-row').forEach(function(row){
+    var action=row.querySelector('.shift-class-action').value;
+    if(action==='normal') return;
+    var cid=row.dataset.class;
+    if(action==='cancel'){ out.push({class_id:cid, action:'cancel', days_of_week:null, start_time:null, end_time:null}); return; }
+    var days=[]; row.querySelectorAll('.shift-days .day-btn.selected').forEach(function(b){ days.push(b.dataset.day); });
+    var st=row.querySelector('.shift-start').value||null;
+    var en=row.querySelector('.shift-end').value||null;
+    out.push({class_id:cid, action:'retime', days_of_week:(days.length?days:null), start_time:st, end_time:en});
+  });
+  return out;
+}
+
+function collectShiftChannels(){
+  var out=[]; document.querySelectorAll('#shiftModal .shift-channel').forEach(function(ch){ if(ch.checked) out.push(ch.value); }); return out;
+}
+
+function openShiftModal(id){
+  var s=id?(allShifts||[]).find(function(x){ return x.id===id; }):null;
+  document.getElementById('shiftEditId').value=s?s.id:'';
+  document.getElementById('shiftModalTitle').textContent=s?'Edit Shift':'New Shift';
+  document.getElementById('shiftName').value=s?s.name:'';
+  document.getElementById('shiftStart').value=s?s.start_date:'';
+  document.getElementById('shiftEnd').value=s?s.end_date:'';
+  document.getElementById('shiftRemindDays').value=s?(s.remind_days_before==null?3:s.remind_days_before):3;
+  document.getElementById('shiftRemindRevert').checked=s?!!s.remind_revert:false;
+  var channels=(s&&s.notify_channels)?s.notify_channels:['alert'];
+  document.querySelectorAll('#shiftModal .shift-channel').forEach(function(ch){ ch.checked=channels.indexOf(ch.value)!==-1; });
+  setMsg('shiftMsg','','');
+  var overrides={};
+  if(s){ (allShiftClasses[s.id]||[]).forEach(function(sc){ overrides[sc.class_id]=sc; }); }
+  buildShiftClassEditor(overrides);
+  document.getElementById('shiftModal').classList.add('active');
+}
+
+function closeShiftModal(){ document.getElementById('shiftModal').classList.remove('active'); }
+
+async function saveScheduleShift(){
+  var name=document.getElementById('shiftName').value.trim();
+  var start=document.getElementById('shiftStart').value;
+  var end=document.getElementById('shiftEnd').value;
+  if(!name){ setMsg('shiftMsg','Please enter a name.','error'); return; }
+  if(!start||!end){ setMsg('shiftMsg','Please choose a start and end date.','error'); return; }
+  if(end<start){ setMsg('shiftMsg','End date must be on or after the start date.','error'); return; }
+  var id=document.getElementById('shiftEditId').value;
+  var row={ school_id:SID, name:name, start_date:start, end_date:end,
+    remind_days_before:parseInt(document.getElementById('shiftRemindDays').value)||0,
+    remind_revert:document.getElementById('shiftRemindRevert').checked,
+    notify_channels:collectShiftChannels(), updated_at:new Date().toISOString() };
+  var res=id?(await sb.from('schedule_shifts').update(row).eq('id',id).select('id').single())
+            :(await sb.from('schedule_shifts').insert(row).select('id').single());
+  if(res.error){
+    var overlap=(res.error.code==='23P01')||/overlap|exclusion|conflicting/i.test(res.error.message||'');
+    setMsg('shiftMsg', overlap?'These dates overlap another shift. Adjust the range so shifts do not overlap.':res.error.message,'error');
+    return;
+  }
+  var shiftId=res.data.id;
+  var del=await sb.from('schedule_shift_classes').delete().eq('shift_id',shiftId);
+  if(del.error){ setMsg('shiftMsg','Saved the shift, but updating class changes failed: '+del.error.message,'error'); return; }
+  var cls=collectShiftClasses().map(function(o){ return { shift_id:shiftId, class_id:o.class_id, action:o.action, days_of_week:o.days_of_week, start_time:o.start_time, end_time:o.end_time }; });
+  if(cls.length){
+    var ins=await sb.from('schedule_shift_classes').insert(cls);
+    if(ins.error){ setMsg('shiftMsg','Saved the shift, but class changes failed: '+ins.error.message,'error'); return; }
+  }
+  closeShiftModal(); loadScheduleShifts();
+}
+
+async function deleteScheduleShift(id){
+  if(!confirm('Delete this schedule shift? Your normal schedule is unaffected.')) return;
+  var r=await sb.from('schedule_shifts').delete().eq('id',id);
+  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  loadScheduleShifts();
+}
+
 function navigate(page,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
@@ -4152,6 +4360,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
+  if(page==='classes') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
 
