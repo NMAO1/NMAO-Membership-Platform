@@ -14117,10 +14117,40 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     var sessInserts = sessions.map(function(s){ return Object.assign({}, s, {school_id: SID, event_id: eventId}); });
     var sessRes = await sb.from("event_sessions").insert(sessInserts);
     if (sessRes.error) { if (msg) { msg.textContent = "Sessions: " + sessRes.error.message; msg.style.color = "#E07070"; } return; }
-    await sb.from("event_price_tiers").delete().eq("event_id", eventId);
-    var tierInserts = tiers.map(function(t){ return {school_id: SID, event_id: eventId, label: t.label, price: t.price, sessions_included: t.sessions_included, visibility: t.visibility, sort_order: t.sort_order}; });
-    var tierRes = await sb.from("event_price_tiers").insert(tierInserts);
-    if (tierRes.error) { if (msg) { msg.textContent = "Tiers: " + tierRes.error.message; msg.style.color = "#E07070"; } return; }
+    // Reconcile pricing tiers by id: update existing (keeps the row + its registration FK),
+    // insert new, delete only the ones actually removed. Avoids the old blanket delete-all
+    // + insert-all, which silently failed (409 FK) on tiers that had registrations and
+    // duplicated every save.
+    var existingTierIds = (window.allEventTiers[eventId] || []).map(function(t){ return t.id; });
+    var keptTierIds = [];
+    var tierErr = null;
+    for (var ti = 0; ti < tiers.length; ti++) {
+      var t = tiers[ti];
+      var tFields = {school_id: SID, event_id: eventId, label: t.label, price: t.price, sessions_included: t.sessions_included, visibility: t.visibility, sort_order: t.sort_order};
+      if (t.id) {
+        keptTierIds.push(t.id);
+        var ur = await sb.from("event_price_tiers").update(tFields).eq("id", t.id);
+        if (ur.error) { tierErr = ur.error; break; }
+      } else {
+        var ir = await sb.from("event_price_tiers").insert(tFields);
+        if (ir.error) { tierErr = ir.error; break; }
+      }
+    }
+    if (!tierErr) {
+      var removedTierIds = existingTierIds.filter(function(id){ return keptTierIds.indexOf(id) === -1; });
+      if (removedTierIds.length) {
+        var dr = await sb.from("event_price_tiers").delete().in("id", removedTierIds);
+        if (dr.error) { tierErr = dr.error; }
+      }
+    }
+    if (tierErr) {
+      if (msg) {
+        var isFk = (tierErr.code === "23503") || /foreign key|violates/i.test(tierErr.message || "");
+        msg.textContent = isFk ? "A tier you removed has people registered under it, so it can't be deleted. Set that tier to Hidden instead of removing it, then save." : ("Tiers: " + tierErr.message);
+        msg.style.color = "#E07070";
+      }
+      return;
+    }
     if (msg) { msg.textContent = "Saved!"; msg.style.color = "#7DBD7D"; }
     await window.loadEvents();
     setTimeout(window.closeAddEvent, 800);
