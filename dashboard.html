@@ -736,7 +736,7 @@
     <!-- ═══════════════ §PAGE-SCHEDULE ═══════════════ -->
     <div class="page" id="page-schedule">
       <div class="today-banner">
-        <div><div class="today-label">Today</div><div class="today-date" id="todayFull"></div></div>
+        <div><div class="today-label">Today <button class="help-hint-inline" onclick="openHelpPopover('schedule',this)" title="Help">?</button></div><div class="today-date" id="todayFull"></div></div>
         <div class="today-stats">
           <div class="today-stat"><span class="today-stat-num" id="todayClassCount">0</span><span class="today-stat-lbl">Classes</span></div>
           <div class="today-stat"><span class="today-stat-num" id="todayStudentCount">0</span><span class="today-stat-lbl">Active</span></div>
@@ -745,7 +745,7 @@
         <button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.5rem;margin:1.25rem 0;">
-        <div class="content-heading"><h2>Schedule Shifts</h2><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
+        <div class="content-heading"><h2>Schedule Shifts</h2><button class="help-hint-inline" onclick="openHelpPopover('shifts',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
         <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
         <div id="shiftsList"><div class="empty">Loading...</div></div>
       </div>
@@ -1366,15 +1366,15 @@
     </div>
 
   <div class="page" id="page-shareembed">
-    <h2>Share &amp; Embed</h2>
+    <div class="content-heading"><h2>Share &amp; Embed</h2><button class="help-hint-inline" onclick="openHelpPopover('shareembed',this)" title="Help">?</button><div class="rule-h"></div></div>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable views of your class schedule and membership pricing for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
     <div class="panel">
-      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds</span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+     <span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds</span><button class="help-hint-inline" onclick="openHelpPopover('scheduleembed',this)" title="Help">?</button>
       <div class="panel-body"><div id="embedsList"><div class="empty">Loading...</div></div></div>
     </div>
 
     <div class="panel">
-      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Embeds</span><button class="panel-action" onclick="openMemEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Embeds</span><button class="help-hint-inline" onclick="openHelpPopover('membershipembed',this)" title="Help">?</button><button class="panel-action" onclick="openMemEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
       <div class="panel-body"><div id="memEmbedsList"><div class="empty">Loading...</div></div></div>
     </div>
 
@@ -4401,6 +4401,56 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+  shareembed: {
+    title: 'Share & Embed',
+    purpose: 'Embeddable widgets that show your live class schedule or membership pricing on your own website. Build one here, then paste a short snippet into your site.',
+    actions: [
+      'Make a Schedule Embed to show your class times, or a Membership Embed to show your plans and prices.',
+      'Choose what each one shows, copy its snippet, and paste it anywhere you can add HTML.',
+      'Edits you make here update the embed live on your site, so you never touch your website code again.'
+    ],
+    example: 'Example: build a Membership Embed with your three plans, paste the snippet on your Pricing page, and if you raise a price later the page updates on its own.'
+  },
+  scheduleembed: {
+    title: 'Schedule Embeds',
+    purpose: 'A widget that displays your class schedule on your website, so visitors can see and book your classes without leaving your site.',
+    actions: [
+      'Click New Embed, name it, and pick which programs or classes it shows.',
+      'Copy the snippet and paste it into your website where you want the schedule to appear.',
+      'Change what it shows any time and the embed on your site updates automatically.'
+    ],
+    example: 'Example: create a Kids Classes embed showing only your youth programs, and paste it on your Kids page.'
+  },
+  membershipembed: {
+    title: 'Membership Embeds',
+    purpose: 'A pricing widget that shows your membership plans on your website, each with a Join button that sends new members straight into signup.',
+    actions: [
+      'Click New Embed, name it, and hand-pick which plans appear.',
+      'A plan only shows if it has Public Signup enabled, so turn that on in the membership editor first.',
+      'Copy the snippet, paste it on your pricing or join page, and the Join buttons handle the rest.'
+    ],
+    example: 'Example: feature your Adult and Kids monthly plans on your Join page, so a visitor can tap Join and land right in signup.'
+  },
+  schedule: {
+    title: 'Schedule',
+    purpose: 'Your live calendar at a glance: the classes running today, the week ahead, and any schedule shifts in effect.',
+    actions: [
+      'See which classes run today and how the rest of the week looks.',
+      'Use Schedule Shifts to temporarily change class times for a date range without editing your normal classes.',
+      'Add a class here to put a new recurring slot on the calendar.'
+    ],
+    example: 'Example: glance at Today to see your evening classes, or scan This Week to plan instructor coverage.'
+  },
+  shifts: {
+    title: 'Schedule Shifts',
+    purpose: 'A temporary change to your schedule for a set date range. Retime or cancel specific classes without touching your normal weekly schedule.',
+    actions: [
+      'Create a shift, name it, and set its start and end dates.',
+      'For each affected class choose Retime for a new day or time, or Cancel; everything else runs as usual.',
+      'Members see the change on your public schedule, and can be reminded by text, email, or in-app alert before it starts.'
+    ],
+    example: 'Example: a Holiday Week shift that cancels morning classes Dec 24 to 26 and moves evening classes an hour earlier, then everything returns to normal on its own.'
+  },
   home: {
     title: 'Dashboard',
     purpose: 'Your daily snapshot: alerts to act on, revenue so far today, the class calendar, and upcoming birthdays.',
