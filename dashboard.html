@@ -744,6 +744,9 @@
         </div>
         <button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button>
       </div>
+      <div class="content-heading"><h2>Schedule Shifts</h2><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
+      <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
+      <div id="shiftsList"><div class="empty">Loading...</div></div>
       <div class="content-heading"><h2>Today's Classes</h2><div class="rule-h"></div></div>
       <div class="schedule-grid" id="todaySchedule"></div>
       <div class="content-heading"><h2>This Week</h2><div class="rule-h"></div></div>
@@ -754,10 +757,6 @@
     <div class="page" id="page-classes">
       <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
-
-      <div class="content-heading" style="margin-top:2rem"><h2>Schedule Shifts</h2><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
-      <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
-      <div id="shiftsList"><div class="empty">Loading...</div></div>
     </div>
 
     <div class="modal-overlay" id="shiftModal">
@@ -4393,7 +4392,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
-  if(page==='classes') { if(window.loadScheduleShifts) loadScheduleShifts(); }
+  if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
 
