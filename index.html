@@ -43,6 +43,8 @@
   .price-solo .ps-amount .ps-n{font-size:4.2rem;font-weight:700;}
   .price-solo .ps-amount .ps-p{font-size:1.1rem;color:#9A8F80;}
   .price-solo .ps-trial{font-size:0.9rem;color:#F5F0E8;font-weight:700;margin-bottom:1.5rem;}
+  .price-solo .ps-plus{font-size:1rem;color:#C9A84C;font-weight:700;margin:0.5rem 0 1.3rem;}
+  .price-solo .ps-plus span{color:#9A8F80;font-weight:400;font-size:0.85rem;}
   .price-solo .ps-accred{
     margin:0 auto 1.75rem;max-width:340px;padding:0.85rem 1rem;
     background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.05));
@@ -56,6 +58,8 @@
     font-family:'Libre Baskerville',serif;font-size:1.5rem;color:#F5F0E8;font-weight:700;line-height:1;
   }
   .price-solo .ps-accred .amt span{font-size:0.8rem;color:#9A8F80;font-weight:400;}
+  .price-solo .ps-accred .amt .strike{text-decoration:line-through;color:#9A8F80;font-weight:400;font-size:1.05rem;margin-right:0.4rem;}
+  .price-solo .ps-accred .accred-plus{font-size:0.7rem;color:#C9A84C;font-weight:700;margin-top:0.4rem;letter-spacing:0.03em;}
   .price-solo .ps-accred .sub{font-size:0.6rem;color:#9A8F80;font-style:italic;margin-top:0.3rem;}
   .ps-features{
     list-style:none;padding:0;margin:0 0 1.85rem;text-align:left;
@@ -276,7 +280,7 @@
     <div style="flex-shrink:0;width:52px;height:52px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#C9A84C;">&#9672;</div>
     <div style="flex:1;min-width:280px;">
       <div style="font-family:'Libre Baskerville',serif;font-size:1.1rem;color:#C9A84C;font-weight:700;margin-bottom:0.35rem;">NMAO Accredited Schools Run Free</div>
-      <div style="font-size:0.88rem;color:#9A8F80;line-height:1.55;">Schools holding active NMAO Accreditation pay <strong style="color:#C9A84C;">$0/mo</strong> &mdash; no monthly fee, just a 1% transaction fee capped at $200. Applied automatically at checkout.</div>
+      <div style="font-size:0.88rem;color:#9A8F80;line-height:1.55;">Schools holding active NMAO Accreditation pay <strong style="color:#C9A84C;">$0/mo</strong> &mdash; no monthly fee, just a 1% platform fee capped at $200. Applied automatically at checkout.</div>
     </div>
     <a href="https://nmao.us/apply-for-accreditation/" target="_blank" rel="noopener" style="flex-shrink:0;background:#C9A84C;color:#0A0A0A;font-family:'Libre Baskerville',serif;font-size:0.78rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.85rem 1.5rem;text-decoration:none;font-weight:700;white-space:nowrap;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Get Accredited &rarr;</a>
   </div>
@@ -285,18 +289,20 @@
   <div class="price-solo">
     <div class="ps-eyebrow">&#9672; One Plan, Everything Included</div>
     <div class="ps-amount"><span class="ps-d">$</span><span class="ps-n">99</span><span class="ps-p">/mo</span></div>
+    <div class="ps-plus">+ 1% platform fee <span>&mdash; capped at $200/mo</span></div>
     <div class="ps-trial">Free for 90 days &mdash; no credit card required.</div>
     <div class="ps-accred">
       <div class="lbl">&#9672; NMAO Accredited Rate</div>
-      <div class="amt">FREE<span>/mo</span></div>
-      <div class="sub">$0 monthly with active NMAO Accreditation &mdash; pay only the 1% fee</div>
+      <div class="amt"><span class="strike">$99</span>$0<span>/mo</span></div>
+      <div class="accred-plus">+ 1% platform fee still applies (capped at $200/mo)</div>
+      <div class="sub">Monthly fee fully waived with active NMAO Accreditation</div>
     </div>
     <ul class="ps-features">
       <li>Unlimited students &mdash; no per-student charges</li>
       <li>Every feature: kiosk, portal, POS, belts, automations</li>
       <li>1,000 text messages a month included</li>
-      <li>1% processing fee, capped at $200/mo</li>
-      <li>Stripe payment processing passed through at cost</li>
+      <li>1% platform fee, capped at $200/mo</li>
+      <li>Stripe card processing passed through at cost &mdash; never marked up</li>
       <li>No per-instructor fees, no add-on upcharges</li>
     </ul>
     <button class="ps-cta" onclick="openModal('signup')">Start Free Trial</button>
@@ -318,11 +324,11 @@
 
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What does it cost after the trial?<span class="faq-mark">+</span></button>
-      <div class="faq-a"><div class="faq-a-inner">$99/month, flat &mdash; one plan, everything included, with unlimited students and 1,000 text messages a month. On top of that, a 1% platform fee (capped at $200/month) applies to the payments you process, and Stripe's processing is passed through at cost with no markup. No per-student or per-instructor charges, and no add-on fees for the kiosk, analytics, QR code generator, staff or member portal. <strong>Schools with active NMAO Accreditation pay $0/month</strong> &mdash; the monthly fee is fully waived, leaving only the 1% transaction fee (capped at $200).</div></div>
+      <div class="faq-a"><div class="faq-a-inner">$99/month, flat &mdash; one plan, everything included, with unlimited students and 1,000 text messages a month. On top of that, a 1% platform fee (capped at $200/month) applies to the payments you process, and Stripe's processing is passed through at cost with no markup. No per-student or per-instructor charges, and no add-on fees for the kiosk, analytics, QR code generator, staff or member portal. <strong>Schools with active NMAO Accreditation pay $0/month</strong> &mdash; the monthly fee is fully waived, leaving only the 1% platform fee (capped at $200).</div></div>
     </div>
 
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How do the payment-processing fees work?<span class="faq-mark">+</span></button>
+      <button class="faq-q" onclick="toggleFaq(this)">How do the card processing and platform fees work?<span class="faq-mark">+</span></button>
       <div class="faq-a"><div class="faq-a-inner">You connect your own Stripe account and pay Stripe's standard rate (about 2.9% + 30&cent;) at cost &mdash; we never mark it up. On top of that, NMAO charges a 1% platform fee, capped at $200/month so it never balloons as you grow. That's the whole story &mdash; no hidden processing margin, which is how most competitors quietly pad their bill.</div></div>
     </div>
 
