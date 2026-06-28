@@ -771,16 +771,17 @@
             <div class="field" style="flex:1"><label>Start date</label><input type="date" id="shiftStart" /></div>
             <div class="field" style="flex:1"><label>End date</label><input type="date" id="shiftEnd" /></div>
           </div>
-          <div class="field"><label>Remind members this many days before</label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /></div>
+          <div class="field"><label>Remind members this many days before</label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin-top:0.3rem">How far ahead members get a heads-up. The reminder sends once, automatically, on that day.</div></div>
           <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal</span></div>
           <div class="field"><label>Notify via</label>
-            <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-top:0.3rem">
-              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="sms" /> <span class="check-item-label">Text</span></label>
-              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="email" /> <span class="check-item-label">Email</span></label>
-              <label style="display:flex;align-items:center;gap:0.5rem"><input type="checkbox" class="shift-channel" value="alert" checked /> <span class="check-item-label">In-app alert</span></label>
+            <div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">How members hear about the change when a reminder goes out. Text and email reach everyone; in-app alerts show in the member portal.</div>
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="sms" /><div class="toggle-slider"></div></label><span class="check-item-label">Text</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="email" /><div class="toggle-slider"></div></label><span class="check-item-label">Email</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="alert" checked /><div class="toggle-slider"></div></label><span class="check-item-label">In-app alert</span></div>
             </div>
           </div>
-          <div class="field"><label>Which classes change during this shift?</label><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
+          <div class="field"><label>Which classes change during this shift?</label><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">Leave a class on <strong>Normal</strong> to keep it as-is. Choose <strong>Retime</strong> to move its day or time, or <strong>Cancel</strong> to skip it for these dates. Only the classes you change are affected.</div><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
           <p class="form-msg" id="shiftMsg"></p>
           <button class="btn-gold-full" onclick="saveScheduleShift()">Save Shift</button>
         </div>
