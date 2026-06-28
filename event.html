@@ -166,6 +166,9 @@
         state.school = school.data || {name: ""};
         var sess = await sb.from("event_sessions").select("*").eq("event_id", eventId).order("sort_order");
         state.sessions = sess.data || [];
+        var av = await sb.from("event_session_availability").select("session_id, is_full, spots_left, capacity").eq("event_id", eventId);
+        state.avail = {};
+        (av.data || []).forEach(function(a){ state.avail[a.session_id] = a; });
         var tiers = await sb.from("event_price_tiers").select("*").eq("event_id", eventId).eq("visibility", "public").order("sort_order");
         state.tiers = tiers.data || [];
        if (state.tiers.length > 0) {
@@ -212,6 +215,8 @@
       if (tier.sessions_included === 0 || tier.sessions_included === null) return;
       var idx = state.selectedSessionIds.indexOf(sessionId);
       if (idx === -1) {
+        var avT = state.avail && state.avail[sessionId];
+        if (avT && avT.is_full) return; // a full day cannot be selected
         if (state.selectedSessionIds.length < tier.sessions_included) state.selectedSessionIds.push(sessionId);
       } else {
         state.selectedSessionIds.splice(idx, 1);
@@ -252,9 +257,17 @@
           state.sessions.map(function(s) {
             var checked = state.selectedSessionIds.indexOf(s.id) !== -1;
             var checkedClass = checked ? " checked" : "";
-            return "<div class=\"session-pick" + checkedClass + "\" onclick=\"toggleSession(&quot;" + s.id + "&quot;)\">" +
-              "<input type=\"checkbox\" " + (checked ? "checked" : "") + " onchange=\"event.stopPropagation()\" onclick=\"event.stopPropagation();toggleSession(&quot;" + s.id + "&quot;)\" />" +
-              "<label>" + fmtDate(s.session_date) + (s.start_time ? " at " + fmtTime(s.start_time) : "") + "</label>" +
+            var av = state.avail && state.avail[s.id];
+            var isFull = av && av.is_full;
+            var capNote = "";
+            if (av && av.capacity != null) {
+              capNote = isFull ? " <span style=\"color:#E07070\">(Full)</span>" : " <span style=\"color:var(--muted)\">(" + av.spots_left + " left)</span>";
+            }
+            var rowClick = isFull ? "" : "onclick=\"toggleSession(&quot;" + s.id + "&quot;)\"";
+            var boxClick = isFull ? "event.stopPropagation()" : "event.stopPropagation();toggleSession(&quot;" + s.id + "&quot;)";
+            return "<div class=\"session-pick" + checkedClass + "\" " + rowClick + (isFull ? " style=\"opacity:0.5;cursor:not-allowed\"" : "") + ">" +
+              "<input type=\"checkbox\" " + (checked ? "checked" : "") + (isFull ? " disabled" : "") + " onchange=\"event.stopPropagation()\" onclick=\"" + boxClick + "\" />" +
+              "<label>" + fmtDate(s.session_date) + (s.start_time ? " at " + fmtTime(s.start_time) : "") + capNote + "</label>" +
             "</div>";
           }).join("") +
           "<div style=\"font-size:0.78rem;color:var(--muted);margin-top:0.5rem\">" + state.selectedSessionIds.length + " of " + tier.sessions_included + " selected</div>";
