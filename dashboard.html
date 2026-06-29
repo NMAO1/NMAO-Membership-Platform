@@ -1244,7 +1244,10 @@
           </div>
           <div id="slugLinkPreview" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;word-break:break-all"></div>
           <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">This is the sign-in address members use. Changing it will break previously shared sign-in links.</div>
-          <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="saveSchoolSlug()"><i class="fa-solid fa-link"></i> Save Portal Link</button>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+            <button class="panel-action" style="width:fit-content" onclick="saveSchoolSlug()"><i class="fa-solid fa-link"></i> Save Portal Link</button>
+            <button class="panel-action" style="width:fit-content" onclick="showPortalQr()"><i class="fa-solid fa-qrcode"></i> Sign-In QR Code</button>
+          </div>
           <p class="form-msg" id="slugMsg"></p>
         </div>
         <div class="field"><label>School Logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.logo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
@@ -3017,6 +3020,13 @@ function openQrModal(opts){
   else{fw.style.display='none';}
   document.getElementById('qrModal').classList.add('active');
   renderQrPreview();
+}
+function showPortalQr(){
+  var slug=(window.schoolData&&window.schoolData.slug)?window.schoolData.slug:'';
+  if(!slug){var inp=document.getElementById('settingSlug');slug=inp?(inp.value||'').trim():'';}
+  if(!slug){alert('Set and save your Member Portal Link (the link name) first, then generate the QR code.');return;}
+  var url='https://app.nmao.us/portal.html?s='+encodeURIComponent(slug);
+  openQrModal({title:'Member Portal Sign-In QR',url:url,filenameBase:slug+'-portal-signin-qr',flyerText:'Scan to sign in to your member portal.'});
 }
 function closeQrModal(){document.getElementById('qrModal').classList.remove('active');}
 async function renderQrPreview(){
