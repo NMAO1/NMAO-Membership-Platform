@@ -2405,6 +2405,21 @@
         <div class="field"><label>Payroll Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_paytype',this)" title="Help">?</button></label><select id="instrPayrollType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="per_class">Per Class</option><option value="per_session">Per Session</option><option value="monthly">Monthly Salary</option><option value="hourly">Hourly</option></select></div>
       </div>
       <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_notes',this)" title="Help">?</button></label><textarea id="instrNotes" rows="3" placeholder="Role, notes..."></textarea></div>
+      <div class="field"><label>Staff Role &amp; Permissions</label>
+        <select id="instrRole" onchange="seedInstrCaps(this.value)" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%;margin-bottom:0.6rem">
+          <option value="owner">Owner</option>
+          <option value="head_instructor">Head Instructor</option>
+          <option value="instructor">Instructor</option>
+          <option value="assistant">Assistant</option>
+        </select>
+        <div style="display:flex;flex-direction:column;gap:0.35rem">
+          <label class="check-item"><input type="checkbox" id="capCheckin" onchange="updateCapHint()" /><div><div class="check-item-label">Check-in and attendance</div></div></label>
+          <label class="check-item"><input type="checkbox" id="capLookup" onchange="updateCapHint()" /><div><div class="check-item-label">Member lookup</div></div></label>
+          <label class="check-item"><input type="checkbox" id="capEnroll" onchange="updateCapHint()" /><div><div class="check-item-label">Enroll new members</div></div></label>
+          <label class="check-item"><input type="checkbox" id="capPos" onchange="updateCapHint()" /><div><div class="check-item-label">Take payments (POS)</div></div></label>
+        </div>
+        <div id="capHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem"></div>
+      </div>
       <button class="btn-gold-full" onclick="saveInstructor()">Save Instructor</button>
       <p class="form-msg" id="instructorMsg"></p>
     </div>
@@ -10616,11 +10631,38 @@ function renderInstructors(){
   }).join('');
 }
 
+var INSTR_PRESET={
+  owner:{checkin:1,lookup:1,enroll:1,pos:1},
+  head_instructor:{checkin:1,lookup:1,enroll:1,pos:1},
+  instructor:{checkin:1,lookup:1,enroll:1,pos:0},
+  assistant:{checkin:1,lookup:1,enroll:0,pos:0}
+};
+function seedInstrCaps(role){
+  var p=INSTR_PRESET[role]||INSTR_PRESET.instructor;
+  document.getElementById('capCheckin').checked=!!p.checkin;
+  document.getElementById('capLookup').checked=!!p.lookup;
+  document.getElementById('capEnroll').checked=!!p.enroll;
+  document.getElementById('capPos').checked=!!p.pos;
+  var owner=(role==='owner');
+  ['capCheckin','capLookup','capEnroll','capPos'].forEach(function(id){document.getElementById(id).disabled=owner;});
+  updateCapHint();
+}
+function updateCapHint(){
+  var sel=document.getElementById('instrRole'); var role=sel.value; var lbl=sel.options[sel.selectedIndex].text;
+  var hint=document.getElementById('capHint');
+  if(role==='owner'){hint.textContent='Owners always have full access.';return;}
+  var p=INSTR_PRESET[role]||{};
+  var cur={checkin:document.getElementById('capCheckin').checked?1:0,lookup:document.getElementById('capLookup').checked?1:0,enroll:document.getElementById('capEnroll').checked?1:0,pos:document.getElementById('capPos').checked?1:0};
+  var diff=0; ['checkin','lookup','enroll','pos'].forEach(function(k){if((cur[k]?1:0)!==(p[k]?1:0))diff++;});
+  hint.textContent = diff ? (diff+' setting'+(diff>1?'s':'')+' overridden from the '+lbl+' preset. Role sets defaults; adjust any switch to customize.') : ('Matches the '+lbl+' preset. Role sets defaults; adjust any switch to customize.');
+}
 function openAddInstructor(){
   document.getElementById('addInstructorTitle').textContent='Add Instructor';
   ['instrEditId','instrFirst','instrLast','instrEmail','instrPhone','instrSpecialties','instrBio','instrNotes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('instrPayrollRate').value='0';
   document.getElementById('instrPayrollType').value='per_class';
+  document.getElementById('instrRole').value='instructor';
+  seedInstrCaps('instructor');
   document.getElementById('instructorMsg').textContent='';
   document.getElementById('addInstructorModal').classList.add('active');
 }
@@ -10637,6 +10679,14 @@ function openEditInstructor(iid){
   document.getElementById('instrPayrollRate').value=i.payroll_rate||0;
   document.getElementById('instrPayrollType').value=i.payroll_type||'per_class';
   document.getElementById('instrNotes').value=i.notes||'';
+  document.getElementById('instrRole').value=i.role||'instructor';
+  var pr=INSTR_PRESET[i.role||'instructor']||INSTR_PRESET.instructor;
+  document.getElementById('capCheckin').checked=(i.can_checkin!=null)?!!i.can_checkin:!!pr.checkin;
+  document.getElementById('capLookup').checked=(i.can_lookup!=null)?!!i.can_lookup:!!pr.lookup;
+  document.getElementById('capEnroll').checked=(i.can_enroll!=null)?!!i.can_enroll:!!pr.enroll;
+  document.getElementById('capPos').checked=(i.can_pos!=null)?!!i.can_pos:!!pr.pos;
+  var ownerLock=((i.role||'')==='owner'); ['capCheckin','capLookup','capEnroll','capPos'].forEach(function(id){document.getElementById(id).disabled=ownerLock;});
+  updateCapHint();
   document.getElementById('instructorMsg').textContent='';
   document.getElementById('addInstructorModal').classList.add('active');
 }
@@ -10648,6 +10698,12 @@ async function saveInstructor(){
   if(!first||!last){setMsg('instructorMsg','First and last name required.','error');return;}
   setMsg('instructorMsg','Saving...','');
   var payload={first_name:first,last_name:last,email:document.getElementById('instrEmail').value.trim().toLowerCase(),phone:document.getElementById('instrPhone').value.trim(),specialties:document.getElementById('instrSpecialties').value.trim()||null,bio:document.getElementById('instrBio').value.trim()||null,payroll_rate:parseFloat(document.getElementById('instrPayrollRate').value)||0,payroll_type:document.getElementById('instrPayrollType').value,notes:document.getElementById('instrNotes').value.trim()||null,active:true};
+  var _role=document.getElementById('instrRole').value; var _owner=(_role==='owner');
+  payload.role=_role;
+  payload.can_checkin=_owner?true:document.getElementById('capCheckin').checked;
+  payload.can_lookup=_owner?true:document.getElementById('capLookup').checked;
+  payload.can_enroll=_owner?true:document.getElementById('capEnroll').checked;
+  payload.can_pos=_owner?true:document.getElementById('capPos').checked;
   var r; if(eid){r=await sb.from('instructors').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('instructors').insert(payload);}
   if(r.error){setMsg('instructorMsg',r.error.message,'error');}else{setMsg('instructorMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadInstructors();setTimeout(closeAddInstructor,1000);}
 }
