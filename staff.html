@@ -435,6 +435,12 @@
 .loading-row{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:2rem;color:var(--muted);font-size:0.88rem;font-style:italic;}
 ```
 
+    /* Per-staff capability gating (body classes set at load; owner is always full) */
+    .nocap-enroll #ctaSignup{display:none;}
+    .nocap-lookup #ctaLookup{display:none;}
+    .nocap-checkin .btn-checkin{display:none !important;}
+    .nocap-pos #suPay-card_now, .nocap-pos #suPay-cash{display:none !important;}
+    .nocap-pos #renewCardBtn, .nocap-pos #renewNewOpenBtn{display:none !important;}
   </style>
 </head>
 <body>
@@ -502,7 +508,7 @@
   </div>
 
   <!-- New Student Sign-Up entry -->
-  <div class="su-cta" onclick="openSignup()">
+  <div class="su-cta" id="ctaSignup" onclick="openSignup()">
     <div class="su-cta-icon"><i class="fa-solid fa-user-plus"></i></div>
     <div class="su-cta-text">
       <div class="su-cta-title">New Student Sign-Up</div>
@@ -512,7 +518,7 @@
   </div>
 
   <!-- Find a Student -->
-  <div class="su-cta" onclick="openStudentLookup()">
+  <div class="su-cta" id="ctaLookup" onclick="openStudentLookup()">
     <div class="su-cta-icon" style="background:var(--surface2);color:var(--gold)"><i class="fa-solid fa-magnifying-glass"></i></div>
     <div class="su-cta-text">
       <div class="su-cta-title">Find a Student</div>
@@ -1088,6 +1094,7 @@ async function startStaffApp(user){
   currentInstructor=r.data;
   SID=r.data.school_id;          // A1: resolve this staff member's school from their record
   await loadSchoolBranding();    // brand the now-known school
+  applyStaffCapabilities();      // gate features to this staff member's permissions
 
   // Self-healing: stamp auth_user_id if not already set
   // After this runs once, all future RLS checks use UUID directly
@@ -1507,6 +1514,7 @@ function switchCvTab(tab){
 //  CHECK IN
 // ─────────────────────────────────────────────────────────────
 async function toggleCheckin(studentId,event){
+  if(!staffCan('checkin')){ if(event&&event.stopPropagation)event.stopPropagation(); return; }
   event.stopPropagation();
   var btn=document.getElementById('chkbtn-'+studentId);
   if(btn){btn.classList.add('loading');btn.disabled=true;}
@@ -2017,7 +2025,21 @@ var toastTimer=null;
 var signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
 var suPlanLoaded=false, suPrograms=[], suMemberships=[], suMemProgs={};
 
+function staffCan(cap){
+  if(!currentInstructor) return false;
+  if(currentInstructor.role==='owner') return true;
+  return currentInstructor['can_'+cap]!==false;
+}
+function applyStaffCapabilities(){
+  var b=document.body;
+  b.classList.toggle('nocap-checkin', !staffCan('checkin'));
+  b.classList.toggle('nocap-lookup',  !staffCan('lookup'));
+  b.classList.toggle('nocap-enroll',  !staffCan('enroll'));
+  b.classList.toggle('nocap-pos',     !staffCan('pos'));
+}
+
 function openSignup(){
+  if(!staffCan('enroll')) return;
   signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
   document.getElementById('suFirst').value='';
   document.getElementById('suLast').value='';
@@ -2335,6 +2357,7 @@ function suRenderDone(kind, info){
 var slStudent=null, slPacks=[], slSelectedPackId=null, slRoster=[];
 
 async function openStudentLookup(){
+  if(!staffCan('lookup')) return;
   slStudent=null; slPacks=[]; slSelectedPackId=null; slRoster=[];
   document.getElementById('slSearch').value='';
   slShowList();
@@ -2505,6 +2528,7 @@ function renewDone(msg){
 function renewPending(msg){ renewBusy=false; setRenewMsg(msg,'success'); renewUpdateActions(); }
 
 async function renewGo(method){
+  if(!staffCan('pos')) return;
   if(renewBusy) return;
   var m=renewSelectedMembership();
   if(!m){ setRenewMsg('Pick a pack first.','error'); return; }
