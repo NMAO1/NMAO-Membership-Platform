@@ -3018,6 +3018,8 @@
 
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+// Returns the signed-in user's access token so payment functions can verify who is charging (falls back to anon).
+async function authToken(){ try{ var _s=await sb.auth.getSession(); if(_s&&_s.data&&_s.data.session&&_s.data.session.access_token) return _s.data.session.access_token; }catch(e){} return SKEY; }
 var SID = null;
 var ownerEmail = null;
 var APP_URL = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -7480,7 +7482,7 @@ async function confirmChargePlan(){
     }
     var r=await fetch(SURL+'/functions/v1/'+endpoint,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
       body:JSON.stringify(payload)
     });
     var data=await r.json();
@@ -8680,7 +8682,7 @@ var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;
     var payload={school_id:SID,student_id:sid,membership_id:mid};
     if(firstCharge) payload.first_charge_date=firstCharge;
     try{
-      var r=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)});
+      var r=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(payload)});
       var data=await r.json();
       if(!r.ok||!data||data.error){
         var em=(data&&data.error)?String(data.error):'';
@@ -9826,7 +9828,7 @@ async function checkoutCompleteCard(force){
     payload.idempotency_key = _checkout.idemKey;
     var r = await fetch(SURL + '/functions/v1/' + endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken()) },
       body: JSON.stringify(payload)
     });
     var data = await r.json();
