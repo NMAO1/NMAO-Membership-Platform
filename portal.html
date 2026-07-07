@@ -1000,6 +1000,7 @@ var schoolData={};
 var celebrationTimeout=null;
 var particleInterval=null;
 var familyAllClasses=[];
+var familyByDate={};
 var familyChildProgIds={};
 var todayAttendance=[];
 var existingReservations={};
@@ -1712,11 +1713,12 @@ async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
   try{
-    var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
-    var allFetched=r.data||[];
-    if(r.error) throw new Error(r.error.message);
+    var now=new Date();
+    var todayStr=now.toISOString().split('T')[0];
+    var weekEnd=new Date(now); weekEnd.setDate(now.getDate()+6);
+    var weekEndStr=weekEnd.toISOString().split('T')[0];
 
-    // Collect all program IDs this student can access
+    // Programs this student can access
     var studentProgIds=[];
     if(s.program_id) studentProgIds.push(s.program_id);
     try{
@@ -1724,61 +1726,68 @@ async function buildSchedule(s){
       if(mpR.data) mpR.data.forEach(function(x){
         if(studentProgIds.indexOf(x.program_id)===-1) studentProgIds.push(x.program_id);
       });
-    }catch(mpErr){
-      // Non-fatal — student still sees classes with no program restriction
-      console.warn('membership_programs lookup failed:',mpErr);
-    }
+    }catch(mpErr){ console.warn('membership_programs lookup failed:',mpErr); }
 
-    // Filter classes: show if no program restriction, or matches student's programs
-    var classes=allFetched.filter(function(c){
-      return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1;
-    });
-
-    if(!classes.length){
-      el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled for your program yet.</div>';
-      return;
-    }
-
-    var now=new Date();
-    var todayIdx=now.getDay();
-
-    // Build scheduleByDay keyed by day-offset from today (0 = today)
+    // Shift-aware schedule via the member RPC (single source of truth).
+    // Falls back to base recurrence only if the RPC is unavailable.
     scheduleByDay={};
-    classes.forEach(function(c){
-      if(!c.days_of_week) return;
-      c.days_of_week.forEach(function(day){
-        var dayIdx=DAYS.indexOf(day); if(dayIdx===-1) return;
-        var diff=dayIdx-todayIdx; if(diff<0) diff+=7;
-        if(!scheduleByDay[diff]) scheduleByDay[diff]=[];
-        scheduleByDay[diff].push(c);
+    var slug=SCHOOL_SLUG||getSlug();
+    var usedRpc=false;
+    if(slug){
+      var rr=await sb.rpc('get_member_class_schedule',{p_slug:slug,p_start:todayStr,p_end:weekEndStr});
+      if(rr.error){ console.warn('get_member_class_schedule error:',rr.error); }
+      else if(rr.data){
+        usedRpc=true;
+        rr.data.forEach(function(row){
+          if(row.program_id && studentProgIds.indexOf(row.program_id)===-1) return;
+          var diff=Math.round((new Date(row.session_date+'T00:00:00')-new Date(todayStr+'T00:00:00'))/86400000);
+          if(diff<0||diff>6) return;
+          if(!scheduleByDay[diff]) scheduleByDay[diff]=[];
+          scheduleByDay[diff].push({id:row.class_id,name:row.class_name,start_time:row.start_time,end_time:row.end_time,style:row.style,age_group:row.age_group,level:row.level,capacity:row.capacity,program_id:row.program_id});
+        });
+      }
+    }
+    if(!usedRpc){
+      // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
+      var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+      if(r.error) throw new Error(r.error.message);
+      var allFetched=r.data||[];
+      var classes=allFetched.filter(function(c){ return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1; });
+      var todayIdx=now.getDay();
+      classes.forEach(function(c){
+        if(!c.days_of_week) return;
+        c.days_of_week.forEach(function(day){
+          var dayIdx=DAYS.indexOf(day); if(dayIdx===-1) return;
+          var diff=dayIdx-todayIdx; if(diff<0) diff+=7;
+          if(!scheduleByDay[diff]) scheduleByDay[diff]=[];
+          scheduleByDay[diff].push(c);
+        });
       });
-    });
+    }
 
     var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
     if(!diffs.length){
-      el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes this week.</div>';
+      el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled for your program this week.</div>';
       return;
     }
 
-    // Fetch this student's enrollments for the next 7 days
-    // Compound key: classId_YYYY-MM-DD — one entry per class per date
+    // This student's enrollments for the next 7 days (key: classId_YYYY-MM-DD)
     enrolledClasses={};
-    var weekEnd=new Date(now); weekEnd.setDate(now.getDate()+7);
     var enrolled=await sb.from('class_enrollments')
       .select('class_id,session_date')
       .eq('student_id',s.id)
       .eq('school_id',SID)
       .eq('status','enrolled')
-      .gte('session_date',now.toISOString().split('T')[0])
-      .lte('session_date',weekEnd.toISOString().split('T')[0]);
+      .gte('session_date',todayStr)
+      .lte('session_date',weekEndStr);
     if(enrolled.error) console.warn('Enrollment fetch error:',enrolled.error);
     if(enrolled.data) enrolled.data.forEach(function(e){
       enrolledClasses[e.class_id+'_'+e.session_date]=true;
     });
 
-    // Live counts: union of RSVPs (class_enrollments) + check-ins (class_attendance)
+    // Live counts (RSVPs + check-ins)
     try{
-      enrollmentCounts=await fetchEnrollmentCounts(now.toISOString().split('T')[0],weekEnd.toISOString().split('T')[0]);
+      enrollmentCounts=await fetchEnrollmentCounts(todayStr,weekEndStr);
     }catch(ecErr){
       console.warn('fetchEnrollmentCounts failed:',ecErr);
       enrollmentCounts={};
@@ -3084,12 +3093,29 @@ async function switchChild(){
   async function buildFamilySchedule(){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
-  var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
-  familyAllClasses=r.data||[];
-  if(!familyAllClasses.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled yet.</div>';return;}
   var today=new Date().toISOString().split('T')[0];
   var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+6);
   var weekEndStr=weekEnd.toISOString().split('T')[0];
+  // Shift-aware schedule via the member RPC; fall back to base recurrence if unavailable.
+  familyByDate={};
+  familyAllClasses=[];
+  var slug=SCHOOL_SLUG||getSlug();
+  var fUsedRpc=false;
+  if(slug){
+    var fr=await sb.rpc('get_member_class_schedule',{p_slug:slug,p_start:today,p_end:weekEndStr});
+    if(!fr.error&&fr.data){
+      fUsedRpc=true;
+      fr.data.forEach(function(row){
+        var d=row.session_date;
+        if(!familyByDate[d])familyByDate[d]=[];
+        familyByDate[d].push({id:row.class_id,name:row.class_name,start_time:row.start_time,end_time:row.end_time,style:row.style,age_group:row.age_group,level:row.level,capacity:row.capacity,program_id:row.program_id});
+      });
+    }
+  }
+  if(!fUsedRpc){
+    var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+    familyAllClasses=r.data||[];
+  }
   var childIds=familyChildren.map(function(c){return c.id;});
   var attR=await sb.rpc('family_attendance_state',{p_child_ids:childIds});
   todayAttendance=(attR.data||[]).map(function(a){return{student_id:a.student_id,class_sessions:{class_id:a.class_id,session_date:a.session_date}};});
@@ -3123,7 +3149,12 @@ function renderFamilySchedule(){
     var dateStr=d.toISOString().split('T')[0];
     var dayName=DAYS[d.getDay()];var isToday=i===0;
     var dayLabel=i===0?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
-    var dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    var dayClasses;
+    if(familyByDate&&Object.keys(familyByDate).length){
+      dayClasses=(familyByDate[dateStr]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    }else{
+      dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    }
     dayClasses=dayClasses.filter(function(c){return familyChildren.some(function(child){return !c.program_id||(familyChildProgIds[child.id]||[]).indexOf(c.program_id)!==-1;});});
     if(!dayClasses.length)continue;
     hasAny=true;
@@ -3264,17 +3295,31 @@ async function showInstructorPortal(instructor){
 async function buildInstructorTodayClasses(){
   var el=document.getElementById('instrTodayClasses');
   var today=DAYS[new Date().getDay()];
-  var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
-  var classes=(r.data||[]).filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
+  var todayStr=new Date().toISOString().split('T')[0];
+  // Shift-aware: today's schedule via the member RPC; fall back to base recurrence if unavailable.
+  var classes=[];
+  var usedRpc=false;
+  var slug=SCHOOL_SLUG||getSlug();
+  if(slug){
+    var rr=await sb.rpc('get_member_class_schedule',{p_slug:slug,p_start:todayStr,p_end:todayStr});
+    if(!rr.error&&rr.data){
+      usedRpc=true;
+      classes=rr.data.map(function(row){return {id:row.class_id,name:row.class_name,start_time:row.start_time,end_time:row.end_time,style:row.style,age_group:row.age_group,level:row.level,capacity:row.capacity,instructor_name:row.instructor_name};});
+    }
+  }
+  if(!usedRpc){
+    var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
+    classes=(r.data||[]).filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
+  }
   if(!classes.length){
     el.innerHTML=emptyState('fa-calendar-xmark','No classes scheduled today.');
     return;
   }
   el.innerHTML=classes.map(function(c){
     var cn=c.name||c.title||'Class';
-    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' \u00b7 ');
     return '<div class="instr-class-card">'+
-      '<div class="instr-class-time">'+fmtTime(c.start_time)+(c.end_time?' — '+fmtTime(c.end_time):'')+' <span style="font-size:0.72rem;color:var(--muted)">'+(c.capacity?'Max '+c.capacity:'')+'</span></div>'+
+      '<div class="instr-class-time">'+fmtTime(c.start_time)+(c.end_time?' \u2014 '+fmtTime(c.end_time):'')+' <span style="font-size:0.72rem;color:var(--muted)">'+(c.capacity?'Max '+c.capacity:'')+'</span></div>'+
       '<div class="instr-class-name">'+cn+'</div>'+
       (tags?'<div class="instr-class-meta">'+tags+'</div>':'')+
       (c.instructor_name?'<div class="instr-class-meta"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem;color:var(--gold)"></i>'+c.instructor_name+'</div>':'')+
