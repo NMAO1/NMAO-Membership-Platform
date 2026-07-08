@@ -1513,6 +1513,17 @@
         <div class="field"><label>Guest Instructor (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_guest',this)" title="Help">?</button></label><input type="text" id="evGuestInstructor" placeholder="e.g. Instructor Name" /></div>
 
         <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('events.ev_desc',this)" title="Help">?</button></label><textarea id="evDescription" rows="3" placeholder="What is this event about? Who is it for?"></textarea></div>
+        <div class="field"><label>Event Flyer <span style="color:var(--muted);font-weight:normal">(optional — JPG, PNG, or PDF, up to 10MB)</span></label>
+          <div style="display:flex;gap:1rem;align-items:center">
+            <div id="eventFlyerPreview" onclick="document.getElementById('eventFlyerInput').click()" style="width:80px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-image"></i></div>
+            <div style="display:flex;flex-direction:column;gap:0.4rem">
+              <button type="button" class="panel-action" onclick="document.getElementById('eventFlyerInput').click()"><i class="fa-solid fa-upload"></i> Upload Flyer</button>
+              <button type="button" class="btn-sm" id="eventFlyerRemoveBtn" onclick="removeEventFlyer()" style="display:none">Remove</button>
+            </div>
+            <input type="file" id="eventFlyerInput" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none" onchange="handleEventFlyerUpload(event)" />
+          </div>
+          <p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">Members see a thumbnail with a prominent “See flyer” button on the signup page.</p>
+        </div>
         <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.4rem;margin-top:1.25rem">Public Signup</div>
         <div style="height:1px;background:var(--border);margin-bottom:1rem"></div>
         <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem">When enabled, anyone with the link can register. Use this to share via email, social media, or QR code.</p>
@@ -14373,6 +14384,43 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     }
   };
 
+  window.handleEventFlyerUpload = async function(event){
+    var file=event.target.files[0]; if(!file) return;
+    var isPdf=(file.type==="application/pdf")||/\.pdf$/i.test(file.name);
+    var isImg=/^image\/(jpeg|png|webp)$/.test(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);
+    if(!isPdf&&!isImg){ alert("Please upload a JPG, PNG, WebP, or PDF file."); return; }
+    if(file.size>10*1024*1024){ alert("That flyer is over the 10MB limit. Please upload a smaller file."); return; }
+    var ext=file.name.split(".").pop().toLowerCase();
+    var eid=document.getElementById("eventEditId").value;
+    var key=eid?eid:"new-"+Date.now()+"-"+Math.floor(Math.random()*10000);
+    var path=SID+"/"+key+"."+ext;
+    var ur=await sb.storage.from("event-flyers").upload(path,file,{upsert:true,contentType:file.type||undefined});
+    if(ur.error){ alert("Flyer upload failed: "+ur.error.message); return; }
+    var pub=sb.storage.from("event-flyers").getPublicUrl(path).data.publicUrl+"?t="+Date.now();
+    window._pendingEventFlyerUrl=pub;
+    window._pendingEventFlyerType=isPdf?"pdf":"image";
+    window.renderEventFlyerPreview();
+  };
+  window.renderEventFlyerPreview = function(){
+    var preview=document.getElementById("eventFlyerPreview");
+    var rm=document.getElementById("eventFlyerRemoveBtn");
+    if(!preview) return;
+    var url=window._pendingEventFlyerUrl, type=window._pendingEventFlyerType;
+    if(url){
+      if(type==="pdf"){ preview.innerHTML='<div style="text-align:center;color:var(--gold)"><i class="fa-solid fa-file-pdf" style="font-size:1.8rem"></i><div style="font-size:0.58rem;color:var(--muted);margin-top:0.2rem">PDF</div></div>'; }
+      else { preview.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" />'; }
+      if(rm) rm.style.display="";
+    } else {
+      preview.innerHTML='<i class="fa-solid fa-image"></i>';
+      if(rm) rm.style.display="none";
+    }
+  };
+  window.removeEventFlyer = function(){
+    window._pendingEventFlyerUrl=null; window._pendingEventFlyerType=null;
+    var inp=document.getElementById("eventFlyerInput"); if(inp) inp.value="";
+    window.renderEventFlyerPreview();
+  };
+
   window.saveEvent = async function(){
     var msg = document.getElementById("eventMsg");
     var eid = document.getElementById("eventEditId").value;
@@ -14417,6 +14465,8 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
       guest_instructor: (document.getElementById("evGuestInstructor").value || "").trim() || null,
       event_type: document.getElementById("evType").value,
       registration_deadline: document.getElementById("evRegistrationDeadline").value || null,
+      flyer_url: window._pendingEventFlyerUrl || null,
+      flyer_type: window._pendingEventFlyerUrl ? (window._pendingEventFlyerType || "image") : null,
       active: true
     };
     var eventId;
@@ -15461,6 +15511,7 @@ window.closeWelcomeModal = async function() {
     prevOpenAdd();
     var pubEl = document.getElementById("evPublicSignupEnabled");
     if (pubEl) pubEl.checked = false;
+    window._pendingEventFlyerUrl = null; window._pendingEventFlyerType = null; if (window.renderEventFlyerPreview) window.renderEventFlyerPreview();
   };
 
   // Override openEditEvent to populate the public signup checkbox
@@ -15470,6 +15521,7 @@ window.closeWelcomeModal = async function() {
     var ev = (window.allEvents || []).find(function(x){ return x.id === eventId; });
     var pubEl = document.getElementById("evPublicSignupEnabled");
     if (pubEl && ev) pubEl.checked = !!ev.public_signup_enabled;
+    if (ev) { window._pendingEventFlyerUrl = ev.flyer_url || null; window._pendingEventFlyerType = ev.flyer_type || (ev.flyer_url ? "image" : null); if (window.renderEventFlyerPreview) window.renderEventFlyerPreview(); }
   };
 
   // Override saveEvent to include the public_signup_enabled field
