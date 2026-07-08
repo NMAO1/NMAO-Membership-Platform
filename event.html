@@ -81,6 +81,15 @@
     .success-screen i { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
     .success-screen h2 { font-family: var(--font-display); font-size: 1.75rem; color: var(--white); margin-bottom: 0.75rem; font-weight: 600; }
     .success-screen p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+    .flyer-row { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); }
+    .flyer-thumb { width: 58px; height: 76px; flex-shrink: 0; background: var(--black); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; color: var(--gold); font-size: 1.6rem; }
+    .flyer-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .flyer-cta { display: flex; flex-direction: column; gap: 0.4rem; }
+    .flyer-cta-label { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .flyer-btn { background: var(--gold); color: var(--black); border: none; font-family: var(--font-ui); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; padding: 0.55rem 1rem; cursor: pointer; }
+    .flyer-btn:hover { opacity: 0.9; }
+    .flyer-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 1.5rem; cursor: zoom-out; }
+    .flyer-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -131,6 +140,19 @@
         return h + ":" + m + " " + ampm;
       } catch(e) { return t; }
     }
+    function openFlyer() {
+      var url = window._eventFlyerUrl, type = window._eventFlyerType;
+      if (!url) return;
+      if (type === "pdf") { window.open(url, "_blank", "noopener"); return; }
+      var ov = document.createElement("div");
+      ov.className = "flyer-lightbox";
+      ov.onclick = function () { if (ov.parentNode) ov.parentNode.removeChild(ov); };
+      var img = document.createElement("img");
+      img.src = url; img.alt = "Event flyer";
+      ov.appendChild(img);
+      document.body.appendChild(ov);
+    }
+
     function escText(s) {
       if (s === null || s === undefined) return "";
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -284,6 +306,8 @@
       }
 
       var flyerUrl = ev.flyer_url || ev.image_url || ev.cover_image_url || ev.poster_url || null;
+      var flyerType = ev.flyer_type || (flyerUrl ? "image" : null);
+      window._eventFlyerUrl = flyerUrl; window._eventFlyerType = flyerType;
 
         document.getElementById("root").innerHTML =
         "<div class=\"header\">" +
@@ -291,7 +315,13 @@
           "<div class=\"header-rule\"></div>" +
         "</div>" +
         "<div class=\"card\">" +
-          (flyerUrl ? "<img src=\"" + escText(flyerUrl) + "\" alt=\"Event flyer\" style=\"width:100%;max-height:400px;object-fit:cover;border:1px solid var(--border);margin-bottom:1.25rem;display:block\" />" : "") +
+          (flyerUrl ? "<div class=\"flyer-row\">" +
+              "<div class=\"flyer-thumb\" onclick=\"openFlyer()\">" +
+                (flyerType === "pdf" ? "<i class=\"fa-solid fa-file-pdf\"></i>" : "<img src=\"" + escText(flyerUrl) + "\" alt=\"Event flyer\" />") +
+              "</div>" +
+              "<div class=\"flyer-cta\"><div class=\"flyer-cta-label\">Event flyer</div>" +
+                "<button class=\"flyer-btn\" onclick=\"openFlyer()\"><i class=\"fa-solid fa-" + (flyerType === "pdf" ? "file-pdf" : "image") + "\"></i> See flyer</button></div>" +
+            "</div>" : "") +
           "<div class=\"event-title\">" + escText(ev.title || "Event") + "</div>" +
           "<div class=\"event-meta-item\"><i class=\"fa-solid fa-calendar-days\"></i><span>" + dateStr + "</span></div>" +
           (ev.location ? "<div class=\"event-meta-item\"><i class=\"fa-solid fa-location-dot\"></i><span>" + escText(ev.location) + "</span></div>" : "") +
