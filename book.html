@@ -1272,7 +1272,15 @@
       var buffer   = selectedSetting.buffer_minutes;
       var minHours = selectedSetting.min_advance_hours;
 
-      var slots = generateSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate);
+      var slots;
+      if (instructor.cluster_enabled && instructor.cluster_anchor_time) {
+        var anchorMin = timeToMins(('' + instructor.cluster_anchor_time).substring(0,5));
+        var clDir     = instructor.cluster_direction || 'before';
+        var clOpen    = parseInt(instructor.cluster_open_count) || 1;
+        slots = generateClusterSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate, anchorMin, clDir, clOpen);
+      } else {
+        slots = generateSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate);
+      }
 
       if (!slots.length) {
         document.getElementById('slotsContainer').innerHTML =
@@ -1289,6 +1297,58 @@
       });
       html += '</div>';
       document.getElementById('slotsContainer').innerHTML = html;
+    }
+
+    // Cascading/clustered slots: show only the N slots nearest the instructor's
+    // anchor time (in the chosen direction); each booking reveals the next one.
+    // Grid is aligned TO the anchor so a slot ends exactly at it.
+    function generateClusterSlots(startTime, endTime, duration, buffer, existingBookings, minAdvanceHours, dateStr, anchorMin, direction, openCount) {
+      var start     = timeToMins(startTime);
+      var end       = timeToMins(endTime);
+      var increment = duration + (buffer || 0);
+      var now       = new Date();
+      var cands     = [];
+
+      function consider(t) {
+        if (t < start || t + duration > end) return;
+        var slotDateTime = new Date(dateStr + 'T' + minsToTime(t));
+        var hoursUntil   = (slotDateTime.getTime() - now.getTime()) / 3600000;
+        if (hoursUntil < minAdvanceHours) return;
+        var conflict = existingBookings.some(function(b) {
+          if (!b.start_time) return false;
+          var bStart = timeToMins(b.start_time);
+          var bEnd   = bStart + (parseInt(b.duration_minutes) || 60);
+          var sEnd   = t + duration;
+          return t < bEnd && sEnd > bStart;
+        });
+        var dist;
+        if (t + duration <= anchorMin) dist = anchorMin - (t + duration); // before: slot end -> anchor
+        else if (t >= anchorMin)       dist = t - anchorMin;              // after: anchor -> slot start
+        else                           dist = 0;
+        cands.push({ time: minsToTime(t), mins: t, booked: conflict, dist: dist });
+      }
+
+      var seen = {};
+      function push(t) { if (!seen[t]) { seen[t] = 1; consider(t); } }
+
+      // Before the anchor: slots ending at/before it, stepping back (aligned so one ends exactly at anchor)
+      if (direction === 'before' || direction === 'both') {
+        for (var tb = anchorMin - duration; tb >= start; tb -= increment) push(tb);
+      }
+      // After the anchor: slots starting at/after it, stepping forward
+      if (direction === 'after' || direction === 'both') {
+        for (var ta = anchorMin; ta + duration <= end; ta += increment) push(ta);
+      }
+
+      // Nearest to the anchor first, then keep the first N unbooked (the frontier)
+      cands.sort(function(a, b) { return a.dist - b.dist; });
+      var open = [];
+      for (var i = 0; i < cands.length && open.length < openCount; i++) {
+        if (!cands[i].booked) open.push(cands[i]);
+      }
+      // Display in chronological order
+      open.sort(function(a, b) { return a.mins - b.mins; });
+      return open;
     }
 
     function generateSlots(startTime, endTime, duration, buffer, existingBookings, minAdvanceHours, dateStr) {
