@@ -600,6 +600,20 @@
 
   <div class="profile-info" id="profileInfoCard"></div>
 
+  <div class="profile-info" id="clusterCard" style="margin-top:0.85rem">
+    <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--gold);margin-bottom:0.25rem">Private Session Booking</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.9rem;line-height:1.4">Cluster private sessions near a set time so they don't scatter across your day. Students see only the nearest open slots; the next opens as each one books.</div>
+    <label style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0;cursor:pointer"><span style="color:var(--white);font-size:0.92rem">Enable clustering</span><input type="checkbox" id="clEnabled" onchange="toggleClusterFields()" style="width:20px;height:20px"></label>
+    <div id="clFields" style="border-top:1px solid var(--border);padding-top:0.6rem">
+      <div style="margin-bottom:0.7rem"><label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Anchor time (e.g. your class start)</label><input type="time" id="clAnchor" onchange="updateClusterHint()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.6rem;font-size:0.95rem"></div>
+      <div style="margin-bottom:0.7rem"><label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Fill direction</label><select id="clDirection" onchange="updateClusterHint()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.6rem;font-size:0.95rem"><option value="before">Before the anchor</option><option value="after">After the anchor</option><option value="both">Both sides</option></select></div>
+      <div style="margin-bottom:0.4rem"><label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Open slots shown at once</label><input type="number" id="clOpen" min="1" max="12" value="1" onchange="updateClusterHint()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.6rem;font-size:0.95rem"></div>
+      <div id="clHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;line-height:1.4"></div>
+    </div>
+    <button id="clSaveBtn" onclick="saveClusterSettings()" style="width:100%;margin-top:0.9rem;background:var(--gold);color:var(--black);border:none;padding:0.75rem;font-family:var(--font-ui);font-size:0.9rem;font-weight:600;letter-spacing:0.06em;cursor:pointer">Save booking settings</button>
+    <div id="clMsg" style="font-size:0.8rem;margin-top:0.5rem;text-align:center"></div>
+  </div>
+
   <button class="btn-signout" onclick="staffSignOut()">
     <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.5rem"></i>Sign Out
   </button>
@@ -1914,6 +1928,45 @@ async function buildProfileTab(){
     s.nmao_cert_expiry?'<div class="profile-info-row"><div class="profile-info-label">Cert Expiry</div><div class="profile-info-value">'+new Date(s.nmao_cert_expiry+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</div></div>':'',
     '<div class="profile-info-row"><div class="profile-info-label">School</div><div class="profile-info-value">'+(schoolData.name||'—')+'</div></div>'
   ].join('');
+  renderClusterEditor(s);
+}
+
+function clFmt(t){ if(!t) return 'the anchor'; var p=(''+t).split(':'); var h=parseInt(p[0],10); var m=p[1]; var ap=h>=12?'PM':'AM'; var h12=(h%12)||12; return h12+':'+m+' '+ap; }
+function toggleClusterFields(){
+  var on=document.getElementById('clEnabled').checked;
+  var f=document.getElementById('clFields');
+  f.style.opacity=on?'1':'0.4'; f.style.pointerEvents=on?'auto':'none';
+  updateClusterHint();
+}
+function updateClusterHint(){
+  var dir=document.getElementById('clDirection').value;
+  var n=parseInt(document.getElementById('clOpen').value,10)||1;
+  var at=clFmt(document.getElementById('clAnchor').value);
+  var where=dir==='before'?('just before '+at):dir==='after'?('just after '+at):('around '+at);
+  document.getElementById('clHint').textContent='Students will see the '+n+' open slot'+(n>1?'s':'')+' nearest '+at+', filling '+where+'. As each books, the next opens.';
+}
+function renderClusterEditor(s){
+  if(!s||!document.getElementById('clEnabled')) return;
+  document.getElementById('clEnabled').checked=!!s.cluster_enabled;
+  document.getElementById('clAnchor').value=s.cluster_anchor_time?(''+s.cluster_anchor_time).substring(0,5):'';
+  document.getElementById('clDirection').value=s.cluster_direction||'before';
+  document.getElementById('clOpen').value=s.cluster_open_count||1;
+  toggleClusterFields();
+}
+async function saveClusterSettings(){
+  var btn=document.getElementById('clSaveBtn'), msg=document.getElementById('clMsg');
+  var enabled=document.getElementById('clEnabled').checked;
+  var anchor=document.getElementById('clAnchor').value||null;
+  var dir=document.getElementById('clDirection').value;
+  var n=parseInt(document.getElementById('clOpen').value,10)||1;
+  if(enabled && !anchor){ msg.style.color='#E07070'; msg.textContent='Please set an anchor time.'; return; }
+  btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='Saving...';
+  var r=await sb.rpc('set_instructor_cluster',{p_enabled:enabled,p_anchor:anchor,p_direction:dir,p_count:n});
+  btn.disabled=false;
+  if(r.error){ msg.style.color='#E07070'; msg.textContent='Could not save: '+r.error.message; return; }
+  currentInstructor.cluster_enabled=enabled; currentInstructor.cluster_anchor_time=anchor;
+  currentInstructor.cluster_direction=dir; currentInstructor.cluster_open_count=n;
+  msg.style.color='#5A9A6A'; msg.textContent='Saved.';
 }
 
 // ─────────────────────────────────────────────────────────────
