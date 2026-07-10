@@ -2480,6 +2480,11 @@
           </div>
         </div>
         <div>
+          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Session Clustering</div>
+          <div id="instrProfileCluster" style="font-size:0.85rem;color:var(--muted2)"></div>
+          <div style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem;font-style:italic">The instructor sets this in their staff app.</div>
+        </div>
+        <div>
           <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Payroll</div>
           <div id="instrProfilePayroll"></div>
           <div class="payroll-summary-row" style="margin-top:0.75rem">
@@ -10759,6 +10764,21 @@ async function openInstructorProfile(instrId){
   document.getElementById('instrBookingLinkSection').style.display=instr.booking_link_enabled?'block':'none';
   document.getElementById('instrBookingSlug').value=instr.booking_slug||'';
   updateBookingLinkPreview(instr.booking_slug||'');
+  // Session clustering (read-only view; instructor controls it in staff.html)
+  var clEl=document.getElementById('instrProfileCluster');
+  if(clEl){
+    if(instr.cluster_enabled && instr.cluster_anchor_time){
+      var dirTxt={before:'before',after:'after',both:'both sides of'}[instr.cluster_direction||'before'];
+      var at=(''+instr.cluster_anchor_time).substring(0,5);
+      clEl.innerHTML=
+        '<div class="profile-info-row"><span class="profile-info-label">Status</span><span style="color:var(--gold)">On</span></div>'+
+        '<div class="profile-info-row"><span class="profile-info-label">Anchor</span><span style="color:#F5F0E8">'+at+'</span></div>'+
+        '<div class="profile-info-row"><span class="profile-info-label">Fill</span><span style="color:#F5F0E8">'+dirTxt+' the anchor</span></div>'+
+        '<div class="profile-info-row"><span class="profile-info-label">Open slots</span><span style="color:#F5F0E8">'+(instr.cluster_open_count||1)+'</span></div>';
+    } else {
+      clEl.innerHTML='<div style="color:var(--muted);font-style:italic">Not enabled.</div>';
+    }
+  }
   // Payroll
   var payrollTypeLabel={per_class:'per class',per_session:'per session',monthly:'monthly salary',hourly:'hourly'}[instr.payroll_type||'per_class'];
   document.getElementById('instrProfilePayroll').innerHTML=
