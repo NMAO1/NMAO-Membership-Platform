@@ -208,11 +208,13 @@
         }
         hideState();
         renderCards(r.data);
+        if(!isFramed() && r.data[0] && r.data[0].membership_id && window.renderSocialFooterByMembership) renderSocialFooterByMembership(sb, r.data[0].membership_id);
         setTimeout(nmaoPostHeight, 50);
       } catch (e){
         showState('Something went wrong loading these plans. Please try again.');
       }
     };
   </script>
+<script src="social-footer.js"></script>
 </body>
 </html>
