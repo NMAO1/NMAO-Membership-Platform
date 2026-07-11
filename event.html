@@ -183,6 +183,7 @@
         state.event = ev.data;
         var school = await sb.from("schools").select("name").eq("id", ev.data.school_id).single();
         state.school = school.data || {name: ""};
+        if(window.renderSocialFooter) renderSocialFooter(sb, ev.data.school_id);
         var sess = await sb.from("event_sessions").select("*").eq("event_id", eventId).order("sort_order");
         state.sessions = sess.data || [];
         var av = await sb.from("event_session_availability").select("session_id, is_full, spots_left, capacity").eq("event_id", eventId);
@@ -453,5 +454,6 @@ submitBtnHTML +
 
     loadEvent();
   </script>
+<script src="social-footer.js"></script>
 </body>
 </html>
