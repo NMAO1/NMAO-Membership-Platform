@@ -259,6 +259,7 @@
         state.offer = res.data[0];
         applyBranding(state.offer);
         renderOffer(state.offer);
+        if(window.renderSocialFooterByMembership) renderSocialFooterByMembership(sb, state.offer.membership_id);
       } catch (e){
         renderError('We could not load this offer. Please try again later.');
       }
@@ -266,5 +267,6 @@
 
     init();
   </script>
+<script src="social-footer.js"></script>
 </body>
 </html>
