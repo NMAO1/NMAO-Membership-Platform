@@ -1393,15 +1393,15 @@
     </div>
 
   <div class="page" id="page-shareembed">
-    <h2>Share &amp; Embed</h2>
+    <h2>Share &amp; Embed <button class="help-hint-inline" onclick="openHelpPopover('shareembed',this)" title="Help">?</button></h2>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable views of your class schedule and membership pricing for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
     <div class="panel">
-      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds</span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds <button class="help-hint-inline" onclick="openHelpPopover('shareembed.schedule',this)" title="Help">?</button></span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
       <div class="panel-body"><div id="embedsList"><div class="empty">Loading...</div></div></div>
     </div>
 
     <div class="panel">
-      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Embeds</span><button class="panel-action" onclick="openMemEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
+      <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Embeds <button class="help-hint-inline" onclick="openHelpPopover('shareembed.memberships',this)" title="Help">?</button></span><button class="panel-action" onclick="openMemEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
       <div class="panel-body"><div id="memEmbedsList"><div class="empty">Loading...</div></div></div>
     </div>
 
@@ -1410,10 +1410,10 @@
         <div class="modal-header"><span class="modal-title" id="memEmbedModalTitle">New Embed</span><button class="modal-close" onclick="safeClose('memEmbedModal',closeMemEmbedModal)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="memEmbedEditId" value="" />
-          <div class="field"><label>Name</label><input type="text" id="memEmbedName" placeholder="e.g. Pricing" /></div>
-          <div class="field"><label>Plans to show</label><div id="memEmbedPlansPicker"><div class="empty">Loading plans...</div></div></div>
-          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedRespectVis" /><div class="toggle-slider"></div></label><span class="check-item-label">Only show plans that are publicly visible</span></div>
-          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedActive" checked /><div class="toggle-slider"></div></label><span class="check-item-label">Active</span></div>
+          <div class="field"><label>Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_name',this)" title="Help">?</button></label><input type="text" id="memEmbedName" placeholder="e.g. Pricing" /></div>
+          <div class="field"><label>Plans to show <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.mem_plans',this)" title="Help">?</button></label><div id="memEmbedPlansPicker"><div class="empty">Loading plans...</div></div></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedRespectVis" /><div class="toggle-slider"></div></label><span class="check-item-label">Only show plans that are publicly visible <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.mem_vis',this)" title="Help">?</button></span></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedActive" checked /><div class="toggle-slider"></div></label><span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_active',this)" title="Help">?</button></span></div>
           <p class="form-msg" id="memEmbedMsg"></p>
           <button class="btn-gold-full" onclick="saveMemEmbed()">Save Embed</button>
         </div>
@@ -1424,7 +1424,7 @@
       <div class="modal" style="width:640px;max-width:95vw">
         <div class="modal-header"><span class="modal-title" id="memEmbedCodeTitle">Embed code</span><button class="modal-close" onclick="safeClose('memEmbedCodeModal',closeMemEmbedCode)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
-          <div class="field"><label>Paste this on your website</label>
+          <div class="field"><label>Paste this on your website <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_code',this)" title="Help">?</button></label>
             <textarea id="memEmbedSnippet" rows="4" readonly style="width:100%;font-family:monospace;font-size:0.78rem"></textarea>
             <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
               <button class="btn-sm gold" onclick="copyMemEmbedSnippet()">Copy code</button>
@@ -1445,7 +1445,7 @@
       <div class="modal" style="width:640px;max-width:95vw">
         <div class="modal-header"><span class="modal-title" id="embedCodeTitle">Embed code</span><button class="modal-close" onclick="safeClose('embedCodeModal',closeEmbedCode)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
-          <div class="field"><label>Paste this on your website</label>
+          <div class="field"><label>Paste this on your website <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_code',this)" title="Help">?</button></label>
             <textarea id="embedSnippet" rows="4" readonly style="width:100%;font-family:monospace;font-size:0.78rem"></textarea>
             <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
               <button class="btn-sm gold" onclick="copyEmbedSnippet()">Copy code</button>
@@ -1466,10 +1466,10 @@
         <div class="modal-header"><span class="modal-title" id="embedModalTitle">New Embed</span><button class="modal-close" onclick="safeClose('embedModal',closeEmbedModal)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="embedEditId" value="" />
-          <div class="field"><label>Name</label><input type="text" id="embedName" placeholder="e.g. Kids Schedule" /></div>
-          <div class="field"><label>Show</label><select id="embedFilterType" onchange="onEmbedFilterTypeChange()"><option value="all">All classes</option><option value="program">A program</option><option value="classes">Specific classes</option><option value="style">A style</option><option value="age">An age group</option><option value="level">A level</option><option value="instructor">An instructor</option></select></div>
+          <div class="field"><label>Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_name',this)" title="Help">?</button></label><input type="text" id="embedName" placeholder="e.g. Kids Schedule" /></div>
+          <div class="field"><label>Show <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_show',this)" title="Help">?</button></label><select id="embedFilterType" onchange="onEmbedFilterTypeChange()"><option value="all">All classes</option><option value="program">A program</option><option value="classes">Specific classes</option><option value="style">A style</option><option value="age">An age group</option><option value="level">A level</option><option value="instructor">An instructor</option></select></div>
           <div class="field" id="embedValuesField" style="display:none"><label id="embedValuesLabel">Selection</label><div id="embedValuesPicker"></div></div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedActive" checked /> <span class="check-item-label">Active</span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedActive" checked /> <span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_active',this)" title="Help">?</button></span></label>
           <p class="form-msg" id="embedMsg"></p>
           <button class="btn-gold-full" onclick="saveEmbed()">Save Embed</button>
         </div>
@@ -4517,6 +4517,16 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+  'shareembed': { title: 'Share & Embed', purpose: 'Put your live class schedule or your membership plans directly on your own website. You build an embed here, copy a small code snippet, and paste it into your site \u2014 it stays in sync automatically as you make changes.' },
+  'shareembed.schedule': { title: 'Schedule Embeds', purpose: 'A live view of your class schedule you can drop onto your website. Create as many as you like \u2014 one for kids classes, one for adults \u2014 each filtered to show only the classes you choose.' },
+  'shareembed.memberships': { title: 'Membership Embeds', purpose: 'A pricing block for your website showing the plans you pick, with join buttons that send visitors straight into signup. Great for a Pricing or Join page.' },
+  'shareembed.emb_name': { title: 'Name', purpose: 'A label just for you, so you can tell your embeds apart in this list (like "Kids Schedule" or "Pricing"). Visitors do not see it.' },
+  'shareembed.emb_show': { title: 'Show', purpose: 'Which classes appear in this embed. All classes shows everything; the other options narrow it to a single program, style, age group, level, instructor, or a hand-picked set of specific classes.' },
+  'shareembed.emb_active': { title: 'Active', purpose: 'When on, the embed displays live on your site. Turn it off to hide it everywhere it is pasted without deleting it \u2014 handy for pausing a page temporarily.' },
+  'shareembed.mem_plans': { title: 'Plans to show', purpose: 'Pick which membership plans appear in this embed and in what order. Leave out anything you do not want shown on your public site.' },
+  'shareembed.mem_vis': { title: 'Only publicly visible plans', purpose: 'When on, the embed automatically hides any plan that is not marked public \u2014 so private or internal plans never show on your website even if selected.' },
+  'shareembed.emb_code': { title: 'Embed code', purpose: 'Copy this snippet and paste it into any page on your website \u2014 it renders the live view right there. Copy link only gives a plain URL instead, for linking rather than embedding. The preview below shows exactly what visitors will see.' },
+
   'schedule.shifts': { title: 'Schedule Shifts', purpose: 'A temporary change to your schedule for a set date range \u2014 holiday weeks, summer hours, a seasonal break \u2014 without editing your normal classes. When the dates pass, everything returns to normal on its own. Members can be reminded before it starts.' },
   'schedule.sh_name': { title: 'Name', purpose: 'A short label so you recognize this shift later, like "Summer Hours" or "Thanksgiving Week." Members don\'t see this name \u2014 it\'s just for you.' },
   'schedule.sh_dates': { title: 'Start & End dates', purpose: 'The date range this shift is active. Your normal schedule applies before and after; the changes below only take effect between these two dates (inclusive).' },
