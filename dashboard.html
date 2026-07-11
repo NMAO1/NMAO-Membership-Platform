@@ -258,6 +258,11 @@
       transform: translateY(-1px);
     }
     .nmao-badge:active { transform: translateY(0); }
+    .plan-menu { display:none; position:absolute; right:0; top:100%; margin-top:0.4rem; background:var(--surface); border:1px solid var(--border); min-width:190px; z-index:300; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+    .plan-menu.open { display:block; }
+    .plan-menu-item { display:block; width:100%; text-align:left; background:none; border:none; color:var(--white); font-family:var(--font-ui); font-size:0.85rem; padding:0.7rem 0.9rem; cursor:pointer; }
+    .plan-menu-item:hover { background:var(--gold-bg); }
+    .plan-menu-danger { color:#E07070; border-top:1px solid var(--border); }
     .nmao-badge-logo {
       height: 28px;
       width: 28px;
@@ -611,9 +616,15 @@
           <div class="quick-add-item" onclick="closeQuickAdd();navigate('communications',null)"><span class="quick-add-icon"><i class="fa-solid fa-bullhorn"></i></span> Send Alert</div>
         </div>
       </div>
-      <div class="nmao-badge" id="planBadge" onclick="openPlanModal()" title="Manage subscription">
-        <img src="nmao_logo.png" alt="NMAO" class="nmao-badge-logo" />
-        <span class="nmao-badge-text">NMAO</span>
+      <div class="nmao-badge-wrap" style="position:relative">
+        <div class="nmao-badge" id="planBadge" onclick="togglePlanMenu(event)" title="Subscription">
+          <img src="nmao_logo.png" alt="NMAO" class="nmao-badge-logo" />
+          <span class="nmao-badge-text">NMAO</span>
+        </div>
+        <div id="planMenu" class="plan-menu">
+          <button class="plan-menu-item" onclick="closePlanMenu();openBillingPortal()"><i class="fa-solid fa-arrow-up-right-dots" style="margin-right:0.5rem"></i>Manage Billing</button>
+          <button class="plan-menu-item plan-menu-danger" onclick="closePlanMenu();openCancelPlan()"><i class="fa-solid fa-circle-xmark" style="margin-right:0.5rem"></i>Cancel plan</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3774,6 +3785,37 @@ function updatePlanBadge(plan) {
   var cur = document.getElementById('planCard-' + plan); if (cur) cur.classList.add('current');
 }
 function openPlanModal()  { openBillingPortal(); }
+function togglePlanMenu(e){ if(e){e.stopPropagation();} var m=document.getElementById('planMenu'); if(m){m.classList.toggle('open');} }
+function closePlanMenu(){ var m=document.getElementById('planMenu'); if(m){m.classList.remove('open');} }
+document.addEventListener('click', function(ev){ var w=(ev.target&&ev.target.closest)?ev.target.closest('.nmao-badge-wrap'):null; if(!w){ closePlanMenu(); } });
+function openCancelPlan(){
+  var ov=document.createElement('div'); ov.id='cancelPlanOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10070;padding:1rem';
+  ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);max-width:460px;width:100%;padding:1.5rem">'+
+    '<div style="font-family:var(--font-display);font-size:1.2rem;color:var(--white);margin-bottom:0.5rem">Cancel your NMAO subscription?</div>'+
+    '<div style="font-size:0.88rem;color:var(--muted);line-height:1.6">Your plan stays active until the end of your current billing period, then it will not renew. <strong style="color:#F5F0E8">Your members\u2019 billing is not affected</strong> \u2014 their payments run on your school\u2019s own Stripe account, not NMAO\u2019s. You can reactivate anytime from Manage Billing before the period ends.</div>'+
+    '<div id="cancelPlanMsg" style="font-size:0.82rem;margin:0.8rem 0;min-height:1rem"></div>'+
+    '<div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:0.5rem">'+
+      '<button class="btn-sm" onclick="closeCancelPlan()">Keep my plan</button>'+
+      '<button class="btn-sm" id="cancelPlanGo" style="border-color:#A04040;color:#E07070" onclick="doCancelPlan()">Cancel subscription</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+function closeCancelPlan(){ var o=document.getElementById('cancelPlanOverlay'); if(o&&o.parentNode){ o.parentNode.removeChild(o); } }
+async function doCancelPlan(){
+  var go=document.getElementById('cancelPlanGo'), msg=document.getElementById('cancelPlanMsg');
+  if(go){go.disabled=true;} if(msg){ msg.textContent='Cancelling\u2026'; msg.style.color='var(--muted)'; }
+  try{
+    var r=await fetch(SURL+'/functions/v1/cancel-platform-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+    var d=await r.json();
+    if(!r.ok||d.error){ throw new Error(d.error||'Could not cancel.'); }
+    var when=d.current_period_end?new Date(d.current_period_end*1000).toLocaleDateString():'the end of your billing period';
+    closeCancelPlan();
+    alert('Your NMAO subscription is set to cancel on '+when+'. It stays active until then, and you can reactivate from Manage Billing anytime before that date.');
+  }catch(err){ if(msg){ msg.textContent=(err&&err.message)?err.message:'Could not cancel.'; msg.style.color='#E07070'; } if(go){go.disabled=false;} }
+}
+
 async function openBillingPortal(){
   try{
     var ret = window.location.origin + window.location.pathname + '?billing=managed';
