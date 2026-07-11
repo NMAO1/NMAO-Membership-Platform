@@ -1406,6 +1406,11 @@
       <div class="field"><label>Facebook URL</label><input type="text" id="kioskFacebookUrl" placeholder="https://facebook.com/yourschool" /></div>
       <div class="field"><label>TikTok URL</label><input type="text" id="kioskTiktokUrl" placeholder="https://tiktok.com/@yourschool" /></div>
       <div class="field"><label>Website URL</label><input type="text" id="schoolWebsiteUrl" placeholder="https://yourschool.com" /></div>
+      <div class="field"><label>Google review link</label><input type="text" id="schoolReviewUrl" placeholder="https://g.page/r/..." /><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">Used by the Google Review Request automation (fires after a belt promotion). Find it in your Google Business Profile under “Get more reviews.”</p></div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+        <div class="field" style="margin:0;flex:1;min-width:150px"><label>Ask at most (per student)</label><input type="number" id="reviewMaxAsks" min="0" value="1" /><p style="font-size:0.68rem;color:var(--muted);margin-top:0.25rem">0 = no limit</p></div>
+        <div class="field" style="margin:0;flex:1;min-width:150px"><label>Wait between asks (days)</label><input type="number" id="reviewCooldownDays" min="0" value="365" /></div>
+      </div>
       <button class="panel-action" style="margin-top:0.75rem" onclick="saveSocialProfiles()"><i class="fa-solid fa-floppy-disk"></i> Save Social Profiles</button>
       <p class="form-msg" id="socialProfilesMsg"></p>
     </div></div>
@@ -1930,6 +1935,7 @@
       <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn-sm gold" onclick="openProfileCheckout()"><i class="fa-solid fa-cash-register"></i> New charge / sell</button>
         <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()"><i class="fa-solid fa-ranking-star"></i> Promote</button>
+        <button class="btn-sm" id="reviewReqBtn" onclick="requestReviewManual()" title="Send a Google review request now"><i class="fa-solid fa-star"></i> Request review</button>
         <button class="btn-sm gold" onclick="openEditStudent()"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="btn-sm" id="sendMagicLinkBtn" onclick="sendPortalMagicLink()"><i class="fa-solid fa-link"></i> Portal Link</button>
         <select class="btn-sm" id="profileStatusSelect" onchange="setStudentStatus(this.value)" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--white)"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select>
@@ -3280,6 +3286,7 @@ var AUTOMATION_TRIGGERS = [
   {key:'welcome',          title:'New Student Welcome',      desc:'Fires when a new student is added',                      icon:'fa-hands-clapping'},
   {key:'kiosk_welcome', title:'Kiosk Sign-Up Welcome', desc:'Fires when someone signs up at the front-desk kiosk', icon:'fa-id-badge'},
   {key:'promotion',        title:'Belt Promotion',           desc:'Fires when a student is promoted',                       icon:'fa-ranking-star'},
+  {key:'review_request',   title:'Google Review Request',    desc:'Fires after a belt promotion, asking for a Google review',icon:'fa-star'},
   {key:'belt_test_invite', title:'Belt Test Invitation',     desc:'Fires when a student is invited to a belt test',         icon:'fa-trophy'},
   {key:'pack_low',         title:'Session Pack Low',         desc:'Fires when a student pack balance falls below threshold', icon:'fa-layer-group'}
 ];
@@ -3793,18 +3800,32 @@ async function saveSessionSettings(){
 }
 
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
+async function requestReviewManual(){
+  var s=currentProfileStudent; if(!s){ return; }
+  if(!window.schoolData||!window.schoolData.google_review_url){ alert('Add your Google review link first in Share & Embed, under Social Profiles.'); return; }
+  if(!confirm('Send a Google review request to '+(s.first_name||'this student')+' now? This bypasses the frequency limits.')) return;
+  var rv=window.schoolData.google_review_url;
+  try{
+    var r=await fetch(SURL+'/functions/v1/run-automation',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,trigger_key:'review_request',recipient:{type:'student',id:s.id},context:{review_link:rv,cta_url:rv,cta_label:'Leave a review',force:true}})});
+    var d=await r.json().catch(function(){return {};});
+    if(d&&d.success){ alert('Review request sent to '+(s.first_name||'the student')+'.'); }
+    else { alert('Nothing was sent. Make sure the Google Review Request automation is turned on with a message, and the student has an email or a phone with SMS consent.'); }
+  }catch(e){ alert('Could not send the request. Please try again.'); }
+}
 async function loadSocialProfiles(){
   try{
-    var r=await sb.from('schools').select('kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,website').eq('id',SID).single();
+    var r=await sb.from('schools').select('kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,website,google_review_url,review_max_asks,review_cooldown_days').eq('id',SID).single();
     var d=r.data||{};
     var set=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
-    set('kioskInstagramUrl',d.kiosk_instagram_url); set('kioskFacebookUrl',d.kiosk_facebook_url); set('kioskTiktokUrl',d.kiosk_tiktok_url); set('schoolWebsiteUrl',d.website);
+    set('kioskInstagramUrl',d.kiosk_instagram_url); set('kioskFacebookUrl',d.kiosk_facebook_url); set('kioskTiktokUrl',d.kiosk_tiktok_url); set('schoolWebsiteUrl',d.website); set('schoolReviewUrl',d.google_review_url);
+    var setN=function(id,v,dflt){var el=document.getElementById(id);if(el)el.value=(v!=null?v:dflt);}; setN('reviewMaxAsks',d.review_max_asks,1); setN('reviewCooldownDays',d.review_cooldown_days,365);
   }catch(e){}
 }
 async function saveSocialProfiles(){
   var g=function(id){var el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():null;};
   setMsg('socialProfilesMsg','Saving...','');
-  var r=await sb.from('schools').update({kiosk_instagram_url:g('kioskInstagramUrl'),kiosk_facebook_url:g('kioskFacebookUrl'),kiosk_tiktok_url:g('kioskTiktokUrl'),website:g('schoolWebsiteUrl')}).eq('id',SID);
+  var r=await sb.from('schools').update({kiosk_instagram_url:g('kioskInstagramUrl'),kiosk_facebook_url:g('kioskFacebookUrl'),kiosk_tiktok_url:g('kioskTiktokUrl'),website:g('schoolWebsiteUrl'),google_review_url:g('schoolReviewUrl'),review_max_asks:(parseInt(document.getElementById('reviewMaxAsks').value)||0),review_cooldown_days:(parseInt(document.getElementById('reviewCooldownDays').value)||0)}).eq('id',SID);
+  if(!r.error && window.schoolData){ window.schoolData.google_review_url=g('schoolReviewUrl'); }
   if(r.error){ setMsg('socialProfilesMsg',r.error.message,'error'); } else { setMsg('socialProfilesMsg','Social profiles saved!','success'); setTimeout(function(){var m=document.getElementById('socialProfilesMsg');if(m)m.textContent='';},3000); }
 }
 function renderShareHub(){
@@ -7918,6 +7939,7 @@ async function confirmPromotion() {
     var from=cb2||currentProfileBeltLevels[0];
     await sb.from('belt_promotions').insert({school_id:SID,student_id:s.id,belt_from:from.name,belt_to:to.name,belt_from_id:from.id,belt_to_id:to.id,promotion_date:document.getElementById('promotionDate').value,promoted_at:new Date().toISOString(),promoted_by:document.getElementById('userName').textContent,fee_charged:parseFloat(document.getElementById('promotionFee').value)||0,fee_paid:document.getElementById('promotionFeePaid').checked,notes:document.getElementById('promotionNotes').value.trim()});
     setMsg('promotionMsg','Promoted to '+to.name+'!','success');
+    if(window.schoolData && window.schoolData.google_review_url){ var _rv=window.schoolData.google_review_url; fetch(SURL+'/functions/v1/run-automation',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,trigger_key:'review_request',recipient:{type:'student',id:s.id},context:{review_link:_rv,cta_url:_rv,cta_label:'Leave a review'}})}).catch(function(){}); }
   }else{
     setMsg('promotionMsg','Rank set to '+to.name+'.','success');
   }
