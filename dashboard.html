@@ -263,6 +263,8 @@
     .plan-menu-item { display:block; width:100%; text-align:left; background:none; border:none; color:var(--white); font-family:var(--font-ui); font-size:0.85rem; padding:0.7rem 0.9rem; cursor:pointer; }
     .plan-menu-item:hover { background:var(--gold-bg); }
     .plan-menu-danger { color:#E07070; border-top:1px solid var(--border); }
+    body.plan-cancelled .panel-action, body.plan-cancelled .btn-gold { opacity:0.5; pointer-events:none; }
+    #planCancelledBanner button { pointer-events:auto !important; opacity:1 !important; }
     .nmao-badge-logo {
       height: 28px;
       width: 28px;
@@ -1249,6 +1251,7 @@
         <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
         <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
         <div class="field"><label>State</label><input type="text" id="settingState" /></div>
+        <div class="field"><label>Timezone</label><select id="settingTimezone"><option value="America/New_York">Eastern (New York)</option><option value="America/Chicago">Central (Chicago)</option><option value="America/Denver">Mountain (Denver)</option><option value="America/Phoenix">Mountain, no DST (Phoenix)</option><option value="America/Los_Angeles">Pacific (Los Angeles)</option><option value="America/Anchorage">Alaska (Anchorage)</option><option value="Pacific/Honolulu">Hawaii (Honolulu)</option></select><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">Used for class scheduling and automatic attendance check-in. Set this before onboarding members if your school isn't Eastern.</p></div>
         <div class="field">
           <label>Member Portal Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.slug',this)" title="Help">?</button></label>
           <div class="booking-slug-row">
@@ -3468,6 +3471,7 @@ async function loadSchool() {
     document.getElementById('settingEmail').value = d.email || '';
     document.getElementById('settingPhone').value = d.phone || '';
     document.getElementById('settingCity').value  = d.city  || '';
+    var _tzEl=document.getElementById('settingTimezone'); if(_tzEl){ _tzEl.value = d.timezone || 'America/New_York'; }
     if(document.getElementById('settingSlug')){var sg=(d.slug)||(window.schoolData&&window.schoolData.slug)||'';document.getElementById('settingSlug').value=sg;updateSlugPreview(sg);}
     if(document.getElementById('publicBookingShowSpots')){document.getElementById('publicBookingShowSpots').checked=d.public_booking_show_spots!==false;}
     if(document.getElementById('publicBookingDefaultView')){document.getElementById('publicBookingDefaultView').value=d.public_booking_default_view||'week';}
@@ -3597,7 +3601,7 @@ function syncSidebarTextColorText() { var h=document.getElementById('settingSide
 function selectFont(font,el)   { selectedFont=font; document.querySelectorAll('.font-option').forEach(function(fo){fo.classList.remove('selected');}); el.classList.add('selected'); document.documentElement.style.setProperty('--font-display',"'"+font+"',serif"); }
 
 async function saveSettings() {
-var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked,allow_member_card_updates:document.getElementById('cardUpdateToggle').checked}).eq('id',SID);
+var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked,allow_member_card_updates:document.getElementById('cardUpdateToggle').checked,timezone:document.getElementById('settingTimezone').value}).eq('id',SID);
   if(r.error){setMsg('settingsMsg',r.error.message,'error');}else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();}
 }
 async function saveMembershipSettings(){
@@ -3767,11 +3771,22 @@ async function saveSessionSettings(){
 }
 
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
+function renderPlanCancelledBanner(cancelled){
+  var b=document.getElementById('planCancelledBanner');
+  if(!cancelled){ document.body.classList.remove('plan-cancelled'); if(b&&b.parentNode){ b.parentNode.removeChild(b); } return; }
+  document.body.classList.add('plan-cancelled');
+  if(b) return;
+  b=document.createElement('div'); b.id='planCancelledBanner';
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#3a1414;border-bottom:1px solid #A04040;color:#F5D0D0;padding:0.7rem 1rem;display:flex;align-items:center;justify-content:center;gap:1rem;font-size:0.88rem;font-family:var(--font-ui);flex-wrap:wrap';
+  b.innerHTML='<span><i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem"></i>Your NMAO subscription has ended. Reactivate to restore full access.</span><button onclick="openBillingPortal()" style="background:var(--gold);color:#0a0a0a;border:none;padding:0.45rem 1rem;font-weight:600;cursor:pointer;font-family:var(--font-ui)">Reactivate</button>';
+  document.body.appendChild(b);
+}
 function updatePlanBadge(plan) {
   var sd = window.schoolData || {};
   var price = sd.plan_price ? sd.plan_price : 99;
   var statusMap = {trialing:'Free Trial', active:'Active', past_due:'Past Due', cancelled:'Cancelled'};
   var status = statusMap[sd.plan_status] || 'Active';
+  renderPlanCancelledBanner(sd.plan_status === 'cancelled');
   var line = '$' + price + '/month \u00b7 ' + status;
   if (sd.plan_status === 'trialing' && sd.trial_ends_at) {
     var ends = new Date(sd.trial_ends_at);
