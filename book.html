@@ -8,6 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Book a private session" />
+  <meta property="og:description" content="Reserve a private lesson at our martial arts school." />
   <style>
     /* ============================================================
        BOOK.HTML — STYLES
@@ -700,6 +703,7 @@
 
         // 3. Render instructor card
         renderInstructorCard();
+        if(window.renderSocialFooter) renderSocialFooter(sb, instructor.school_id);
 
         // 4. Load booking settings → fallback to school session types
         var rawSettings = [];
@@ -1568,5 +1572,6 @@
       el.className = 'form-msg' + (type ? ' ' + type : '');
     }
   </script>
+<script src="social-footer.js"></script>
 </body>
 </html>
