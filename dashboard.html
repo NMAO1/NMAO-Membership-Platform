@@ -1117,6 +1117,13 @@
             <button class="alert-type-btn" id="pi-type-family" onclick="setPortalInviteType('family')"><i class="fa-solid fa-users"></i> Families</button>
           </div>
 
+          <!-- §PI-CHANNEL-TOGGLE -->
+          <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Send via</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem">
+            <button class="alert-type-btn selected" id="pi-channel-email" onclick="setPortalInviteChannel('email')"><i class="fa-solid fa-envelope"></i> Email</button>
+            <button class="alert-type-btn" id="pi-channel-sms" onclick="setPortalInviteChannel('sms')"><i class="fa-solid fa-comment-sms"></i> Text</button>
+          </div>
+
           <!-- §PI-FILTER-CHIPS -->
           <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Filter</div>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem" id="pi-filters">
@@ -1150,8 +1157,8 @@
         <span>Customize message (optional)</span>
       </label>
       <div id="pi-customize-fields" style="display:none;margin-top:0.85rem">
-        <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Subject</div>
-        <input type="text" id="pi-subject" placeholder="Leave blank for the default" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.55rem 0.85rem;outline:none;margin-bottom:0.85rem" />
+        <div id="pi-subject-wrap"><div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Subject</div>
+        <input type="text" id="pi-subject" placeholder="Leave blank for the default" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.55rem 0.85rem;outline:none;margin-bottom:0.85rem" /></div>
         <div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Message</div>
         <textarea id="pi-message" rows="5" placeholder="Leave blank for the default welcome message. Write your own to replace it — the sign-in button, expiry note, and footer are added automatically. Use a blank line between paragraphs." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.55rem 0.85rem;outline:none;resize:vertical;line-height:1.5"></textarea>
       </div>
@@ -12865,7 +12872,7 @@ async function composeSendSms(){
   }catch(e){ msgEl.style.color='#E0857B'; msgEl.textContent='Message failed to send.'; }
 }
 
-var portalInviteState={
+var portalInviteState={channel:'email',
   loaded:false,
   type:"student",          // "student" | "family"
   filter:"all",            // "all" | "never" | "pending" | "onboarded"
@@ -12893,8 +12900,8 @@ async function fetchPortalInviteRecipients(){
     var type=portalInviteState.type;
     var table=type==="family"?"families":"students";
     var cols=type==="family"
-      ? "id, email, name, portal_invited_at"
-      : "id, email, first_name, last_name, portal_invited_at, portal_onboarded";
+      ? "id, email, name, phone, portal_invited_at"
+      : "id, email, first_name, last_name, phone, portal_invited_at, portal_onboarded";
     var r=await sb.from(table).select(cols).eq("school_id",SID).order(type==="family"?"name":"first_name");
     if(r.error){throw new Error(r.error.message);}
     portalInviteState.recipients=r.data||[];
@@ -12906,6 +12913,17 @@ async function fetchPortalInviteRecipients(){
   }
 }
 
+function setPortalInviteChannel(ch){
+  if(portalInviteState.channel===ch) return;
+  portalInviteState.channel=ch;
+  document.getElementById("pi-channel-email").classList.toggle("selected",ch==="email");
+  document.getElementById("pi-channel-sms").classList.toggle("selected",ch==="sms");
+  var sw=document.getElementById("pi-subject-wrap"); if(sw) sw.style.display = ch==="sms" ? "none" : "block";
+  var msg=document.getElementById("pi-message");
+  if(msg) msg.placeholder = ch==="sms"
+    ? "Leave blank for the default text. Write your own message \u2014 the sign-in link is added automatically."
+    : "Leave blank for the default welcome message. Write your own to replace it \u2014 the sign-in button, expiry note, and footer are added automatically. Use a blank line between paragraphs.";
+}
 function setPortalInviteType(type){
   if(portalInviteState.type===type)return;
   portalInviteState.type=type;
@@ -13086,12 +13104,14 @@ function confirmPortalInvites(){
   var selectedIds=Object.keys(portalInviteState.selected);
   if(!selectedIds.length)return;
   var selectedRows=portalInviteState.recipients.filter(function(r){return portalInviteState.selected[r.id];});
-  var withEmail=selectedRows.filter(function(r){return r.email;});
+  var isSms=portalInviteState.channel==="sms";
+  var withEmail=selectedRows.filter(function(r){return isSms?(r.phone&&r.email):r.email;});
   var priorInvited=withEmail.filter(function(r){return r.portal_invited_at;}).length;
   var typeLabel=portalInviteState.type==="family"?"family head":"student";
   var typePlural=portalInviteState.type==="family"?"family heads":"students";
   var noun=withEmail.length===1?typeLabel:typePlural;
-  var text='Send portal invite to <strong>'+withEmail.length+'</strong> '+noun+'?';
+  var text='Send '+(isSms?'a text ':'')+'portal invite to <strong>'+withEmail.length+'</strong> '+noun+'?';
+  if(isSms){ var _missing=selectedRows.length-withEmail.length; if(_missing>0){ text+='<br><span style="color:var(--muted2);font-size:0.8rem;display:inline-block;margin-top:0.35rem">'+_missing+" selected can't be texted (need both a phone and an email on file) and will be skipped.</span>"; } }
   if(priorInvited){
     var verb=priorInvited===1?"has":"have";
     text+='<br><span style="color:var(--gold);font-size:0.82rem;display:inline-block;margin-top:0.4rem"><i class="fa-solid fa-circle-info" style="margin-right:0.4rem"></i>'+priorInvited+' '+verb+' been invited before \u2014 they will receive a fresh link.</span>';
@@ -13135,6 +13155,7 @@ async function sendPortalInvites(){
         school_id:SID,
         recipient_type:portalInviteState.type,
         recipient_ids:selectedIds,
+        channel:(portalInviteState.channel||"email"),
         subject:customSubject,
         body:customBody
       })
