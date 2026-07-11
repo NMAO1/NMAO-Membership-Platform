@@ -1354,14 +1354,6 @@
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-youtube" style="color:#E07070;margin-right:0.5rem"></i>Highlight Reel Video</div><div style="font-size:0.75rem;color:var(--muted)">YouTube video shown to prospective students</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowVideo"><div class="toggle-slider"></div></label></div><div class="field"><label>YouTube URL</label><input type="text" id="kioskVideoUrl" placeholder="https://youtube.com/watch?v=..." /></div></div>
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-quote-left" style="color:var(--gold);margin-right:0.5rem"></i>School Bio</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowBio"><div class="toggle-slider"></div></label></div><div class="field"><label>Bio Text</label><textarea id="kioskBio" rows="4" placeholder="Welcome! We are a family-friendly martial arts school..."></textarea></div></div>
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.5rem"></i>Social Proof Stats</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowStats"><div class="toggle-slider"></div></label></div><div style="display:flex;flex-direction:column;gap:0.5rem"><div class="form-row"><div class="field"><label>Stat 1 Number</label><input type="text" id="kioskStat1Num" placeholder="e.g. 200+" /></div><div class="field"><label>Stat 1 Label</label><input type="text" id="kioskStat1Label" placeholder="e.g. Students" /></div></div><div class="form-row"><div class="field"><label>Stat 2 Number</label><input type="text" id="kioskStat2Num" placeholder="e.g. 2008" /></div><div class="field"><label>Stat 2 Label</label><input type="text" id="kioskStat2Label" placeholder="e.g. Founded" /></div></div><div class="form-row"><div class="field"><label>Stat 3 Number</label><input type="text" id="kioskStat3Num" placeholder="e.g. 5" /></div><div class="field"><label>Stat 3 Label</label><input type="text" id="kioskStat3Label" placeholder="e.g. Instructors" /></div></div></div></div>
-          <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
-            <div style="font-size:0.92rem;color:var(--white);margin-bottom:0.3rem"><i class="fa-solid fa-share-nodes" style="color:var(--gold);margin-right:0.5rem"></i>School Socials &amp; Website <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.school_socials',this)" title="Help">?</button></div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.5">Shown on your kiosk and as \u201cFollow us\u201d links at the bottom of your public pages (booking, events, plans, and the member portal). Leave any blank to hide that icon.</div>
-            <div class="field"><label>Instagram URL</label><input type="text" id="kioskInstagramUrl" placeholder="https://instagram.com/yourschool" /></div>
-            <div class="field"><label>Facebook URL</label><input type="text" id="kioskFacebookUrl" placeholder="https://facebook.com/yourschool" /></div>
-            <div class="field"><label>TikTok URL</label><input type="text" id="kioskTiktokUrl" placeholder="https://tiktok.com/@yourschool" /></div>
-            <div class="field"><label>Website URL</label><input type="text" id="schoolWebsiteUrl" placeholder="https://yourschool.com" /></div>
-          </div>
         </div>
         <button class="panel-action" style="margin-top:1.5rem" onclick="saveKioskSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Kiosk Settings</button>
         <p class="form-msg" id="kioskSettingsMsg"></p>
@@ -1407,6 +1399,15 @@
     <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem;color:var(--gold)"></i>Share Links <button class="help-hint-inline" onclick="openHelpPopover('shareembed.sharelinks',this)" title="Help">?</button></span></div><div class="panel-body">
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Your public links, ready to post. Copy them, show a QR code for print or the front desk, or share straight to social.</p>
       <div id="shareHubList"></div>
+    </div></div>
+    <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Social Profiles &amp; Website <button class="help-hint-inline" onclick="openHelpPopover('settings.school_socials',this)" title="Help">?</button></span></div><div class="panel-body">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Your Instagram, Facebook, TikTok, and website. These appear as "Follow us" links at the bottom of your public pages (booking, events, plans, and the member portal) and on your kiosk. Leave any blank to hide it.</p>
+      <div class="field"><label>Instagram URL</label><input type="text" id="kioskInstagramUrl" placeholder="https://instagram.com/yourschool" /></div>
+      <div class="field"><label>Facebook URL</label><input type="text" id="kioskFacebookUrl" placeholder="https://facebook.com/yourschool" /></div>
+      <div class="field"><label>TikTok URL</label><input type="text" id="kioskTiktokUrl" placeholder="https://tiktok.com/@yourschool" /></div>
+      <div class="field"><label>Website URL</label><input type="text" id="schoolWebsiteUrl" placeholder="https://yourschool.com" /></div>
+      <button class="panel-action" style="margin-top:0.75rem" onclick="saveSocialProfiles()"><i class="fa-solid fa-floppy-disk"></i> Save Social Profiles</button>
+      <p class="form-msg" id="socialProfilesMsg"></p>
     </div></div>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable views of your class schedule and membership pricing for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
     <div class="panel">
@@ -3792,6 +3793,20 @@ async function saveSessionSettings(){
 }
 
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
+async function loadSocialProfiles(){
+  try{
+    var r=await sb.from('schools').select('kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,website').eq('id',SID).single();
+    var d=r.data||{};
+    var set=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
+    set('kioskInstagramUrl',d.kiosk_instagram_url); set('kioskFacebookUrl',d.kiosk_facebook_url); set('kioskTiktokUrl',d.kiosk_tiktok_url); set('schoolWebsiteUrl',d.website);
+  }catch(e){}
+}
+async function saveSocialProfiles(){
+  var g=function(id){var el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():null;};
+  setMsg('socialProfilesMsg','Saving...','');
+  var r=await sb.from('schools').update({kiosk_instagram_url:g('kioskInstagramUrl'),kiosk_facebook_url:g('kioskFacebookUrl'),kiosk_tiktok_url:g('kioskTiktokUrl'),website:g('schoolWebsiteUrl')}).eq('id',SID);
+  if(r.error){ setMsg('socialProfilesMsg',r.error.message,'error'); } else { setMsg('socialProfilesMsg','Social profiles saved!','success'); setTimeout(function(){var m=document.getElementById('socialProfilesMsg');if(m)m.textContent='';},3000); }
+}
 function renderShareHub(){
   var box=document.getElementById('shareHubList'); if(!box) return;
   var slug=(window.schoolData&&window.schoolData.slug)?window.schoolData.slug:'';
@@ -3935,10 +3950,9 @@ document.getElementById('unsavedConfirm').onclick = function(){document.getEleme
 // Kiosk settings
 async function loadKioskSettings(){
   try{
-    var r=await sb.from('schools').select('kiosk_video_url,kiosk_bio,kiosk_stats,kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,website,kiosk_show_video,kiosk_show_bio,kiosk_show_stats,kiosk_show_instagram,kiosk_show_facebook,kiosk_show_tiktok').eq('id',SID).single();
+    var r=await sb.from('schools').select('kiosk_video_url,kiosk_bio,kiosk_stats,kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,kiosk_show_video,kiosk_show_bio,kiosk_show_stats,kiosk_show_instagram,kiosk_show_facebook,kiosk_show_tiktok').eq('id',SID).single();
     if(r.error||!r.data)return; var d=r.data;
-    ['kioskVideoUrl','kioskBio','kioskInstagramUrl','kioskFacebookUrl','kioskTiktokUrl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=d['kiosk_'+id.replace('kiosk','').replace(/([A-Z])/g,function(m){return '_'+m.toLowerCase()}).slice(1)]||'';});
-    var _wEl=document.getElementById('schoolWebsiteUrl'); if(_wEl) _wEl.value=d.website||'';
+    ['kioskVideoUrl','kioskBio'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=d['kiosk_'+id.replace('kiosk','').replace(/([A-Z])/g,function(m){return '_'+m.toLowerCase()}).slice(1)]||'';});
     document.getElementById('kioskVideoUrl').value=d.kiosk_video_url||'';
     document.getElementById('kioskBio').value=d.kiosk_bio||'';
     document.getElementById('kioskShowVideo').checked=!!d.kiosk_show_video;
@@ -3959,8 +3973,7 @@ async function saveKioskSettings(){
   if(s1n||s1l)stats.push({num:s1n,label:s1l});
   if(s2n||s2l)stats.push({num:s2n,label:s2l});
   if(s3n||s3l)stats.push({num:s3n,label:s3l});
-  function _kv(id){var el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():null;}
-  var r=await sb.from('schools').update({kiosk_video_url:document.getElementById('kioskVideoUrl').value.trim()||null,kiosk_bio:document.getElementById('kioskBio').value.trim()||null,kiosk_stats:stats,kiosk_instagram_url:_kv('kioskInstagramUrl'),kiosk_facebook_url:_kv('kioskFacebookUrl'),kiosk_tiktok_url:_kv('kioskTiktokUrl'),website:_kv('schoolWebsiteUrl'),kiosk_show_video:document.getElementById('kioskShowVideo').checked,kiosk_show_bio:document.getElementById('kioskShowBio').checked,kiosk_show_stats:document.getElementById('kioskShowStats').checked}).eq('id',SID);
+  var r=await sb.from('schools').update({kiosk_video_url:document.getElementById('kioskVideoUrl').value.trim()||null,kiosk_bio:document.getElementById('kioskBio').value.trim()||null,kiosk_stats:stats,kiosk_show_video:document.getElementById('kioskShowVideo').checked,kiosk_show_bio:document.getElementById('kioskShowBio').checked,kiosk_show_stats:document.getElementById('kioskShowStats').checked}).eq('id',SID);
   if(r.error){setMsg('kioskSettingsMsg',r.error.message,'error');}else{setMsg('kioskSettingsMsg','Kiosk settings saved!','success');setTimeout(function(){document.getElementById('kioskSettingsMsg').textContent='';},3000);}
 }
 
@@ -4565,7 +4578,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
-  if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
+  if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
