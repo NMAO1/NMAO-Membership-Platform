@@ -523,6 +523,13 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 #firstRunPwModal.active{display:flex}
 #firstRunPwModal .field input{background:#fff;color:#000;}
     
+    .btn-add-family{background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.5rem 0.7rem;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+    .btn-add-family:hover{background:var(--gold-bg);}
+    .af-label{display:block;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+    .af-input{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem 0.7rem;outline:none;box-sizing:border-box;}
+    .af-input:focus{border-color:var(--gold);}
+    .af-plan{display:flex;align-items:center;gap:0.5rem;background:var(--black);border:1px solid var(--border);padding:0.6rem 0.75rem;cursor:pointer;font-size:0.9rem;color:var(--white);}
+    .af-plan.sel{border-color:var(--gold);background:var(--gold-bg);}
   </style>
 </head>
 <body>
@@ -644,6 +651,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   <div class="child-switcher-bar" id="childSwitcherBar" style="display:none">
     <span class="child-switcher-label"><i class="fa-solid fa-child" style="margin-right:0.4rem"></i>Viewing</span>
     <select class="child-switcher-select" id="childSelect" onchange="switchChild()"></select>
+    <button class="btn-add-family" id="addFamilyBtn" onclick="openAddFamily()"><i class="fa-solid fa-user-plus" style="margin-right:0.3rem"></i>Add family member</button>
   </div>
   <div class="waiver-banner" id="waiverBanner" style="display:none">
     <i class="fa-solid fa-circle-exclamation waiver-banner-icon"></i>
@@ -3048,6 +3056,45 @@ function clearShopBadge(){
 // ─────────────────────────────────────────────────────────────
 //  §JS: FAMILY_PORTAL
 // ─────────────────────────────────────────────────────────────
+var afSelectedPlan=null;
+function afEsc(s){ return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function closeAddFamily(){ document.getElementById('addFamilyModal').style.display='none'; }
+async function openAddFamily(){
+  ['afFirst','afLast','afDob','afEmail','afNotes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('afMsg').textContent=''; afSelectedPlan=null;
+  var plansEl=document.getElementById('afPlans'); plansEl.innerHTML='<div style="color:var(--muted);font-size:0.8rem">Loading plans...</div>';
+  document.getElementById('addFamilyModal').style.display='flex';
+  var r=await sb.rpc('get_public_memberships',{p_school_id:SID});
+  if(r.error||!r.data||!r.data.length){ plansEl.innerHTML='<div style="color:var(--muted);font-size:0.8rem">No self-signup plans are available right now. Please contact your school.</div>'; return; }
+  plansEl.innerHTML=r.data.map(function(m){
+    var price=parseFloat(m.price)||0, fee=parseFloat(m.signup_fee)||0;
+    var priceTxt=(price+fee)>0?('$'+price.toFixed(2)+(m.billing_unit?(' / '+m.billing_unit):'')+(fee>0?(' + $'+fee.toFixed(2)+' signup'):'')):'Free';
+    return '<label class="af-plan" data-mid="'+m.id+'" onclick="afPickPlan(\''+m.id+'\',this)"><input type="radio" name="afplan"><span style="flex:1">'+afEsc(m.name)+'</span><span style="color:var(--gold);white-space:nowrap">'+priceTxt+'</span></label>';
+  }).join('');
+}
+function afPickPlan(id,el){
+  afSelectedPlan=id;
+  var list=document.querySelectorAll('#afPlans .af-plan');
+  for(var i=0;i<list.length;i++){ list[i].classList.remove('sel'); var ip=list[i].querySelector('input'); if(ip) ip.checked=false; }
+  el.classList.add('sel'); var rr=el.querySelector('input'); if(rr) rr.checked=true;
+}
+async function submitAddFamily(){
+  var g=function(id){return document.getElementById(id).value.trim();};
+  var first=g('afFirst'), last=g('afLast'), dob=g('afDob'), email=g('afEmail'), notes=g('afNotes');
+  var msg=document.getElementById('afMsg');
+  if(!first||!last||!dob){ msg.style.color='#E07070'; msg.textContent='First name, last name, and date of birth are required.'; return; }
+  if(!afSelectedPlan){ msg.style.color='#E07070'; msg.textContent='Please choose a membership.'; return; }
+  var btn=document.getElementById('afSubmit'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='Adding...';
+  var resp=await sb.functions.invoke('member-add-family',{body:{school_id:SID,membership_id:afSelectedPlan,first_name:first,last_name:last,date_of_birth:dob,email:email||null,notes:notes||null}});
+  btn.disabled=false;
+  var d=resp.data||{};
+  if(resp.error||d.error){ msg.style.color='#E07070'; msg.textContent=d.message||(resp.error&&resp.error.message)||'Could not add member.'; return; }
+  if(d.mode==='paid'&&d.checkout_url){ window.location.href=d.checkout_url; return; }
+  msg.style.color='#5A9A6A'; msg.textContent='Added!';
+  closeAddFamily();
+  if(currentFamily) showFamilyPortal(currentFamily);
+}
+
 async function showFamilyPortal(family){
   isFamilyMode=true;
   hideAllScreens();
@@ -3460,5 +3507,25 @@ function showPortalToast(msg, kind){
 init();
 </script>
 
+<div id="addFamilyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:600;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface);border:1px solid var(--border);width:100%;max-width:440px;max-height:90vh;overflow-y:auto">
+    <div style="padding:1.1rem 1.3rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:1.15rem;color:var(--white)">Add a family member</div>
+      <button onclick="closeAddFamily()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div style="padding:1.3rem">
+      <div style="display:flex;gap:0.6rem;margin-bottom:0.7rem">
+        <div style="flex:1"><label class="af-label">First name *</label><input id="afFirst" class="af-input"></div>
+        <div style="flex:1"><label class="af-label">Last name *</label><input id="afLast" class="af-input"></div>
+      </div>
+      <div style="margin-bottom:0.7rem"><label class="af-label">Date of birth *</label><input type="date" id="afDob" class="af-input"></div>
+      <div style="margin-bottom:0.7rem"><label class="af-label">Email (optional)</label><input type="email" id="afEmail" class="af-input" placeholder="For their own login &amp; notifications"></div>
+      <div style="margin-bottom:0.9rem"><label class="af-label">Allergies or notes (optional)</label><textarea id="afNotes" class="af-input" rows="2"></textarea></div>
+      <div style="margin-bottom:0.6rem"><label class="af-label">Membership *</label><div id="afPlans" style="display:flex;flex-direction:column;gap:0.4rem"></div></div>
+      <div id="afMsg" style="font-size:0.82rem;margin:0.6rem 0;min-height:1rem"></div>
+      <button id="afSubmit" onclick="submitAddFamily()" class="btn-gold" style="width:100%">Add member</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
