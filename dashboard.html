@@ -760,7 +760,7 @@
         <button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.5rem;margin:1.25rem 0;">
-        <div class="content-heading"><h2>Schedule Shifts</h2><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
+        <div class="content-heading"><h2>Schedule Shifts</h2><button class="help-hint-inline" onclick="openHelpPopover('schedule.shifts',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openShiftModal()"><i class="fa-solid fa-calendar-week"></i> New Shift</button></div>
         <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
         <div id="shiftsList"><div class="empty">Loading...</div></div>
       </div>
@@ -781,14 +781,14 @@
         <div class="modal-header"><span class="modal-title" id="shiftModalTitle">New Shift</span><button class="modal-close" onclick="safeClose('shiftModal',closeShiftModal)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="shiftEditId" value="" />
-          <div class="field"><label>Name</label><input type="text" id="shiftName" placeholder="e.g. Summer Hours" /></div>
+          <div class="field"><label>Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_name',this)" title="Help">?</button></label><input type="text" id="shiftName" placeholder="e.g. Summer Hours" /></div>
           <div style="display:flex;gap:0.75rem">
-            <div class="field" style="flex:1"><label>Start date</label><input type="date" id="shiftStart" /></div>
+            <div class="field" style="flex:1"><label>Start date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_dates',this)" title="Help">?</button></label><input type="date" id="shiftStart" /></div>
             <div class="field" style="flex:1"><label>End date</label><input type="date" id="shiftEnd" /></div>
           </div>
-          <div class="field"><label>Remind members this many days before</label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin-top:0.3rem">How far ahead members get a heads-up. The reminder sends once, automatically, on that day.</div></div>
-          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal</span></div>
-          <div class="field"><label>Notify via</label>
+          <div class="field"><label>Remind members this many days before <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_remind',this)" title="Help">?</button></label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin-top:0.3rem">How far ahead members get a heads-up. The reminder sends once, automatically, on that day.</div></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_revert',this)" title="Help">?</button></span></div>
+          <div class="field"><label>Notify via <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_notify',this)" title="Help">?</button></label>
             <div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">How members hear about the change when a reminder goes out. Text and email reach everyone; in-app alerts show in the member portal.</div>
             <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="sms" /><div class="toggle-slider"></div></label><span class="check-item-label">Text</span></div>
@@ -796,7 +796,7 @@
               <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="alert" checked /><div class="toggle-slider"></div></label><span class="check-item-label">In-app alert</span></div>
             </div>
           </div>
-          <div class="field"><label>Which classes change during this shift?</label><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">Leave a class on <strong>Normal</strong> to keep it as-is. Choose <strong>Retime</strong> to move its day or time, or <strong>Cancel</strong> to skip it for these dates. Only the classes you change are affected.</div><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
+          <div class="field"><label>Which classes change during this shift? <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_classes',this)" title="Help">?</button></label><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">Leave a class on <strong>Normal</strong> to keep it as-is. Choose <strong>Retime</strong> to move its day or time, or <strong>Cancel</strong> to skip it for these dates. Only the classes you change are affected.</div><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
           <p class="form-msg" id="shiftMsg"></p>
           <button class="btn-gold-full" onclick="saveScheduleShift()">Save Shift</button>
         </div>
@@ -4510,6 +4510,13 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+  'schedule.shifts': { title: 'Schedule Shifts', purpose: 'A temporary change to your schedule for a set date range \u2014 holiday weeks, summer hours, a seasonal break \u2014 without editing your normal classes. When the dates pass, everything returns to normal on its own. Members can be reminded before it starts.' },
+  'schedule.sh_name': { title: 'Name', purpose: 'A short label so you recognize this shift later, like "Summer Hours" or "Thanksgiving Week." Members don\'t see this name \u2014 it\'s just for you.' },
+  'schedule.sh_dates': { title: 'Start & End dates', purpose: 'The date range this shift is active. Your normal schedule applies before and after; the changes below only take effect between these two dates (inclusive).' },
+  'schedule.sh_remind': { title: 'Remind members before it starts', purpose: 'How many days ahead members get a heads-up about the change. The reminder sends once, automatically, on that day. Set it to 0 to skip the advance reminder.' },
+  'schedule.sh_revert': { title: 'Remind when normal resumes', purpose: 'Also send a reminder when the shift ends and your regular schedule returns, so members know classes are back to their usual days and times.' },
+  'schedule.sh_notify': { title: 'Notify via', purpose: 'Which channels carry the reminder. Text and email reach everyone with those on file; in-app alerts show in the member portal. Pick any combination.' },
+  'schedule.sh_classes': { title: 'Which classes change', purpose: 'For each class: leave it on Normal to keep it as-is, choose Retime to move its day or time during these dates, or Cancel to skip it entirely. Only the classes you change are affected \u2014 everything else runs as usual.' },
   home: {
     title: 'Dashboard',
     purpose: 'Your daily snapshot: alerts to act on, revenue so far today, the class calendar, and upcoming birthdays.',
