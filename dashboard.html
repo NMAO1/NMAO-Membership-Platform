@@ -263,6 +263,8 @@
     .plan-menu-item { display:block; width:100%; text-align:left; background:none; border:none; color:var(--white); font-family:var(--font-ui); font-size:0.85rem; padding:0.7rem 0.9rem; cursor:pointer; }
     .plan-menu-item:hover { background:var(--gold-bg); }
     .plan-menu-danger { color:#E07070; border-top:1px solid var(--border); }
+    .share-ico{width:32px;height:32px;border:1px solid var(--border);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--muted2);text-decoration:none;font-size:14px}
+    .share-ico:hover{border-color:var(--gold);color:var(--gold)}
     body.plan-cancelled .panel-action, body.plan-cancelled .btn-gold { opacity:0.5; pointer-events:none; }
     #planCancelledBanner button { pointer-events:auto !important; opacity:1 !important; }
     .nmao-badge-logo {
@@ -1352,6 +1354,14 @@
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-youtube" style="color:#E07070;margin-right:0.5rem"></i>Highlight Reel Video</div><div style="font-size:0.75rem;color:var(--muted)">YouTube video shown to prospective students</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowVideo"><div class="toggle-slider"></div></label></div><div class="field"><label>YouTube URL</label><input type="text" id="kioskVideoUrl" placeholder="https://youtube.com/watch?v=..." /></div></div>
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-quote-left" style="color:var(--gold);margin-right:0.5rem"></i>School Bio</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowBio"><div class="toggle-slider"></div></label></div><div class="field"><label>Bio Text</label><textarea id="kioskBio" rows="4" placeholder="Welcome! We are a family-friendly martial arts school..."></textarea></div></div>
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.5rem"></i>Social Proof Stats</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowStats"><div class="toggle-slider"></div></label></div><div style="display:flex;flex-direction:column;gap:0.5rem"><div class="form-row"><div class="field"><label>Stat 1 Number</label><input type="text" id="kioskStat1Num" placeholder="e.g. 200+" /></div><div class="field"><label>Stat 1 Label</label><input type="text" id="kioskStat1Label" placeholder="e.g. Students" /></div></div><div class="form-row"><div class="field"><label>Stat 2 Number</label><input type="text" id="kioskStat2Num" placeholder="e.g. 2008" /></div><div class="field"><label>Stat 2 Label</label><input type="text" id="kioskStat2Label" placeholder="e.g. Founded" /></div></div><div class="form-row"><div class="field"><label>Stat 3 Number</label><input type="text" id="kioskStat3Num" placeholder="e.g. 5" /></div><div class="field"><label>Stat 3 Label</label><input type="text" id="kioskStat3Label" placeholder="e.g. Instructors" /></div></div></div></div>
+          <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem">
+            <div style="font-size:0.92rem;color:var(--white);margin-bottom:0.3rem"><i class="fa-solid fa-share-nodes" style="color:var(--gold);margin-right:0.5rem"></i>School Socials &amp; Website</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.5">Shown on your kiosk and as \u201cFollow us\u201d links at the bottom of your public pages (booking, events, plans, and the member portal). Leave any blank to hide that icon.</div>
+            <div class="field"><label>Instagram URL</label><input type="text" id="kioskInstagramUrl" placeholder="https://instagram.com/yourschool" /></div>
+            <div class="field"><label>Facebook URL</label><input type="text" id="kioskFacebookUrl" placeholder="https://facebook.com/yourschool" /></div>
+            <div class="field"><label>TikTok URL</label><input type="text" id="kioskTiktokUrl" placeholder="https://tiktok.com/@yourschool" /></div>
+            <div class="field"><label>Website URL</label><input type="text" id="schoolWebsiteUrl" placeholder="https://yourschool.com" /></div>
+          </div>
         </div>
         <button class="panel-action" style="margin-top:1.5rem" onclick="saveKioskSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Kiosk Settings</button>
         <p class="form-msg" id="kioskSettingsMsg"></p>
@@ -1394,6 +1404,10 @@
 
   <div class="page" id="page-shareembed">
     <h2>Share &amp; Embed <button class="help-hint-inline" onclick="openHelpPopover('shareembed',this)" title="Help">?</button></h2>
+    <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem;color:var(--gold)"></i>Share Links</span></div><div class="panel-body">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Your public links, ready to post. Copy them, show a QR code for print or the front desk, or share straight to social.</p>
+      <div id="shareHubList"></div>
+    </div></div>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem">Create embeddable views of your class schedule and membership pricing for your website. Build one, choose what it shows, and paste the snippet anywhere you can add HTML. Editing an embed updates it live wherever it is pasted, with no changes to your site.</p>
     <div class="panel">
       <div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Schedule Embeds <button class="help-hint-inline" onclick="openHelpPopover('shareembed.schedule',this)" title="Help">?</button></span><button class="panel-action" onclick="openEmbedModal()"><i class="fa-solid fa-plus"></i> New Embed</button></div>
@@ -3778,6 +3792,46 @@ async function saveSessionSettings(){
 }
 
 function toggleLateCancelFee() { document.getElementById('lateCancelFeeField').style.display=document.getElementById('lateCancelAction').value==='charge'?'block':'none'; }
+function renderShareHub(){
+  var box=document.getElementById('shareHubList'); if(!box) return;
+  var slug=(window.schoolData&&window.schoolData.slug)?window.schoolData.slug:'';
+  var name=(window.schoolData&&window.schoolData.name)?window.schoolData.name:'our school';
+  if(!slug){ box.innerHTML='<div class="empty">Set your link name in Settings first, then your shareable links appear here.</div>'; return; }
+  var base='https://app.nmao.us/';
+  var links=[
+    {icon:'fa-calendar-days',title:'Class schedule & booking',url:base+'classes.html?s='+slug,text:'Check out the class schedule at '+name+' and book a class:'},
+    {icon:'fa-id-badge',title:'Member portal',url:base+'portal.html?s='+slug,text:'Sign in to your '+name+' member portal:'}
+  ];
+  box.innerHTML=links.map(function(l){
+    var u=encodeURIComponent(l.url), t=encodeURIComponent(l.text), tu=encodeURIComponent(l.text+' '+l.url);
+    var eu=l.url.replace(/'/g,"\\'"), et=l.title.replace(/'/g,"\\'");
+    return '<div style="border:1px solid var(--border);background:var(--black);padding:1rem 1.15rem;margin-bottom:0.85rem">'+
+      '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem"><i class="fa-solid '+l.icon+'" style="color:var(--gold)"></i><span style="color:var(--white);font-size:0.92rem">'+l.title+'</span></div>'+
+      '<div style="font-size:0.76rem;color:var(--muted2);word-break:break-all;margin-bottom:0.7rem">'+l.url+'</div>'+
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">'+
+        '<button class="btn-sm" onclick="copyShareLink(\''+eu+'\',this)"><i class="fa-solid fa-copy" style="margin-right:0.3rem"></i>Copy</button>'+
+        '<button class="btn-sm" onclick="showLinkQr(\''+eu+'\',\''+et+'\')"><i class="fa-solid fa-qrcode" style="margin-right:0.3rem"></i>QR</button>'+
+        '<span style="width:1px;height:20px;background:var(--border);margin:0 0.2rem"></span>'+
+        '<a href="https://www.facebook.com/sharer/sharer.php?u='+u+'" target="_blank" rel="noopener" class="share-ico" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>'+
+        '<a href="https://twitter.com/intent/tweet?url='+u+'&text='+t+'" target="_blank" rel="noopener" class="share-ico" title="X"><i class="fa-brands fa-x-twitter"></i></a>'+
+        '<a href="https://wa.me/?text='+tu+'" target="_blank" rel="noopener" class="share-ico" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>'+
+        '<a href="sms:?&body='+tu+'" class="share-ico" title="Text"><i class="fa-solid fa-comment-sms"></i></a>'+
+        '<a href="mailto:?subject='+encodeURIComponent(l.title)+'&body='+tu+'" class="share-ico" title="Email"><i class="fa-solid fa-envelope"></i></a>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function copyShareLink(url,btn){ try{ navigator.clipboard.writeText(url); if(btn){var o=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>Copied';setTimeout(function(){btn.innerHTML=o;},1500);} }catch(e){ window.prompt('Copy this link:',url); } }
+async function showLinkQr(url,label){
+  if(typeof QRCode==='undefined'){ alert('QR library not loaded'); return; }
+  try{
+    var dataUrl=await QRCode.toDataURL(url,{width:512,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+    var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:10080;padding:1rem';
+    ov.onclick=function(){ ov.remove(); };
+    ov.innerHTML='<div style="background:#fff;padding:1.3rem;border-radius:8px;text-align:center;max-width:320px" onclick="event.stopPropagation()"><img src="'+dataUrl+'" style="width:260px;height:260px;display:block;margin:0 auto" alt="QR" /><div style="color:#333;font-size:0.82rem;margin-top:0.6rem">'+label+'</div><a href="'+dataUrl+'" download="nmao-qr.png" style="display:inline-block;margin-top:0.7rem;background:#0a0a0a;color:#fff;padding:0.45rem 1rem;font-size:0.78rem;text-decoration:none;border-radius:4px">Download PNG</a></div>';
+    document.body.appendChild(ov);
+  }catch(e){ alert('Could not generate QR code.'); }
+}
 function renderPlanCancelledBanner(cancelled){
   var b=document.getElementById('planCancelledBanner');
   if(!cancelled){ document.body.classList.remove('plan-cancelled'); if(b&&b.parentNode){ b.parentNode.removeChild(b); } return; }
@@ -3881,9 +3935,10 @@ document.getElementById('unsavedConfirm').onclick = function(){document.getEleme
 // Kiosk settings
 async function loadKioskSettings(){
   try{
-    var r=await sb.from('schools').select('kiosk_video_url,kiosk_bio,kiosk_stats,kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,kiosk_show_video,kiosk_show_bio,kiosk_show_stats,kiosk_show_instagram,kiosk_show_facebook,kiosk_show_tiktok').eq('id',SID).single();
+    var r=await sb.from('schools').select('kiosk_video_url,kiosk_bio,kiosk_stats,kiosk_instagram_url,kiosk_facebook_url,kiosk_tiktok_url,website,kiosk_show_video,kiosk_show_bio,kiosk_show_stats,kiosk_show_instagram,kiosk_show_facebook,kiosk_show_tiktok').eq('id',SID).single();
     if(r.error||!r.data)return; var d=r.data;
     ['kioskVideoUrl','kioskBio','kioskInstagramUrl','kioskFacebookUrl','kioskTiktokUrl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=d['kiosk_'+id.replace('kiosk','').replace(/([A-Z])/g,function(m){return '_'+m.toLowerCase()}).slice(1)]||'';});
+    var _wEl=document.getElementById('schoolWebsiteUrl'); if(_wEl) _wEl.value=d.website||'';
     document.getElementById('kioskVideoUrl').value=d.kiosk_video_url||'';
     document.getElementById('kioskBio').value=d.kiosk_bio||'';
     document.getElementById('kioskShowVideo').checked=!!d.kiosk_show_video;
@@ -3904,7 +3959,8 @@ async function saveKioskSettings(){
   if(s1n||s1l)stats.push({num:s1n,label:s1l});
   if(s2n||s2l)stats.push({num:s2n,label:s2l});
   if(s3n||s3l)stats.push({num:s3n,label:s3l});
-  var r=await sb.from('schools').update({kiosk_video_url:document.getElementById('kioskVideoUrl').value.trim()||null,kiosk_bio:document.getElementById('kioskBio').value.trim()||null,kiosk_stats:stats,kiosk_show_video:document.getElementById('kioskShowVideo').checked,kiosk_show_bio:document.getElementById('kioskShowBio').checked,kiosk_show_stats:document.getElementById('kioskShowStats').checked}).eq('id',SID);
+  function _kv(id){var el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():null;}
+  var r=await sb.from('schools').update({kiosk_video_url:document.getElementById('kioskVideoUrl').value.trim()||null,kiosk_bio:document.getElementById('kioskBio').value.trim()||null,kiosk_stats:stats,kiosk_instagram_url:_kv('kioskInstagramUrl'),kiosk_facebook_url:_kv('kioskFacebookUrl'),kiosk_tiktok_url:_kv('kioskTiktokUrl'),website:_kv('schoolWebsiteUrl'),kiosk_show_video:document.getElementById('kioskShowVideo').checked,kiosk_show_bio:document.getElementById('kioskShowBio').checked,kiosk_show_stats:document.getElementById('kioskShowStats').checked}).eq('id',SID);
   if(r.error){setMsg('kioskSettingsMsg',r.error.message,'error');}else{setMsg('kioskSettingsMsg','Kiosk settings saved!','success');setTimeout(function(){document.getElementById('kioskSettingsMsg').textContent='';},3000);}
 }
 
@@ -4509,7 +4565,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
-  if(page==='shareembed') { if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
+  if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
 }
@@ -15729,7 +15785,7 @@ window.closeWelcomeModal = async function() {
   // Copy public link to clipboard
   window.copyEventPublicLink = function(){
     if (!window.currentEventId) return;
-var url = APP_URL + "event.html?id=" + window.currentEventId;
+var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function(){
         var btn = document.getElementById("evCopyLinkBtn");
