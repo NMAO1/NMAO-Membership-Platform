@@ -1243,7 +1243,7 @@ async function loadSchoolBranding(pre){
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
+sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
       sb.from('families').select('*').eq('email',user.email).eq('school_id',SID).maybeSingle(),
       sb.from('instructors').select('*').eq('email',user.email).eq('active',true).eq('school_id',SID).maybeSingle()
     ]);
@@ -1674,7 +1674,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
-renderSelfCancel(s, _sm);   if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))document.getElementById('cardUpdateSection').style.display='';
+renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))document.getElementById('cardUpdateSection').style.display='';
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
@@ -2519,6 +2519,87 @@ function selfCancelFee(sm, plan){
   var fee=0; if(t==='flat')fee=parseFloat(sm.commit_fee_amount)||0; else if(t==='remaining')fee=rv; else if(t==='percent')fee=rv*((parseFloat(sm.commit_fee_amount)||0)/100);
   return Math.round(fee*100)/100;
 }
+function renderPauseControls(s, smArr){
+  try{
+    var card=document.getElementById('membershipCard'); if(!card) return;
+    var plan=s&&s.memberships; if(!plan) return;
+    var active=null;
+    if(smArr&&smArr.length){ for(var i=0;i<smArr.length;i++){ if(smArr[i]&&smArr[i].status!=='cancelled'){ active=smArr[i]; break; } } }
+    if(!active) return;
+    window._pauseSm=active; window._pausePlan=plan;
+    if(active.status==='paused'){
+      var until=active.pause_resumes_at?(' until '+new Date(active.pause_resumes_at+'T00:00:00').toLocaleDateString()):'';
+      card.innerHTML += '<div style="margin-top:0.6rem;padding:0.7rem 0.9rem;background:rgba(90,122,154,0.12);border:1px solid rgba(90,122,154,0.4);font-size:0.85rem;color:#9BB4CC">Your membership is paused'+until+'. <button class="btn-sm" style="margin-left:0.5rem" onclick="doSelfResume()">Resume now</button></div>';
+    } else if(plan.allow_member_self_pause){
+      card.innerHTML += '<div style="margin-top:0.5rem;text-align:right"><button class="btn-sm" onclick="openSelfPause()"><i class="fa-solid fa-circle-pause" style="margin-right:0.3rem"></i>Pause membership</button></div>';
+    }
+  }catch(e){}
+}
+function openSelfPause(){
+  var sm=window._pauseSm, plan=window._pausePlan; if(!sm||!plan) return;
+  var maxM=parseInt(plan.pause_max_months)||3, maxY=parseInt(plan.pause_max_per_year)||2, fee=parseFloat(plan.pause_fee)||0;
+  var today=new Date(); var minD=new Date(today); minD.setDate(minD.getDate()+1);
+  var maxD=new Date(today); maxD.setMonth(maxD.getMonth()+maxM);
+  function iso(d){ return d.toISOString().split('T')[0]; }
+  var feeHtml=(fee>0)?'<div style="background:rgba(226,168,76,0.1);border:1px solid rgba(226,168,76,0.4);padding:0.7rem 0.9rem;margin:0.7rem 0;font-size:0.85rem;color:#E2A84C">A pause fee of <strong>$'+fee.toFixed(2)+'</strong> applies.</div>':'';
+  var ov=document.createElement('div'); ov.id='selfPauseOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10060;padding:1rem';
+  ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);max-width:440px;width:100%;padding:1.4rem">'+
+    '<div style="font-size:1.05rem;color:var(--white);font-weight:600;margin-bottom:0.3rem">Pause membership</div>'+
+    '<div style="font-size:0.85rem;color:var(--muted);line-height:1.5">While paused, billing stops and class access is paused. You can pause up to '+maxM+' month'+(maxM>1?'s':'')+' at a time, '+maxY+' time'+(maxY>1?'s':'')+' a year. Billing resumes automatically on your chosen date.</div>'+
+    feeHtml+
+    '<div style="margin:0.8rem 0"><label class="af-label">Resume on</label><input type="date" id="pauseResumeDate" min="'+iso(minD)+'" max="'+iso(maxD)+'" value="'+iso(maxD)+'" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.6rem"></div>'+
+    '<label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:0.84rem;color:var(--white);margin:0.5rem 0 1rem;cursor:pointer"><input type="checkbox" id="pauseAccept" style="margin-top:0.2rem" onchange="document.getElementById(\'pauseGo\').disabled=!this.checked" /> <span>I understand and accept the pause policy'+((fee>0)?' and the pause fee above':'')+'.</span></label>'+
+    '<div style="display:flex;gap:0.6rem;justify-content:flex-end">'+
+      '<button class="btn-sm" onclick="closeSelfPause()">Cancel</button>'+
+      '<button class="btn-sm" id="pauseGo" disabled onclick="doSelfPause()">Pause membership</button>'+
+    '</div>'+
+    '<div id="pauseMsg" style="font-size:0.8rem;margin-top:0.7rem"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+function closeSelfPause(){ var o=document.getElementById('selfPauseOverlay'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+async function doSelfPause(){
+  var sm=window._pauseSm; if(!sm) return;
+  var go=document.getElementById('pauseGo'), msg=document.getElementById('pauseMsg');
+  var resumeDate=document.getElementById('pauseResumeDate').value;
+  if(!resumeDate){ if(msg){msg.textContent='Please choose a resume date.';msg.style.color='#E07070';} return; }
+  if(go) go.disabled=true; if(msg){ msg.textContent='Pausing\u2026'; msg.style.color='var(--muted)'; }
+  try{
+    var r=await sb.rpc('member_self_pause',{p_sm_id:sm.id,p_resume_date:resumeDate});
+    if(r.error) throw new Error(r.error.message||'Could not pause.');
+    var data=r.data||{}; var fee=Number(data.fee)||0; var sub=data.stripe_subscription_id;
+    var chargeNote='';
+    if(fee>0){
+      try{ var cr=await sb.functions.invoke('charge-membership-fee',{body:{school_id:SID,student_membership_id:sm.id,kind:'pause'}}); var cd=cr.data||{}; chargeNote=cd.charged?(' A pause fee of $'+Number(cd.amount).toFixed(2)+' was charged to your card on file.'):(' A pause fee of $'+fee.toFixed(2)+' will be billed by the school.'); }catch(e){ chargeNote=' A pause fee of $'+fee.toFixed(2)+' will be billed by the school.'; }
+    }
+    if(sub){
+      var resumesUnix=Math.floor(new Date(resumeDate+'T12:00:00').getTime()/1000);
+      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'pause',resumes_at:resumesUnix})});
+      var d=await resp.json().catch(function(){return {};});
+      if(!resp.ok||(d&&d.error)) throw new Error('Could not pause billing \u2014 please contact the school.');
+    }
+    closeSelfPause();
+    alert('Your membership is paused and will resume on '+new Date(resumeDate+'T00:00:00').toLocaleDateString()+'.'+chargeNote);
+    location.reload();
+  }catch(err){ if(msg){msg.textContent=(err&&err.message)?err.message:'Could not pause.';msg.style.color='#E07070';} if(go)go.disabled=false; }
+}
+async function doSelfResume(){
+  var sm=window._pauseSm; if(!sm) return;
+  if(!confirm('Resume your membership now? Billing will restart on your normal cycle.')) return;
+  try{
+    var r=await sb.rpc('member_self_resume',{p_sm_id:sm.id});
+    if(r.error) throw new Error(r.error.message||'Could not resume.');
+    var sub=(r.data&&r.data.stripe_subscription_id);
+    if(sub){
+      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'resume'})});
+      var d=await resp.json().catch(function(){return {};});
+      if(!resp.ok||(d&&d.error)) throw new Error('Could not resume billing \u2014 please contact the school.');
+    }
+    alert('Your membership has been resumed.'); location.reload();
+  }catch(err){ alert((err&&err.message)?err.message:'Could not resume.'); }
+}
+
 function renderSelfCancel(s, smArr){
   try{
     var card=document.getElementById('membershipCard'); if(!card) return;
@@ -3116,7 +3197,7 @@ async function showFamilyPortal(family){
   document.getElementById('portalScreen').style.display='block';
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
+  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
   familyChildren=r.data||[];
   if(!familyChildren.length){
     document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
