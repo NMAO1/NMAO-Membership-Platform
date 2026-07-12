@@ -1529,6 +1529,19 @@ function switchCvTab(tab){
 // ─────────────────────────────────────────────────────────────
 //  CHECK IN
 // ─────────────────────────────────────────────────────────────
+// §STAFF: PACK-BALANCE-REFRESH — the roster's "rem/total" tile (packBalanceMap) is a
+// load-time snapshot from get_class_pack_balances. Check-ins deduct classes_remaining
+// server-side (attendance trigger, synchronous within the insert), so the snapshot goes
+// stale the moment anyone is checked in or undone — which is why a checked-in student can
+// still read full (e.g. 20/20) while the live toast correctly shows the deducted count.
+// Re-pull the authoritative balances and rebuild the map. Called on toggle only (no bulk
+// loop in this app), so the extra round-trip is negligible. Never throws.
+async function refreshAllPackBalances(){
+  try{
+    var r=await sb.rpc('get_class_pack_balances',{p_school_id:SID});
+    buildPackBalanceMap(r&&r.data?r.data:[]);
+  }catch(e){ console.error('refreshAllPackBalances error:',e); }
+}
 async function toggleCheckin(studentId,event){
   if(!staffCan('checkin')){ if(event&&event.stopPropagation)event.stopPropagation(); return; }
   event.stopPropagation();
@@ -1678,6 +1691,10 @@ if(!classSessionId){
 
  // Recompute walk-in eligible set (check-in status changed)
   recomputeEligible();
+
+  // Sync the pack-balance tile to real server state after this check-in / undo
+  // (the trigger has already run synchronously, so balances are current).
+  await refreshAllPackBalances();
 
   // Re-render all four tabs (preserve current search term where applicable)
   var currentSearch=document.getElementById('cvSearch').value||'';
