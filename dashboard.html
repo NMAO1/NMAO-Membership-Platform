@@ -2278,63 +2278,97 @@
 
 <!-- §MODAL-MEMBERSHIP -->
 <div class="modal-overlay" id="addMembershipModal">
-  <div class="modal" style="width:580px;max-width:95vw">
+  <div class="modal" style="width:880px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addMembershipTitle">Add New Membership</span><button class="help-hint-inline" onclick="openHelpPopover('memberships.mem_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addMembershipModal',closeAddMembership)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="memEditId" value="" />
-      <div class="field"><label>Membership Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_name',this)" title="Help">?</button></label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
-      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_desc',this)" title="Help">?</button></label><div id="memDescEditor"></div></div>
-      <div class="field"><label>Programs <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_programs',this)" title="Help">?</button></label><div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
-<div id="memBillingHeader" style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Billing <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_billing',this)" title="Help">?</button></div>
-      <div class="form-row">
-        <div class="field"><label>Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_type',this)" title="Help">?</button></label><select id="memType" onchange="toggleMemType()"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option></select></div>
-        <div class="field"><label>Length <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_length',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem"><input type="number" id="memLength" value="1" min="1" max="12" style="width:60px" /><select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select></div><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;line-height:1.5">For a plan that bills every few months, keep Type as Monthly and set Length to 3, 6, or 12 with Unit = Months. Length × Unit is how often the card is charged.</p></div>
+
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-layer-group" style="color:var(--gold)"></i>Plan Basics <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_basics',this)" title="Help">?</button></div>
+        <div class="field"><label>Membership Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_name',this)" title="Help">?</button></label><input type="text" id="memName" placeholder="e.g. Monthly Unlimited" /></div>
+        <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_desc',this)" title="Help">?</button></label><div id="memDescEditor"></div></div>
+        <div class="field" style="margin-bottom:0"><label>Programs <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_programs',this)" title="Help">?</button></label><div id="memProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:160px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
       </div>
-      <div class="form-row">
-        <div class="field"><label>Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_price',this)" title="Help">?</button></label><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
-        <div class="field"><label>Signup Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_signup',this)" title="Help">?</button></label><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
-      </div>
-<div id="memAllowanceHeader" style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Class Allowance <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_allowance',this)" title="Help">?</button></div>
-      <div class="field"><label>Class Access <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_limittype',this)" title="Help">?</button></label><select id="memLimitType" onchange="toggleClassLimit()"><option value="unlimited">Unlimited</option><option value="per_day">Per Day</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option><option value="per_year">Per Year</option><option value="class_pack">Class Pack</option></select></div>
-      <div class="field" id="classLimitField" style="display:none"><label>Number of Classes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_classes',this)" title="Help">?</button></label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" /></div>       <div class="field" id="packExpiryField" style="display:none"><label>Expiration <span style="color:var(--muted);font-weight:normal">(optional)</span></label><div style="display:flex;align-items:center;gap:0.5rem"><input type="number" id="memPackExpiry" min="1" placeholder="e.g. 90" style="max-width:110px" /><span style="color:var(--muted);font-size:0.85rem">days after purchase — blank = never expires</span></div></div>
-<div id="cycleAdvancedSection" style="display:none">
-        <div id="cycleAdvancedToggle" onclick="toggleCycleAdvanced()" style="cursor:pointer;color:var(--muted);font-size:0.82rem;margin-top:0.5rem;user-select:none;text-decoration:underline">Show advanced settings</div>
-        <div class="field" id="cycleOverrideField" style="display:none;margin-top:0.5rem"><label>Custom Class Period (Optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_cycle',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem"><input type="number" id="memCycleLength" placeholder="e.g. 2" min="1" style="width:80px" /><select id="memCycleUnit"><option value="">— Use Default —</option><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.35rem">By default, Per Week resets every 7 days, Per Month resets every 30 days, Per Year every 365 days. Set both fields to override with a custom period (biweekly = 2 weeks, quarterly = 3 months, etc). Changes apply at the next cycle reset for current subscribers.</div></div>
-      </div>
-      <div class="field"><label>Autopay Billing Day <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopayday',this)" title="Help">?</button></label><select id="memAutopayDay" onchange="toggleMemCustomDay()"><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select></div>
-      <div class="field" id="memCustomDayField" style="display:none"><label>Day of Month (1-28) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_customday',this)" title="Help">?</button></label><input type="number" id="memCustomDay" min="1" max="28" placeholder="e.g. 20" /></div>
-      <div class="field"><label class="check-item" style="margin:0"><input type="checkbox" id="memProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st of the month <span style="color:var(--muted)">(partial charge at signup for the days until the 1st, then full on the 1st; works for any interval)</span></span></label></div><div class="field"><label>Visibility <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_visibility',this)" title="Help">?</button></label><select id="memVisibility"><option value="public">Public</option><option value="widget_only">Widget Only</option><option value="hidden">Hidden</option></select></div>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="memAutoRenew" checked /><span class="check-item-label">Auto-Renew <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autorenew',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="memAutopay" checked /><span class="check-item-label">Autopay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopay',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="memFeatured" /><span class="check-item-label">Featured <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_featured',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="memTrial" /><span class="check-item-label">Trial <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_trial',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="memRolloverEnabled" /><span class="check-item-label">Allow Rollover</span></label>
-        <label class="check-item"><input type="checkbox" id="memClassReservation" /><span class="check-item-label">Class Reservation Eligible</span></label>
-      </div>
-      <div id="memCommitHeader" style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Commitment &amp; Cancellation</div>
-      <div class="field"><label>Commitment Term <span style="color:var(--muted);font-weight:normal">(optional, blank = month-to-month)</span></label><div style="display:flex;gap:0.5rem"><input type="number" id="memCommitLength" min="1" placeholder="e.g. 12" style="width:80px" /><select id="memCommitUnit"><option value="months">Months</option><option value="years">Years</option></select></div><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;line-height:1.5">How long the member agrees to stay. Billing still follows the cycle above. Leave blank for no commitment.</p></div>
-      <div class="form-row">
-        <div class="field"><label>Early-Cancel Fee</label><select id="memCancelFeeType" onchange="toggleCancelFee()"><option value="none">None</option><option value="flat">Flat amount</option><option value="remaining">Remaining months</option><option value="percent">Percent of remaining</option></select></div>
-        <div class="field" id="memCancelFeeAmtField" style="display:none"><label id="memCancelFeeAmtLabel">Amount ($)</label><input type="number" id="memCancelFeeAmount" min="0" step="0.01" placeholder="0.00" /></div>
-      </div>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="memAutoChargePenalty" /><span class="check-item-label">Auto-charge cancellation penalty (card on file)</span></label>
-        <label class="check-item"><input type="checkbox" id="memAllowSelfCancel" /><span class="check-item-label">Allow member self-cancel in portal</span></label>
-        <label class="check-item"><input type="checkbox" id="memAllowSelfPause" /><span class="check-item-label">Allow member self-pause in portal</span></label>
-        <div id="memPauseFields" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.4rem">
-          <div class="field" style="margin:0"><label>Max pause length (months)</label><input type="number" id="memPauseMaxMonths" min="1" value="3" style="width:120px" /></div>
-          <div class="field" style="margin:0"><label>Max pauses / year</label><input type="number" id="memPauseMaxYear" min="1" value="2" style="width:120px" /></div>
-          <div class="field" style="margin:0"><label>Pause fee ($)</label><input type="number" id="memPauseFee" min="0" step="0.01" value="0" style="width:120px" /></div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem">
+
+        <div style="display:flex;flex-direction:column;gap:1rem">
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div id="memBillingHeader" style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-credit-card" style="color:var(--gold)"></i>Billing <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_billing',this)" title="Help">?</button></div>
+            <div class="form-row">
+              <div class="field"><label>Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_type',this)" title="Help">?</button></label><select id="memType" onchange="toggleMemType()"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="trial">Trial</option><option value="class_pack">Class Pack</option></select></div>
+              <div class="field"><label>Length <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_length',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem"><input type="number" id="memLength" value="1" min="1" max="12" style="width:60px" /><select id="memUnit"><option value="months">Months</option><option value="weeks">Weeks</option><option value="days">Days</option></select></div><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;line-height:1.5">Bills every Length x Unit. For quarterly, use Monthly x 3.</p></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_price',this)" title="Help">?</button></label><input type="number" id="memPrice" placeholder="0.00" min="0" step="0.01" /></div>
+              <div class="field"><label>Signup Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_signup',this)" title="Help">?</button></label><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
+            </div>
+            <div class="field"><label>Autopay Billing Day <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopayday',this)" title="Help">?</button></label><select id="memAutopayDay" onchange="toggleMemCustomDay()"><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select></div>
+            <div class="field" id="memCustomDayField" style="display:none"><label>Day of Month (1-28) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_customday',this)" title="Help">?</button></label><input type="number" id="memCustomDay" min="1" max="28" placeholder="e.g. 20" /></div>
+            <div class="field" style="margin-bottom:0.4rem"><label class="check-item" style="margin:0"><input type="checkbox" id="memProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_prorate',this)" title="Help">?</button></span></label></div>
+            <div class="check-group" style="margin-top:0">
+              <label class="check-item"><input type="checkbox" id="memAutoRenew" checked /><span class="check-item-label">Auto-Renew <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autorenew',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="memAutopay" checked /><span class="check-item-label">Autopay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopay',this)" title="Help">?</button></span></label>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-ticket" style="color:var(--gold)"></i><span id="memAllowanceHeader">Class Allowance</span> <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_allowance',this)" title="Help">?</button></div>
+            <div class="field"><label>Class Access <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_limittype',this)" title="Help">?</button></label><select id="memLimitType" onchange="toggleClassLimit()"><option value="unlimited">Unlimited</option><option value="per_day">Per Day</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option><option value="per_year">Per Year</option><option value="class_pack">Class Pack</option></select></div>
+            <div class="field" id="classLimitField" style="display:none"><label>Number of Classes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_classes',this)" title="Help">?</button></label><input type="number" id="memLimitCount" placeholder="e.g. 8" min="1" /></div>
+            <div class="field" id="packExpiryField" style="display:none"><label>Expiration <span style="color:var(--muted);font-weight:normal">(optional)</span></label><div style="display:flex;align-items:center;gap:0.5rem"><input type="number" id="memPackExpiry" min="1" placeholder="e.g. 90" style="max-width:110px" /><span style="color:var(--muted);font-size:0.85rem">days after purchase</span></div></div>
+            <div id="cycleAdvancedSection" style="display:none">
+              <div id="cycleAdvancedToggle" onclick="toggleCycleAdvanced()" style="cursor:pointer;color:var(--muted);font-size:0.82rem;margin-top:0.5rem;user-select:none;text-decoration:underline">Show advanced settings</div>
+              <div class="field" id="cycleOverrideField" style="display:none;margin-top:0.5rem"><label>Custom Class Period (Optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_cycle',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem"><input type="number" id="memCycleLength" placeholder="e.g. 2" min="1" style="width:80px" /><select id="memCycleUnit"><option value="">- Use Default -</option><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></div><div style="font-size:0.78rem;color:var(--muted);margin-top:0.35rem">Overrides the default reset period (biweekly = 2 weeks, quarterly = 3 months). Applies at the next cycle reset.</div></div>
+            </div>
+            <div class="check-group" style="margin-top:0.6rem">
+              <label class="check-item"><input type="checkbox" id="memRolloverEnabled" /><span class="check-item-label">Allow Rollover</span></label>
+              <label class="check-item"><input type="checkbox" id="memClassReservation" /><span class="check-item-label">Class Reservation Eligible</span></label>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:1rem">
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-file-signature" style="color:var(--gold)"></i>Commitment &amp; Cancellation <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_commitment',this)" title="Help">?</button></div>
+            <div class="field"><label>Commitment Term <span style="color:var(--muted);font-weight:normal">(optional, blank = month-to-month)</span></label><div style="display:flex;gap:0.5rem"><input type="number" id="memCommitLength" min="1" placeholder="e.g. 12" style="width:80px" /><select id="memCommitUnit"><option value="months">Months</option><option value="years">Years</option></select></div><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;line-height:1.5">How long the member agrees to stay. Billing still follows the cycle above.</p></div>
+            <div class="form-row">
+              <div class="field"><label>Early-Cancel Fee</label><select id="memCancelFeeType" onchange="toggleCancelFee()"><option value="none">None</option><option value="flat">Flat amount</option><option value="remaining">Remaining months</option><option value="percent">Percent of remaining</option></select></div>
+              <div class="field" id="memCancelFeeAmtField" style="display:none"><label id="memCancelFeeAmtLabel">Amount ($)</label><input type="number" id="memCancelFeeAmount" min="0" step="0.01" placeholder="0.00" /></div>
+            </div>
+            <div class="check-group">
+              <label class="check-item"><input type="checkbox" id="memAutoChargePenalty" /><span class="check-item-label">Auto-charge cancellation penalty (card on file)</span></label>
+              <label class="check-item"><input type="checkbox" id="memAllowSelfCancel" /><span class="check-item-label">Allow member self-cancel in portal</span></label>
+              <label class="check-item"><input type="checkbox" id="memAllowSelfPause" /><span class="check-item-label">Allow member self-pause in portal</span></label>
+              <div id="memPauseFields" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.4rem">
+                <div class="field" style="margin:0"><label>Max pause length (months)</label><input type="number" id="memPauseMaxMonths" min="1" value="3" style="width:120px" /></div>
+                <div class="field" style="margin:0"><label>Max pauses / year</label><input type="number" id="memPauseMaxYear" min="1" value="2" style="width:120px" /></div>
+                <div class="field" style="margin:0"><label>Pause fee ($)</label><input type="number" id="memPauseFee" min="0" step="0.01" value="0" style="width:120px" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-eye" style="color:var(--gold)"></i>Display &amp; Public Sign-up <button class="help-hint-inline" onclick="openHelpPopover('memberships.sec_display',this)" title="Help">?</button></div>
+            <div class="field"><label>Visibility <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_visibility',this)" title="Help">?</button></label><select id="memVisibility"><option value="public">Public</option><option value="widget_only">Widget Only</option><option value="hidden">Hidden</option></select></div>
+            <div class="check-group">
+              <label class="check-item"><input type="checkbox" id="memFeatured" /><span class="check-item-label">Featured <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_featured',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="memTrial" /><span class="check-item-label">Trial <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_trial',this)" title="Help">?</button></span></label>
+            </div>
+            <div style="margin-top:0.5rem"><label class="check-item"><input type="checkbox" id="memPublicJoin" onchange="toggleMemPublicFields()" /><span class="check-item-label">Allow public sign-up via QR / link</span></label></div>
+            <div id="memPublicFields" style="display:none;margin-top:0.5rem">
+              <div class="field"><label>Offer Headline <span style="color:var(--muted);font-weight:normal">(shown on the sign-up page)</span></label><input type="text" id="memPublicHeadline" placeholder="e.g. Spring Community Special" /></div>
+              <div class="field" style="margin-bottom:0"><label>Offer Blurb <span style="color:var(--muted);font-weight:normal">(short description)</span></label><textarea id="memPublicBlurb" rows="3" placeholder="e.g. Your first month free, no commitment. Join the family today." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.65rem 0.85rem;outline:none;resize:vertical"></textarea></div>
+            </div>
+          </div>
+
         </div>
       </div>
-      <div id="memPublicHeader" style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Public Sign-up (QR / Link)</div>
-      <label class="check-item"><input type="checkbox" id="memPublicJoin" onchange="toggleMemPublicFields()" /><span class="check-item-label">Allow public sign-up via QR / link</span></label>
-      <div id="memPublicFields" style="display:none;margin-top:0.5rem">
-        <div class="field"><label>Offer Headline <span style="color:var(--muted);font-weight:normal">(shown on the sign-up page)</span></label><input type="text" id="memPublicHeadline" placeholder="e.g. Spring Community Special" /></div>
-        <div class="field"><label>Offer Blurb <span style="color:var(--muted);font-weight:normal">(short description on the sign-up page)</span></label><textarea id="memPublicBlurb" rows="3" placeholder="e.g. Your first month free, no commitment. Join the family today." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.65rem 0.85rem;outline:none;resize:vertical"></textarea></div>
-      </div>
-      <button id="memSaveBtn" class="btn-gold-full" onclick="saveMembership()">Save Membership</button>
+
+      <button id="memSaveBtn" class="btn-gold-full" style="margin-top:1.25rem" onclick="saveMembership()">Save Membership</button>
       <p class="form-msg" id="membershipMsg"></p>
     </div>
   </div>
@@ -4861,6 +4895,10 @@ var HELP_CONTENT = {
     example: 'Example: Adult Unlimited, Karate and BJJ, 150 per month, unlimited classes.'
   },
   'memberships.sec_billing': { title: 'Billing', purpose: 'How this plan charges: the type, the interval, the price, and any signup fee.' },
+'memberships.sec_basics': { title: 'Plan basics', purpose: 'The plan name, description, and which programs it covers.' },
+'memberships.sec_commitment': { title: 'Commitment and cancellation', purpose: 'Optional term length, early-cancel fees, and whether members can cancel or pause themselves from the portal.' },
+'memberships.sec_display': { title: 'Display and public sign-up', purpose: 'Where this plan appears: visibility, featured placement, and public QR/link sign-up with an optional offer headline.' },
+'memberships.mem_prorate': { title: 'Prorate first charge', purpose: 'Charges a partial amount at signup for the days until the 1st, then bills the full amount on the 1st of each cycle. Works for any interval.' },
   'memberships.sec_allowance': { title: 'Class Allowance', purpose: 'How many classes the plan includes and over what period, plus autopay timing and visibility.' },
   'memberships.mem_name': { title: 'Membership Name', purpose: 'The plan name students see, like Adult Unlimited or 10-Class Pack.' },
   'memberships.mem_desc': { title: 'Description', purpose: 'Optional details about the plan, shown at signup.' },
