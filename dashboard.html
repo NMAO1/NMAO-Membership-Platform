@@ -1018,7 +1018,7 @@
             <div class="field"><label>Audience <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_audience',this)" title="Help">?</button></label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
             <div class="field" id="commTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_tag',this)" title="Help">?</button></label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
             <div class="field"><label>Message <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_message',this)" title="Help">?</button></label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
-            <button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+            <div class="field"><label>Flyer <span style="color:var(--muted);font-weight:normal">(optional — image; embeds in the email and sends as a tappable link in the text)</span></label><div style="display:flex;gap:1rem;align-items:center"><div id="bcFlyerPreview" onclick="document.getElementById('bcFlyerInput').click()" style="width:70px;height:88px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-image"></i></div><div style="display:flex;flex-direction:column;gap:0.4rem"><button type="button" class="btn-sm" onclick="document.getElementById('bcFlyerInput').click()"><i class="fa-solid fa-upload"></i> Upload Flyer</button><button type="button" class="btn-sm" id="bcFlyerRemoveBtn" onclick="removeBroadcastFlyer()" style="display:none">Remove</button></div><input type="file" id="bcFlyerInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBroadcastFlyerUpload(event)" /></div></div><button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
           <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span><button class="help-hint-inline" onclick="openHelpPopover('comm.templates',this)" title="Help">?</button></div><div class="panel-body">
@@ -12594,12 +12594,43 @@ function clearReportSelection(){
   if(n) n.textContent='';
 }
 
+window._broadcastFlyerUrl = null;
+async function handleBroadcastFlyerUpload(ev){
+  var file = ev.target.files && ev.target.files[0]; if(!file) return;
+  if(file.size > 10*1024*1024){ setMsg('commMsg','Flyer must be under 10MB.','error'); return; }
+  setMsg('commMsg','Uploading flyer\u2026','');
+  try{
+    var ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+    var path = SID + '/broadcast-' + Date.now() + '.' + ext;
+    var up = await sb.storage.from('event-flyers').upload(path, file, {upsert:true, contentType:file.type});
+    if(up.error) throw new Error(up.error.message);
+    var pub = sb.storage.from('event-flyers').getPublicUrl(path);
+    window._broadcastFlyerUrl = pub.data.publicUrl;
+    var prev=document.getElementById('bcFlyerPreview'); if(prev) prev.innerHTML='<img src="'+window._broadcastFlyerUrl+'" style="width:100%;height:100%;object-fit:cover" />';
+    var rb=document.getElementById('bcFlyerRemoveBtn'); if(rb) rb.style.display='';
+    setMsg('commMsg','Flyer attached.','success');
+  }catch(e){ setMsg('commMsg','Flyer upload failed: '+((e&&e.message)||'error'),'error'); }
+}
+function removeBroadcastFlyer(){
+  window._broadcastFlyerUrl=null;
+  var prev=document.getElementById('bcFlyerPreview'); if(prev) prev.innerHTML='<i class="fa-solid fa-image"></i>';
+  var rb=document.getElementById('bcFlyerRemoveBtn'); if(rb) rb.style.display='none';
+  var inp=document.getElementById('bcFlyerInput'); if(inp) inp.value='';
+}
 async function sendCommunication(){
   var audience=document.getElementById('commAudience').value;
   var tagId=document.getElementById('commTag').value;
   var subject=document.getElementById('commSubject').value.trim();
   var body=getQuillContent('commBodyEditor');
-  if(!body){setMsg('commMsg','Message body required.','error');return;}
+  var _flyer = window._broadcastFlyerUrl || null;
+  if(!body && !_flyer){setMsg('commMsg','Add a message or a flyer.','error');return;}
+  // Flyer: embed as an image in the email; append as a tappable link in the SMS (which is text-only).
+  var _emailBody = body || '';
+  var _smsBody = body || '';
+  if(_flyer){
+    _emailBody = _emailBody + '<div style="margin-top:16px"><a href="'+_flyer+'" target="_blank"><img src="'+_flyer+'" style="max-width:100%;border-radius:8px" alt="Flyer" /></a></div>';
+    _smsBody = _smsBody + '<p>View flyer: '+_flyer+'</p>';
+  }
   setMsg('commMsg','Sending...','');
   var emailRecipients, smsRecipients;
   if(selectedReportRecipients.length){
@@ -12624,7 +12655,7 @@ async function sendCommunication(){
       var r=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
-        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:body,recipients:emailRecipients,audience:audience,reply_to:ownerEmail})
+        body:JSON.stringify({school_id:SID,type:'email',subject:subject,body:_emailBody,recipients:emailRecipients,audience:audience,reply_to:ownerEmail})
       });
       var ej=await r.json().catch(function(){return{};});
       if(r.ok){
@@ -12638,7 +12669,7 @@ async function sendCommunication(){
       var rs=await fetch(SURL+'/functions/v1/send-communication',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
-        body:JSON.stringify({school_id:SID,type:'sms',body:body,recipients:smsRecipients,audience:audience})
+        body:JSON.stringify({school_id:SID,type:'sms',body:_smsBody,recipients:smsRecipients,audience:audience})
       });
       var es=await rs.json().catch(function(){return{};});
       if(rs.ok){
@@ -12659,6 +12690,7 @@ async function sendCommunication(){
   var failCount=failNotes.length+hardErrors.length;
   if(failCount) resultMsg+=' — '+failCount+' failed';
   clearReportSelection();
+  if(typeof removeBroadcastFlyer==='function') removeBroadcastFlyer();
   setMsg('commMsg',resultMsg,failCount?'error':'success');
   setTimeout(function(){document.getElementById('commMsg').textContent='';},5000);
 }
