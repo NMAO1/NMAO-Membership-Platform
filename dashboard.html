@@ -2679,46 +2679,54 @@
 
 <!-- §MODAL-PRODUCT -->
 <div class="modal-overlay" id="addProductModal">
-  <div class="modal" style="width:580px;max-width:95vw">
+  <div class="modal" style="width:840px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addProductTitle">Add Product</span><button class="help-hint-inline" onclick="openHelpPopover('retail.prod_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addProductModal',closeAddProduct)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
 <input type="hidden" id="productEditId" value="" />
       <input type="file" id="productImageInput" accept="image/*" style="display:none" onchange="handleProductPhotoUpload(event)" />
-      <div class="field"><label>Product Photo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_photo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="productImagePreview" onclick="document.getElementById('productImageInput').click()" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-box"></i></div><button type="button" class="panel-action" onclick="document.getElementById('productImageInput').click()"><i class="fa-solid fa-upload"></i> Upload Photo</button></div></div>
-      <div class="field"><label>Product Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_name',this)" title="Help">?</button></label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
-      <div class="form-row">
-        <div class="field"><label>Category <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_category',this)" title="Help">?</button></label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div>
-        <div class="field"><label>Subcategory (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_subcategory',this)" title="Help">?</button></label><input type="text" id="productSubcategory" placeholder="e.g. Gi, Gloves" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>Retail Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_retail',this)" title="Help">?</button></label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Wholesale Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_wholesale',this)" title="Help">?</button></label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div>
-      </div>
-      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_desc',this)" title="Help">?</button></label><div id="productDescEditor"></div></div>
-      <div class="check-group" style="margin-top:0.75rem">
-        <label class="check-item"><input type="checkbox" id="productTrackInventory" onchange="toggleInventoryFields()" /><span class="check-item-label">Track Inventory <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_track',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="productFeatured" /><span class="check-item-label">Featured <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_featured',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="productQuickList" /><span class="check-item-label">Quick List <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_quicklist',this)" title="Help">?</button></span></label>
-       <label class="check-item"><input type="checkbox" id="productMemberApp" /><span class="check-item-label">Show in Member App <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_memberapp',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="productPublicPay" /><span class="check-item-label">Public Scan-to-Pay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_publicpay',this)" title="Help">?</button></span></label>
-      </div>
-      <div id="inventoryFields" style="display:none">
-        <div class="form-row">
-          <div class="field"><label>Inventory Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_inventory',this)" title="Help">?</button></label><input type="number" id="productInventoryQty" value="0" min="0" /></div>
-          <div class="field"><label>Reorder Alert Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_reorder',this)" title="Help">?</button></label><input type="number" id="productReorderQty" value="0" min="0" /></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-box" style="color:var(--gold)"></i>Product <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_product',this)" title="Help">?</button></div>
+            <div class="field"><label>Product Photo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_photo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="productImagePreview" onclick="document.getElementById('productImageInput').click()" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-box"></i></div><button type="button" class="panel-action" onclick="document.getElementById('productImageInput').click()"><i class="fa-solid fa-upload"></i> Upload Photo</button></div></div>
+            <div class="field"><label>Product Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_name',this)" title="Help">?</button></label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
+            <div class="form-row"><div class="field"><label>Category <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_category',this)" title="Help">?</button></label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div><div class="field"><label>Subcategory (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_subcategory',this)" title="Help">?</button></label><input type="text" id="productSubcategory" placeholder="e.g. Gi, Gloves" /></div></div>
+            <div class="field" style="margin-bottom:0"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_desc',this)" title="Help">?</button></label><div id="productDescEditor"></div></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tag" style="color:var(--gold)"></i>Pricing <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_pricing',this)" title="Help">?</button></div>
+            <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Retail Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_retail',this)" title="Help">?</button></label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div><div class="field" style="margin-bottom:0"><label>Wholesale Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_wholesale',this)" title="Help">?</button></label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-boxes-stacked" style="color:var(--gold)"></i>Availability &amp; Inventory <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_availability',this)" title="Help">?</button></div>
+            <div class="check-group" style="margin-top:0">
+              <label class="check-item"><input type="checkbox" id="productTrackInventory" onchange="toggleInventoryFields()" /><span class="check-item-label">Track Inventory <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_track',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="productFeatured" /><span class="check-item-label">Featured <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_featured',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="productQuickList" /><span class="check-item-label">Quick List <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_quicklist',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="productMemberApp" /><span class="check-item-label">Show in Member App <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_memberapp',this)" title="Help">?</button></span></label>
+              <label class="check-item"><input type="checkbox" id="productPublicPay" /><span class="check-item-label">Public Scan-to-Pay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_publicpay',this)" title="Help">?</button></span></label>
+            </div>
+            <div id="inventoryFields" style="display:none;margin-top:0.6rem">
+              <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Inventory Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_inventory',this)" title="Help">?</button></label><input type="number" id="productInventoryQty" value="0" min="0" /></div><div class="field" style="margin-bottom:0"><label>Reorder Alert Qty <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_reorder',this)" title="Help">?</button></label><input type="number" id="productReorderQty" value="0" min="0" /></div></div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-certificate" style="color:var(--gold)"></i>Badge <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_badge',this)" title="Help">?</button></div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+              <button class="badge-style-btn selected" data-badge="" onclick="selectBadgeStyle('',this)">None</button>
+              <button class="badge-style-btn" data-badge="red" onclick="selectBadgeStyle('red',this)" style="color:#FFD0D0;border-color:#9A3030">Red</button>
+              <button class="badge-style-btn" data-badge="gold" onclick="selectBadgeStyle('gold',this)" style="color:var(--black);background:var(--gold);border-color:var(--gold)">Gold</button>
+              <button class="badge-style-btn" data-badge="green" onclick="selectBadgeStyle('green',this)" style="color:#90D4A0;border-color:#2A5A3A">Green</button>
+              <button class="badge-style-btn" data-badge="blue" onclick="selectBadgeStyle('blue',this)" style="color:#90B4D4;border-color:#2A3A5A">Blue</button>
+              <button class="badge-style-btn" data-badge="black" onclick="selectBadgeStyle('black',this)" style="color:var(--gold);border-color:var(--gold);background:#000">Black</button>
+            </div>
+            <div class="field" id="badgeTextField" style="display:none;margin-bottom:0"><label>Badge Text (max 20 chars) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_badge',this)" title="Help">?</button></label><input type="text" id="productBadgeText" placeholder="e.g. SALE, NEW" maxlength="20" style="text-transform:uppercase" /></div>
+          </div>
         </div>
       </div>
-      <div style="font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.5rem">Product Badge (optional)</div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
-        <button class="badge-style-btn selected" data-badge="" onclick="selectBadgeStyle('',this)">None</button>
-        <button class="badge-style-btn" data-badge="red" onclick="selectBadgeStyle('red',this)" style="color:#FFD0D0;border-color:#9A3030">Red</button>
-        <button class="badge-style-btn" data-badge="gold" onclick="selectBadgeStyle('gold',this)" style="color:var(--black);background:var(--gold);border-color:var(--gold)">Gold</button>
-        <button class="badge-style-btn" data-badge="green" onclick="selectBadgeStyle('green',this)" style="color:#90D4A0;border-color:#2A5A3A">Green</button>
-        <button class="badge-style-btn" data-badge="blue" onclick="selectBadgeStyle('blue',this)" style="color:#90B4D4;border-color:#2A3A5A">Blue</button>
-        <button class="badge-style-btn" data-badge="black" onclick="selectBadgeStyle('black',this)" style="color:var(--gold);border-color:var(--gold);background:#000">Black</button>
-      </div>
-      <div class="field" id="badgeTextField" style="display:none"><label>Badge Text (max 20 chars) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_badge',this)" title="Help">?</button></label><input type="text" id="productBadgeText" placeholder="e.g. SALE, NEW" maxlength="20" style="text-transform:uppercase" /></div>
-      <button class="btn-gold-full" onclick="saveProduct()">Save Product</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveProduct()">Save Product</button>
       <p class="form-msg" id="productMsg"></p>
     </div>
   </div>
@@ -2726,28 +2734,30 @@
 
 <!-- §MODAL-SESSION -->
 <div class="modal-overlay" id="bookSessionModal">
-  <div class="modal" style="width:560px;max-width:95vw">
+  <div class="modal" style="width:800px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="bookSessionTitle">Book Session</span><button class="modal-close" onclick="safeClose('bookSessionModal',closeBookSession)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="sessionEditId" value="" />
-      <div class="field"><label>Session Type</label><select id="sessionTypeSelect" onchange="updateBookSessionCheckoutButtons()"><option value="">-- Select Type --</option></select></div>
-      <div class="field"><label>Student</label>
-        <input type="text" id="sessionStudentSearch" placeholder="Search student..." oninput="searchSessionStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
-        <div id="sessionStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
-        <div id="sessionSelectedStudent" style="display:none;font-size:0.85rem;color:var(--gold);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i><span id="sessionSelectedStudentName"></span> <button onclick="clearSessionStudent()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">change</button></div>
-        <input type="hidden" id="sessionStudentId" value="" />
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-dumbbell" style="color:var(--gold)"></i>Session <button class="help-hint-inline" onclick="openHelpPopover('sessions.sec_session',this)" title="Help">?</button></div>
+          <div class="field"><label>Session Type</label><select id="sessionTypeSelect" onchange="updateBookSessionCheckoutButtons()"><option value="">-- Select Type --</option></select></div>
+          <div class="field"><label>Student</label>
+            <input type="text" id="sessionStudentSearch" placeholder="Search student..." oninput="searchSessionStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem;outline:none;margin-bottom:0.25rem" />
+            <div id="sessionStudentResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+            <div id="sessionSelectedStudent" style="display:none;font-size:0.85rem;color:var(--gold);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i><span id="sessionSelectedStudentName"></span> <button onclick="clearSessionStudent()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;margin-left:0.4rem">change</button></div>
+            <input type="hidden" id="sessionStudentId" value="" />
+          </div>
+          <div class="field" style="margin-bottom:0"><label>Instructor</label><select id="sessionInstructor"><option value="">-- Select Instructor --</option></select></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i>Schedule &amp; Pricing <button class="help-hint-inline" onclick="openHelpPopover('sessions.sec_schedule',this)" title="Help">?</button></div>
+          <div class="form-row"><div class="field"><label>Date</label><input type="date" id="sessionDate" onchange="updateBookSessionCheckoutButtons()" /></div><div class="field"><label>Start Time</label><input type="time" id="sessionStartTime" /></div></div>
+          <div class="form-row"><div class="field"><label>Duration (minutes)</label><input type="number" id="sessionDuration" value="60" min="15" step="15" /></div><div class="field"><label>Status</label><select id="sessionStatus"><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div></div>
+          <div class="field"><label>Price (optional)</label><input type="number" id="sessionPrice" value="0" min="0" step="0.01" oninput="updateBookSessionCheckoutButtons()" /></div>
+          <div class="field" style="margin-bottom:0"><label>Notes</label><textarea id="sessionNotes" rows="3" placeholder="Session goals, focus areas..."></textarea></div>
+        </div>
       </div>
-      <div class="field"><label>Instructor</label><select id="sessionInstructor"><option value="">-- Select Instructor --</option></select></div>
-      <div class="form-row">
-        <div class="field"><label>Date</label><input type="date" id="sessionDate" onchange="updateBookSessionCheckoutButtons()" /></div>
-        <div class="field"><label>Start Time</label><input type="time" id="sessionStartTime" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>Duration (minutes)</label><input type="number" id="sessionDuration" value="60" min="15" step="15" /></div>
-        <div class="field"><label>Status</label><select id="sessionStatus"><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
-      </div>
-      <div class="field"><label>Price (optional)</label><input type="number" id="sessionPrice" value="0" min="0" step="0.01" oninput="updateBookSessionCheckoutButtons()" /></div>
-<div class="field"><label>Notes</label><textarea id="sessionNotes" rows="3" placeholder="Session goals, focus areas..."></textarea></div>
       <!-- §SESSION-PACK-BANNER — shows when an active matching pack is detected -->
       <div id="bookSessionPackBanner" style="display:none;background:linear-gradient(135deg,rgba(118,187,64,0.15),rgba(118,187,64,0.05));border:1px solid rgba(118,187,64,0.4);padding:0.75rem 1rem;margin-bottom:0.5rem;border-radius:4px;font-size:0.85rem">
         <div style="display:flex;align-items:start;gap:0.65rem">
@@ -2779,22 +2789,19 @@
 
 <!-- §MODAL-SESSTYPE -->
 <div class="modal-overlay" id="addSessionTypeModal">
-  <div class="modal" style="width:460px;max-width:95vw">
+  <div class="modal" style="width:560px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addSessionTypeTitle">New Session Type</span><button class="help-hint-inline" onclick="openHelpPopover('sessions.type_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddSessionType()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="sessionTypeEditId" value="" />
-      <div class="field"><label>Type Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_name',this)" title="Help">?</button></label><input type="text" id="stName" placeholder="e.g. Private Lesson, Assessment" /></div>
-      <div class="form-row">
-        <div class="field"><label>Duration (minutes) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_duration',this)" title="Help">?</button></label><input type="number" id="stDuration" value="60" min="15" step="15" /></div>
-        <div class="field"><label>Default Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_price',this)" title="Help">?</button></label><input type="number" id="stPrice" value="0" min="0" step="0.01" /></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-stopwatch" style="color:var(--gold)"></i>Session Type <button class="help-hint-inline" onclick="openHelpPopover('sessions.type_form',this)" title="Help">?</button></div>
+        <div class="field"><label>Type Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_name',this)" title="Help">?</button></label><input type="text" id="stName" placeholder="e.g. Private Lesson, Assessment" /></div>
+        <div class="form-row"><div class="field"><label>Duration (minutes) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_duration',this)" title="Help">?</button></label><input type="number" id="stDuration" value="60" min="15" step="15" /></div><div class="field"><label>Default Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_price',this)" title="Help">?</button></label><input type="number" id="stPrice" value="0" min="0" step="0.01" /></div></div>
+        <div class="check-group"><label class="check-item"><input type="checkbox" id="stAvailableBooking" checked /><span class="check-item-label">Available for booking <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_booking',this)" title="Help">?</button></span></label><label class="check-item"><input type="checkbox" id="stShowPortal" checked /><span class="check-item-label">Show in portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_portal',this)" title="Help">?</button></span></label></div>
+        <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="stColor" value="#9060D0" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="stColorHex" value="#9060D0" style="flex:1" oninput="syncSessionTypeColor()" /></div></div>
+        <div class="field" style="margin-bottom:0"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_desc',this)" title="Help">?</button></label><textarea id="stDescription" rows="3" placeholder="What does this session include?"></textarea></div>
       </div>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="stAvailableBooking" checked /><span class="check-item-label">Available for booking <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_booking',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="stShowPortal" checked /><span class="check-item-label">Show in portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_portal',this)" title="Help">?</button></span></label>
-      </div>
-      <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="stColor" value="#9060D0" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="stColorHex" value="#9060D0" style="flex:1" oninput="syncSessionTypeColor()" /></div></div>
-      <div class="field"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.st_desc',this)" title="Help">?</button></label><textarea id="stDescription" rows="3" placeholder="What does this session include?"></textarea></div>
-      <button class="btn-gold-full" onclick="saveSessionType()">Save Session Type</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveSessionType()">Save Session Type</button>
       <p class="form-msg" id="sessionTypeMsg"></p>
     </div>
   </div>
@@ -2802,25 +2809,19 @@
 
 <!-- §MODAL-SESSPACK -->
 <div class="modal-overlay" id="addSessionPackModal">
-  <div class="modal" style="width:480px;max-width:95vw">
+  <div class="modal" style="width:560px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addSessionPackTitle">New Session Pack</span><button class="help-hint-inline" onclick="openHelpPopover('sessions.pack_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddSessionPack()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
     <input type="hidden" id="sessPackEditId" value="" />
-    <div class="field"><label>Pack Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_name',this)" title="Help">?</button></label><input type="text" id="spName" placeholder="e.g. 10-Session Pack" /></div>
-      <div class="form-row">
-        <div class="field"><label>Number of Sessions <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_qty',this)" title="Help">?</button></label><input type="number" id="spQuantity" value="10" min="1" /></div>
-        <div class="field"><label>Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_price',this)" title="Help">?</button></label><input type="number" id="spPrice" value="0" min="0" step="0.01" /></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-ticket" style="color:var(--gold)"></i>Session Pack <button class="help-hint-inline" onclick="openHelpPopover('sessions.pack_form',this)" title="Help">?</button></div>
+        <div class="field"><label>Pack Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_name',this)" title="Help">?</button></label><input type="text" id="spName" placeholder="e.g. 10-Session Pack" /></div>
+        <div class="form-row"><div class="field"><label>Number of Sessions <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_qty',this)" title="Help">?</button></label><input type="number" id="spQuantity" value="10" min="1" /></div><div class="field"><label>Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_price',this)" title="Help">?</button></label><input type="number" id="spPrice" value="0" min="0" step="0.01" /></div></div>
+        <div class="form-row"><div class="field"><label>Expiry (days, blank = no expiry) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_expiry',this)" title="Help">?</button></label><input type="number" id="spExpiryDays" placeholder="e.g. 90" min="1" /></div><div class="field"><label>Session Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_type',this)" title="Help">?</button></label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Type --</option></select></div></div>
+        <div class="check-group"><label class="check-item"><input type="checkbox" id="spActive" checked /><span class="check-item-label">Active (available for purchase) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_active',this)" title="Help">?</button></span></label><label class="check-item"><input type="checkbox" id="spShowPortal" checked /><span class="check-item-label">Show in member portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_portal',this)" title="Help">?</button></span></label></div>
+        <div class="field" style="margin-bottom:0"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_desc',this)" title="Help">?</button></label><textarea id="spDescription" rows="3" placeholder="What is included in this pack?"></textarea></div>
       </div>
-      <div class="form-row">
-        <div class="field"><label>Expiry (days, blank = no expiry) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_expiry',this)" title="Help">?</button></label><input type="number" id="spExpiryDays" placeholder="e.g. 90" min="1" /></div>
-<div class="field"><label>Session Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_type',this)" title="Help">?</button></label><select id="spSessionType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select Type --</option></select></div>
-      </div>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="spActive" checked /><span class="check-item-label">Active (available for purchase) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_active',this)" title="Help">?</button></span></label>
-        <label class="check-item"><input type="checkbox" id="spShowPortal" checked /><span class="check-item-label">Show in member portal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_portal',this)" title="Help">?</button></span></label>
-      </div>
-      <div class="field"><label>Description (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('sessions.sp_desc',this)" title="Help">?</button></label><textarea id="spDescription" rows="3" placeholder="What's included in this pack?"></textarea></div>
-      <button class="btn-gold-full" onclick="saveSessionPack()">Save Session Pack</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveSessionPack()">Save Session Pack</button>
       <p class="form-msg" id="sessPackMsg"></p>
     </div>
   </div>
@@ -4684,6 +4685,13 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'retail.sec_product': { title: 'Product', purpose: 'Photo, name, category, and description of the item.' },
+'retail.sec_pricing': { title: 'Pricing', purpose: 'Retail price charged to buyers and your wholesale cost.' },
+'retail.sec_availability': { title: 'Availability and inventory', purpose: 'Where the product shows (member app, quick list, public pay) and optional inventory tracking with reorder alerts.' },
+'retail.sec_badge': { title: 'Badge', purpose: 'An optional colored badge (SALE, NEW) shown on the product.' },
+'sessions.sec_session': { title: 'Session', purpose: 'The session type, the student, and the instructor for this booking.' },
+'sessions.sec_schedule': { title: 'Schedule and pricing', purpose: 'Date, time, duration, status, and optional price for the session.' },
+
 'students.sec_personal': { title: 'Personal', purpose: 'Name, date of birth, and contact details for the student.' },
 'students.sec_enrollment': { title: 'Enrollment', purpose: 'The program and plan the student joins on, their start date, and status.' },
 'leads.sec_contact': { title: 'Contact', purpose: 'The prospect name, email, and phone.' },
