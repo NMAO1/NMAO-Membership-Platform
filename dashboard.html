@@ -2229,28 +2229,47 @@
 
 <!-- §MODAL-CLASS -->
 <div class="modal-overlay" id="addClassModal">
-  <div class="modal" style="width:560px;max-width:95vw">
+  <div class="modal" style="width:820px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addClassTitle">Add New Class</span><button class="help-hint-inline" onclick="openHelpPopover('classes.class_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addClassModal',closeAddClass)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="classEditId" value="" />
-      <div class="field"><label>Class Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_title',this)" title="Help">?</button></label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
-      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_desc',this)" title="Help">?</button></label><div id="classDescEditor"></div></div>
-<div class="field"><label>Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_program',this)" title="Help">?</button></label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
-<div class="form-row">
-  <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classStyleLabel">Style</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_style',this)" title="Help">?</button></span><select id="classStyle"></select></div>
-  <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classAgeLabel">Age Group</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_age',this)" title="Help">?</button></span><select id="classAge"></select></div>
-</div>
-      <div class="form-row">
-      <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classLevelLabel">Level</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_level',this)" title="Help">?</button></span><select id="classLevel"></select></div>
-        <div class="field"><label>Capacity <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_capacity',this)" title="Help">?</button></label><input type="number" id="classCapacity" placeholder="20" /></div>
+
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-circle-info" style="color:var(--gold)"></i>Class Details <button class="help-hint-inline" onclick="openHelpPopover('classes.sec_details',this)" title="Help">?</button></div>
+        <div class="field"><label>Class Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_title',this)" title="Help">?</button></label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
+        <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_desc',this)" title="Help">?</button></label><div id="classDescEditor"></div></div>
+        <div class="field" style="margin-bottom:0"><label>Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_program',this)" title="Help">?</button></label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
       </div>
-      <div class="field"><label>Instructor <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_instructor',this)" title="Help">?</button></label><select id="classInstructor"><option value="">-- Select Instructor --</option></select></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classShowInstructor" checked /><div><div class="check-item-label">Show instructor on member app <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_showinstr',this)" title="Help">?</button></div></div></label></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classPublicBooking" /><div><div class="check-item-label">Show on public booking page <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_public',this)" title="Help">?</button></div></div></label></div>
-      <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classTrialEnabled" /><div><div class="check-item-label">Allow trial sign-ups (public) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_trial',this)" title="Help">?</button></div></div></label></div>
-      <div class="form-row"><div class="field"><label>Start Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_start',this)" title="Help">?</button></label><input type="time" id="classStart" /></div><div class="field"><label>End Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_end',this)" title="Help">?</button></label><input type="time" id="classEnd" /></div></div>
-      <div class="field"><label>Days of Week <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_days',this)" title="Help">?</button></label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
-      <button class="btn-gold-full" onclick="saveClass()">Save Class</button>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tags" style="color:var(--gold)"></i>Classification <button class="help-hint-inline" onclick="openHelpPopover('classes.sec_classification',this)" title="Help">?</button></div>
+          <div class="form-row">
+            <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classStyleLabel">Style</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_style',this)" title="Help">?</button></span><select id="classStyle"></select></div>
+            <div class="field"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classAgeLabel">Age Group</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_age',this)" title="Help">?</button></span><select id="classAge"></select></div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:0"><span style="display:inline-flex;align-items:center;gap:0.15rem"><label id="classLevelLabel">Level</label><button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_level',this)" title="Help">?</button></span><select id="classLevel"></select></div>
+            <div class="field" style="margin-bottom:0"><label>Capacity <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_capacity',this)" title="Help">?</button></label><input type="number" id="classCapacity" placeholder="20" /></div>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user-tie" style="color:var(--gold)"></i>Instructor &amp; Visibility <button class="help-hint-inline" onclick="openHelpPopover('classes.sec_instructor',this)" title="Help">?</button></div>
+          <div class="field"><label>Instructor <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_instructor',this)" title="Help">?</button></label><select id="classInstructor"><option value="">-- Select Instructor --</option></select></div>
+          <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classShowInstructor" checked /><div><div class="check-item-label">Show instructor on member app <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_showinstr',this)" title="Help">?</button></div></div></label></div>
+          <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classPublicBooking" /><div><div class="check-item-label">Show on public booking page <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_public',this)" title="Help">?</button></div></div></label></div>
+          <div class="check-group" style="margin-top:0.25rem"><label class="check-item"><input type="checkbox" id="classTrialEnabled" /><div><div class="check-item-label">Allow trial sign-ups (public) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_trial',this)" title="Help">?</button></div></div></label></div>
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;margin-top:1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-calendar-days" style="color:var(--gold)"></i>Schedule <button class="help-hint-inline" onclick="openHelpPopover('classes.sec_schedule',this)" title="Help">?</button></div>
+        <div class="form-row"><div class="field"><label>Start Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_start',this)" title="Help">?</button></label><input type="time" id="classStart" /></div><div class="field"><label>End Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_end',this)" title="Help">?</button></label><input type="time" id="classEnd" /></div></div>
+        <div class="field" style="margin-bottom:0"><label>Days of Week <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_days',this)" title="Help">?</button></label><div class="days-grid"><button class="day-btn" data-day="monday" onclick="toggleDay(this)">Mon</button><button class="day-btn" data-day="tuesday" onclick="toggleDay(this)">Tue</button><button class="day-btn" data-day="wednesday" onclick="toggleDay(this)">Wed</button><button class="day-btn" data-day="thursday" onclick="toggleDay(this)">Thu</button><button class="day-btn" data-day="friday" onclick="toggleDay(this)">Fri</button><button class="day-btn" data-day="saturday" onclick="toggleDay(this)">Sat</button><button class="day-btn" data-day="sunday" onclick="toggleDay(this)">Sun</button></div></div>
+      </div>
+
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveClass()">Save Class</button>
       <p class="form-msg" id="classMsg"></p>
     </div>
   </div>
@@ -2420,18 +2439,26 @@
 
 <!-- §MODAL-ADDSTUDENT -->
 <div class="modal-overlay" id="addStudentModal">
-  <div class="modal" style="width:560px;max-width:95vw">
+  <div class="modal" style="width:760px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addStudentTitle">Add New Student</span><button class="modal-close" onclick="safeClose('addStudentModal',closeAddStudent)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="stuEditId" value="" />
-      <div class="form-row"><div class="field"><label>First Name</label><input type="text" id="stuFirst" placeholder="First name" /></div><div class="field"><label>Last Name</label><input type="text" id="stuLast" placeholder="Last name" /></div></div>
-      <div class="form-row"><div class="field"><label>Date of Birth</label><input type="date" id="stuDOB" /></div><div class="field"><label>Phone</label><input type="text" id="stuPhone" placeholder="(555) 555-5555" /></div></div>
-      <div class="field"><label>Email</label><input type="email" id="stuEmail" placeholder="student@email.com" /></div>
-      <div class="field"><label>Notes</label><textarea id="stuNotes" rows="3" placeholder="Any notes about this student..."></textarea></div>
-      <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
-      <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
-      <div class="form-row"><div class="field"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
-      <button class="btn-gold-full" onclick="saveStudent()">Save Student</button>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user" style="color:var(--gold)"></i>Personal <button class="help-hint-inline" onclick="openHelpPopover('students.sec_personal',this)" title="Help">?</button></div>
+          <div class="form-row"><div class="field"><label>First Name</label><input type="text" id="stuFirst" placeholder="First name" /></div><div class="field"><label>Last Name</label><input type="text" id="stuLast" placeholder="Last name" /></div></div>
+          <div class="form-row"><div class="field"><label>Date of Birth</label><input type="date" id="stuDOB" /></div><div class="field"><label>Phone</label><input type="text" id="stuPhone" placeholder="(555) 555-5555" /></div></div>
+          <div class="field"><label>Email</label><input type="email" id="stuEmail" placeholder="student@email.com" /></div>
+          <div class="field" style="margin-bottom:0"><label>Notes</label><textarea id="stuNotes" rows="3" placeholder="Any notes about this student..."></textarea></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Enrollment <button class="help-hint-inline" onclick="openHelpPopover('students.sec_enrollment',this)" title="Help">?</button></div>
+          <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
+          <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
+          <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field" style="margin-bottom:0"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
+        </div>
+      </div>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveStudent()">Save Student</button>
       <p class="form-msg" id="studentMsg"></p>
     </div>
   </div>
@@ -2439,19 +2466,24 @@
 
 <!-- §MODAL-LEAD -->
 <div class="modal-overlay" id="addLeadModal">
-  <div class="modal" style="width:500px;max-width:95vw">
+  <div class="modal" style="width:740px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addLeadTitle">Add New Lead</span><button class="help-hint-inline" onclick="openHelpPopover('leads.lead_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addLeadModal',closeAddLead)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="leadEditId" value="" />
-      <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_first',this)" title="Help">?</button></label><input type="text" id="leadFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_last',this)" title="Help">?</button></label><input type="text" id="leadLast" placeholder="Last name" /></div></div>
-      <div class="form-row"><div class="field"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_email',this)" title="Help">?</button></label><input type="email" id="leadEmail" placeholder="email@example.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_phone',this)" title="Help">?</button></label><input type="text" id="leadPhone" placeholder="(555) 555-5555" /></div></div>
-      <div class="form-row">
-        <div class="field"><label>Interested Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_program',this)" title="Help">?</button></label><select id="leadProgram"><option value="">-- Select --</option></select></div>
-        <div class="field"><label>Source <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_source',this)" title="Help">?</button></label><select id="leadSource"><option value="walk-in">Walk-In</option><option value="referral">Referral</option><option value="social-media">Social Media</option><option value="website">Website</option><option value="phone">Phone Call</option><option value="event">Event</option><option value="other">Other</option></select></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user" style="color:var(--gold)"></i>Contact <button class="help-hint-inline" onclick="openHelpPopover('leads.sec_contact',this)" title="Help">?</button></div>
+          <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_first',this)" title="Help">?</button></label><input type="text" id="leadFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_last',this)" title="Help">?</button></label><input type="text" id="leadLast" placeholder="Last name" /></div></div>
+          <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_email',this)" title="Help">?</button></label><input type="email" id="leadEmail" placeholder="email@example.com" /></div><div class="field" style="margin-bottom:0"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_phone',this)" title="Help">?</button></label><input type="text" id="leadPhone" placeholder="(555) 555-5555" /></div></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-clipboard-list" style="color:var(--gold)"></i>Lead Details <button class="help-hint-inline" onclick="openHelpPopover('leads.sec_details',this)" title="Help">?</button></div>
+          <div class="form-row"><div class="field"><label>Interested Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_program',this)" title="Help">?</button></label><select id="leadProgram"><option value="">-- Select --</option></select></div><div class="field"><label>Source <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_source',this)" title="Help">?</button></label><select id="leadSource"><option value="walk-in">Walk-In</option><option value="referral">Referral</option><option value="social-media">Social Media</option><option value="website">Website</option><option value="phone">Phone Call</option><option value="event">Event</option><option value="other">Other</option></select></div></div>
+          <div class="field"><label>Status <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_status',this)" title="Help">?</button></label><select id="leadStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="trial">Trial Scheduled</option><option value="converted">Converted</option></select></div>
+          <div class="field" style="margin-bottom:0"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_notes',this)" title="Help">?</button></label><textarea id="leadNotes" rows="3" placeholder="Any notes about this lead..."></textarea></div>
+        </div>
       </div>
-      <div class="field"><label>Status <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_status',this)" title="Help">?</button></label><select id="leadStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="trial">Trial Scheduled</option><option value="converted">Converted</option></select></div>
-      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('leads.lead_notes',this)" title="Help">?</button></label><textarea id="leadNotes" rows="3" placeholder="Any notes about this lead..."></textarea></div>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.25rem">
         <button class="btn-gold-full" style="flex:1" onclick="saveLead()">Save Lead</button>
         <button class="btn-sm gold" id="bookTrialBtn" style="display:none" onclick="bookTrialFromLead()"><i class="fa-solid fa-user-clock"></i> Book Trial</button>
         <button class="btn-sm gold" id="convertLeadBtn" style="display:none" onclick="convertLeadToStudent()"><i class="fa-solid fa-user-check"></i> Convert</button>
@@ -2463,15 +2495,17 @@
 
 <!-- §MODAL-FAMILY -->
 <div class="modal-overlay" id="addFamilyModal">
-  <div class="modal" style="width:560px;max-width:95vw">
+  <div class="modal" style="width:600px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addFamilyTitle">Add Family</span><button class="help-hint-inline" onclick="openHelpPopover('families.fam_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addFamilyModal',closeAddFamily)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="familyEditId" value="" />
-      <div class="field"><label>Family Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_name',this)" title="Help">?</button></label><input type="text" id="familyName" placeholder="e.g. The Smith Family" /></div>
-      <div class="field"><label>Primary Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_email',this)" title="Help">?</button></label><input type="email" id="familyEmail" placeholder="parent@email.com" /></div>
-      <div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_phone',this)" title="Help">?</button></label><input type="text" id="familyPhone" placeholder="(555) 555-5555" /></div>
-      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_notes',this)" title="Help">?</button></label><textarea id="familyNotes" rows="3" placeholder="Any notes about this family..."></textarea></div>
-      <div id="familyLinkedStudentsSection" style="display:none">
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-people-roof" style="color:var(--gold)"></i>Family Details <button class="help-hint-inline" onclick="openHelpPopover('families.fam_form',this)" title="Help">?</button></div>
+        <div class="field"><label>Family Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_name',this)" title="Help">?</button></label><input type="text" id="familyName" placeholder="e.g. The Smith Family" /></div>
+        <div class="form-row"><div class="field"><label>Primary Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_email',this)" title="Help">?</button></label><input type="email" id="familyEmail" placeholder="parent@email.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_phone',this)" title="Help">?</button></label><input type="text" id="familyPhone" placeholder="(555) 555-5555" /></div></div>
+        <div class="field" style="margin-bottom:0"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.fam_notes',this)" title="Help">?</button></label><textarea id="familyNotes" rows="3" placeholder="Any notes about this family..."></textarea></div>
+      </div>
+      <div id="familyLinkedStudentsSection" style="display:none;margin-top:1rem">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0 0.75rem">Linked Students <button class="help-hint-inline" onclick="openHelpPopover('families.fam_students',this)" title="Help">?</button></div>
         <div id="familyLinkedStudentsList" style="margin-bottom:0.75rem"></div>
         <div style="position:relative;margin-bottom:0.5rem">
@@ -2480,7 +2514,7 @@
         </div>
         <div id="familyStudentSearchResults" style="max-height:150px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);display:none"></div>
       </div>
-      <button class="btn-gold-full" onclick="saveFamily()">Save Family</button>
+      <button class="btn-gold-full" style="margin-top:1rem" onclick="saveFamily()">Save Family</button>
       <p class="form-msg" id="familyMsg"></p>
     </div>
   </div>
@@ -2488,35 +2522,43 @@
 
 <!-- §MODAL-INSTRUCTOR-ADD -->
 <div class="modal-overlay" id="addInstructorModal">
-  <div class="modal" style="width:480px;max-width:95vw">
+  <div class="modal" style="width:820px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addInstructorTitle">Add Instructor</span><button class="help-hint-inline" onclick="openHelpPopover('instructors.instr_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addInstructorModal',closeAddInstructor)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="instrEditId" value="" />
-      <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_first',this)" title="Help">?</button></label><input type="text" id="instrFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_last',this)" title="Help">?</button></label><input type="text" id="instrLast" placeholder="Last name" /></div></div>
-      <div class="form-row"><div class="field"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_email',this)" title="Help">?</button></label><input type="email" id="instrEmail" placeholder="instructor@email.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_phone',this)" title="Help">?</button></label><input type="text" id="instrPhone" placeholder="(555) 555-5555" /></div></div>
-      <div class="field"><label>Specialties <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_specialties',this)" title="Help">?</button></label><input type="text" id="instrSpecialties" placeholder="e.g. BJJ, Kickboxing" /></div>
-      <div class="field"><label>Bio <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_bio',this)" title="Help">?</button></label><textarea id="instrBio" rows="3" placeholder="Short instructor bio..."></textarea></div>
-      <div class="form-row">
-        <div class="field"><label>Payroll Rate ($) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_payrate',this)" title="Help">?</button></label><input type="number" id="instrPayrollRate" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Payroll Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_paytype',this)" title="Help">?</button></label><select id="instrPayrollType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="per_class">Per Class</option><option value="per_session">Per Session</option><option value="monthly">Monthly Salary</option><option value="hourly">Hourly</option></select></div>
-      </div>
-      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_notes',this)" title="Help">?</button></label><textarea id="instrNotes" rows="3" placeholder="Role, notes..."></textarea></div>
-      <div class="field"><label>Staff Role &amp; Permissions</label>
-        <select id="instrRole" onchange="seedInstrCaps(this.value)" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%;margin-bottom:0.6rem">
-          <option value="owner">Owner</option>
-          <option value="head_instructor">Head Instructor</option>
-          <option value="instructor">Instructor</option>
-          <option value="assistant">Assistant</option>
-        </select>
-        <div style="display:flex;flex-direction:column;gap:0.35rem">
-          <label class="check-item"><input type="checkbox" id="capCheckin" onchange="updateCapHint()" /><div><div class="check-item-label">Check-in and attendance</div></div></label>
-          <label class="check-item"><input type="checkbox" id="capLookup" onchange="updateCapHint()" /><div><div class="check-item-label">Member lookup</div></div></label>
-          <label class="check-item"><input type="checkbox" id="capEnroll" onchange="updateCapHint()" /><div><div class="check-item-label">Enroll new members</div></div></label>
-          <label class="check-item"><input type="checkbox" id="capPos" onchange="updateCapHint()" /><div><div class="check-item-label">Take payments (POS)</div></div></label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user" style="color:var(--gold)"></i>Profile <button class="help-hint-inline" onclick="openHelpPopover('instructors.sec_profile',this)" title="Help">?</button></div>
+          <div class="form-row"><div class="field"><label>First Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_first',this)" title="Help">?</button></label><input type="text" id="instrFirst" placeholder="First name" /></div><div class="field"><label>Last Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_last',this)" title="Help">?</button></label><input type="text" id="instrLast" placeholder="Last name" /></div></div>
+          <div class="form-row"><div class="field"><label>Email <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_email',this)" title="Help">?</button></label><input type="email" id="instrEmail" placeholder="instructor@email.com" /></div><div class="field"><label>Phone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_phone',this)" title="Help">?</button></label><input type="text" id="instrPhone" placeholder="(555) 555-5555" /></div></div>
+          <div class="field"><label>Specialties <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_specialties',this)" title="Help">?</button></label><input type="text" id="instrSpecialties" placeholder="e.g. BJJ, Kickboxing" /></div>
+          <div class="field" style="margin-bottom:0"><label>Bio <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_bio',this)" title="Help">?</button></label><textarea id="instrBio" rows="3" placeholder="Short instructor bio..."></textarea></div>
         </div>
-        <div id="capHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem"></div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-money-bill" style="color:var(--gold)"></i>Payroll <button class="help-hint-inline" onclick="openHelpPopover('instructors.sec_payroll',this)" title="Help">?</button></div>
+            <div class="form-row"><div class="field"><label>Payroll Rate ($) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_payrate',this)" title="Help">?</button></label><input type="number" id="instrPayrollRate" value="0" min="0" step="0.01" /></div><div class="field"><label>Payroll Type <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_paytype',this)" title="Help">?</button></label><select id="instrPayrollType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="per_class">Per Class</option><option value="per_session">Per Session</option><option value="monthly">Monthly Salary</option><option value="hourly">Hourly</option></select></div></div>
+            <div class="field" style="margin-bottom:0"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('instructors.instr_notes',this)" title="Help">?</button></label><textarea id="instrNotes" rows="3" placeholder="Role, notes..."></textarea></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-shield-halved" style="color:var(--gold)"></i>Role &amp; Permissions <button class="help-hint-inline" onclick="openHelpPopover('instructors.sec_role',this)" title="Help">?</button></div>
+            <select id="instrRole" onchange="seedInstrCaps(this.value)" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%;margin-bottom:0.6rem">
+              <option value="owner">Owner</option>
+              <option value="head_instructor">Head Instructor</option>
+              <option value="instructor">Instructor</option>
+              <option value="assistant">Assistant</option>
+            </select>
+            <div style="display:flex;flex-direction:column;gap:0.35rem">
+              <label class="check-item"><input type="checkbox" id="capCheckin" onchange="updateCapHint()" /><div><div class="check-item-label">Check-in and attendance</div></div></label>
+              <label class="check-item"><input type="checkbox" id="capLookup" onchange="updateCapHint()" /><div><div class="check-item-label">Member lookup</div></div></label>
+              <label class="check-item"><input type="checkbox" id="capEnroll" onchange="updateCapHint()" /><div><div class="check-item-label">Enroll new members</div></div></label>
+              <label class="check-item"><input type="checkbox" id="capPos" onchange="updateCapHint()" /><div><div class="check-item-label">Take payments (POS)</div></div></label>
+            </div>
+            <div id="capHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem"></div>
+          </div>
+        </div>
       </div>
-      <button class="btn-gold-full" onclick="saveInstructor()">Save Instructor</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveInstructor()">Save Instructor</button>
       <p class="form-msg" id="instructorMsg"></p>
     </div>
   </div>
@@ -4642,6 +4684,14 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'students.sec_personal': { title: 'Personal', purpose: 'Name, date of birth, and contact details for the student.' },
+'students.sec_enrollment': { title: 'Enrollment', purpose: 'The program and plan the student joins on, their start date, and status.' },
+'leads.sec_contact': { title: 'Contact', purpose: 'The prospect name, email, and phone.' },
+'leads.sec_details': { title: 'Lead details', purpose: 'What they are interested in, where they came from, their status, and notes. Book Trial and Convert appear when editing an existing lead.' },
+'instructors.sec_profile': { title: 'Profile', purpose: 'Name, contact info, specialties, and bio shown on the member app.' },
+'instructors.sec_payroll': { title: 'Payroll', purpose: 'How this instructor is paid: rate and pay type, plus internal notes.' },
+'instructors.sec_role': { title: 'Role and permissions', purpose: 'Staff role and the specific capabilities (check-in, lookup, enroll, POS) this person can use.' },
+
   'shareembed.sharelinks': { title: 'Share Links', purpose: 'Your public links, ready to hand out. Copy a link, show a QR code (great for the front desk or a printed flyer), or share straight to Facebook, X, WhatsApp, text, or email with a caption already written. Anything you post stays live \u2014 the link always points at your current schedule or portal.' },
   'settings.school_socials': { title: 'School Socials & Website', purpose: 'Your Instagram, Facebook, TikTok, and website links. They power the Follow us footer at the bottom of your public pages (booking, events, plans, and the member portal) and show on your kiosk. Leave any blank to hide that icon \u2014 nothing empty ever appears.' },
   'settings.timezone': { title: 'Timezone', purpose: 'The local timezone your school operates in. It keeps class times and the automatic attendance check-in accurate \u2014 so a class that ends at 6:00 PM is treated as 6:00 PM your time, not the server time. Set this before adding members if you are not on Eastern time.' },
@@ -4709,7 +4759,11 @@ var HELP_CONTENT = {
     ],
     example: 'Example: create Adult BJJ, Mon and Wed at 6pm, Coach Sara, capacity 20, and it lands on the schedule each week.'
   },
-  'classes.class_form': {
+  'classes.sec_details': { title: 'Class details', purpose: 'The class name, description, and the program it belongs to.' },
+'classes.sec_classification': { title: 'Classification', purpose: 'Style, age group, level, and capacity. Style/age/level options come from the selected program.' },
+'classes.sec_instructor': { title: 'Instructor and visibility', purpose: 'Who teaches it, and whether it shows on the member app, the public booking page, and to trial sign-ups.' },
+'classes.sec_schedule': { title: 'Schedule', purpose: 'Start and end time and the days of the week this class runs.' },
+'classes.class_form': {
     title: 'Add / Edit Class',
     purpose: 'Create or edit a class. This sets the schedule, who teaches it, and how it appears to members and the public.',
     actions: [
