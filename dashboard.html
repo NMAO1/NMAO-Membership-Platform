@@ -779,27 +779,30 @@
     </div>
 
     <div class="modal-overlay" id="shiftModal">
-      <div class="modal" style="width:640px;max-width:95vw;max-height:90vh;overflow-y:auto">
+      <div class="modal" style="width:720px;max-width:96vw;max-height:90vh;overflow-y:auto">
         <div class="modal-header"><span class="modal-title" id="shiftModalTitle">New Shift</span><button class="modal-close" onclick="safeClose('shiftModal',closeShiftModal)"><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="shiftEditId" value="" />
-          <div class="field"><label>Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_name',this)" title="Help">?</button></label><input type="text" id="shiftName" placeholder="e.g. Summer Hours" /></div>
-          <div style="display:flex;gap:0.75rem">
-            <div class="field" style="flex:1"><label>Start date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_dates',this)" title="Help">?</button></label><input type="date" id="shiftStart" /></div>
-            <div class="field" style="flex:1"><label>End date</label><input type="date" id="shiftEnd" /></div>
-          </div>
-          <div class="field"><label>Remind members this many days before <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_remind',this)" title="Help">?</button></label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin-top:0.3rem">How far ahead members get a heads-up. The reminder sends once, automatically, on that day.</div></div>
-          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_revert',this)" title="Help">?</button></span></div>
-          <div class="field"><label>Notify via <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_notify',this)" title="Help">?</button></label>
-            <div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">How members hear about the change when a reminder goes out. Text and email reach everyone; in-app alerts show in the member portal.</div>
-            <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="sms" /><div class="toggle-slider"></div></label><span class="check-item-label">Text</span></div>
-              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="email" /><div class="toggle-slider"></div></label><span class="check-item-label">Email</span></div>
-              <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="alert" checked /><div class="toggle-slider"></div></label><span class="check-item-label">In-app alert</span></div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold)"></i>Shift Details <button class="help-hint-inline" onclick="openHelpPopover('schedule.sec_details',this)" title="Help">?</button></div>
+            <div class="field"><label>Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_name',this)" title="Help">?</button></label><input type="text" id="shiftName" placeholder="e.g. Summer Hours" /></div>
+            <div style="display:flex;gap:0.75rem"><div class="field" style="flex:1"><label>Start date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_dates',this)" title="Help">?</button></label><input type="date" id="shiftStart" /></div><div class="field" style="flex:1"><label>End date</label><input type="date" id="shiftEnd" /></div></div>
+            <div class="field"><label>Remind members this many days before <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_remind',this)" title="Help">?</button></label><input type="number" id="shiftRemindDays" value="3" min="0" max="60" style="width:110px" /><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin-top:0.3rem">How far ahead members get a heads-up. The reminder sends once, automatically, on that day.</div></div>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin:0.45rem 0"><label class="toggle-switch"><input type="checkbox" id="shiftRemindRevert" /><div class="toggle-slider"></div></label><span class="check-item-label">Also remind when the schedule returns to normal <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_revert',this)" title="Help">?</button></span></div>
+            <div class="field" style="margin-bottom:0"><label>Notify via <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_notify',this)" title="Help">?</button></label>
+              <div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">How members hear about the change when a reminder goes out. Text and email reach everyone; in-app alerts show in the member portal.</div>
+              <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="sms" /><div class="toggle-slider"></div></label><span class="check-item-label">Text</span></div>
+                <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="email" /><div class="toggle-slider"></div></label><span class="check-item-label">Email</span></div>
+                <div style="display:flex;align-items:center;gap:0.5rem"><label class="toggle-switch"><input type="checkbox" class="shift-channel" value="alert" checked /><div class="toggle-slider"></div></label><span class="check-item-label">In-app alert</span></div>
+              </div>
             </div>
           </div>
-          <div class="field"><label>Which classes change during this shift? <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('schedule.sh_classes',this)" title="Help">?</button></label><div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0.15rem 0 0.6rem">Leave a class on <strong>Normal</strong> to keep it as-is. Choose <strong>Retime</strong> to move its day or time, or <strong>Cancel</strong> to skip it for these dates. Only the classes you change are affected.</div><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div></div>
-          <p class="form-msg" id="shiftMsg"></p>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;margin-top:1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-calendar-week" style="color:var(--gold)"></i>Class Changes <button class="help-hint-inline" onclick="openHelpPopover('schedule.sec_classes',this)" title="Help">?</button></div>
+            <div style="font-size:0.75rem;color:var(--muted);line-height:1.45;margin:0 0 0.6rem">Leave a class on <strong>Normal</strong> to keep it as-is. Choose <strong>Retime</strong> to move its day or time, or <strong>Cancel</strong> to skip it for these dates. Only the classes you change are affected.</div><div id="shiftClassEditor"><div class="empty">Loading classes...</div></div>
+          </div>
+          <p class="form-msg" id="shiftMsg" style="margin-top:1rem"></p>
           <button class="btn-gold-full" onclick="saveScheduleShift()">Save Shift</button>
         </div>
       </div>
@@ -1807,25 +1810,20 @@
 
 <!-- §MODAL-BELTTEST -->
 <div class="modal-overlay" id="addBeltTestModal">
-  <div class="modal" style="width:600px;max-width:95vw">
+  <div class="modal" style="width:620px;max-width:96vw">
     <div class="modal-header"><span class="modal-title">Schedule Belt Test</span><button class="help-hint-inline" onclick="openHelpPopover('belttests.test_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addBeltTestModal',closeAddBeltTest)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="beltTestEditId" value="" />
-      <div class="field"><label>Test Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_name',this)" title="Help">?</button></label><input type="text" id="btName" placeholder="e.g. Adult Karate Spring Belt Test" /></div>
-      <div class="form-row">
-        <div class="field"><label>Test Date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_date',this)" title="Help">?</button></label><input type="date" id="btDate" /></div>
-        <div class="field"><label>Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_time',this)" title="Help">?</button></label><input type="time" id="btTime" /></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-trophy" style="color:var(--gold)"></i>Belt Test <button class="help-hint-inline" onclick="openHelpPopover('belttests.test_form',this)" title="Help">?</button></div>
+        <div class="field"><label>Test Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_name',this)" title="Help">?</button></label><input type="text" id="btName" placeholder="e.g. Adult Karate Spring Belt Test" /></div>
+        <div class="form-row"><div class="field"><label>Test Date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_date',this)" title="Help">?</button></label><input type="date" id="btDate" /></div><div class="field"><label>Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_time',this)" title="Help">?</button></label><input type="time" id="btTime" /></div></div>
+        <div class="field"><label>Location <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_location',this)" title="Help">?</button></label><input type="text" id="btLocation" placeholder="e.g. Main School" /></div>
+        <div class="check-group"><label class="check-item"><input type="checkbox" id="btFeeEnabled" onchange="toggleBeltTestFee()" /><span class="check-item-label">Charge test fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_enabled',this)" title="Help">?</button></span></label></div>
+        <div id="btFeeFields" style="display:none"><div class="form-row"><div class="field"><label>Fee Amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_amount',this)" title="Help">?</button></label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div><div class="field"><label>Payment Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_payment',this)" title="Help">?</button></label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div></div></div>
+        <div class="field" style="margin-bottom:0"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_notes',this)" title="Help">?</button></label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
       </div>
-      <div class="field"><label>Location <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_location',this)" title="Help">?</button></label><input type="text" id="btLocation" placeholder="e.g. Main School" /></div>
-      <div class="check-group"><label class="check-item"><input type="checkbox" id="btFeeEnabled" onchange="toggleBeltTestFee()" /><span class="check-item-label">Charge test fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_enabled',this)" title="Help">?</button></span></label></div>
-      <div id="btFeeFields" style="display:none">
-        <div class="form-row">
-          <div class="field"><label>Fee Amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_amount',this)" title="Help">?</button></label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div>
-          <div class="field"><label>Payment Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_payment',this)" title="Help">?</button></label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div>
-        </div>
-      </div>
-      <div class="field"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_notes',this)" title="Help">?</button></label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
-      <button class="btn-gold-full" onclick="saveBeltTest()">Schedule Belt Test</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveBeltTest()">Schedule Belt Test</button>
       <p class="form-msg" id="beltTestMsg"></p>
     </div>
   </div>
@@ -2156,11 +2154,14 @@
 
 <!-- §MODAL-BELTSYSTEM-ADD -->
 <div class="modal-overlay" id="addBeltSystemModal">
-  <div class="modal" style="width:460px;max-width:95vw">
+  <div class="modal" style="width:480px;max-width:96vw">
     <div class="modal-header"><span class="modal-title">New Belt System</span><button class="help-hint-inline" onclick="openHelpPopover('belts.system_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddBeltSystem()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div class="field"><label>System Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_name',this)" title="Help">?</button></label><input type="text" id="bsName" placeholder="e.g. Karate Ranks" /></div>
-      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_desc',this)" title="Help">?</button></label><div id="bsDescEditor"></div></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-sitemap" style="color:var(--gold)"></i>Belt System <button class="help-hint-inline" onclick="openHelpPopover('belts.system_form',this)" title="Help">?</button></div>
+        <div class="field"><label>System Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_name',this)" title="Help">?</button></label><input type="text" id="bsName" placeholder="e.g. Karate Ranks" /></div>
+        <div class="field" style="margin-bottom:0"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bs_desc',this)" title="Help">?</button></label><div id="bsDescEditor"></div></div>
+      </div>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveBeltSystem()">Create Belt System</button>
       <p class="form-msg" id="beltSystemMsg"></p>
     </div>
@@ -2195,17 +2196,14 @@
   <div class="modal" style="width:560px;max-width:95vw">
     <div class="modal-header"><span class="modal-title">Add Belt Level</span><button class="help-hint-inline" onclick="openHelpPopover('belts.level_form',this)" title="Help">?</button><button class="modal-close" onclick="closeAddBeltLevel()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div class="form-row">
-        <div class="field"><label>Belt Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_name',this)" title="Help">?</button></label><input type="text" id="blName" placeholder="e.g. White Belt" /></div>
-        <div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="blColor" value="#FFFFFF" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="document.getElementById('blColorHex').value=this.value" /><input type="text" id="blColorHex" value="#FFFFFF" style="flex:1" oninput="syncBeltColor()" /></div></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-medal" style="color:var(--gold)"></i>Belt Level <button class="help-hint-inline" onclick="openHelpPopover('belts.level_form',this)" title="Help">?</button></div>
+        <div class="form-row"><div class="field"><label>Belt Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_name',this)" title="Help">?</button></label><input type="text" id="blName" placeholder="e.g. White Belt" /></div><div class="field"><label>Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="blColor" value="#FFFFFF" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="document.getElementById('blColorHex').value=this.value" /><input type="text" id="blColorHex" value="#FFFFFF" style="flex:1" oninput="syncBeltColor()" /></div></div></div>
+        <div class="form-row"><div class="field"><label>Promotion Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_fee',this)" title="Help">?</button></label><input type="number" id="blFee" value="0" min="0" step="0.01" /></div><div class="field"><label>Classes Required <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_classes',this)" title="Help">?</button></label><input type="number" id="blClassesRequired" value="0" min="0" /></div></div>
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0">Curriculum Videos <button class="help-hint-inline" onclick="openHelpPopover('belts.bl_videos',this)" title="Help">?</button></div>
+        <div id="blVideoRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem"></div>
+        <button class="btn-sm" onclick="addVideoRow()"><i class="fa-solid fa-plus"></i> Add Video</button>
       </div>
-      <div class="form-row">
-        <div class="field"><label>Promotion Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_fee',this)" title="Help">?</button></label><input type="number" id="blFee" value="0" min="0" step="0.01" /></div>
-        <div class="field"><label>Classes Required <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belts.bl_classes',this)" title="Help">?</button></label><input type="number" id="blClassesRequired" value="0" min="0" /></div>
-      </div>
-      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0">Curriculum Videos <button class="help-hint-inline" onclick="openHelpPopover('belts.bl_videos',this)" title="Help">?</button></div>
-      <div id="blVideoRows" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem"></div>
-      <button class="btn-sm" onclick="addVideoRow()"><i class="fa-solid fa-plus"></i> Add Video</button>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveBeltLevel()">Save Belt Level</button>
       <p class="form-msg" id="beltLevelMsg"></p>
     </div>
@@ -2277,19 +2275,19 @@
 
 <!-- §MODAL-PROGRAM -->
 <div class="modal-overlay" id="addProgramModal">
-  <div class="modal">
+  <div class="modal" style="width:600px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addProgramTitle">Add New Program</span><button class="help-hint-inline" onclick="openHelpPopover('programs.prog_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addProgramModal',closeAddProgram)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="progEditId" value="" />
-      <div class="field"><label>Program Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_name',this)" title="Help">?</button></label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
-      <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_desc',this)" title="Help">?</button></label><div id="progDescEditor"></div></div>
-      <div class="form-row">
-        <div class="field"><label>Age Group <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_age',this)" title="Help">?</button></label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div>
-        <div class="field"><label>Belt Progression <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_belt',this)" title="Help">?</button></label><select id="progBelt" onchange="toggleProgBeltSystem()"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-diagram-project" style="color:var(--gold)"></i>Program <button class="help-hint-inline" onclick="openHelpPopover('programs.prog_form',this)" title="Help">?</button></div>
+        <div class="field"><label>Program Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_name',this)" title="Help">?</button></label><input type="text" id="progName" placeholder="e.g. Adult Karate" /></div>
+        <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_desc',this)" title="Help">?</button></label><div id="progDescEditor"></div></div>
+        <div class="form-row"><div class="field"><label>Age Group <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_age',this)" title="Help">?</button></label><select id="progAge"><option value="Little Tigers (4-6)">Little Tigers (4-6)</option><option value="Kids (7-12)">Kids (7-12)</option><option value="Teens (13-17)">Teens (13-17)</option><option value="Adults (18+)" selected>Adults (18+)</option><option value="All Ages">All Ages</option></select></div><div class="field"><label>Belt Progression <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_belt',this)" title="Help">?</button></label><select id="progBelt" onchange="toggleProgBeltSystem()"><option value="Belt Progression">Belt Progression</option><option value="No Belt Progression">No Belt Progression</option></select></div></div>
+        <div class="field" id="progBeltSystemField"><label>Belt System <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_beltsys',this)" title="Help">?</button></label><select id="progBeltSystem"><option value="">-- Select Belt System --</option></select><div id="progBeltSystemHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;display:none"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No belt systems yet. Create one in the Belt Systems panel first.</div></div>
+        <div class="field" style="margin-bottom:0"><label>Program Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.75rem;align-items:center"><input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" /></div></div>
       </div>
-      <div class="field" id="progBeltSystemField"><label>Belt System <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_beltsys',this)" title="Help">?</button></label><select id="progBeltSystem"><option value="">-- Select Belt System --</option></select><div id="progBeltSystemHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem;display:none"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No belt systems yet. Create one in the Belt Systems panel first.</div></div>
-      <div class="field"><label>Program Color <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('programs.pr_color',this)" title="Help">?</button></label><div style="display:flex;gap:0.75rem;align-items:center"><input type="color" id="progColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" /><input type="text" id="progColorHex" placeholder="#C9A84C" style="flex:1" oninput="syncProgColor()" /></div></div>
-      <button class="btn-gold-full" onclick="saveProgram()">Save Program</button>
+      <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveProgram()">Save Program</button>
       <p class="form-msg" id="programMsg"></p>
     </div>
   </div>
@@ -2395,35 +2393,40 @@
 
 <!-- §MODAL-CUSTOM-MEMBERSHIP -->
 <div class="modal-overlay" id="craftCustomModal">
-  <div class="modal" style="width:600px;max-width:95vw">
+  <div class="modal" style="width:820px;max-width:96vw">
     <div class="modal-header"><span class="modal-title">Craft Custom Membership</span><button class="modal-close" onclick="safeClose('craftCustomModal',closeCraftCustom)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">For</div>
-      <div id="ccStudentName" style="font-size:1rem;color:var(--white);margin-bottom:1rem"></div>
-      <div class="field"><label>Membership Name</label><input type="text" id="ccName" placeholder="e.g. Legacy Unlimited" /></div>
-      <div class="field"><label>Programs</label><div id="ccProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
-      <div class="field"><label>Class Access <span style="color:var(--muted);font-weight:normal">(optional — leave all unchecked for every class in the selected programs, now and future)</span></label><div id="ccClassChecks" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div></div></div>
-      <div class="field" id="ccBeltField" style="display:none"><label>Current Belt <span style="color:var(--muted);font-weight:normal">(set the student's rank)</span></label><select id="ccBelt"><option value="">-- No change --</option></select><div id="ccBeltHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem"></div></div>
-      <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Billing</div>
-      <div class="field"><label>Bill Every</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="number" id="ccEveryN" value="1" min="1" max="12" style="width:70px" /><span style="color:var(--muted)">month(s)</span></div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">How often the card is charged. 1 = monthly, 3 = quarterly, 6 = every six months, 12 = annually.</div></div>
-      <div class="form-row">
-        <div class="field"><label>Price</label><input type="number" id="ccPrice" placeholder="0.00" min="0" step="0.01" /></div>
-        <div class="field"><label>Signup Fee</label><input type="number" id="ccSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+          <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user-gear" style="color:var(--gold)"></i>Plan <button class="help-hint-inline" onclick="openHelpPopover('custom.sec_plan',this)" title="Help">?</button></div>
+          <div style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.2rem">For</div>
+          <div id="ccStudentName" style="font-size:1rem;color:var(--white);margin-bottom:1rem"></div>
+          <div class="field"><label>Membership Name</label><input type="text" id="ccName" placeholder="e.g. Legacy Unlimited" /></div>
+          <div class="field"><label>Programs</label><div id="ccProgramChecks" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Loading...</div></div></div>
+          <div class="field"><label>Class Access <span style="color:var(--muted);font-weight:normal">(optional — leave all unchecked for every class in the selected programs, now and future)</span></label><div id="ccClassChecks" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem;max-height:140px;overflow-y:auto;padding:0.75rem;background:var(--black);border:1px solid var(--border)"><div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div></div></div>
+          <div class="field" id="ccBeltField" style="display:none;margin-bottom:0"><label>Current Belt <span style="color:var(--muted);font-weight:normal">(set the student's rank)</span></label><select id="ccBelt"><option value="">-- No change --</option></select><div id="ccBeltHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-credit-card" style="color:var(--gold)"></i>Billing <button class="help-hint-inline" onclick="openHelpPopover('custom.sec_billing',this)" title="Help">?</button></div>
+            <div class="field"><label>Bill Every</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="number" id="ccEveryN" value="1" min="1" max="12" style="width:70px" /><span style="color:var(--muted)">month(s)</span></div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">How often the card is charged. 1 = monthly, 3 = quarterly, 6 = every six months, 12 = annually.</div></div>
+            <div class="form-row"><div class="field"><label>Price</label><input type="number" id="ccPrice" placeholder="0.00" min="0" step="0.01" /></div><div class="field"><label>Signup Fee</label><input type="number" id="ccSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div></div>
+            <div class="form-row"><div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div><div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div></div>
+            <div class="field"><label>Start Date <span style="color:var(--muted);font-weight:normal">(the "member since" date — when this membership began. Backdate for a migrated member; blank = today. This is record-only and does not affect billing.)</span></label><input type="date" id="ccStartDate" /></div>
+            <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(the next charge date — future only. For a migrated member, set it to their next billing date; the membership is active now and bills from this date onward. Blank = charge today.)</span></label><input type="date" id="ccFirstCharge" /></div>
+            <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st of the month <span style="color:var(--muted)">(overrides the date above — partial charge now for the days until the 1st, then full on the 1st)</span></span></label>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-money-check-dollar" style="color:var(--gold)"></i>Payment <button class="help-hint-inline" onclick="openHelpPopover('custom.sec_payment',this)" title="Help">?</button></div>
+            <div class="check-group" style="flex-direction:column;gap:0.5rem;margin-top:0">
+              <label class="check-item"><input type="radio" name="ccBillingMode" value="stripe" checked /><span class="check-item-label">Auto-bill card on file (Stripe)</span></label>
+              <label class="check-item"><input type="radio" name="ccBillingMode" value="cash" /><span class="check-item-label">Cash / manual — record payment, no auto-billing</span></label>
+            </div>
+            <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccAutoSendCard" checked /><span class="check-item-label">If the student has no card, activate now and text them a card link automatically <span style="color:var(--muted)">(off = you'll send it yourself)</span></span></label>
+          </div>
+        </div>
       </div>
-      <div class="form-row">
-        <div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div>
-        <div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div>
-      </div>
-       <div class="field"><label>Start Date <span style="color:var(--muted);font-weight:normal">(the "member since" date — when this membership began. Backdate for a migrated member; blank = today. This is record-only and does not affect billing.)</span></label><input type="date" id="ccStartDate" /></div>
-      <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(the next charge date — future only. For a migrated member, set it to their next billing date; the membership is active now and bills from this date onward. Blank = charge today.)</span></label><input type="date" id="ccFirstCharge" /></div>
-      <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st of the month <span style="color:var(--muted)">(overrides the date above — partial charge now for the days until the 1st, then full on the 1st)</span></span></label>
-      <div style="margin-top:1.25rem;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Payment</div>
-      <div class="check-group" style="flex-direction:column;gap:0.5rem">
-        <label class="check-item"><input type="radio" name="ccBillingMode" value="stripe" checked /><span class="check-item-label">Auto-bill card on file (Stripe)</span></label>
-        <label class="check-item"><input type="radio" name="ccBillingMode" value="cash" /><span class="check-item-label">Cash / manual — record payment, no auto-billing</span></label>
-      </div>
-      <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccAutoSendCard" checked /><span class="check-item-label">If the student has no card, activate now and text them a card link automatically <span style="color:var(--muted)">(off = you'll send it yourself)</span></span></label>
-      <button id="ccSaveBtn" class="btn-gold-full" onclick="saveCraftCustomMembership()">Create &amp; Assign</button>
+      <button id="ccSaveBtn" class="btn-gold-full" style="margin-top:1.25rem" onclick="saveCraftCustomMembership()">Create &amp; Assign</button>
       <p class="form-msg" id="ccMsg"></p>
     </div>
   </div>
@@ -4685,6 +4688,12 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'custom.sec_plan': { title: 'Plan', purpose: 'Who the custom plan is for, its name, the programs and classes it covers, and an optional belt rank set.' },
+'custom.sec_billing': { title: 'Billing', purpose: 'How often and how much to charge, class allowance, the member-since date, the next charge date, and optional prorate-to-the-1st.' },
+'custom.sec_payment': { title: 'Payment', purpose: 'Auto-bill a card on file via Stripe, or record it as cash/manual. Optionally text a card link if none is on file.' },
+'schedule.sec_details': { title: 'Shift details', purpose: 'Name the schedule change, set its date range, and choose how and when members are reminded.' },
+'schedule.sec_classes': { title: 'Class changes', purpose: 'Pick which classes are retimed or cancelled during the shift. Classes left on Normal are unchanged.' },
+
 'retail.sec_product': { title: 'Product', purpose: 'Photo, name, category, and description of the item.' },
 'retail.sec_pricing': { title: 'Pricing', purpose: 'Retail price charged to buyers and your wholesale cost.' },
 'retail.sec_availability': { title: 'Availability and inventory', purpose: 'Where the product shows (member app, quick list, public pay) and optional inventory tracking with reorder alerts.' },
