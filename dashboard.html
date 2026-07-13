@@ -7794,6 +7794,39 @@ async function saveChangeMembership() {
       var sx=await sb.from('student_memberships').select('id').eq('student_id',currentProfileStudent.id).eq('membership_id',curMid).eq('status','active').limit(1);
       if(sx.data&&sx.data.length) swapTarget=sx.data[0].id;
     }
+    // §SWAP-STRIPE-CANCEL — assign_membership(swap) flips the outgoing membership row to
+    // 'cancelled' in the DB but cannot reach Stripe, so a monthly->yearly (or any) swap used to
+    // leave the OLD subscription live and still billing. Cancel the outgoing sub(s) in Stripe
+    // FIRST; only proceed with the swap if Stripe confirms, so we never orphan live billing.
+    var _swapOutgoing=[];
+    if(swapTarget){
+      var _so=await sb.from('student_memberships').select('id,stripe_subscription_id').eq('id',swapTarget).limit(1);
+      if(_so.data) _swapOutgoing=_so.data;
+    }else{
+      // No explicit target: mirror assign_membership's program-scoped cancel.
+      var _prog=pid;
+      if(!_prog){
+        var _mp=await sb.from('membership_programs').select('program_id').eq('membership_id',mid).limit(1);
+        if(_mp.data&&_mp.data.length) _prog=_mp.data[0].program_id;
+      }
+      var _or=await sb.from('student_memberships').select('id,stripe_subscription_id,program_id').eq('student_id',currentProfileStudent.id).eq('status','active');
+      var _orows=_or.data||[];
+      for(var _k=0;_k<_orows.length;_k++){
+        if((_orows[_k].program_id||null)===(_prog||null)) _swapOutgoing.push(_orows[_k]);
+      }
+    }
+    for(var _ci=0;_ci<_swapOutgoing.length;_ci++){
+      var _subId=_swapOutgoing[_ci].stripe_subscription_id;
+      if(!_subId) continue;
+      try{
+        var _ccr=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:_subId,when:'now'})});
+        var _ccd=await _ccr.json();
+        if(!_ccr.ok||_ccd.error) throw new Error(_ccd.error||'Subscription cancel failed');
+      }catch(_ce){
+        setMsg('changeMembershipMsg','Could not stop the current plan\'s billing ('+((_ce&&_ce.message)?_ce.message:'error')+'). Plan change not applied.','error');
+        return;
+      }
+    }
     var r2=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'swap',p_swap_target:swapTarget,p_program_id:pid});
     if(r2.error){setMsg('changeMembershipMsg',r2.error.message,'error');}else{setMsg('changeMembershipMsg','Updated!','success');await loadStudents();setTimeout(async function(){document.getElementById('profileMembershipChangeBox').style.display='none';await openStudentProfile(currentProfileStudent.id);},800);}
   }
