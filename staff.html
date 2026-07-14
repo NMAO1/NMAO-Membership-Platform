@@ -390,6 +390,18 @@
 .su-sum-row:last-child{border-bottom:none;}
 .su-sum-row b{color:var(--white);font-weight:600;text-align:right;}
 .su-sum-total b{color:var(--gold);font-size:1rem;font-family:var(--font-display);}
+
+/* ── §STAFF: DISCOUNT — shared control for signup + pack flows ───────────── */
+.dsc-wrap{border:1px solid var(--line,#2a2a2a);border-radius:8px;padding:0.7rem 0.8rem;margin:0.75rem 0}
+.dsc-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem}
+.dsc-lbl{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2)}
+.dsc-body{margin-top:0.6rem;display:none}
+.dsc-body.on{display:block}
+.dsc-row{display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center}
+.dsc-row input,.dsc-row select{padding:0.4rem 0.5rem;font-size:0.85rem}
+.dsc-amt{width:90px}
+.dsc-reason{width:100%;margin-top:0.4rem;padding:0.4rem 0.5rem;font-size:0.85rem}
+.dsc-preview{margin-top:0.45rem;font-size:0.78rem;color:var(--gold,#C9A84C)}
 .su-pay{display:flex;align-items:center;gap:0.7rem;background:var(--surface);border:1px solid var(--border);padding:0.85rem 0.95rem;margin-bottom:0.6rem;cursor:pointer;}
 .su-pay.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent);}
 .su-pay-radio{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);}
@@ -813,6 +825,21 @@
       <div class="su-step-head">Payment</div>
       <div class="su-step-sub">Review and choose how they will pay.</div>
       <div class="su-summary" id="suSummary"></div>
+      <div class="dsc-wrap">
+        <div class="dsc-head">
+          <span class="dsc-lbl"><i class="fa-solid fa-tag" style="margin-right:0.35rem"></i>Discount</span>
+          <label style="font-size:0.8rem;display:flex;align-items:center;gap:0.35rem;cursor:pointer"><input type="checkbox" id="suDscOn" onchange="dscToggle('su')" /> Apply</label>
+        </div>
+        <div class="dsc-body" id="suDscBody">
+          <div class="dsc-row">
+            <select id="suDscType" onchange="dscSync('su')"><option value="pct">% off</option><option value="amt">$ off</option></select>
+            <input class="dsc-amt" id="suDscVal" type="number" min="0" step="0.01" placeholder="0" oninput="dscSync('su')" />
+            <select id="suDscMode" onchange="dscSync('su')"><option value="once">One time</option><option value="forever">Every cycle</option></select>
+          </div>
+          <input class="dsc-reason" id="suDscReason" type="text" maxlength="300" placeholder="Reason (optional)" />
+          <div class="dsc-preview" id="suDscPreview"></div>
+        </div>
+      </div>
       <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.5rem">Payment Method</label>
       <div class="su-pay" id="suPay-card_now" onclick="suSetPay('card_now')">
         <div class="su-pay-radio"></div>
@@ -877,6 +904,20 @@
           <button class="su-btn su-btn-back" style="height:auto;padding:0.3rem 0.9rem" onclick="closeRenewPanel()">Cancel</button>
         </div>
         <div id="renewPackList"></div>
+        <div class="dsc-wrap">
+          <div class="dsc-head">
+            <span class="dsc-lbl"><i class="fa-solid fa-tag" style="margin-right:0.35rem"></i>Discount</span>
+            <label style="font-size:0.8rem;display:flex;align-items:center;gap:0.35rem;cursor:pointer"><input type="checkbox" id="renewDscOn" onchange="dscToggle('renew')" /> Apply</label>
+          </div>
+          <div class="dsc-body" id="renewDscBody">
+            <div class="dsc-row">
+              <select id="renewDscType" onchange="dscSync('renew')"><option value="pct">% off</option><option value="amt">$ off</option></select>
+              <input class="dsc-amt" id="renewDscVal" type="number" min="0" step="0.01" placeholder="0" oninput="dscSync('renew')" />
+            </div>
+            <input class="dsc-reason" id="renewDscReason" type="text" maxlength="300" placeholder="Reason (optional)" />
+            <div class="dsc-preview" id="renewDscPreview"></div>
+          </div>
+        </div>
         <div id="renewActions" style="margin-top:0.85rem;display:grid;gap:0.5rem">
           <button class="su-btn su-btn-next" id="renewCardBtn" disabled onclick="renewGo('card_file')"><i class="fa-solid fa-credit-card"></i> Charge card on file</button>
           <button class="su-btn su-btn-sec" id="renewNewOpenBtn" disabled onclick="renewGo('card_open')"><i class="fa-solid fa-up-right-from-square"></i> New card &mdash; open payment page</button>
@@ -1529,19 +1570,6 @@ function switchCvTab(tab){
 // ─────────────────────────────────────────────────────────────
 //  CHECK IN
 // ─────────────────────────────────────────────────────────────
-// §STAFF: PACK-BALANCE-REFRESH — the roster's "rem/total" tile (packBalanceMap) is a
-// load-time snapshot from get_class_pack_balances. Check-ins deduct classes_remaining
-// server-side (attendance trigger, synchronous within the insert), so the snapshot goes
-// stale the moment anyone is checked in or undone — which is why a checked-in student can
-// still read full (e.g. 20/20) while the live toast correctly shows the deducted count.
-// Re-pull the authoritative balances and rebuild the map. Called on toggle only (no bulk
-// loop in this app), so the extra round-trip is negligible. Never throws.
-async function refreshAllPackBalances(){
-  try{
-    var r=await sb.rpc('get_class_pack_balances',{p_school_id:SID});
-    buildPackBalanceMap(r&&r.data?r.data:[]);
-  }catch(e){ console.error('refreshAllPackBalances error:',e); }
-}
 async function toggleCheckin(studentId,event){
   if(!staffCan('checkin')){ if(event&&event.stopPropagation)event.stopPropagation(); return; }
   event.stopPropagation();
@@ -1691,10 +1719,6 @@ if(!classSessionId){
 
  // Recompute walk-in eligible set (check-in status changed)
   recomputeEligible();
-
-  // Sync the pack-balance tile to real server state after this check-in / undo
-  // (the trigger has already run synchronously, so balances are current).
-  await refreshAllPackBalances();
 
   // Re-render all four tabs (preserve current search term where applicable)
   var currentSearch=document.getElementById('cvSearch').value||'';
@@ -2113,6 +2137,7 @@ function applyStaffCapabilities(){
 function openSignup(){
   if(!staffCan('enroll')) return;
   signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
+  dscReset('su');
   document.getElementById('suFirst').value='';
   document.getElementById('suLast').value='';
   document.getElementById('suEmail').value='';
@@ -2313,6 +2338,74 @@ function suCommitStep2(){
   return true;
 }
 
+// ── §STAFF: DISCOUNT ENGINE — shared by the signup + pack flows ─────────────
+// dscGet(ns, basePrice) -> null when off/zero, else { cents, mode, reason, net }
+var _dscStaffUid=null;
+async function dscStaffUid(){
+  if(_dscStaffUid) return _dscStaffUid;
+  try{ var u=await sb.auth.getUser(); if(u&&u.data&&u.data.user) _dscStaffUid=u.data.user.id; }catch(e){}
+  return _dscStaffUid;
+}
+function dscBase(ns){
+  if(ns==='su'){
+    var p=signupState&&signupState.plan;
+    if(!p) return 0;
+    return Number((p.mode==='custom'&&p.custom)?p.custom.price:p.price)||0;
+  }
+  var m=(typeof renewSelectedMembership==='function')?renewSelectedMembership():null;
+  return m?(Number(m.price)||0):0;
+}
+function dscToggle(ns){
+  var on=document.getElementById(ns+'DscOn').checked;
+  var b=document.getElementById(ns+'DscBody');
+  if(b) b.className='dsc-body'+(on?' on':'');
+  dscSync(ns);
+}
+function dscSync(ns){
+  var pv=document.getElementById(ns+'DscPreview'); if(!pv) return;
+  var d=dscGet(ns);
+  if(!d){ pv.textContent=''; return; }
+  var base=dscBase(ns);
+  var modeEl=document.getElementById(ns+'DscMode');
+  var modeTxt=(modeEl&&modeEl.value==='forever')?' every cycle':' on the first charge';
+  pv.textContent='$'+base.toFixed(2)+' \u2192 $'+d.net.toFixed(2)+modeTxt+' (\u2212$'+(d.cents/100).toFixed(2)+')';
+}
+function dscGet(ns){
+  var onEl=document.getElementById(ns+'DscOn');
+  if(!onEl||!onEl.checked) return null;
+  var base=dscBase(ns); if(!(base>0)) return null;
+  var type=(document.getElementById(ns+'DscType')||{}).value||'pct';
+  var raw=parseFloat((document.getElementById(ns+'DscVal')||{}).value);
+  if(!raw||raw<=0||isNaN(raw)) return null;
+  var baseCents=Math.round(base*100);
+  var cents=(type==='pct')?Math.round(baseCents*(Math.min(raw,100)/100)):Math.round(raw*100);
+  if(cents<=0) return null;
+  if(cents>baseCents) cents=baseCents;
+  var modeEl=document.getElementById(ns+'DscMode');
+  var mode=(modeEl&&modeEl.value==='forever')?'forever':'once';
+  var reason=((document.getElementById(ns+'DscReason')||{}).value||'').trim();
+  return { cents:cents, mode:mode, reason:reason||null, net:(baseCents-cents)/100 };
+}
+// Merge discount fields into an EF payload.
+async function dscPayload(ns, payload){
+  var d=dscGet(ns); if(!d) return payload;
+  payload.discount_cents=d.cents;
+  payload.discount_mode=d.mode;
+  if(d.reason) payload.discount_reason=d.reason;
+  var uid=await dscStaffUid(); if(uid) payload.discounted_by=uid;
+  return payload;
+}
+
+function dscReset(ns){
+  var on=document.getElementById(ns+'DscOn'); if(on) on.checked=false;
+  var v=document.getElementById(ns+'DscVal'); if(v) v.value='';
+  var r=document.getElementById(ns+'DscReason'); if(r) r.value='';
+  var t=document.getElementById(ns+'DscType'); if(t) t.value='pct';
+  var m=document.getElementById(ns+'DscMode'); if(m) m.value='once';
+  var b=document.getElementById(ns+'DscBody'); if(b) b.className='dsc-body';
+  var p=document.getElementById(ns+'DscPreview'); if(p) p.textContent='';
+}
+
 function suEsc(s){ s=(s==null)?'':String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ── Signup Step 3: payment + commit ── */
@@ -2368,12 +2461,17 @@ async function suFinish(){
     var studentId=sr.data.id; signupState.studentId=studentId;
 
     if(method==='cash'){
+      var _suD=dscGet('su');
+      var _suPaid=_suD?_suD.net:price;
+      var _suUid=_suD?(await dscStaffUid()):null;
       await sb.from('student_memberships').insert({ school_id:SID, student_id:studentId, membership_id:membershipId, program_id:plan.program_id, status:'active', started_at:nowIso, start_date:today });
       await sb.from('students').update({ membership_id:membershipId, status:'active' }).eq('id',studentId);
-      await sb.from('payments').insert({ school_id:SID, student_id:studentId, amount:price, type:'membership', status:'paid', description:'Cash - '+planName, created_at:nowIso, paid_at:nowIso });
-      suRenderDone('cash',{ name:stu.first_name, plan:planName, price:price });
+      await sb.from('payments').insert({ school_id:SID, student_id:studentId, amount:_suPaid, type:'membership', status:'paid', description:'Cash - '+planName+(_suD?' (discounted)':''), created_at:nowIso, paid_at:nowIso,
+        discount_cents:_suD?_suD.cents:null, discount_mode:_suD?_suD.mode:null, discount_reason:_suD?_suD.reason:null, discounted_by:_suUid });
+      suRenderDone('cash',{ name:stu.first_name, plan:planName, price:_suPaid });
     } else {
-      var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify({ school_id:SID, student_id:studentId, membership_id:membershipId, success_url:window.location.origin+window.location.pathname+'?signup=paid', cancel_url:window.location.origin+window.location.pathname+'?signup=cancelled' }) });
+      var _suPayload=await dscPayload('su',{ school_id:SID, student_id:studentId, membership_id:membershipId, success_url:window.location.origin+window.location.pathname+'?signup=paid', cancel_url:window.location.origin+window.location.pathname+'?signup=cancelled' });
+      var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify(_suPayload) });
       var cd=await co.json();
       if(!co.ok||cd.error||!cd.url) throw new Error(cd.error||'Could not start checkout.');
       if(method==='card_now'){
@@ -2542,6 +2640,7 @@ function renewSetBusy(b){ renewBusy=b; renewUpdateActions(); }
 async function openRenewPanel(){
   if(!slStudent) return;
   renewSelMemId=null; renewIdemKey=null;
+  dscReset('renew');
   var t=document.getElementById('slRenewToggle'); if(t) t.style.display='none';
   document.getElementById('slRenewPanel').style.display='block';
   setRenewMsg('','');
@@ -2610,6 +2709,8 @@ async function renewGo(method){
   try{
     if(method==='cash'){
       var nowIso=new Date().toISOString(); var today=nowIso.split('T')[0];
+      var _rnD=dscGet('renew');
+      var _rnUid=_rnD?(await dscStaffUid()):null;
       var pid=renewProgramId(m.id);
       var jr=await sb.from('student_memberships').insert({ school_id:SID, student_id:sid, membership_id:m.id, program_id:pid, status:'active', started_at:nowIso, start_date:today });
       if(jr.error){
@@ -2618,13 +2719,15 @@ async function renewGo(method){
         throw new Error(em||'Could not record the pack.');
       }
       await sb.from('students').update({ status:'active' }).eq('id',sid);
-      await sb.from('payments').insert({ school_id:SID, student_id:sid, amount:(m.price||0), type:'membership', status:'paid', description:'Cash - '+m.name, created_at:nowIso, paid_at:nowIso });
-      renewDone('Recorded. '+fn+' has a fresh '+m.name+'. Cash payment of $'+Number(m.price||0).toFixed(2)+' logged.');
+      await sb.from('payments').insert({ school_id:SID, student_id:sid, amount:(_rnD?_rnD.net:(m.price||0)), type:'membership', status:'paid', description:'Cash - '+m.name+(_rnD?' (discounted)':''), created_at:nowIso, paid_at:nowIso,
+        discount_cents:_rnD?_rnD.cents:null, discount_mode:_rnD?_rnD.mode:null, discount_reason:_rnD?_rnD.reason:null, discounted_by:_rnUid });
+      renewDone('Recorded. '+fn+' has a fresh '+m.name+'. Cash payment of $'+Number(_rnD?_rnD.net:(m.price||0)).toFixed(2)+' logged.');
       return;
     }
     if(method==='card_file'){
       if(!renewIdemKey) renewIdemKey=renewNewIdem();
-      var cr=await fetch(SURL+'/functions/v1/create-membership-subscription',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())}, body:JSON.stringify({ school_id:SID, student_id:sid, membership_id:m.id, idempotency_key:renewIdemKey }) });
+      var _rnCardPayload=await dscPayload('renew',{ school_id:SID, student_id:sid, membership_id:m.id, idempotency_key:renewIdemKey });
+      var cr=await fetch(SURL+'/functions/v1/create-membership-subscription',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())}, body:JSON.stringify(_rnCardPayload) });
       var cd=await cr.json();
       if(!cr.ok||!cd||cd.error){ renewIdemKey=null; setRenewMsg(renewFriendlyError(cd&&cd.error?cd.error:''),'error'); renewSetBusy(false); return; }
       renewIdemKey=null;
@@ -2632,7 +2735,8 @@ async function renewGo(method){
       renewDone('Charged '+brandLine+'. '+fn+' has a fresh '+m.name+'.');
       return;
     }
-    var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify({ school_id:SID, student_id:sid, membership_id:m.id, success_url:window.location.origin+window.location.pathname+'?renew=paid', cancel_url:window.location.origin+window.location.pathname+'?renew=cancelled' }) });
+    var _rnPayload=await dscPayload('renew',{ school_id:SID, student_id:sid, membership_id:m.id, success_url:window.location.origin+window.location.pathname+'?renew=paid', cancel_url:window.location.origin+window.location.pathname+'?renew=cancelled' });
+    var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify(_rnPayload) });
     var cod=await co.json();
     if(!co.ok||cod.error||!cod.url) throw new Error(cod.error||'Could not start checkout.');
     if(method==='card_open'){
