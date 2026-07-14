@@ -575,8 +575,8 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 <div id="changePwModal">
   <div class="login-card" style="position:relative">
     <button onclick="closeChangePw()" title="Close" style="position:absolute;top:0.9rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.25rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-    <div class="login-title">Change Password</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin:0.5rem 0 1rem 0">Update the password you use to sign in to your portal.</p>
+    <div class="login-title" id="changePwTitle">Change Password</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin:0.5rem 0 1rem 0" id="changePwHelp">Update the password you use to sign in to your portal.</p>
     <div class="field"><label>New Password</label><input type="password" id="newPassword" placeholder="At least 6 characters" /></div>
     <div class="field"><label>Confirm New Password</label><input type="password" id="confirmPassword" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')setPortalPassword()" /></div>
     <button class="btn-gold" id="setPasswordBtn" onclick="setPortalPassword()"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password</button>
@@ -1452,6 +1452,11 @@ async function setPortalPassword(){
 }
 
 function openChangePw(){
+  var fam=(typeof isFamilyMode!=='undefined' && isFamilyMode);
+  var t=document.getElementById('changePwTitle'); if(t) t.textContent=fam?'Family Login':'Change Password';
+  var h=document.getElementById('changePwHelp'); if(h) h.textContent=fam
+    ? 'One password for your whole family, used to sign in. Updating it here changes the login for all your children.'
+    : 'Update the password you use to sign in to your portal.';
   var a=document.getElementById('newPassword'); if(a) a.value='';
   var b=document.getElementById('confirmPassword'); if(b) b.value='';
   var m=document.getElementById('passwordMsg'); if(m){ m.textContent=''; m.className='form-msg'; }
@@ -1727,11 +1732,7 @@ renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_m
   await buildAttendance(s.id);
   await buildAnnouncements();
   if(isFamilyMode){await buildFamilySchedule();}else{await buildSchedule(s);}
-  // CP3.2: single password control lives on the Profile tab; relabel it for families
-  var _pwl=document.getElementById('pwSectionLabel');
-  var _pwh=document.getElementById('pwSectionHelp');
-  if(_pwl)_pwl.innerHTML='<i class="fa-solid fa-key"></i> '+(isFamilyMode?'Family Login':'Update Password');
-  if(_pwh)_pwh.textContent=isFamilyMode?'One password for your whole family, used to sign in. Updating it here changes the login for all your children.':'Change the password you use to sign in to your portal.';
+  // Password control moved to the shared header modal (openChangePw); it sets family-aware copy itself.
   processAutoCheckIn();
   }catch(e){
     console.error('buildPortal error:',e);
