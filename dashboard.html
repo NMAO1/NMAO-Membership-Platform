@@ -999,7 +999,17 @@
     <!-- ═══════════════ §PAGE-PAYMENTS ═══════════════ -->
     <div class="page" id="page-payments">
       <div class="content-heading"><h2>Payments</h2><button class="help-hint-inline" onclick="openHelpPopover('payments',this)" title="What is this page?">?</button><div class="rule-h"></div></div>
-      <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No payments yet.</td></tr></tbody></table></div></div>
+      <div class="panel" id="discountSummaryPanel" style="display:none">
+        <div class="panel-header"><span class="panel-title">Discounts Applied (last 90 days)</span><button class="help-hint-inline" onclick="openHelpPopover('payments.discounts',this)" title="Help">?</button></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;padding:1rem 1.1rem">
+          <div><div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Discounted Sales</div><div style="font-size:1.5rem;font-family:var(--font-display,inherit);color:var(--gold)" id="dscCount">0</div></div>
+          <div><div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Total Discounted</div><div style="font-size:1.5rem;font-family:var(--font-display,inherit);color:#E07070" id="dscTotal">$0.00</div></div>
+          <div><div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Recurring Discounts</div><div style="font-size:1.5rem;font-family:var(--font-display,inherit);color:var(--gold)" id="dscRecurring">0</div></div>
+        </div>
+      </div>
+      <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span>
+        <label style="margin-left:auto;font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem;cursor:pointer"><input type="checkbox" id="dscOnlyFilter" onchange="loadPaymentsLedger()" /> Discounted only</label>
+      </div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Discount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody></table></div></div>
     </div>
 
     <!-- ═══════════════ §PAGE-COMMUNICATIONS ═══════════════ -->
@@ -4685,11 +4695,74 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
+  if(page==='payments') { loadPaymentsLedger(); }
+}
+
+// ── §PAYMENTS LEDGER + DISCOUNT REVIEW ──────────────────────────────────────
+async function loadPaymentsLedger(){
+  var body=document.getElementById('paymentsTableBody'); if(!body) return;
+  var onlyDisc=(document.getElementById('dscOnlyFilter')||{}).checked;
+  try{
+    var q=sb.from('payments')
+      .select('id,amount,type,description,status,created_at,paid_at,discount_cents,discount_mode,discount_reason,discounted_by,students(first_name,last_name)')
+      .eq('school_id',SID).order('created_at',{ascending:false}).limit(200);
+    if(onlyDisc) q=q.not('discount_cents','is',null);
+    var r=await q;
+    if(r.error) throw new Error(r.error.message);
+    var rows=r.data||[];
+
+    // Resolve who applied each discount (staff names).
+    var uids=[]; rows.forEach(function(p){ if(p.discounted_by&&uids.indexOf(p.discounted_by)===-1) uids.push(p.discounted_by); });
+    var names={};
+    if(uids.length){
+      try{ var st=await sb.from('instructors').select('auth_user_id,first_name,last_name').in('auth_user_id',uids);
+        (st.data||[]).forEach(function(x){ names[x.auth_user_id]=((x.first_name||'')+' '+(x.last_name||'')).trim(); });
+      }catch(e){}
+    }
+    if(!rows.length){ body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">'+(onlyDisc?'No discounted sales yet.':'No payments yet.')+'</td></tr>'; }
+    else{
+      body.innerHTML=rows.map(function(p){
+        var stu=p.students?((p.students.first_name||'')+' '+(p.students.last_name||'')).trim():'\u2014';
+        var amt='$'+Number(p.amount||0).toFixed(2);
+        var when=p.paid_at||p.created_at;
+        var dTd='<span style="color:var(--muted)">\u2014</span>';
+        if(p.discount_cents){
+          var who=p.discounted_by?(names[p.discounted_by]||'staff'):'';
+          var mode=p.discount_mode==='forever'?'every cycle':'one time';
+          dTd='<div style="color:#E07070;font-weight:600">\u2212$'+(p.discount_cents/100).toFixed(2)+'</div>'+
+              '<div style="font-size:0.7rem;color:var(--muted)">'+mode+(who?(' \u00b7 '+_dEsc(who)):'')+'</div>'+
+              (p.discount_reason?'<div style="font-size:0.7rem;color:var(--muted);font-style:italic">'+_dEsc(p.discount_reason)+'</div>':'');
+        }
+        return '<tr><td>'+_dEsc(stu)+'</td><td>'+_dEsc(p.type||'\u2014')+'</td><td>'+amt+'</td><td>'+dTd+'</td><td>'+_dEsc(p.status||'')+'</td><td>'+(when?new Date(when).toLocaleDateString():'\u2014')+'</td></tr>';
+      }).join('');
+    }
+    loadDiscountSummary();
+  }catch(e){
+    body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#E07070;padding:2rem">Could not load payments: '+_dEsc(e.message)+'</td></tr>';
+  }
+}
+function _dEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function loadDiscountSummary(){
+  var panel=document.getElementById('discountSummaryPanel'); if(!panel) return;
+  try{
+    var since=new Date(); since.setDate(since.getDate()-90);
+    var r=await sb.from('payments').select('discount_cents,discount_mode').eq('school_id',SID)
+      .not('discount_cents','is',null).gte('created_at',since.toISOString());
+    var rows=(r.data||[]);
+    if(!rows.length){ panel.style.display='none'; return; }
+    panel.style.display='';
+    var total=rows.reduce(function(a,p){return a+(p.discount_cents||0);},0);
+    var rec=rows.filter(function(p){return p.discount_mode==='forever';}).length;
+    document.getElementById('dscCount').textContent=String(rows.length);
+    document.getElementById('dscTotal').textContent='$'+(total/100).toFixed(2);
+    document.getElementById('dscRecurring').textContent=String(rec);
+  }catch(e){ panel.style.display='none'; }
 }
 
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'payments.discounts': { title: 'Discounts applied', purpose: 'Every staff discount from the last 90 days: how many sales, the total given away, and how many repeat every cycle. Each row in the ledger shows the amount, whether it is one-time or recurring, who applied it, and the reason.' },
 'custom.cc_startdate': { title: 'Start date', purpose: 'The member-since date this membership began. Backdate for a migrated member; blank = today. Record-only, does not affect billing.' },
 'custom.cc_billingday': { title: 'Autopay billing day', purpose: 'The day of the month this plan bills. Charge today bills now and every cycle after; 1st/15th/custom anchor billing to that day.' },
 'custom.cc_prorate': { title: 'Prorate first charge', purpose: 'Collect a partial charge now for the days until the selected billing day, then bill full on that day each cycle. Available when a specific billing day is chosen.' },
