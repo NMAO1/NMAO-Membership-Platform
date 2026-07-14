@@ -2322,8 +2322,8 @@
               <div class="field"><label>Signup Fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_signup',this)" title="Help">?</button></label><input type="number" id="memSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div>
             </div>
             <div class="field"><label>Autopay Billing Day <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopayday',this)" title="Help">?</button></label><select id="memAutopayDay" onchange="toggleMemCustomDay()"><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select></div>
-            <div class="field" id="memCustomDayField" style="display:none"><label>Day of Month (1-28) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_customday',this)" title="Help">?</button></label><input type="number" id="memCustomDay" min="1" max="28" placeholder="e.g. 20" /></div>
-            <div class="field" style="margin-bottom:0.4rem"><label class="check-item" style="margin:0"><input type="checkbox" id="memProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_prorate',this)" title="Help">?</button></span></label></div>
+            <div class="field" id="memCustomDayField" style="display:none"><label>Day of Month (1-28) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_customday',this)" title="Help">?</button></label><input type="number" id="memCustomDay" min="1" max="28" placeholder="e.g. 20" oninput="syncMemProrate()" /></div>
+            <div class="field" id="memProrateRow" style="margin-bottom:0.4rem"><label class="check-item" style="margin:0"><input type="checkbox" id="memProrateFirst" /><span class="check-item-label">Prorate first charge to the <span id="memProrateDayLabel">1st</span> <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_prorate',this)" title="Help">?</button></span></label></div>
             <div class="check-group" style="margin-top:0">
               <label class="check-item"><input type="checkbox" id="memAutoRenew" checked /><span class="check-item-label">Auto-Renew <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autorenew',this)" title="Help">?</button></span></label>
               <label class="check-item"><input type="checkbox" id="memAutopay" checked /><span class="check-item-label">Autopay <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('memberships.mem_autopay',this)" title="Help">?</button></span></label>
@@ -2412,9 +2412,10 @@
             <div class="field"><label>Bill Every</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="number" id="ccEveryN" value="1" min="1" max="12" style="width:70px" /><span style="color:var(--muted)">month(s)</span></div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">How often the card is charged. 1 = monthly, 3 = quarterly, 6 = every six months, 12 = annually.</div></div>
             <div class="form-row"><div class="field"><label>Price</label><input type="number" id="ccPrice" placeholder="0.00" min="0" step="0.01" /></div><div class="field"><label>Signup Fee</label><input type="number" id="ccSignup" placeholder="0.00" min="0" step="0.01" value="0" /></div></div>
             <div class="form-row"><div class="field"><label>Class Allowance</label><select id="ccLimitType" onchange="ccToggleLimit()"><option value="unlimited">Unlimited</option><option value="per_week">Per Week</option><option value="per_month">Per Month</option></select></div><div class="field" id="ccLimitCountField" style="display:none"><label>Number of Classes</label><input type="number" id="ccLimitCount" placeholder="e.g. 8" min="1" /></div></div>
-            <div class="field"><label>Start Date <span style="color:var(--muted);font-weight:normal">(the "member since" date — when this membership began. Backdate for a migrated member; blank = today. This is record-only and does not affect billing.)</span></label><input type="date" id="ccStartDate" /></div>
-            <div class="field"><label>First Charge Date <span style="color:var(--muted);font-weight:normal">(the next charge date — future only. For a migrated member, set it to their next billing date; the membership is active now and bills from this date onward. Blank = charge today.)</span></label><input type="date" id="ccFirstCharge" /></div>
-            <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccProrateFirst" /><span class="check-item-label">Prorate first charge to the 1st of the month <span style="color:var(--muted)">(overrides the date above — partial charge now for the days until the 1st, then full on the 1st)</span></span></label>
+            <div class="field"><label>Start Date <span style="color:var(--muted);font-weight:normal">(member-since)</span> <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('custom.cc_startdate',this)" title="Help">?</button></label><input type="date" id="ccStartDate" /></div>
+            <div class="field"><label>Autopay Billing Day <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('custom.cc_billingday',this)" title="Help">?</button></label><select id="ccAutopayDay" onchange="ccSyncBillingDay()"><option value="today">Charge today</option><option value="1">1st of month</option><option value="15">15th of month</option><option value="custom">Custom day</option></select></div>
+            <div class="field" id="ccCustomDayField" style="display:none"><label>Day of Month (1-28)</label><input type="number" id="ccCustomDay" min="1" max="28" placeholder="e.g. 20" oninput="ccSyncBillingDay()" /></div>
+            <div id="ccProrateRow" style="display:none"><label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="ccProrateFirst" /><span class="check-item-label">Prorate first charge to the <span id="ccProrateDayLabel">selected day</span> <span style="color:var(--muted)">(partial charge now for the days until then, then full on that day)</span> <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('custom.cc_prorate',this)" title="Help">?</button></span></label></div>
           </div>
           <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
             <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-money-check-dollar" style="color:var(--gold)"></i>Payment <button class="help-hint-inline" onclick="openHelpPopover('custom.sec_payment',this)" title="Help">?</button></div>
@@ -4688,6 +4689,9 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'custom.cc_startdate': { title: 'Start date', purpose: 'The member-since date this membership began. Backdate for a migrated member; blank = today. Record-only, does not affect billing.' },
+'custom.cc_billingday': { title: 'Autopay billing day', purpose: 'The day of the month this plan bills. Charge today bills now and every cycle after; 1st/15th/custom anchor billing to that day.' },
+'custom.cc_prorate': { title: 'Prorate first charge', purpose: 'Collect a partial charge now for the days until the selected billing day, then bill full on that day each cycle. Available when a specific billing day is chosen.' },
 'custom.sec_plan': { title: 'Plan', purpose: 'Who the custom plan is for, its name, the programs and classes it covers, and an optional belt rank set.' },
 'custom.sec_billing': { title: 'Billing', purpose: 'How often and how much to charge, class allowance, the member-since date, the next charge date, and optional prorate-to-the-1st.' },
 'custom.sec_payment': { title: 'Payment', purpose: 'Auto-bill a card on file via Stripe, or record it as cash/manual. Optionally text a card link if none is on file.' },
@@ -6471,6 +6475,7 @@ function openAddClassPack(){
   document.getElementById('memLimitCount').value='';
   document.getElementById('memAutopayDay').value='anniversary';
   document.getElementById('memCustomDayField').style.display='none';
+  if(typeof syncMemProrate==='function') syncMemProrate();
   document.getElementById('memVisibility').value='public';
   document.getElementById('memAutoRenew').checked=false;
   document.getElementById('memAutopay').checked=false;
@@ -8902,6 +8907,17 @@ function ensureCheckoutModal(){
 /* §JS: CRAFT-CUSTOM-MEMBERSHIP — per-student one-off membership builder (opens from member profile) */
 function closeCraftCustom(){ document.getElementById('craftCustomModal').classList.remove('active'); }
 
+function _ccNextBillingDate(day){ var n=new Date(); var cd=n.getUTCDate(); var y=n.getUTCFullYear(), m=n.getUTCMonth(); if(cd>day) m+=1; var dt=new Date(Date.UTC(y,m,day,12,0,0)); return dt.toISOString().split('T')[0]; }
+function ccSyncBillingDay(){
+  var sel=document.getElementById('ccAutopayDay'); if(!sel) return;
+  var v=sel.value;
+  var cf=document.getElementById('ccCustomDayField'); if(cf) cf.style.display=v==='custom'?'block':'none';
+  var row=document.getElementById('ccProrateRow'); if(!row) return;
+  if(v==='today'){ row.style.display='none'; var cb=document.getElementById('ccProrateFirst'); if(cb) cb.checked=false; return; }
+  row.style.display='';
+  var d=v==='custom'?(document.getElementById('ccCustomDay').value||''):v;
+  var lbl=document.getElementById('ccProrateDayLabel'); if(lbl) lbl.textContent=d?_ordinalDay(d):'selected day';
+}
 function openCraftCustomMembership(){
   if(!currentProfileStudent){return;}
   var s=currentProfileStudent;
@@ -8913,7 +8929,9 @@ function openCraftCustomMembership(){
   document.getElementById('ccLimitType').value='unlimited';
   document.getElementById('ccLimitCount').value='';
   document.getElementById('ccLimitCountField').style.display='none';
-  document.getElementById('ccFirstCharge').value='';
+  document.getElementById('ccAutopayDay').value='today';
+  document.getElementById('ccCustomDay').value='';
+  var _ccp=document.getElementById('ccProrateFirst'); if(_ccp) _ccp.checked=false;
   var _ccpf=document.getElementById('ccProrateFirst'); if(_ccpf)_ccpf.checked=false;
   document.getElementById('ccMsg').textContent='';
   var sm=document.querySelector('input[name="ccBillingMode"][value="stripe"]'); if(sm)sm.checked=true;
@@ -8924,6 +8942,7 @@ function openCraftCustomMembership(){
   document.getElementById('ccClassChecks').innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">Select a program first.</div>';
   document.getElementById('ccBeltField').style.display='none';
   document.getElementById('ccBelt').innerHTML='<option value="">-- No change --</option>';
+  if(typeof ccSyncBillingDay==='function') ccSyncBillingDay();
   document.getElementById('craftCustomModal').classList.add('active');
 }
 
@@ -8979,7 +8998,9 @@ async function saveCraftCustomMembership(){
   var classIds=[]; var cce=document.querySelectorAll('.cc-class-check:checked');
   for(var i=0;i<cce.length;i++){ classIds.push(cce[i].value); }
   var mode=(document.querySelector('input[name="ccBillingMode"]:checked')||{}).value||'stripe';
-  var firstCharge=document.getElementById('ccFirstCharge').value||null;
+  var _ccDay=document.getElementById('ccAutopayDay').value;
+  var firstCharge=null;
+  if(_ccDay!=='today'){ var _d=_ccDay==='custom'?parseInt(document.getElementById('ccCustomDay').value,10):parseInt(_ccDay,10); if(_d>=1&&_d<=28){ firstCharge=_ccNextBillingDate(_d); } }
   var startDate=document.getElementById('ccStartDate').value||null;
   var beltId=document.getElementById('ccBelt').value||null;
 
@@ -9008,7 +9029,13 @@ async function saveCraftCustomMembership(){
   });
   if(cr.error || !cr.data){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',(cr.error?cr.error.message:'Could not create membership.'),'error'); return; }
   var mid=cr.data;
-  try{ var _ccProrate=document.getElementById('ccProrateFirst'); if(_ccProrate&&_ccProrate.checked){ await sb.from('memberships').update({prorate_to_first:true}).eq('id',mid); } }catch(_e){}
+  try{
+    var _ccProrate=document.getElementById('ccProrateFirst');
+    var _ccAutopay=(_ccDay==='today')?'anniversary':(_ccDay==='custom'?(document.getElementById('ccCustomDay').value||'anniversary'):_ccDay);
+    var _ccUpd={autopay_day:_ccAutopay};
+    if(_ccProrate&&_ccProrate.checked&&_ccDay!=='today') _ccUpd.prorate_to_first=true;
+    await sb.from('memberships').update(_ccUpd).eq('id',mid);
+  }catch(_e){}
 
 var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;});
   var stuUpd={};
@@ -12130,7 +12157,8 @@ function openMembershipQr(mid){
 async function openEditMembership(mid){
   var m=allMemberships.find(function(x){return x.id===mid;}); if(!m) return;
   document.getElementById('addMembershipTitle').textContent='Edit Membership';
-  document.getElementById('memEditId').value=m.id;document.getElementById('memName').value=m.name||'';document.getElementById('memType').value=m.billing_type||'monthly';document.getElementById('memPackExpiry').value=m.pack_expiry_days||'';document.getElementById('memLength').value=m.billing_length||1;document.getElementById('memUnit').value=m.billing_unit||'months';document.getElementById('memPrice').value=m.price||'';document.getElementById('memSignup').value=m.signup_fee||0;document.getElementById('memLimitType').value=m.class_limit_type||'unlimited';document.getElementById('memLimitCount').value=m.class_limit_count||'';document.getElementById('memCycleLength').value=m.cycle_length||'';document.getElementById('memCycleUnit').value=m.cycle_unit||'';document.getElementById('classLimitField').style.display=m.class_limit_type==='unlimited'?'none':'block';var showCycleSection=(m.class_limit_type==='per_day'||m.class_limit_type==='per_week'||m.class_limit_type==='per_month'||m.class_limit_type==='per_year');document.getElementById('cycleAdvancedSection').style.display=showCycleSection?'block':'none';var hasCustomCycle=(m.cycle_length!==null&&m.cycle_length!==undefined&&m.cycle_unit);document.getElementById('cycleOverrideField').style.display=(showCycleSection&&hasCustomCycle)?'block':'none';document.getElementById('cycleAdvancedToggle').textContent=hasCustomCycle?'Hide advanced settings':'Show advanced settings';document.getElementById('memAutopayDay').value=m.autopay_day||'anniversary';document.getElementById('memCustomDayField').style.display=m.autopay_day==='custom'?'block':'none';document.getElementById('memVisibility').value=m.visibility||'public';document.getElementById('memAutoRenew').checked=!!m.auto_renew;document.getElementById('memAutopay').checked=!!m.autopay;document.getElementById('memFeatured').checked=!!m.featured;document.getElementById('memTrial').checked=!!m.trial;document.getElementById('memClassReservation').checked=!!m.class_reservation_eligible;document.getElementById('memRolloverEnabled').checked=!!m.rollover_enabled;document.getElementById('memProrateFirst').checked=!!m.prorate_to_first;document.getElementById('memPublicJoin').checked=!!m.public_join_enabled;document.getElementById('memPublicFields').style.display=m.public_join_enabled?'block':'none';document.getElementById('memPublicHeadline').value=m.public_headline||'';document.getElementById('memPublicBlurb').value=m.public_blurb||'';document.getElementById('memCommitLength').value=m.commitment_length||'';document.getElementById('memCommitUnit').value=m.commitment_unit||'months';document.getElementById('memCancelFeeType').value=m.early_cancel_fee_type||'none';document.getElementById('memCancelFeeAmount').value=(m.early_cancel_fee_amount!=null?m.early_cancel_fee_amount:'');document.getElementById('memAutoChargePenalty').checked=!!m.auto_charge_penalty;document.getElementById('memAllowSelfCancel').checked=!!m.allow_member_self_cancel;document.getElementById('memAllowSelfPause').checked=!!m.allow_member_self_pause;document.getElementById('memPauseMaxMonths').value=(m.pause_max_months!=null?m.pause_max_months:3);document.getElementById('memPauseMaxYear').value=(m.pause_max_per_year!=null?m.pause_max_per_year:2);document.getElementById('memPauseFee').value=(m.pause_fee!=null?m.pause_fee:0);toggleCancelFee();document.getElementById('membershipMsg').textContent='';
+  document.getElementById('memEditId').value=m.id;document.getElementById('memName').value=m.name||'';document.getElementById('memType').value=m.billing_type||'monthly';document.getElementById('memPackExpiry').value=m.pack_expiry_days||'';document.getElementById('memLength').value=m.billing_length||1;document.getElementById('memUnit').value=m.billing_unit||'months';document.getElementById('memPrice').value=m.price||'';document.getElementById('memSignup').value=m.signup_fee||0;document.getElementById('memLimitType').value=m.class_limit_type||'unlimited';document.getElementById('memLimitCount').value=m.class_limit_count||'';document.getElementById('memCycleLength').value=m.cycle_length||'';document.getElementById('memCycleUnit').value=m.cycle_unit||'';document.getElementById('classLimitField').style.display=m.class_limit_type==='unlimited'?'none':'block';var showCycleSection=(m.class_limit_type==='per_day'||m.class_limit_type==='per_week'||m.class_limit_type==='per_month'||m.class_limit_type==='per_year');document.getElementById('cycleAdvancedSection').style.display=showCycleSection?'block':'none';var hasCustomCycle=(m.cycle_length!==null&&m.cycle_length!==undefined&&m.cycle_unit);document.getElementById('cycleOverrideField').style.display=(showCycleSection&&hasCustomCycle)?'block':'none';document.getElementById('cycleAdvancedToggle').textContent=hasCustomCycle?'Hide advanced settings':'Show advanced settings';(function(){var ad=String(m.autopay_day||'anniversary');var isStd=(ad==='anniversary'||ad==='1'||ad==='15');document.getElementById('memAutopayDay').value=isStd?ad:'custom';if(!isStd){document.getElementById('memCustomDay').value=ad;}document.getElementById('memCustomDayField').style.display=isStd?'none':'block';})();document.getElementById('memVisibility').value=m.visibility||'public';document.getElementById('memAutoRenew').checked=!!m.auto_renew;document.getElementById('memAutopay').checked=!!m.autopay;document.getElementById('memFeatured').checked=!!m.featured;document.getElementById('memTrial').checked=!!m.trial;document.getElementById('memClassReservation').checked=!!m.class_reservation_eligible;document.getElementById('memRolloverEnabled').checked=!!m.rollover_enabled;document.getElementById('memProrateFirst').checked=!!m.prorate_to_first;document.getElementById('memPublicJoin').checked=!!m.public_join_enabled;document.getElementById('memPublicFields').style.display=m.public_join_enabled?'block':'none';document.getElementById('memPublicHeadline').value=m.public_headline||'';document.getElementById('memPublicBlurb').value=m.public_blurb||'';document.getElementById('memCommitLength').value=m.commitment_length||'';document.getElementById('memCommitUnit').value=m.commitment_unit||'months';document.getElementById('memCancelFeeType').value=m.early_cancel_fee_type||'none';document.getElementById('memCancelFeeAmount').value=(m.early_cancel_fee_amount!=null?m.early_cancel_fee_amount:'');document.getElementById('memAutoChargePenalty').checked=!!m.auto_charge_penalty;document.getElementById('memAllowSelfCancel').checked=!!m.allow_member_self_cancel;document.getElementById('memAllowSelfPause').checked=!!m.allow_member_self_pause;document.getElementById('memPauseMaxMonths').value=(m.pause_max_months!=null?m.pause_max_months:3);document.getElementById('memPauseMaxYear').value=(m.pause_max_per_year!=null?m.pause_max_per_year:2);document.getElementById('memPauseFee').value=(m.pause_fee!=null?m.pause_fee:0);toggleCancelFee();document.getElementById('membershipMsg').textContent='';
+  if(typeof syncMemProrate==='function') syncMemProrate();
   var mpR=await sb.from('membership_programs').select('program_id').eq('membership_id',mid);
   var currentProgIds=(mpR.data||[]).map(function(x){return x.program_id;});
   populateProgramCheckboxes(currentProgIds);
@@ -12170,7 +12198,16 @@ function applyMemPackMode(){
   var sbtn=document.getElementById('memSaveBtn'); if(sbtn) sbtn.textContent=isPack?'Save Pack':'Save Membership';
 }
 function toggleMemPublicFields(){ var on=document.getElementById('memPublicJoin').checked; document.getElementById('memPublicFields').style.display=on?'block':'none'; }
-function toggleMemCustomDay(){ document.getElementById('memCustomDayField').style.display=document.getElementById('memAutopayDay').value==='custom'?'block':'none'; }
+function toggleMemCustomDay(){ document.getElementById('memCustomDayField').style.display=document.getElementById('memAutopayDay').value==='custom'?'block':'none'; syncMemProrate(); }
+function _ordinalDay(n){ n=parseInt(n,10); if(isNaN(n)) return 'selected day'; var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function syncMemProrate(){
+  var sel=document.getElementById('memAutopayDay'); var row=document.getElementById('memProrateRow'); if(!sel||!row) return;
+  var day=sel.value;
+  if(day==='anniversary'){ row.style.display='none'; var cb=document.getElementById('memProrateFirst'); if(cb) cb.checked=false; return; }
+  row.style.display='';
+  var d=day==='custom'?(document.getElementById('memCustomDay').value||''):day;
+  var lbl=document.getElementById('memProrateDayLabel'); if(lbl) lbl.textContent=d?_ordinalDay(d):'selected day';
+}
   async function saveMembership(){
   var eid=document.getElementById('memEditId').value;
   var name=document.getElementById('memName').value.trim();
