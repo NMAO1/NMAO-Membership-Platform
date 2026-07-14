@@ -699,6 +699,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-tab"        id="ptab-progress"    onclick="switchPortalTab('progress')"><i class="fa-solid fa-ranking-star"></i> Progress</div>
         <div class="portal-tab"        id="ptab-sessions"    onclick="switchPortalTab('sessions')"><i class="fa-solid fa-person-chalkboard"></i> Sessions</div>
         <div class="portal-tab"        id="ptab-book"        onclick="switchPortalTab('book')"><i class="fa-solid fa-calendar-plus"></i> Book</div>
+        <div class="portal-tab"        id="ptab-events"      onclick="switchPortalTab('events')"><i class="fa-solid fa-calendar-star"></i> Events</div>
         <div class="portal-tab"        id="ptab-shop"        onclick="switchPortalTab('shop')"><i class="fa-solid fa-bag-shopping"></i> Shop<span class="shop-badge-notif" id="shopBadgeNotif" style="display:none">0</span></div>
       </div>
 
@@ -841,6 +842,25 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
            Cart-based checkout via create-pos-checkout EF
            Search: §SECTION: TAB_SHOP
       ════════════════════════════════════ -->
+      <div id="portalTabEvents" style="display:none">
+        <style>
+        .event-card{border:1px solid var(--border);background:var(--surface);margin-bottom:0.75rem}
+        .event-card.open{border-color:var(--gold)}
+        .event-card-head{display:flex;align-items:center;gap:0.75rem;padding:1rem;cursor:pointer}
+        .event-card-body{padding:0 1rem 1rem}
+        .ev-tier{display:flex;justify-content:space-between;align-items:center;gap:0.75rem;border:1px solid var(--border);padding:0.7rem 0.85rem;margin-bottom:0.5rem;cursor:pointer}
+        .ev-tier.selected{border-color:var(--gold);background:rgba(201,168,76,0.08)}
+        .ev-day{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0;cursor:pointer;color:var(--white);font-size:0.88rem}
+        .btn-ev-register{width:100%;background:var(--gold);color:var(--black);border:none;padding:0.85rem;font-family:var(--font-ui);font-size:0.9rem;font-weight:600;cursor:pointer;letter-spacing:0.02em}
+        .btn-ev-register:disabled{opacity:0.6;cursor:default}
+        </style>
+        <div class="portal-section">
+          <div class="section-label"><i class="fa-solid fa-calendar-star"></i> Upcoming Events</div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Register for seminars, belt tests, and special events. Pick your days if the event runs over multiple sessions.</p>
+          <div id="eventsList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div></div>
+        </div>
+      </div>
+
       <div id="portalTabShop" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-bag-shopping"></i> School Store</div>
@@ -2308,8 +2328,148 @@ async function buildAttendance(sid){
 //  §JS: SWITCH_TAB
 //  Updated to include all 8 tabs + lazy-load new ones on first open
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  §JS: EVENTS_TAB — member event registration + partial-attendance day-picker
+//  Submits via register-public (student_id path). Paid -> stripe-create-checkout.
+// ─────────────────────────────────────────────────────────────
+var eventsLoaded=false;
+var _evState={events:[],openId:null,sessions:{},tiers:{},avail:{},tierId:null,picked:[],busy:false};
+function _evEsc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function _evFmtDate(d){ if(!d) return ""; var dt=new Date(d+"T00:00:00"); return dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}); }
+
+async function buildEvents(student){
+  var el=document.getElementById("eventsList"); if(!el) return;
+  try{
+    var today=new Date().toISOString().split("T")[0];
+    var res=await sb.from("events").select("*").eq("school_id",SID).eq("public_signup_enabled",true).order("event_date",{ascending:true});
+    if(res.error) throw new Error(res.error.message);
+    _evState.events=(res.data||[]).filter(function(ev){ return !ev.event_date || ev.event_date>=today; });
+    if(!_evState.events.length){ el.innerHTML=emptyState("fa-calendar-star","No upcoming events right now. Check back soon."); return; }
+    renderEventsList();
+  }catch(e){
+    el.innerHTML='<div style="color:#E07070;font-size:0.85rem">Could not load events: '+_evEsc(e.message)+'</div>';
+    console.error("buildEvents error:",e);
+  }
+}
+
+function renderEventsList(){
+  var el=document.getElementById("eventsList"); if(!el) return;
+  el.innerHTML=_evState.events.map(function(ev){
+    var open=_evState.openId===ev.id;
+    var dateStr=ev.event_date?_evFmtDate(ev.event_date):"";
+    var head='<div class="event-card-head" onclick="evToggle(\''+ev.id+'\')">'+
+      '<div style="flex:1"><div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white)">'+_evEsc(ev.title||"Event")+'</div>'+
+      '<div style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem">'+
+        (dateStr?'<i class="fa-solid fa-calendar-days" style="margin-right:0.35rem;color:var(--gold)"></i>'+dateStr:"")+
+        (ev.location?'<span style="margin-left:0.6rem"><i class="fa-solid fa-location-dot" style="margin-right:0.3rem;color:var(--gold)"></i>'+_evEsc(ev.location)+'</span>':"")+
+      '</div></div>'+
+      '<i class="fa-solid fa-chevron-'+(open?"up":"down")+'" style="color:var(--muted)"></i></div>';
+    var body=open?'<div class="event-card-body" id="evbody-'+ev.id+'">'+renderEventRegister(ev)+'</div>':"";
+    return '<div class="event-card'+(open?" open":"")+'">'+head+body+'</div>';
+  }).join("");
+}
+
+async function evToggle(id){
+  if(_evState.openId===id){ _evState.openId=null; renderEventsList(); return; }
+  _evState.openId=id; _evState.tierId=null; _evState.picked=[];
+  if(!_evState.tiers[id]){
+    try{
+      var sess=await sb.from("event_sessions").select("*").eq("event_id",id).order("sort_order");
+      var tiers=await sb.from("event_price_tiers").select("*").eq("event_id",id).in("visibility",["public","member"]).order("sort_order");
+      var av=await sb.from("event_session_availability").select("session_id,is_full,spots_left,capacity").eq("event_id",id);
+      _evState.sessions[id]=sess.data||[]; _evState.tiers[id]=tiers.data||[];
+      var am={}; (av.data||[]).forEach(function(a){am[a.session_id]=a;}); _evState.avail[id]=am;
+    }catch(e){ console.error("evToggle fetch",e); _evState.sessions[id]=[]; _evState.tiers[id]=[]; _evState.avail[id]={}; }
+  }
+  var tiers=_evState.tiers[id]||[];
+  if(tiers.length){ _evState.tierId=tiers[0].id; evAutoSelect(id); }
+  renderEventsList();
+}
+
+function evAutoSelect(id){
+  var tier=(_evState.tiers[id]||[]).find(function(t){return t.id===_evState.tierId;});
+  if(!tier){_evState.picked=[];return;}
+  if(!tier.sessions_included){ _evState.picked=(_evState.sessions[id]||[]).map(function(s){return s.id;}); }
+  else{ _evState.picked=[]; }
+}
+
+function evSelectTier(id,tierId){ _evState.tierId=tierId; evAutoSelect(id); renderEventsList(); }
+
+function evToggleSession(id,sid){
+  var tier=(_evState.tiers[id]||[]).find(function(t){return t.id===_evState.tierId;});
+  if(!tier||!tier.sessions_included) return;
+  var av=(_evState.avail[id]||{})[sid];
+  var i=_evState.picked.indexOf(sid);
+  if(i===-1){ if(av&&av.is_full) return; if(_evState.picked.length<tier.sessions_included) _evState.picked.push(sid); }
+  else{ _evState.picked.splice(i,1); }
+  renderEventsList();
+}
+
+function renderEventRegister(ev){
+  var id=ev.id;
+  var tiers=_evState.tiers[id]||[]; var sessions=_evState.sessions[id]||[]; var avail=_evState.avail[id]||{};
+  if(!tiers.length) return '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.5rem 0">No pricing available for members right now.</div>';
+  var tier=tiers.find(function(t){return t.id===_evState.tierId;});
+  var tierHTML=tiers.map(function(t){
+    var sl=!t.sessions_included?"All sessions":t.sessions_included+" day"+(t.sessions_included!==1?"s":"");
+    var pl=parseFloat(t.price)>0?"$"+parseFloat(t.price).toFixed(2):"Free";
+    var sel=t.id===_evState.tierId?" selected":"";
+    return '<div class="ev-tier'+sel+'" onclick="evSelectTier(\''+id+'\',\''+t.id+'\')"><div><div style="color:var(--white);font-size:0.9rem">'+_evEsc(t.label)+'</div><div style="font-size:0.75rem;color:var(--muted)">'+sl+'</div></div><div style="color:var(--gold);font-weight:600">'+pl+'</div></div>';
+  }).join("");
+  var pickHTML="";
+  if(sessions.length && tier && tier.sessions_included>0){
+    pickHTML='<div class="section-label" style="margin-top:1rem">Select '+tier.sessions_included+" Day"+(tier.sessions_included!==1?"s":"")+'</div>'+
+      sessions.map(function(sN){
+        var checked=_evState.picked.indexOf(sN.id)!==-1;
+        var av=avail[sN.id]; var full=av&&av.is_full;
+        var cap=av&&av.capacity!=null?(full?' <span style="color:#E07070">(Full)</span>':' <span style="color:var(--muted)">('+av.spots_left+' left)</span>'):"";
+        return '<label class="ev-day'+(checked?" checked":"")+'"'+(full?' style="opacity:0.5"':"")+'><input type="checkbox" '+(checked?"checked":"")+(full?" disabled":"")+' onclick="evToggleSession(\''+id+'\',\''+sN.id+'\')" /><span>'+_evFmtDate(sN.session_date)+(sN.start_time?" at "+fmtTime(sN.start_time):"")+cap+'</span></label>';
+      }).join("")+
+      '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.4rem">'+_evState.picked.length+" of "+tier.sessions_included+' selected</div>';
+  }
+  var price=tier?parseFloat(tier.price)||0:0;
+  var btnLabel=price>0?'<i class="fa-solid fa-credit-card" style="margin-right:0.4rem"></i>Register — $'+price.toFixed(2):'<i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Register';
+  return '<div class="section-label" style="margin-top:0.5rem">Choose an Option</div>'+tierHTML+pickHTML+
+    '<button class="btn-ev-register" id="evRegBtn-'+id+'" onclick="evRegister(\''+id+'\')" style="margin-top:1rem">'+btnLabel+'</button>'+
+    '<div id="evRegMsg-'+id+'" style="margin-top:0.5rem"></div>';
+}
+
+async function evRegister(id){
+  if(_evState.busy) return;
+  var ev=_evState.events.find(function(e){return e.id===id;});
+  var tier=(_evState.tiers[id]||[]).find(function(t){return t.id===_evState.tierId;});
+  var msg=document.getElementById("evRegMsg-"+id);
+  if(!tier){ if(msg)msg.innerHTML='<span style="color:#E07070;font-size:0.82rem">Please choose an option.</span>'; return; }
+  if(tier.sessions_included>0 && _evState.picked.length!==tier.sessions_included){
+    if(msg)msg.innerHTML='<span style="color:#E07070;font-size:0.82rem">Please select exactly '+tier.sessions_included+" day"+(tier.sessions_included!==1?"s":"")+'.</span>'; return;
+  }
+  _evState.busy=true;
+  var btn=document.getElementById("evRegBtn-"+id); if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';}
+  try{
+    var r=await fetch(SURL+"/functions/v1/register-public",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SKEY},body:JSON.stringify({event_id:id,tier_id:tier.id,session_ids:_evState.picked,student_id:currentStudent.id})});
+    var data=await r.json();
+    if(!r.ok||data.error) throw new Error(data.error||"Registration failed.");
+    if(data.requires_payment){
+      if(msg)msg.innerHTML='<span style="color:var(--muted);font-size:0.82rem">Redirecting to secure payment…</span>';
+      var base=window.location.href.split("?")[0];
+      var co=await fetch(SURL+"/functions/v1/stripe-create-checkout",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SKEY},body:JSON.stringify({kind:"event_registration",school_id:ev.school_id,event_registration_id:data.registration_id,event_id:id,student_id:currentStudent.id,guest_name:(currentStudent.first_name||"")+" "+(currentStudent.last_name||""),guest_email:currentStudent.email,amount_cents:data.amount_cents,tier_label:tier.label,save_card:false,success_url:base+"?evpaid=1",cancel_url:base+"?evcancel=1"})});
+      var cd=await co.json();
+      if(!co.ok||cd.error||!cd.url) throw new Error(cd.error||"Could not start payment.");
+      window.location.href=cd.url; return;
+    }
+    var bodyEl=document.getElementById("evbody-"+id);
+    if(bodyEl) bodyEl.innerHTML='<div style="text-align:center;padding:1.25rem 0"><i class="fa-solid fa-circle-check" style="font-size:2rem;color:var(--gold)"></i><div style="font-size:1.05rem;color:var(--white);margin-top:0.5rem">You are registered!</div><div style="font-size:0.82rem;color:var(--muted);margin-top:0.25rem">A confirmation has been sent to '+_evEsc(currentStudent.email||"your email")+'.</div></div>';
+    _evState.busy=false;
+  }catch(e){
+    _evState.busy=false;
+    if(btn) btn.disabled=false;
+    if(msg)msg.innerHTML='<span style="color:#E07070;font-size:0.82rem">'+_evEsc(e.message)+'</span>';
+    renderEventsList();
+  }
+}
+
 function switchPortalTab(tab){
-  var tabs=['schedule','updates','profile','curriculum','progress','sessions','book','shop'];
+  var tabs=['schedule','updates','profile','curriculum','progress','sessions','book','events','shop'];
   tabs.forEach(function(t){
     var key=t.charAt(0).toUpperCase()+t.slice(1);
     var panel=document.getElementById('portalTab'+key);
@@ -2320,6 +2480,7 @@ function switchPortalTab(tab){
   // Lazy-load tabs on first visit. Sessions tab now builds packs too (merged tab).
   if(tab==='sessions'&&!sessionsLoaded){sessionsLoaded=true;buildSessions(currentStudent);buildPacks(currentStudent);}
   if(tab==='book'&&!bookLoaded){bookLoaded=true;buildBook();}
+  if(tab==='events'&&!eventsLoaded){eventsLoaded=true;buildEvents(currentStudent);}
   if(tab==='shop'&&!shopLoaded){shopLoaded=true;buildShop();}
   if(tab==='shop'){clearShopBadge();}
   if(tab==='updates'){clearUpdatesBadge();}
