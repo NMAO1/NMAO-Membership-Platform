@@ -8324,7 +8324,7 @@ async function confirmDeleteStudent() {
         return;
       }
     } else {
-      var dur = await sb.from('student_memberships').update({ status: 'cancelled' }).eq('id', drow.id);
+      var dur = await sb.from('student_memberships').update({ status: 'cancelled', ended_at: new Date().toISOString() }).eq('id', drow.id);
       if (dur.error) { showToast('Could not close membership: ' + dur.error.message, 'err'); return; }
     }
   }
@@ -10565,7 +10565,7 @@ async function cancelMembershipDo(i, when){
         successMsg = end ? (row.name + ' will end ' + end.toLocaleDateString() + '.') : (row.name + ' will end at the period close.');
       }
     } else {
-      var up = await sb.from('student_memberships').update({ status: 'cancelled' }).eq('id', row.smId);
+      var up = await sb.from('student_memberships').update({ status: 'cancelled', ended_at: new Date().toISOString() }).eq('id', row.smId);
       if (up.error) throw new Error(up.error.message);
       successMsg = row.name + ' ended.';
     }
