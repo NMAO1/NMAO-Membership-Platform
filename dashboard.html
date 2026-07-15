@@ -1265,15 +1265,21 @@
     <!-- ═══════════════ §PAGE-SETTINGS ═══════════════ -->
     <div class="page" id="page-settings">
      <div class="content-heading"><h2>Settings</h2><button class="help-hint-inline" onclick="openHelpPopover('settings',this)" title="Help">?</button><div class="rule-h"></div></div>
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-circle-question" style="margin-right:0.5rem;color:var(--gold)"></i>Help Hints</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;max-width:500px"><div class="field"><label class="check-item"><input type="checkbox" id="helpHintsToggle" onchange="setHelpHints(this.checked)" /><div><div class="check-item-label">Show help hints</div><div style="font-size:0.72rem;color:var(--muted)">Adds a small ? next to each page title with a quick explainer and example. Turn it off once you know your way around.</div></div></label></div></div></div>
-      <!-- School Profile -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-school" style="margin-right:0.5rem;color:var(--gold)"></i>School Profile</span><button class="help-hint-inline" onclick="openHelpPopover('settings.profile',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:1.5rem;align-items:start">
+
+        <!-- COLUMN 1 - your school: identity, brand, public face -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-school" style="margin-right:0.5rem;color:var(--gold)"></i>School Profile</span><button class="help-hint-inline" onclick="openHelpPopover('settings.profile',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+        <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Identity</div>
         <div class="field"><label>School Name</label><input type="text" id="settingName" /></div>
         <div class="field"><label>Email</label><input type="email" id="settingEmail" /></div>
         <div class="field"><label>Phone</label><input type="text" id="settingPhone" /></div>
         <div class="field"><label>City</label><input type="text" id="settingCity" /></div>
         <div class="field"><label>State</label><input type="text" id="settingState" /></div>
         <div class="field"><label>Timezone <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.timezone',this)" title="Help">?</button></label><select id="settingTimezone"><option value="America/New_York">Eastern (New York)</option><option value="America/Chicago">Central (Chicago)</option><option value="America/Denver">Mountain (Denver)</option><option value="America/Phoenix">Mountain, no DST (Phoenix)</option><option value="America/Los_Angeles">Pacific (Los Angeles)</option><option value="America/Anchorage">Alaska (Anchorage)</option><option value="Pacific/Honolulu">Hawaii (Honolulu)</option></select><p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">Used for class scheduling and automatic attendance check-in. Set this before onboarding members if your school isn't Eastern.</p></div>
+        <div class="field"><label>School Logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.logo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Member Portal</div>
         <div class="field">
           <label>Member Portal Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.slug',this)" title="Help">?</button></label>
           <div class="booking-slug-row">
@@ -1288,28 +1294,15 @@
           </div>
           <p class="form-msg" id="slugMsg"></p>
         </div>
-        <div class="field"><label>School Logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.logo',this)" title="Help">?</button></label><div style="display:flex;gap:1rem;align-items:center"><div id="logoPreview" style="width:100px;height:100px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.72rem;text-align:center;overflow:hidden">No Logo</div><button class="panel-action" onclick="document.getElementById('logoUploadInput').click()"><i class="fa-solid fa-upload"></i> Upload</button></div></div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Payment Behavior</div>
         <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.passfees',this)" title="Help">?</button></div></div></label></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.cardupdate',this)" title="Help">?</button></div></div></label></div>
         <button class="panel-action" style="width:fit-content" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="settingsMsg"></p>
       </div></div>
 
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-calendar-check" style="margin-right:0.5rem;color:var(--gold)"></i>Public Booking Page</span><button class="help-hint-inline" onclick="openHelpPopover('settings.booking',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
-        <div class="field">
-          <label>Shareable Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_link',this)" title="Help">?</button></label>
-          <div id="bookingPageLinkPreview" style="font-size:0.8rem;color:var(--gold);word-break:break-all;padding:0.5rem;background:var(--surface);border:1px solid var(--border)"></div>
-          <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">Share this on social or in your bio so members can reserve and prospects can book a trial. It uses the same link name as your member portal (set above).</div>
-          <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="copyBookingPageLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
-        </div>
-        <div class="field"><label class="check-item"><input type="checkbox" id="publicBookingShowSpots" /><div><div class="check-item-label">Show spots remaining on each class <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_spots',this)" title="Help">?</button></div></div></label></div>
-        <div class="field"><label>Default View <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_view',this)" title="Help">?</button></label><select id="publicBookingDefaultView"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
-        <div class="field"><label>Headline (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_headline',this)" title="Help">?</button></label><input type="text" id="publicBookingHeadline" placeholder="Train with us — reserve a class or try one free" /></div>
-        <button class="panel-action" style="width:fit-content" onclick="saveBookingPageSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Booking Page</button>
-        <p class="form-msg" id="bookingPageMsg"></p>
-      </div></div>
-      <!-- Brand & Design -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-palette" style="margin-right:0.5rem;color:var(--gold)"></i>Brand &amp; Design</span><button class="help-hint-inline" onclick="openHelpPopover('settings.branding',this)" title="Help">?</button></div><div class="panel-body">
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-palette" style="margin-right:0.5rem;color:var(--gold)"></i>Brand &amp; Design</span><button class="help-hint-inline" onclick="openHelpPopover('settings.branding',this)" title="Help">?</button></div><div class="panel-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:600px">
           <div class="field"><label>Background Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingBgColor" value="#0A0A0A" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncBgColor()" /><input type="text" id="settingBgColorHex" value="#0A0A0A" style="flex:1" oninput="syncBgColorText()" /></div></div>
           <div class="field"><label>Accent Color</label><div style="display:flex;gap:0.5rem;align-items:center"><input type="color" id="settingColor" value="#C9A84C" style="width:48px;height:38px;padding:2px;background:var(--black);border:1px solid var(--border);cursor:pointer" onchange="syncAccentColor()" /><input type="text" id="settingColorHex" value="#C9A84C" style="flex:1" oninput="syncAccentColorText()" /></div></div>
@@ -1334,34 +1327,43 @@
           <div id="brandTemplates"></div>
         </div>
       </div></div>
-      <!-- §SETTINGS: MEMBERSHIPS -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.membership',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-calendar-check" style="margin-right:0.5rem;color:var(--gold)"></i>Public Booking Page</span><button class="help-hint-inline" onclick="openHelpPopover('settings.booking',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
+        <div class="field">
+          <label>Shareable Link <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_link',this)" title="Help">?</button></label>
+          <div id="bookingPageLinkPreview" style="font-size:0.8rem;color:var(--gold);word-break:break-all;padding:0.5rem;background:var(--surface);border:1px solid var(--border)"></div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:0.35rem;opacity:0.85">Share this on social or in your bio so members can reserve and prospects can book a trial. It uses the same link name as your member portal (set above).</div>
+          <button class="panel-action" style="width:fit-content;margin-top:0.5rem" onclick="copyBookingPageLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+        </div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="publicBookingShowSpots" /><div><div class="check-item-label">Show spots remaining on each class <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_spots',this)" title="Help">?</button></div></div></label></div>
+        <div class="field"><label>Default View <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_view',this)" title="Help">?</button></label><select id="publicBookingDefaultView"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
+        <div class="field"><label>Headline (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.bk_headline',this)" title="Help">?</button></label><input type="text" id="publicBookingHeadline" placeholder="Train with us — reserve a class or try one free" /></div>
+        <button class="panel-action" style="width:fit-content" onclick="saveBookingPageSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Booking Page</button>
+        <p class="form-msg" id="bookingPageMsg"></p>
+      </div></div>
+        </div>
+
+        <!-- COLUMN 2 - operations: how the school runs -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-circle-question" style="margin-right:0.5rem;color:var(--gold)"></i>Help Hints</span></div><div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;max-width:500px"><div class="field"><label class="check-item"><input type="checkbox" id="helpHintsToggle" onchange="setHelpHints(this.checked)" /><div><div class="check-item-label">Show help hints</div><div style="font-size:0.72rem;color:var(--muted)">Adds a small ? next to each page title with a quick explainer and example. Turn it off once you know your way around.</div></div></label></div></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-id-card" style="margin-right:0.5rem;color:var(--gold)"></i>Membership Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.membership',this)" title="Help">?</button></div><div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;max-width:500px">
         <div class="field"><label>Max Rollover Balance <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.maxrollover',this)" title="Help">?</button></label><input type="number" id="settingMaxRollover" min="0" placeholder="Leave blank for unlimited" /><div style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem">When a student renews a membership with rollover enabled, unused classes carry forward up to this cap. Leave blank for no cap.</div></div>
         <button class="panel-action" style="width:fit-content" onclick="saveMembershipSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="membershipSettingsMsg"></p>
       </div></div>
-      <!-- Class Settings -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-sliders" style="margin-right:0.5rem;color:var(--gold)"></i>Class Field Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.classfields',this)" title="Help">?</button></div><div class="panel-body"><div id="classFieldsEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveClassFieldSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Class Settings</button><p class="form-msg" id="classFieldsMsg"></p></div></div>
-      <!-- Referral Settings -->
-      <div class="panel" style="display:none;margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Referral Program</span></div><div class="panel-body" style="max-width:500px">
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="field"><label>Reward Type</label><select id="referralRewardType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="session">Free Session</option><option value="credit">Account Credit</option><option value="discount">Discount</option></select></div>
-          <div class="field"><label>Reward Value ($)</label><input type="number" id="referralRewardValue" value="0" min="0" step="0.01" /></div>
-        </div>
-        <div class="field"><label>Trigger</label><select id="referralRewardTrigger" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="signup">On Referral Signup</option><option value="first_payment">On First Payment</option><option value="30_days">After 30 Days</option></select></div>
-        <button class="panel-action" style="margin-top:0.75rem" onclick="saveReferralSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Referral Settings</button>
-        <p class="form-msg" id="referralSettingsMsg"></p>
-      </div></div>
-      <!-- Tags -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Tags</span><button class="help-hint-inline" onclick="openHelpPopover('settings.tags',this)" title="Help">?</button><button class="panel-action" onclick="openAddTag()"><i class="fa-solid fa-plus"></i> New Tag</button></div><div class="panel-body"><div id="tagsManager"></div></div></div>
-      <!-- Discounts -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-percent" style="margin-right:0.5rem;color:var(--gold)"></i>Discounts</span><button class="help-hint-inline" onclick="openHelpPopover('settings.discounts',this)" title="Help">?</button><button class="panel-action" onclick="openAddDiscount()"><i class="fa-solid fa-plus"></i> New Discount</button></div><div class="panel-body"><div id="discountsManager"></div></div></div>
-      <!-- Digital Waiver -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-file-signature" style="margin-right:0.5rem;color:var(--gold)"></i>Digital Waiver</span><button class="help-hint-inline" onclick="openHelpPopover('settings.waiver',this)" title="Help">?</button></div><div class="panel-body"><div class="field"><label>Waiver Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_title',this)" title="Help">?</button></label><input type="text" id="waiverTitle" placeholder="e.g. Liability Waiver" /></div><div class="field"><label>Waiver Content <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_content',this)" title="Help">?</button></label><div id="waiverEditor" style="margin-top:0.25rem"></div></div><button class="panel-action" style="width:fit-content;margin-top:1rem" onclick="saveWaiver()"><i class="fa-solid fa-floppy-disk"></i> Save Waiver</button><p class="form-msg" id="waiverMsg"></p></div></div>
-      <!-- Milestones -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-party-horn" style="margin-right:0.5rem;color:var(--gold)"></i>Milestone Celebrations</span><button class="help-hint-inline" onclick="openHelpPopover('settings.milestones',this)" title="Help">?</button></div><div class="panel-body"><div id="milestonesEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveMilestones()"><i class="fa-solid fa-floppy-disk"></i> Save Milestones</button><p class="form-msg" id="milestonesMsg"></p></div></div>
-      <!-- Kiosk -->
-      <div class="panel" style="margin-bottom:1.5rem"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tablet-screen-button" style="margin-right:0.5rem;color:var(--gold)"></i>Kiosk Welcome Screen</span></div><div class="panel-body">
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-sliders" style="margin-right:0.5rem;color:var(--gold)"></i>Class Field Settings</span><button class="help-hint-inline" onclick="openHelpPopover('settings.classfields',this)" title="Help">?</button></div><div class="panel-body"><div id="classFieldsEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveClassFieldSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Class Settings</button><p class="form-msg" id="classFieldsMsg"></p></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tags" style="margin-right:0.5rem;color:var(--gold)"></i>Tags</span><button class="help-hint-inline" onclick="openHelpPopover('settings.tags',this)" title="Help">?</button><button class="panel-action" onclick="openAddTag()"><i class="fa-solid fa-plus"></i> New Tag</button></div><div class="panel-body"><div id="tagsManager"></div></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-percent" style="margin-right:0.5rem;color:var(--gold)"></i>Discounts</span><button class="help-hint-inline" onclick="openHelpPopover('settings.discounts',this)" title="Help">?</button><button class="panel-action" onclick="openAddDiscount()"><i class="fa-solid fa-plus"></i> New Discount</button></div><div class="panel-body"><div id="discountsManager"></div></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-file-signature" style="margin-right:0.5rem;color:var(--gold)"></i>Digital Waiver</span><button class="help-hint-inline" onclick="openHelpPopover('settings.waiver',this)" title="Help">?</button></div><div class="panel-body"><div class="field"><label>Waiver Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_title',this)" title="Help">?</button></label><input type="text" id="waiverTitle" placeholder="e.g. Liability Waiver" /></div><div class="field"><label>Waiver Content <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.waiver_content',this)" title="Help">?</button></label><div id="waiverEditor" style="margin-top:0.25rem"></div></div><button class="panel-action" style="width:fit-content;margin-top:1rem" onclick="saveWaiver()"><i class="fa-solid fa-floppy-disk"></i> Save Waiver</button><p class="form-msg" id="waiverMsg"></p></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-party-horn" style="margin-right:0.5rem;color:var(--gold)"></i>Milestone Celebrations</span><button class="help-hint-inline" onclick="openHelpPopover('settings.milestones',this)" title="Help">?</button></div><div class="panel-body"><div id="milestonesEditor"></div><button class="panel-action" style="margin-top:1rem" onclick="saveMilestones()"><i class="fa-solid fa-floppy-disk"></i> Save Milestones</button><p class="form-msg" id="milestonesMsg"></p></div></div>
+
+      <div class="panel"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-tablet-screen-button" style="margin-right:0.5rem;color:var(--gold)"></i>Kiosk Welcome Screen</span></div><div class="panel-body">
         <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1.5rem">Configure what prospective students see when they tap New Student on the kiosk.</p>
         <div style="display:flex;flex-direction:column;gap:1.5rem">
           <div style="background:var(--black);border:1px solid var(--border);padding:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-size:0.92rem;color:var(--white);margin-bottom:0.2rem"><i class="fa-brands fa-youtube" style="color:#E07070;margin-right:0.5rem"></i>Highlight Reel Video</div><div style="font-size:0.75rem;color:var(--muted)">YouTube video shown to prospective students</div></div><label class="toggle-switch"><input type="checkbox" id="kioskShowVideo"><div class="toggle-slider"></div></label></div><div class="field"><label>YouTube URL</label><input type="text" id="kioskVideoUrl" placeholder="https://youtube.com/watch?v=..." /></div></div>
@@ -1371,6 +1373,18 @@
         <button class="panel-action" style="margin-top:1.5rem" onclick="saveKioskSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Kiosk Settings</button>
         <p class="form-msg" id="kioskSettingsMsg"></p>
       </div></div>
+
+      <div class="panel" style="display:none"><div class="panel-header"><span class="panel-title"><i class="fa-solid fa-share-nodes" style="margin-right:0.5rem;color:var(--gold)"></i>Referral Program</span></div><div class="panel-body" style="max-width:500px">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="field"><label>Reward Type</label><select id="referralRewardType" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="session">Free Session</option><option value="credit">Account Credit</option><option value="discount">Discount</option></select></div>
+          <div class="field"><label>Reward Value ($)</label><input type="number" id="referralRewardValue" value="0" min="0" step="0.01" /></div>
+        </div>
+        <div class="field"><label>Trigger</label><select id="referralRewardTrigger" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="signup">On Referral Signup</option><option value="first_payment">On First Payment</option><option value="30_days">After 30 Days</option></select></div>
+        <button class="panel-action" style="margin-top:0.75rem" onclick="saveReferralSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Referral Settings</button>
+        <p class="form-msg" id="referralSettingsMsg"></p>
+      </div></div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════ §PAGE-BILLING ═══════════════ -->
@@ -1952,107 +1966,130 @@
       </div>
     </div>
     <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div><div id="profileAlerts" style="display:none;flex-wrap:wrap;gap:0.5rem;padding:0.75rem 1.5rem;border-bottom:1px solid var(--border)"></div>
-      <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem">
-        <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Contact</div><div id="profileContactInfo"></div></div><div id="profileFamilyTile" style="display:none"><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Family</div><div id="profileFamilyList"></div></div>
-        <div>
-  <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Memberships</div>
-  <div id="profileMembershipslist"></div>
+      <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;align-items:start">
 
-  <!-- Primary actions: payment processing -->
-  <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap">
-  </div>
+        <!-- LEFT COLUMN - identity & progress -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
 
-  <!-- Stripe charge form (moved from Financial tab) -->
-  <div id="stripeChargeForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
-    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</div>
-    <div class="field">
-      <label>Membership Plan</label>
-      <select id="stripeChargeTier"><option value="">-- Select Plan --</option></select>
-    </div>
-    <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
-      <button class="panel-action" style="font-size:0.72rem" id="stripeChargeCreateBtn" onclick="createStripeCheckoutLink()"><i class="fa-solid fa-link"></i> Create Payment Link</button>
-      <button class="btn-sm" onclick="toggleStripeChargeForm()">Cancel</button>
-    </div>
-    <p class="form-msg" id="stripeChargeMsg"></p>
-    <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
-      <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
-      <div class="field">
-        <label>Payment Link</label>
-        <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.72rem" />
-      </div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <button class="btn-sm" onclick="copyCheckoutLink()"><i class="fa-solid fa-copy"></i> Copy</button>
-        <button class="btn-sm" onclick="emailCheckoutLink()"><i class="fa-solid fa-envelope"></i> Email</button>
-        <button class="btn-sm" onclick="smsCheckoutLink()"><i class="fa-solid fa-message"></i> SMS</button>
-      </div>
-      <p class="form-msg" id="stripeChargeDeliveryMsg"></p>
-    </div>
-  </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-address-card" style="color:var(--gold)"></i>Contact <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_contact',this)" title="Help">?</button></div>
+            <div id="profileContactInfo"></div>
+          </div>
 
-  <!-- Manual payment form (moved from Financial tab) -->
-  <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
-    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
-    <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType" onchange="onManualPayTypeChange()"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
-    <div class="field" id="manualPayMembershipField"><label>Membership Plan</label><select id="manualPayMembership"><option value="">-- Select Plan --</option></select></div>
-    <div class="form-row"><div class="field"><label>Method</label><select id="manualPayMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Date</label><input type="date" id="manualPayDate" /></div></div>
-    <div class="field"><label>Note (optional)</label><input type="text" id="manualPayNote" placeholder="e.g. Monthly dues April" /></div>
-    <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
-    <p class="form-msg" id="manualPayMsg"></p>
-  </div>
+          <div id="profileFamilyTile" style="display:none;border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-people-roof" style="color:var(--gold)"></i>Family <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_family',this)" title="Help">?</button></div>
+            <div id="profileFamilyList"></div>
+          </div>
 
-  <!-- Secondary actions: admin overrides (collapsed) -->
-  <div style="margin-top:0.85rem;border-top:1px solid var(--border);padding-top:0.75rem">
-    <button onclick="toggleMembershipMoreActions()" style="background:none;border:none;color:var(--muted);font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.4rem">
-      <i class="fa-solid fa-chevron-down" id="membershipMoreCaret" style="font-size:0.6rem"></i> More actions
-    </button>
-    <div id="membershipMoreActions" style="display:none;padding-top:0.5rem">
-      <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">Account Credit <span id="profileCreditBalance" style="color:#F5F0E8;font-family:var(--font-display);font-size:0.95rem;margin-left:0.35rem">$0.00</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-        <button onclick="openChangeMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-right-left" style="color:var(--gold)"></i> Switch Plan</button>
-        <button onclick="openAddMembershipToProfile()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-gift" style="color:var(--gold)"></i> Comp Plan</button>
-        <button onclick="toggleIssueCreditForm()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-plus" style="color:var(--gold)"></i> Issue Credit</button>
-        <button onclick="openCancelMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid #5A2A2A;color:#E07070;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='#E07070'" onmouseout="this.style.borderColor='#5A2A2A'"><i class="fa-solid fa-ban"></i> Cancel Plan</button>
-      </div>
-      <div id="issueCreditForm" style="display:none;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-        <div class="field"><label>Amount ($)</label><input type="number" id="issueCreditAmount" step="0.01" min="0" placeholder="0.00" /></div>
-        <div class="field"><label>Reason</label><input type="text" id="issueCreditReason" placeholder="e.g. Old-system overcharge adjustment" /></div>
-        <p id="issueCreditMsg" style="margin:0.25rem 0;font-size:0.8rem"></p>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <button class="btn-sm" onclick="toggleIssueCreditForm()" style="flex:1">Cancel</button>
-          <button class="btn-sm" id="issueCreditBtn" onclick="issueCredit()" style="flex:1;border-color:var(--gold);color:var(--gold)"><i class="fa-solid fa-check"></i> Issue</button>
-        </div>
-      </div>
-    </div>
-  </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tags" style="color:var(--gold)"></i>Tags <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_tags',this)" title="Help">?</button></div>
+            <div id="profileTagsList" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.5rem"></div>
+            <select id="profileTagAdd" onchange="addTagToStudent()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.45rem 0.65rem;width:100%"><option value="">+ Add Tag</option></select>
+          </div>
 
-  <div id="profileMembershipChangeBox" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
-    <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
-    <select id="profileMemSelect" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;margin-bottom:0.5rem"><option value="">Loading...</option></select>
-    <div style="display:flex;gap:0.5rem"><button class="panel-action" onclick="saveChangeMembership()">Save</button><button class="btn-sm" onclick="cancelChangeMembership()">Cancel</button></div>
- <p class="form-msg" id="changeMembershipMsg"></p>
-  </div>
-</div>
-        <div>
-          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Card on File</div>
-          <div id="profileCardOnFile" style="font-size:0.82rem;color:var(--muted);font-style:italic">Loading...</div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-chart-line" style="color:var(--gold)"></i>Progress <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_progress',this)" title="Help">?</button></div>
+            <div id="profileBeltSection" style="display:none">
+              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
+              <div id="profileBeltInfo"></div><div id="profileBeltProgress" style="margin-top:0.75rem"></div><div id="profileBeltPalette" style="margin-top:0.75rem"></div>
+              <div style="border-top:1px solid var(--border);margin:0.9rem 0"></div>
+            </div>
+            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
+            <div id="profileClassTracker"></div>
+          </div>
+
         </div>
-        <div>
-          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Billing Day Override</div>
-          <select id="profileAutopayDay" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;width:100%"><option value="">Use Membership Default</option><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select>
-          <div id="profileAutopayCustomDay" style="display:none;margin-top:0.5rem"><div class="field"><label>Day of Month (1-28)</label><input type="number" id="profileAutopayCustomNum" min="1" max="28" placeholder="e.g. 20" /></div></div>
-          <button class="panel-action" style="font-size:0.72rem;margin-top:0.5rem" onclick="saveAutopayOverride()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-          <p class="form-msg" id="autopayOverrideMsg"></p>
+
+        <!-- RIGHT COLUMN - membership & billing -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Memberships <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_memberships',this)" title="Help">?</button></div>
+            <div id="profileMembershipslist"></div>
+            <!-- Stripe charge form (moved from Financial tab) -->
+            <div id="stripeChargeForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
+              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem"><i class="fa-brands fa-stripe-s"></i> Charge via Stripe</div>
+              <div class="field">
+                <label>Membership Plan</label>
+                <select id="stripeChargeTier"><option value="">-- Select Plan --</option></select>
+              </div>
+              <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+                <button class="panel-action" style="font-size:0.72rem" id="stripeChargeCreateBtn" onclick="createStripeCheckoutLink()"><i class="fa-solid fa-link"></i> Create Payment Link</button>
+                <button class="btn-sm" onclick="toggleStripeChargeForm()">Cancel</button>
+              </div>
+              <p class="form-msg" id="stripeChargeMsg"></p>
+              <div id="stripeChargeDelivery" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+                <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Send to Student</div>
+                <div class="field">
+                  <label>Payment Link</label>
+                  <input type="text" id="stripeChargeUrl" readonly style="background:var(--surface);font-size:0.72rem" />
+                </div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                  <button class="btn-sm" onclick="copyCheckoutLink()"><i class="fa-solid fa-copy"></i> Copy</button>
+                  <button class="btn-sm" onclick="emailCheckoutLink()"><i class="fa-solid fa-envelope"></i> Email</button>
+                  <button class="btn-sm" onclick="smsCheckoutLink()"><i class="fa-solid fa-message"></i> SMS</button>
+                </div>
+                <p class="form-msg" id="stripeChargeDeliveryMsg"></p>
+              </div>
+            </div>
+
+            <!-- Manual payment form (moved from Financial tab) -->
+            <div id="manualPaymentForm" class="manual-payment-form" style="display:none;margin-top:0.75rem">
+              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Record Manual Payment</div>
+              <div class="form-row"><div class="field"><label>Amount</label><input type="number" id="manualPayAmt" value="0" min="0" step="0.01" /></div><div class="field"><label>Type</label><select id="manualPayType" onchange="onManualPayTypeChange()"><option value="membership">Membership</option><option value="retail_sale">Retail</option><option value="session">Session</option><option value="session_pack">Session Pack</option><option value="belt_test">Belt Test</option><option value="other">Other</option></select></div></div>
+              <div class="field" id="manualPayMembershipField"><label>Membership Plan</label><select id="manualPayMembership"><option value="">-- Select Plan --</option></select></div>
+              <div class="form-row"><div class="field"><label>Method</label><select id="manualPayMethod"><option value="cash">Cash</option><option value="check">Check</option><option value="card">Card</option><option value="other">Other</option></select></div><div class="field"><label>Date</label><input type="date" id="manualPayDate" /></div></div>
+              <div class="field"><label>Note (optional)</label><input type="text" id="manualPayNote" placeholder="e.g. Monthly dues April" /></div>
+              <div style="display:flex;gap:0.5rem"><button class="panel-action" style="font-size:0.72rem" onclick="saveManualPayment()"><i class="fa-solid fa-floppy-disk"></i> Save</button><button class="btn-sm" onclick="toggleManualPaymentForm()">Cancel</button></div>
+              <p class="form-msg" id="manualPayMsg"></p>
+            </div>
+
+            <!-- Secondary actions: admin overrides (collapsed) -->
+            <div style="margin-top:0.85rem;border-top:1px solid var(--border);padding-top:0.75rem">
+              <button onclick="toggleMembershipMoreActions()" style="background:none;border:none;color:var(--muted);font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.4rem">
+                <i class="fa-solid fa-chevron-down" id="membershipMoreCaret" style="font-size:0.6rem"></i> More actions
+              </button>
+              <div id="membershipMoreActions" style="display:none;padding-top:0.5rem">
+                <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">Account Credit <span id="profileCreditBalance" style="color:#F5F0E8;font-family:var(--font-display);font-size:0.95rem;margin-left:0.35rem">$0.00</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                  <button onclick="openChangeMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-right-left" style="color:var(--gold)"></i> Switch Plan</button>
+                  <button onclick="openAddMembershipToProfile()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-gift" style="color:var(--gold)"></i> Comp Plan</button>
+                  <button onclick="toggleIssueCreditForm()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-plus" style="color:var(--gold)"></i> Issue Credit</button>
+                  <button onclick="openCancelMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid #5A2A2A;color:#E07070;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='#E07070'" onmouseout="this.style.borderColor='#5A2A2A'"><i class="fa-solid fa-ban"></i> Cancel Plan</button>
+                </div>
+                <div id="issueCreditForm" style="display:none;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                  <div class="field"><label>Amount ($)</label><input type="number" id="issueCreditAmount" step="0.01" min="0" placeholder="0.00" /></div>
+                  <div class="field"><label>Reason</label><input type="text" id="issueCreditReason" placeholder="e.g. Old-system overcharge adjustment" /></div>
+                  <p id="issueCreditMsg" style="margin:0.25rem 0;font-size:0.8rem"></p>
+                  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                    <button class="btn-sm" onclick="toggleIssueCreditForm()" style="flex:1">Cancel</button>
+                    <button class="btn-sm" id="issueCreditBtn" onclick="issueCredit()" style="flex:1;border-color:var(--gold);color:var(--gold)"><i class="fa-solid fa-check"></i> Issue</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="profileMembershipChangeBox" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--black);border:1px solid var(--border)">
+              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem" id="profileMembershipChangeTitle">Select New Plan</div>
+              <select id="profileMemSelect" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;margin-bottom:0.5rem"><option value="">Loading...</option></select>
+              <div style="display:flex;gap:0.5rem"><button class="panel-action" onclick="saveChangeMembership()">Save</button><button class="btn-sm" onclick="cancelChangeMembership()">Cancel</button></div>
+           <p class="form-msg" id="changeMembershipMsg"></p>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-credit-card" style="color:var(--gold)"></i>Billing <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_billing',this)" title="Help">?</button></div>
+            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Card on File</div>
+            <div id="profileCardOnFile" style="font-size:0.82rem;color:var(--muted);font-style:italic">Loading...</div>
+            <div style="border-top:1px solid var(--border);margin:0.9rem 0"></div>
+            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Billing Day Override</div>
+            <select id="profileAutopayDay" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.55rem 0.75rem;width:100%"><option value="">Use Membership Default</option><option value="anniversary">Anniversary Date</option><option value="1">1st of Month</option><option value="15">15th of Month</option><option value="custom">Custom Day</option></select>
+            <div id="profileAutopayCustomDay" style="display:none;margin-top:0.5rem"><div class="field"><label>Day of Month (1-28)</label><input type="number" id="profileAutopayCustomNum" min="1" max="28" placeholder="e.g. 20" /></div></div>
+            <button class="panel-action" style="font-size:0.72rem;margin-top:0.5rem" onclick="saveAutopayOverride()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+            <p class="form-msg" id="autopayOverrideMsg"></p>
+          </div>
+
         </div>
-        <div>
-          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Tags</div>
-          <div id="profileTagsList" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.5rem"></div>
-          <select id="profileTagAdd" onchange="addTagToStudent()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.45rem 0.65rem;width:100%"><option value="">+ Add Tag</option></select>
-        </div>
-        <div id="profileBeltSection" style="display:none">
-          <div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
-          <div id="profileBeltInfo"></div><div id="profileBeltProgress" style="margin-top:0.75rem"></div><div id="profileBeltPalette" style="margin-top:0.75rem"></div>
-        </div>
-        <div><div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div><div id="profileClassTracker"></div></div>
       </div>
       <div style="padding:1.5rem">
         <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;flex-wrap:wrap">
@@ -4762,6 +4799,13 @@ async function loadDiscountSummary(){
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'profile.sec_contact': { title: 'Contact', purpose: 'Phone, email, and address on file for this member. Use Edit in the header to change them.' },
+'profile.sec_family': { title: 'Family', purpose: 'Other members sharing this family account. Only shows when the member belongs to a family.' },
+'profile.sec_tags': { title: 'Tags', purpose: 'Labels for segmenting this member in reports and broadcasts. Add a tag to apply it immediately.' },
+'profile.sec_progress': { title: 'Progress', purpose: 'Belt rank and progress toward the next test, plus the class tracker showing attendance against their plan allowance.' },
+'profile.sec_memberships': { title: 'Memberships', purpose: 'Active plans and packs for this member, plus admin actions under More actions: switch or comp a plan, issue account credit, or cancel.' },
+'profile.sec_billing': { title: 'Billing', purpose: 'The card Stripe will charge and an optional billing-day override for this member only. Leave the override on Use Membership Default to follow the plan.' },
+
 'payments.discounts': { title: 'Discounts applied', purpose: 'Every staff discount from the last 90 days: how many sales, the total given away, and how many repeat every cycle. Each row in the ledger shows the amount, whether it is one-time or recurring, who applied it, and the reason.' },
 'custom.cc_startdate': { title: 'Start date', purpose: 'The member-since date this membership began. Backdate for a migrated member; blank = today. Record-only, does not affect billing.' },
 'custom.cc_billingday': { title: 'Autopay billing day', purpose: 'The day of the month this plan bills. Charge today bills now and every cycle after; 1st/15th/custom anchor billing to that day.' },
