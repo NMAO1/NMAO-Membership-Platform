@@ -940,6 +940,10 @@
         <div style="position:relative;flex:1;max-width:380px"><input type="text" id="memberSearch" placeholder="Search by name or email..." oninput="filterMembers()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.65rem 0.9rem 0.65rem 2.6rem;outline:none" /><i class="fa-solid fa-magnifying-glass" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.85rem;pointer-events:none"></i></div>
         <select id="tagFilter" onchange="filterMembers()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.65rem 0.75rem"><option value="">All Tags</option></select>
         <select id="statusFilter" onchange="filterMembers()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.65rem 0.75rem"><option value="">All Statuses</option><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="expired">Expired</option></select>
+        <div style="margin-left:auto;display:flex;gap:0.5rem">
+          <button class="panel-action" style="font-size:0.75rem" onclick="exportMembersCSV()" title="Download the roster shown below as a CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+          <button class="panel-action" style="font-size:0.75rem" onclick="exportMembersPDF()" title="Print or save the roster shown below as a PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        </div>
       </div>
       <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
@@ -7549,6 +7553,7 @@ function textAllAtRisk(){
 }
 function renderMembersTable() { filterMembers(); }
 function renderMembersTableFiltered(list) {
+  membersExportList = list;
   var tb = document.getElementById('membersTableBody');
   if (!list.length) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">'+(allStudents.length?'No students match your search.':'No students yet. Add them one at a time or import a CSV.<br><br><button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add your first student</button>')+'</td></tr>'; return; }
   tb.innerHTML = list.map(function(s){
@@ -14251,6 +14256,78 @@ function exportReportCSV(){
   var a=document.createElement('a'); a.href=url; a.download=def.key+'_report_'+localDateStr(new Date())+'.csv'; a.click(); URL.revokeObjectURL(url);
 }
 function exportReportPDF(){ window.print(); }
+
+// ─────────────────────────────── §MEMBERS EXPORT ───────────────────────────────
+// CSV + PDF of the Student Roster. Always exports exactly what the active
+// search / tag / status filters are showing, in the same 7 columns as the table.
+var membersExportList = [];
+var MEMBER_EXPORT_COLS = [
+  { label:'Name',       get:function(s){ return ((s.first_name||'')+' '+(s.last_name||'')).trim(); } },
+  { label:'Email',      get:function(s){ return s.email||''; } },
+  { label:'Program',    get:function(s){ return (s.programs&&s.programs.name)?s.programs.name:''; } },
+  { label:'Membership', get:function(s){ return (s.memberships&&s.memberships.name)?s.memberships.name:''; } },
+  { label:'Status',     get:function(s){ return s.status||'trial'; } },
+  { label:'Tags',       get:function(s){ if(!s._tags||!s._tags.length) return ''; return (allTags||[]).filter(function(t){return s._tags.includes(t.id);}).map(function(t){return t.name;}).join('; '); } },
+  { label:'Joined',     get:function(s){ return s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''; } }
+];
+function memberFilterSummary(){
+  var q  = (document.getElementById('memberSearch')||{}).value||'';
+  var tg = (document.getElementById('tagFilter')||{}).value||'';
+  var st = (document.getElementById('statusFilter')||{}).value||'';
+  var parts=[];
+  if(q) parts.push('Search: "'+q+'"');
+  if(tg){ var t=(allTags||[]).filter(function(x){return x.id===tg;})[0]; parts.push('Tag: '+(t?t.name:tg)); }
+  if(st) parts.push('Status: '+st);
+  return parts.length?parts.join('  \u00b7  '):'All members';
+}
+function exportMembersCSV(){
+  var rows=membersExportList||[];
+  if(!rows.length){ alert('No members to export.'); return; }
+  var csv=MEMBER_EXPORT_COLS.map(function(c){return c.label;}).join(',')+'\n';
+  csv+=rows.map(function(s){ return MEMBER_EXPORT_COLS.map(function(c){ return '"'+String(c.get(s)).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='members_roster_'+localDateStr(new Date())+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+function exportMembersPDF(){
+  var rows=membersExportList||[];
+  if(!rows.length){ alert('No members to export.'); return; }
+  var head=MEMBER_EXPORT_COLS.map(function(c){return '<th>'+_dEsc(c.label)+'</th>';}).join('');
+  var body=rows.map(function(s){ return '<tr>'+MEMBER_EXPORT_COLS.map(function(c){return '<td>'+_dEsc(c.get(s))+'</td>';}).join('')+'</tr>'; }).join('');
+  var school=(document.getElementById('topSchoolName')||{}).textContent||'';
+  var sub=memberFilterSummary()+'  \u00b7  '+rows.length+' member'+(rows.length!==1?'s':'');
+  printExportTable('Student Roster', school, sub, head, body);
+}
+// Prints a clean standalone table via a hidden iframe, so the PDF is just the
+// roster - not the whole dashboard chrome. No pop-up blocker to fight.
+function printExportTable(title, schoolName, subtitle, headHtml, bodyHtml){
+  var f=document.createElement('iframe');
+  f.setAttribute('aria-hidden','true');
+  f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  var d=f.contentWindow.document;
+  d.open();
+  d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+_dEsc(title)+'</title><style>'+
+    '*{box-sizing:border-box}body{font-family:Helvetica,Arial,sans-serif;color:#111;margin:0}'+
+    'h1{font-size:17px;margin:0 0 3px}.sub{font-size:10.5px;color:#666;margin-bottom:14px}'+
+    'table{width:100%;border-collapse:collapse;font-size:10.5px}'+
+    'th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}'+
+    'th{background:#f2f2f2;font-size:9.5px;text-transform:uppercase;letter-spacing:0.06em}'+
+    'tr{page-break-inside:avoid}thead{display:table-header-group}'+
+    '@page{margin:14mm}'+
+    '</style></head><body>'+
+    '<h1>'+_dEsc(schoolName?(schoolName+' \u2014 '+title):title)+'</h1>'+
+    '<div class="sub">'+_dEsc(subtitle)+'  \u00b7  '+_dEsc(new Date().toLocaleDateString())+'</div>'+
+    '<table><thead><tr>'+headHtml+'</tr></thead><tbody>'+bodyHtml+'</tbody></table>'+
+    '</body></html>');
+  d.close();
+  setTimeout(function(){
+    try{ f.contentWindow.focus(); f.contentWindow.print(); }
+    catch(e){ console.error('printExportTable failed:',e); alert('Could not open the print dialog.'); }
+    setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); },1500);
+  },120);
+}
 
 // ─────────────────────────────── §BILLING ───────────────────────────────
 
