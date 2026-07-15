@@ -80,6 +80,20 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .info-row:last-child{margin-bottom:0;}
 .info-label{color:var(--muted);min-width:100px;flex-shrink:0;font-size:0.72rem;letter-spacing:0.08em;padding-top:0.05rem;}
 .info-value{color:var(--white);}
+.sched-view-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:0.85rem}
+.sched-view-toggle button{flex:1;background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 0.4rem;cursor:pointer}
+.sched-view-toggle button.active{background:var(--gold);color:var(--black);font-weight:600}
+.fam-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:0.85rem;padding-bottom:0.3rem}
+.fam-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(124px,1fr);gap:0.4rem}
+.fam-grid-head{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);text-align:center;padding:0.3rem 0 0.35rem;border-bottom:1px solid var(--border);margin-bottom:0.4rem;white-space:nowrap}
+.fam-grid-head.today{color:var(--gold)}
+.fam-chip{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);padding:0.4rem 0.45rem;margin-bottom:0.35rem;cursor:pointer}
+.fam-chip.has{border-left-color:var(--gold)}
+.fam-chip.open{border-color:var(--gold)}
+.fam-chip-time{color:var(--gold);font-weight:600;font-size:0.66rem}
+.fam-chip-name{color:var(--white);font-size:0.72rem;line-height:1.25;margin-top:0.1rem}
+.fam-chip-count{font-size:0.6rem;color:var(--muted);margin-top:0.15rem}
+.fam-grid-empty{font-size:0.62rem;color:var(--muted);font-style:italic;text-align:center;padding:0.4rem 0;opacity:0.6}
 .day-header{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:1.25rem 0 0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
 .sched-day-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);padding:0.85rem 1rem;margin-bottom:0.75rem;}
 .sched-day-btn{background:none;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:0.9rem;flex-shrink:0;}
@@ -720,7 +734,6 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       <div id="portalTabSchedule">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
-          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>
           <div id="scheduleList"><div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div></div>
         </div>
       </div>
@@ -1035,6 +1048,10 @@ var todayAttendance=[];
 var existingReservations={};
 var scheduleByDay={};
 var scheduleViewDay=0;
+var SCHED_VIEW_KEY='nmao_sched_view';
+var FAM_VIEW_KEY='nmao_fam_view';
+var scheduleViewMode=(function(){try{return localStorage.getItem(SCHED_VIEW_KEY)==='week'?'week':'day';}catch(e){return 'day';}})();
+var familyViewMode=(function(){try{return localStorage.getItem(FAM_VIEW_KEY)==='grid'?'grid':'list';}catch(e){return 'list';}})();
 var enrollmentCounts={};
 // lazy-load flags for new tabs — reset in buildPortal
 var sessionsLoaded=false;
@@ -1832,12 +1849,58 @@ async function buildSchedule(s){
     }
 
     scheduleViewDay=diffs[0];
-    renderScheduleDay();
+    renderScheduleView();
 
   }catch(e){
     console.error('buildSchedule error:',e);
     el.innerHTML='<div style="color:#E07070;font-size:0.85rem;padding:1rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.5rem"></i>Could not load schedule: '+e.message+'</div>';
   }
+}
+
+// Shared class-card markup, used by BOTH the day and week views so they can never drift.
+function renderClassCardHTML(c,viewDateStr){
+  var enrollKey=c.id+'_'+viewDateStr;
+  var isEnrolled=!!enrolledClasses[enrollKey];
+  var cn=c.name||c.title||'Class';
+  var tags=[]; if(c.style)tags.push(c.style); if(c.level)tags.push(c.level); if(c.age_group)tags.push(c.age_group);
+  var liveCount=(enrollmentCounts[c.id]&&enrollmentCounts[c.id][viewDateStr])||0;
+  var cap=c.capacity||0;
+  var isFull=cap>0&&liveCount>=cap;
+  var badge=enrollBadgeHTML(liveCount,cap);
+  var metaParts=[]; if(tags.length)metaParts.push(tags.join(' &bull; ')); if(badge)metaParts.push(badge);
+  var metaHtml=metaParts.join(' &bull; ');
+  var _gated=(currentStudent && (currentStudent.status==='alumni'||currentStudent.status==='paused'||currentStudent.status==='lapsed'));
+  var btnLabel,btnDisabled='';
+  if(_gated){
+    btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Renew to reserve';
+    btnDisabled=' disabled';
+  }else if(isEnrolled){
+    btnLabel='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
+  }else if(isFull){
+    btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Full';
+    btnDisabled=' disabled';
+  }else{
+    btnLabel='RSVP';
+  }
+  var h='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+metaHtml+'</div></div>';
+  h+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'"'+btnDisabled+' onclick="toggleRSVP(\''+c.id+'\',\''+viewDateStr+'\',this)">'+btnLabel+'</button></div>';
+  return h;
+}
+
+function schedViewToggleHTML(){
+  return '<div class="sched-view-toggle">'+
+    '<button class="'+(scheduleViewMode==='day'?'active':'')+'" onclick="setScheduleViewMode(\'day\')"><i class="fa-solid fa-calendar-day" style="margin-right:0.35rem"></i>Day</button>'+
+    '<button class="'+(scheduleViewMode==='week'?'active':'')+'" onclick="setScheduleViewMode(\'week\')"><i class="fa-solid fa-calendar-week" style="margin-right:0.35rem"></i>Week</button>'+
+  '</div>';
+}
+function setScheduleViewMode(mode){
+  scheduleViewMode=(mode==='week')?'week':'day';
+  try{ localStorage.setItem(SCHED_VIEW_KEY,scheduleViewMode); }catch(e){}
+  renderScheduleView();
+}
+// Dispatcher — every re-render (including after an RSVP) keeps the chosen view.
+function renderScheduleView(){
+  if(scheduleViewMode==='week') renderScheduleWeek(); else renderScheduleDay();
 }
 
 function renderScheduleDay(){
@@ -1850,7 +1913,8 @@ function renderScheduleDay(){
   var dateLabel=viewDate.toLocaleDateString('en-US',{month:'long',day:'numeric'});
   var currentIdx=diffs.indexOf(scheduleViewDay);
   var hasPrev=currentIdx>0; var hasNext=currentIdx<diffs.length-1;
-  var html='<div class="sched-day-nav">';
+  var html=schedViewToggleHTML();
+  html+='<div class="sched-day-nav">';
   html+='<button class="sched-day-btn" onclick="navScheduleDay(-1)"'+(hasPrev?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-left"></i></button>';
   html+='<div style="flex:1;text-align:center"><div class="sched-day-label">'+label+'</div><div class="sched-day-sub">'+dateLabel+'</div></div>';
   html+='<button class="sched-day-btn" onclick="navScheduleDay(1)"'+(hasNext?'':' disabled style="opacity:0.25;cursor:default"')+'><i class="fa-solid fa-chevron-right"></i></button>';
@@ -1866,33 +1930,32 @@ function renderScheduleDay(){
     html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes this day.</div>';
   }else{
     html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
-   dayClasses.forEach(function(c){
-      var enrollKey=c.id+'_'+viewDateStr;
-      var isEnrolled=!!enrolledClasses[enrollKey];
-      var cn=c.name||c.title||'Class';
-      var tags=[]; if(c.style)tags.push(c.style); if(c.level)tags.push(c.level); if(c.age_group)tags.push(c.age_group);
-      var liveCount=(enrollmentCounts[c.id]&&enrollmentCounts[c.id][viewDateStr])||0;
-      var cap=c.capacity||0;
-      var isFull=cap>0&&liveCount>=cap;
-      var badge=enrollBadgeHTML(liveCount,cap);
-      var metaParts=[]; if(tags.length)metaParts.push(tags.join(' &bull; ')); if(badge)metaParts.push(badge);
-      var metaHtml=metaParts.join(' &bull; ');
-      var _gated=(currentStudent && (currentStudent.status==='alumni'||currentStudent.status==='paused'||currentStudent.status==='lapsed'));
-      var btnLabel,btnDisabled='';
-      if(_gated){
-        btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Renew to reserve';
-        btnDisabled=' disabled';
-      }else if(isEnrolled){
-        btnLabel='<i class="fa-solid fa-check" style="margin-right:0.3rem"></i>RSVP\'d';
-      }else if(isFull){
-        btnLabel='<i class="fa-solid fa-lock" style="margin-right:0.3rem"></i>Full';
-        btnDisabled=' disabled';
-      }else{
-        btnLabel='RSVP';
-      }
-      html+='<div class="class-schedule-card'+(isEnrolled?' enrolled':'')+'"><div class="class-time-badge">'+fmtTime(c.start_time)+'</div><div class="class-details"><div class="class-name">'+cn+'</div><div class="class-meta-text">'+metaHtml+'</div></div>';
-      html+='<button class="btn-rsvp'+(isEnrolled?' enrolled':'')+'"'+btnDisabled+' onclick="toggleRSVP(\''+c.id+'\',\''+viewDateStr+'\',this)">'+btnLabel+'</button></div>';
-    });
+    dayClasses.forEach(function(c){ html+=renderClassCardHTML(c,viewDateStr); });
+  }
+  el.innerHTML=html;
+}
+
+// Week view — the same cards, grouped under a header per day, whole week at a glance.
+function renderScheduleWeek(){
+  var el=document.getElementById('scheduleList'); if(!el)return;
+  var now=new Date();
+  var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
+  var html=schedViewToggleHTML();
+  html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
+  var hasAny=false;
+  diffs.forEach(function(diff){
+    var dayClasses=(scheduleByDay[diff]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    if(!dayClasses.length) return;
+    hasAny=true;
+    var d=new Date(now); d.setDate(now.getDate()+diff);
+    var dStr=d.toISOString().split('T')[0];
+    var lbl=diff===0?'Today':diff===1?'Tomorrow':DAY_NAMES[d.getDay()];
+    var sub=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+lbl+' &mdash; '+sub+'</div>';
+    dayClasses.forEach(function(c){ html+=renderClassCardHTML(c,dStr); });
+  });
+  if(!hasAny){
+    html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid fa-calendar-xmark" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>No classes scheduled this week.</div>';
   }
   el.innerHTML=html;
 }
@@ -1940,7 +2003,7 @@ async function toggleRSVP(classId,sessionDate,btn){
       enrollmentCounts[classId][sessionDate]=(enrollmentCounts[classId][sessionDate]||0)+1;
     }
     // Re-render so pill, button state, and card border all update consistently
-    renderScheduleDay();
+    renderScheduleView();
   }catch(e){
     console.error('RSVP error:',e);
     btn.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.3rem"></i>Error';
@@ -1948,7 +2011,7 @@ async function toggleRSVP(classId,sessionDate,btn){
     setTimeout(function(){
       btn.style.background='';
       btn.disabled=false;
-      renderScheduleDay();
+      renderScheduleView();
     },2000);
   }
 }
@@ -3454,71 +3517,178 @@ async function switchChild(){
   renderFamilySchedule();
 }
 
+var familyGridOpen=null;
+
+// Shared day filter — program-gated classes for one date, sorted. Used by list AND grid.
+function familyDayClasses(dateStr,dayName){
+  var dayClasses;
+  if(familyByDate&&Object.keys(familyByDate).length){
+    dayClasses=(familyByDate[dateStr]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  }else{
+    dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+  }
+  return dayClasses.filter(function(c){return familyChildren.some(function(child){return !c.program_id||(familyChildProgIds[child.id]||[]).indexOf(c.program_id)!==-1;});});
+}
+function familyFindClass(classId,dateStr){
+  var list=(familyByDate&&familyByDate[dateStr])?familyByDate[dateStr]:familyAllClasses;
+  for(var i=0;i<list.length;i++){ if(list[i].id===classId) return list[i]; }
+  return null;
+}
+function familyChildDone(cls,dateStr,isToday,child){
+  if(isToday) return todayAttendance.some(function(a){return a.student_id===child.id&&a.class_sessions&&a.class_sessions.class_id===cls.id&&a.class_sessions.session_date===dateStr;});
+  return !!existingReservations[cls.id+'_'+dateStr+'_'+child.id];
+}
+function familyClassCounts(cls,dateStr,isToday){
+  var sel=familySelections[cls.id+'_'+dateStr];
+  var done=0,pending=0;
+  familyChildren.forEach(function(child){
+    if(cls.program_id&&(familyChildProgIds[child.id]||[]).indexOf(cls.program_id)===-1)return;
+    if(familyChildDone(cls,dateStr,isToday,child)) done++;
+    else if(sel&&sel.studentIds&&sel.studentIds.has(child.id)) pending++;
+  });
+  return {done:done,pending:pending};
+}
+function famChipCountLabel(counts,isToday){
+  var parts=[];
+  if(counts.done) parts.push(counts.done+(isToday?' in':' booked'));
+  if(counts.pending) parts.push(counts.pending+' picked');
+  return parts.length?parts.join(' \u00b7 '):'Tap to add';
+}
+
+// Shared per-class card (child rows + selection), used by the list AND the grid detail.
+function familyClassCardHTML(cls,dateStr,isToday){
+  var cn=cls.name||cls.title||'Class';
+  var selKey=cls.id+'_'+dateStr;
+  var currentSel=familySelections[selKey];
+  var hasSelection=currentSel&&currentSel.studentIds&&currentSel.studentIds.size>0;
+  var tags=[cls.style,cls.age_group,cls.level].filter(Boolean).join(' \u00b7 ');
+  var html='<div class="family-class-card'+(hasSelection?' has-selection':'')+'" id="fcc-'+cls.id+'-'+dateStr+'">';
+  html+='<div class="family-class-header">';
+  html+='<div><div class="family-class-time">'+fmtTime(cls.start_time)+'</div>';
+  html+='<div class="family-class-name">'+cn+'</div>';
+  if(tags)html+='<div class="family-class-meta">'+tags+'</div>';
+  html+='</div>';
+  html+='<span class="family-class-type '+(isToday?'type-checkin':'type-reserve')+'">'+(isToday?'Check In':'Reserve')+'</span>';
+  html+='</div>';
+  html+='<div class="family-children-list">';
+  familyChildren.forEach(function(child){
+    if(cls.program_id&&(familyChildProgIds[child.id]||[]).indexOf(cls.program_id)===-1)return;
+    var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
+    var isDone=familyChildDone(cls,dateStr,isToday,child);
+    var progName=child.programs?child.programs.name:'Member';
+    if(isDone){
+      html+='<div class="family-child-row already-done selected">';
+      html+='<div class="family-child-check"><i class="fa-solid fa-check"></i></div>';
+      html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
+      html+='<div class="family-child-prog">'+(isToday?'Checked in':'Reserved')+'</div>';
+      html+='</div>';
+    }else{
+      html+='<div class="family-child-row'+(isSelected?' selected':'')+'" onclick="toggleFamilyChild(\''+cls.id+'\',\''+dateStr+'\',\''+child.id+'\','+isToday+')" id="fcr-'+cls.id+'-'+dateStr+'-'+child.id+'">';
+      html+='<div class="family-child-check">'+(isSelected?'<i class="fa-solid fa-check"></i>':'')+'</div>';
+      html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
+      html+='<div class="family-child-prog">'+progName+'</div>';
+      html+='</div>';
+    }
+  });
+  html+='</div></div>';
+  return html;
+}
+
+function famViewToggleHTML(){
+  return '<div class="sched-view-toggle">'+
+    '<button class="'+(familyViewMode==='list'?'active':'')+'" onclick="setFamilyViewMode(\'list\')"><i class="fa-solid fa-list" style="margin-right:0.35rem"></i>List</button>'+
+    '<button class="'+(familyViewMode==='grid'?'active':'')+'" onclick="setFamilyViewMode(\'grid\')"><i class="fa-solid fa-table-cells" style="margin-right:0.35rem"></i>Week grid</button>'+
+  '</div>';
+}
+function setFamilyViewMode(mode){
+  familyViewMode=(mode==='grid')?'grid':'list';
+  try{ localStorage.setItem(FAM_VIEW_KEY,familyViewMode); }catch(e){}
+  renderFamilySchedule();
+}
+
+// Dispatcher — keeps every existing call site working.
 function renderFamilySchedule(){
+  if(familyViewMode==='grid'){ renderFamilyGrid(); return; }
   var el=document.getElementById('scheduleList');
-  var now=new Date();var todayStr=now.toISOString().split('T')[0];
-  var html='';var hasAny=false;
+  var now=new Date();
+  var html=famViewToggleHTML();
+  html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap each child to check in or reserve, then confirm.</p>';
+  var hasAny=false;
   for(var i=0;i<7;i++){
     var d=new Date(now);d.setDate(now.getDate()+i);
     var dateStr=d.toISOString().split('T')[0];
     var dayName=DAYS[d.getDay()];var isToday=i===0;
-    var dayLabel=i===0?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
-    var dayClasses;
-    if(familyByDate&&Object.keys(familyByDate).length){
-      dayClasses=(familyByDate[dateStr]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-    }else{
-      dayClasses=familyAllClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
-    }
-    dayClasses=dayClasses.filter(function(c){return familyChildren.some(function(child){return !c.program_id||(familyChildProgIds[child.id]||[]).indexOf(c.program_id)!==-1;});});
+    var dayLabel=i===0?'Today \u2014 '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    var dayClasses=familyDayClasses(dateStr,dayName);
     if(!dayClasses.length)continue;
     hasAny=true;
     html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+dayLabel+'</div>';
-    dayClasses.forEach(function(cls){
-      var cn=cls.name||cls.title||'Class';
-      var selKey=cls.id+'_'+dateStr;
-      var currentSel=familySelections[selKey];
-      var hasSelection=currentSel&&currentSel.studentIds&&currentSel.studentIds.size>0;
-      var tags=[cls.style,cls.age_group,cls.level].filter(Boolean).join(' · ');
-      html+='<div class="family-class-card'+(hasSelection?' has-selection':'')+'" id="fcc-'+cls.id+'-'+dateStr+'">';
-      html+='<div class="family-class-header">';
-      html+='<div><div class="family-class-time">'+fmtTime(cls.start_time)+'</div>';
-      html+='<div class="family-class-name">'+cn+'</div>';
-      if(tags)html+='<div class="family-class-meta">'+tags+'</div>';
-      html+='</div>';
-      html+='<span class="family-class-type '+(isToday?'type-checkin':'type-reserve')+'">'+(isToday?'Check In':'Reserve')+'</span>';
-      html+='</div>';
-      html+='<div class="family-children-list">';
-      familyChildren.forEach(function(child){
-        if(cls.program_id&&(familyChildProgIds[child.id]||[]).indexOf(cls.program_id)===-1)return;
-        var childKey=cls.id+'_'+dateStr+'_'+child.id;
-        var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
-        var isDone=false;
-        if(isToday){
-          isDone=todayAttendance.some(function(a){return a.student_id===child.id&&a.class_sessions&&a.class_sessions.class_id===cls.id&&a.class_sessions.session_date===dateStr;});
-        }else{
-          isDone=!!existingReservations[childKey];
-        }
-        var progName=child.programs?child.programs.name:'Member';
-        if(isDone){
-          html+='<div class="family-child-row already-done selected">';
-          html+='<div class="family-child-check"><i class="fa-solid fa-check"></i></div>';
-          html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
-          html+='<div class="family-child-prog">'+(isToday?'Checked in':'Reserved')+'</div>';
-          html+='</div>';
-        }else{
-          html+='<div class="family-child-row'+(isSelected?' selected':'')+'" onclick="toggleFamilyChild(\''+cls.id+'\',\''+dateStr+'\',\''+child.id+'\','+isToday+')" id="fcr-'+cls.id+'-'+dateStr+'-'+child.id+'">';
-          html+='<div class="family-child-check">'+(isSelected?'<i class="fa-solid fa-check"></i>':'')+'</div>';
-          html+='<div class="family-child-name">'+child.first_name+' '+child.last_name+'</div>';
-          html+='<div class="family-child-prog">'+progName+'</div>';
-          html+='</div>';
-        }
-      });
-      html+='</div></div>';
-    });
+    (function(ds,it){ dayClasses.forEach(function(cls){ html+=familyClassCardHTML(cls,ds,it); }); })(dateStr,isToday);
   }
-  if(!hasAny)html='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
+  if(!hasAny)html=famViewToggleHTML()+'<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
   el.innerHTML=html;
   updateFamilyConfirmBar();
+}
+
+// Week grid — the whole week at a glance; tap a class to pick who is going.
+function renderFamilyGrid(){
+  var el=document.getElementById('scheduleList');
+  var now=new Date();
+  var html=famViewToggleHTML();
+  html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap a class to choose who is going.</p>';
+  html+='<div class="fam-grid-wrap"><div class="fam-grid">';
+  var hasAny=false;
+  for(var i=0;i<7;i++){
+    var d=new Date(now);d.setDate(now.getDate()+i);
+    var dateStr=d.toISOString().split('T')[0];
+    var dayName=DAYS[d.getDay()];var isToday=i===0;
+    var dayClasses=familyDayClasses(dateStr,dayName);
+    html+='<div class="fam-grid-col">';
+    html+='<div class="fam-grid-head'+(isToday?' today':'')+'">'+(isToday?'Today':d.toLocaleDateString('en-US',{weekday:'short'}))+'<br>'+d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+'</div>';
+    if(!dayClasses.length){ html+='<div class="fam-grid-empty">\u2014</div>'; }
+    else{
+      hasAny=true;
+      (function(ds,it){
+        dayClasses.forEach(function(cls){
+          var counts=familyClassCounts(cls,ds,it);
+          var n=counts.done+counts.pending;
+          var isOpen=familyGridOpen&&familyGridOpen.classId===cls.id&&familyGridOpen.dateStr===ds;
+          html+='<div class="fam-chip'+(n>0?' has':'')+(isOpen?' open':'')+'" id="fchip-'+cls.id+'-'+ds+'" onclick="openFamilyGridClass(\''+cls.id+'\',\''+ds+'\','+it+')">';
+          html+='<div class="fam-chip-time">'+fmtTime(cls.start_time)+'</div>';
+          html+='<div class="fam-chip-name">'+(cls.name||cls.title||'Class')+'</div>';
+          html+='<div class="fam-chip-count">'+famChipCountLabel(counts,it)+'</div>';
+          html+='</div>';
+        });
+      })(dateStr,isToday);
+    }
+    html+='</div>';
+  }
+  html+='</div></div>';
+  if(!hasAny){
+    html+='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
+  }else if(familyGridOpen){
+    var oc=familyFindClass(familyGridOpen.classId,familyGridOpen.dateStr);
+    if(oc) html+=familyClassCardHTML(oc,familyGridOpen.dateStr,familyGridOpen.isToday);
+  }else{
+    html+='<div style="color:var(--muted);font-style:italic;font-size:0.8rem;text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border)">Tap any class above to check in or reserve.</div>';
+  }
+  el.innerHTML=html;
+  updateFamilyConfirmBar();
+}
+function openFamilyGridClass(classId,dateStr,isToday){
+  if(familyGridOpen&&familyGridOpen.classId===classId&&familyGridOpen.dateStr===dateStr){ familyGridOpen=null; }
+  else{ familyGridOpen={classId:classId,dateStr:dateStr,isToday:isToday}; }
+  renderFamilyGrid();
+}
+// Targeted chip refresh so the grid badge stays truthful without a full re-render.
+function refreshFamilyGridChip(classId,dateStr){
+  var chip=document.getElementById('fchip-'+classId+'-'+dateStr); if(!chip) return;
+  var cls=familyFindClass(classId,dateStr); if(!cls) return;
+  var isToday=dateStr===new Date().toISOString().split('T')[0];
+  var counts=familyClassCounts(cls,dateStr,isToday);
+  if(counts.done+counts.pending>0) chip.classList.add('has'); else chip.classList.remove('has');
+  var cEl=chip.querySelector('.fam-chip-count');
+  if(cEl) cEl.textContent=famChipCountLabel(counts,isToday);
 }
 
 function toggleFamilyChild(classId,dateStr,studentId,isToday){
@@ -3536,6 +3706,7 @@ function toggleFamilyChild(classId,dateStr,studentId,isToday){
     if(isSel){row.classList.add('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='<i class="fa-solid fa-check"></i>';}
     else{row.classList.remove('selected');var chk=row.querySelector('.family-child-check');if(chk)chk.innerHTML='';}
   }
+  if(familyViewMode==='grid') refreshFamilyGridChip(classId,dateStr);
   updateFamilyConfirmBar();
 }
 
