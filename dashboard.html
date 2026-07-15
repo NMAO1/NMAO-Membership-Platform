@@ -2630,6 +2630,8 @@
               <label class="check-item"><input type="checkbox" id="capLookup" onchange="updateCapHint()" /><div><div class="check-item-label">Member lookup</div></div></label>
               <label class="check-item"><input type="checkbox" id="capEnroll" onchange="updateCapHint()" /><div><div class="check-item-label">Enroll new members</div></div></label>
               <label class="check-item"><input type="checkbox" id="capPos" onchange="updateCapHint()" /><div><div class="check-item-label">Take payments (POS)</div></div></label>
+          <label class="check-item"><input type="checkbox" id="capText" onchange="updateCapHint()" /><div><div class="check-item-label">Text members</div></div></label>
+          <label class="check-item"><input type="checkbox" id="capPortalInvite" onchange="updateCapHint()" /><div><div class="check-item-label">Send portal login links</div></div></label>
             </div>
             <div id="capHint" style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem"></div>
           </div>
@@ -11150,10 +11152,10 @@ function renderInstructors(){
 }
 
 var INSTR_PRESET={
-  owner:{checkin:1,lookup:1,enroll:1,pos:1},
-  head_instructor:{checkin:1,lookup:1,enroll:1,pos:1},
-  instructor:{checkin:1,lookup:1,enroll:1,pos:0},
-  assistant:{checkin:1,lookup:1,enroll:0,pos:0}
+  owner:{checkin:1,lookup:1,enroll:1,pos:1,text:1,portal_invite:1},
+  head_instructor:{checkin:1,lookup:1,enroll:1,pos:1,text:1,portal_invite:1},
+  instructor:{checkin:1,lookup:1,enroll:1,pos:0,text:1,portal_invite:0},
+  assistant:{checkin:1,lookup:1,enroll:0,pos:0,text:0,portal_invite:0}
 };
 function seedInstrCaps(role){
   var p=INSTR_PRESET[role]||INSTR_PRESET.instructor;
@@ -11161,8 +11163,10 @@ function seedInstrCaps(role){
   document.getElementById('capLookup').checked=!!p.lookup;
   document.getElementById('capEnroll').checked=!!p.enroll;
   document.getElementById('capPos').checked=!!p.pos;
+  document.getElementById('capText').checked=!!p.text;
+  document.getElementById('capPortalInvite').checked=!!p.portal_invite;
   var owner=(role==='owner');
-  ['capCheckin','capLookup','capEnroll','capPos'].forEach(function(id){document.getElementById(id).disabled=owner;});
+  ['capCheckin','capLookup','capEnroll','capPos','capText','capPortalInvite'].forEach(function(id){document.getElementById(id).disabled=owner;});
   updateCapHint();
 }
 function updateCapHint(){
@@ -11170,8 +11174,8 @@ function updateCapHint(){
   var hint=document.getElementById('capHint');
   if(role==='owner'){hint.textContent='Owners always have full access.';return;}
   var p=INSTR_PRESET[role]||{};
-  var cur={checkin:document.getElementById('capCheckin').checked?1:0,lookup:document.getElementById('capLookup').checked?1:0,enroll:document.getElementById('capEnroll').checked?1:0,pos:document.getElementById('capPos').checked?1:0};
-  var diff=0; ['checkin','lookup','enroll','pos'].forEach(function(k){if((cur[k]?1:0)!==(p[k]?1:0))diff++;});
+  var cur={checkin:document.getElementById('capCheckin').checked?1:0,lookup:document.getElementById('capLookup').checked?1:0,enroll:document.getElementById('capEnroll').checked?1:0,pos:document.getElementById('capPos').checked?1:0,text:document.getElementById('capText').checked?1:0,portal_invite:document.getElementById('capPortalInvite').checked?1:0};
+  var diff=0; ['checkin','lookup','enroll','pos','text','portal_invite'].forEach(function(k){if((cur[k]?1:0)!==(p[k]?1:0))diff++;});
   hint.textContent = diff ? (diff+' setting'+(diff>1?'s':'')+' overridden from the '+lbl+' preset. Role sets defaults; adjust any switch to customize.') : ('Matches the '+lbl+' preset. Role sets defaults; adjust any switch to customize.');
 }
 function openAddInstructor(){
@@ -11203,7 +11207,9 @@ function openEditInstructor(iid){
   document.getElementById('capLookup').checked=(i.can_lookup!=null)?!!i.can_lookup:!!pr.lookup;
   document.getElementById('capEnroll').checked=(i.can_enroll!=null)?!!i.can_enroll:!!pr.enroll;
   document.getElementById('capPos').checked=(i.can_pos!=null)?!!i.can_pos:!!pr.pos;
-  var ownerLock=((i.role||'')==='owner'); ['capCheckin','capLookup','capEnroll','capPos'].forEach(function(id){document.getElementById(id).disabled=ownerLock;});
+  document.getElementById('capText').checked=(i.can_text!=null)?!!i.can_text:!!pr.text;
+  document.getElementById('capPortalInvite').checked=(i.can_portal_invite!=null)?!!i.can_portal_invite:!!pr.portal_invite;
+  var ownerLock=((i.role||'')==='owner'); ['capCheckin','capLookup','capEnroll','capPos','capText','capPortalInvite'].forEach(function(id){document.getElementById(id).disabled=ownerLock;});
   updateCapHint();
   document.getElementById('instructorMsg').textContent='';
   document.getElementById('addInstructorModal').classList.add('active');
@@ -11222,6 +11228,8 @@ async function saveInstructor(){
   payload.can_lookup=_owner?true:document.getElementById('capLookup').checked;
   payload.can_enroll=_owner?true:document.getElementById('capEnroll').checked;
   payload.can_pos=_owner?true:document.getElementById('capPos').checked;
+  payload.can_text=_owner?true:document.getElementById('capText').checked;
+  payload.can_portal_invite=_owner?true:document.getElementById('capPortalInvite').checked;
   var r; if(eid){r=await sb.from('instructors').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('instructors').insert(payload);}
   if(r.error){setMsg('instructorMsg',r.error.message,'error');}else{setMsg('instructorMsg',first+' '+last+(eid?' updated!':' added!'),'success');await loadInstructors();setTimeout(closeAddInstructor,1000);}
 }
