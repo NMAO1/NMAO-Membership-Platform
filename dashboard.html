@@ -14105,7 +14105,15 @@ function openReport(key){
   });
   // Build filters
   var fs=document.getElementById('reportFiltersSection'); fs.innerHTML='';
-  if(!def.filters||!def.filters.length){fs.innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">No filters available.</div>';}
+  var _selCss='background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%;box-sizing:border-box';
+  if(reportStudentField(def)){
+    var tdv=document.createElement('div'); tdv.className='field'; tdv.style.marginBottom='0.6rem';
+    var tlb=document.createElement('label'); tlb.textContent='Tag'; tdv.appendChild(tlb);
+    var tsel=document.createElement('select'); tsel.id='rf-tag'; tsel.style.cssText=_selCss;
+    tsel.innerHTML='<option value="">All Tags</option>'+(allTags||[]).map(function(t){return '<option value="'+t.id+'">'+_dEsc(t.name)+'</option>';}).join('');
+    tdv.appendChild(tsel); fs.appendChild(tdv);
+  }
+  if(!def.filters||!def.filters.length){ if(!fs.children.length) fs.innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">No filters available.</div>'; }
   else{
     def.filters.forEach(function(f){
       var div=document.createElement('div'); div.className='field'; div.style.marginBottom='0.6rem';
@@ -14166,29 +14174,100 @@ function wireReportToolbar(count){
 }
 
 function selectAllColumns(val){ document.querySelectorAll('.report-col-check').forEach(function(cb){cb.checked=val;}); }
+// Which field on each report's rows points at a student. Reports not listed
+// (leads, utilization, lead_funnel) have no student, so they get no tag filter.
+var REPORT_STUDENT_FIELD = {
+  commitments:'student_id', comped_classes:'student_id', students:'id',
+  attendance:'student_id',  sessions:'student_id',       memberships:'id',
+  payments:'student_id',    belt_promotions:'student_id', expiring:'id',
+  birthdays:'id',           session_packs:'student_id',   retention:'id'
+};
+function reportStudentField(def){ return (def && REPORT_STUDENT_FIELD[def.key]) || null; }
+
+var reportSortKey=null, reportSortDir=1, reportActionable=true;
+
+// Cell value. Note !==undefined rather than ||'--' : a real 0 (a $0 payment,
+// zero attendance) must render as 0, not as a dash.
+function _rptCell(col,row){
+  if(col.compute) return col.compute(row);
+  var v=row[col.key];
+  return (v!==undefined && v!==null) ? v : '--';
+}
+// Sort on the raw value where possible; computed cells may contain markup, so
+// strip tags before comparing.
+function _rptSortVal(col,row){
+  if(col.sortValue) return col.sortValue(row);
+  var v=row[col.key];
+  if(v!==undefined && v!==null && typeof v!=='object') return v;
+  return String(col.compute?col.compute(row):'').replace(/<[^>]*>/g,'').trim();
+}
+function sortReportBy(key){
+  var def=currentReportDef; if(!def) return;
+  var col=def.columns.filter(function(c){return c.key===key;})[0]; if(!col) return;
+  if(reportSortKey===key) reportSortDir=-reportSortDir; else { reportSortKey=key; reportSortDir=1; }
+  reportData.sort(function(a,b){
+    var x=_rptSortVal(col,a), y=_rptSortVal(col,b);
+    var sx=String(x).trim(), sy=String(y).trim();
+    if(sx==='' && sy!=='') return 1;
+    if(sy==='' && sx!=='') return -1;
+    var nx=parseFloat(sx.replace(/[$,%\s]/g,'')), ny=parseFloat(sy.replace(/[$,%\s]/g,''));
+    if(!isNaN(nx)&&!isNaN(ny)&&/^[-$]?[\d,.$%\s]+$/.test(sx)&&/^[-$]?[\d,.$%\s]+$/.test(sy)) return (nx-ny)*reportSortDir;
+    var dx=Date.parse(sx), dy=Date.parse(sy);
+    if(!isNaN(dx)&&!isNaN(dy)&&sx.length>5&&sy.length>5) return (dx-dy)*reportSortDir;
+    return sx.localeCompare(sy)*reportSortDir;
+  });
+  renderReportResults(def, reportActionable);
+}
+
+// ONE renderer for both query paths. These were duplicated inline, which is how
+// the two branches drifted (one honoured def.actionable, the other never did).
+function renderReportResults(def, actionable){
+  var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
+  var cols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
+  var thead=document.getElementById('reportResultsThead');
+  var tbody=document.getElementById('reportResultsTbody');
+  thead.innerHTML='<tr>'+(actionable?'<th style="width:32px"></th>':'')+cols.map(function(col){
+    var caret=(reportSortKey===col.key)?(reportSortDir===1?' <i class="fa-solid fa-caret-up" style="color:var(--gold)"></i>':' <i class="fa-solid fa-caret-down" style="color:var(--gold)"></i>'):'';
+    return '<th style="cursor:pointer;user-select:none;white-space:nowrap" title="Sort by '+_dEsc(col.label)+'" onclick="sortReportBy(\''+col.key+'\')">'+col.label+caret+'</th>';
+  }).join('')+'</tr>';
+  tbody.innerHTML=reportData.map(function(row,idx){
+    return '<tr>'+(actionable?'<td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>':'')+
+      cols.map(function(col){ return '<td style="font-size:0.82rem">'+_rptCell(col,row)+'</td>'; }).join('')+'</tr>';
+  }).join('');
+  wireReportToolbar(reportData.length);
+  document.getElementById('reportResultCount').textContent=reportData.length;
+  document.getElementById('reportResultsSection').style.display='block';
+  document.getElementById('reportMsg').textContent='';
+}
+
+// Tag is filtered after the fetch: tags live in a junction, so one lookup of the
+// tag's student ids then an in-memory filter keeps every report path identical.
+async function applyReportTagFilter(def){
+  var sel=document.getElementById('rf-tag');
+  var tagId=sel?sel.value:'';
+  var field=reportStudentField(def);
+  if(!tagId||!field) return;
+  var r=await sb.from('student_tags').select('student_id').eq('school_id',SID).eq('tag_id',tagId);
+  var ids={}; (r.data||[]).forEach(function(x){ ids[x.student_id]=true; });
+  reportData=reportData.filter(function(row){ return !!ids[row[field]]; });
+}
+
 async function runReport(){
   if(!currentReportDef){return;} setMsg('reportMsg','Running...','');
   var def=currentReportDef;
+  reportSortKey=null; reportSortDir=1;
   try{
     var selectStr='*'+(def.join?','+def.join:'');
     if(def.customQuery){
       var r=await def.customQuery(sb,SID);
       if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
       reportData=def.customFilter?(await def.customFilter(r.data||[])):(r.data||[]);
-      document.getElementById('reportResultCount').textContent=reportData.length;
-      var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
-      var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
-      var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
-      thead.innerHTML='<tr>'+(!!def.actionable?'<th style="width:32px"></th>':'')+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
-      tbody.innerHTML=reportData.map(function(row,idx){return '<tr>'+(!!def.actionable?'<td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>':'')+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]!==undefined?row[col.key]:'--');return '<td style="font-size:0.82rem">'+val+'</td>';}).join('')+'</tr>';}).join('');
-      wireReportToolbar(reportData.length);
-      document.getElementById('reportResultsSection').style.display='block';
-      document.getElementById('reportMsg').textContent='';
+      await applyReportTagFilter(def);
+      reportActionable=!!def.actionable;
+      renderReportResults(def, reportActionable);
       return;
     }
     var q=sb.from(def.table).select(selectStr).eq('school_id',SID);
-
-    // Apply date filters
     if(def.filters){
       def.filters.forEach(function(f){
         var el=document.getElementById('rf-'+f.key); if(!el||!el.value) return;
@@ -14199,25 +14278,13 @@ async function runReport(){
       });
     }
     q=q.limit(1000);
-    var r=await q;
-    if(r.error){setMsg('reportMsg',r.error.message,'error');return;}
-    reportData=r.data||[];
-    document.getElementById('reportResultCount').textContent=reportData.length;
-    // Determine selected columns
-    var selectedKeys=[]; document.querySelectorAll('.report-col-check:checked').forEach(function(cb){selectedKeys.push(cb.value);});
-    var selectedCols=def.columns.filter(function(col){return selectedKeys.includes(col.key);});
-    // Build table
- var thead=document.getElementById('reportResultsThead'); var tbody=document.getElementById('reportResultsTbody');
-      thead.innerHTML='<tr><th style="width:32px"></th>'+selectedCols.map(function(col){return '<th>'+col.label+'</th>';}).join('')+'</tr>';
-      tbody.innerHTML=reportData.map(function(row,idx){
-      return '<tr><td><input type="checkbox" class="report-row-check" data-idx="'+idx+'" style="accent-color:var(--gold);width:16px;height:16px" /></td>'+selectedCols.map(function(col){var val=col.compute?col.compute(row):(row[col.key]||'--');
-        return '<td style="font-size:0.82rem">'+val+'</td>';
-      }).join('')+'</tr>';
-    }).join('');
-    wireReportToolbar(reportData.length);
-    document.getElementById('reportResultsSection').style.display='block';
-    document.getElementById('reportMsg').textContent='';
-    }catch(e){setMsg('reportMsg',e.message,'error');}
+    var r2=await q;
+    if(r2.error){setMsg('reportMsg',r2.error.message,'error');return;}
+    reportData=r2.data||[];
+    await applyReportTagFilter(def);
+    reportActionable=true;
+    renderReportResults(def, reportActionable);
+  }catch(e){setMsg('reportMsg',e.message,'error');}
 }
   async function sendToSelectedNow(){
   var emailOn=document.getElementById('stsEmailToggle').checked;
