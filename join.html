@@ -50,7 +50,7 @@
     .field input:focus { outline: none; border-color: var(--gold); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } }
-    .hp { position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .hp { display: none !important; }
     .btn-primary {
       width: 100%; padding: 1rem; background: var(--gold); color: var(--black); border: none;
       font-family: var(--font-ui); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
@@ -194,7 +194,7 @@
           '</div>' +
           '<div class="field"><label>Email</label><input id="jEmail" type="email" autocomplete="email" /></div>' +
           '<div class="field"><label>Phone</label><input id="jPhone" type="tel" autocomplete="tel" /></div>' +
-          '<input class="hp" id="jWebsite" name="website" tabindex="-1" autocomplete="off" />' +
+          '<input class="hp" id="jHp" name="hp_ref" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />' +
           '<button class="btn-primary" id="jSubmit" onclick="submitJoin()">Sign Up</button>' +
           '<div id="joinMsg"></div>' +
           '<div class="fineprint">By signing up you agree to be contacted by the school about your membership.</div>' +
@@ -214,8 +214,9 @@
       var last = (document.getElementById('jLast').value || '').trim();
       var email = (document.getElementById('jEmail').value || '').trim();
       var phone = (document.getElementById('jPhone').value || '').trim();
-      var hp = (document.getElementById('jWebsite').value || '').trim();
-      if (hp){ renderSuccess(); return; }
+      var _hpEl = document.getElementById('jHp');
+      var hp = (_hpEl && _hpEl.value || '').trim();
+      if (hp){ console.warn('join: honeypot tripped - signup silently skipped', hp); renderSuccess(); return; }
       if (!first || !last){ setMsg('Please enter your first and last name.', 'error'); return; }
       if (!email || email.indexOf('@') === -1){ setMsg('Please enter a valid email address.', 'error'); return; }
 
@@ -240,7 +241,9 @@
           setMsg(data.message || 'We could not complete your sign-up. Please try again.', 'error');
           btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false; return;
         }
-        renderSuccess();
+        if (data.success === true){ renderSuccess(); return; }
+        setMsg('Something went wrong. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false;
       } catch (e){
         setMsg('Something went wrong. Please try again.', 'error');
         btn.disabled = false; btn.textContent = 'Sign Up'; state.submitting = false;
