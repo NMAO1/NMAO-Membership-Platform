@@ -4827,7 +4827,7 @@ async function loadDiscountSummary(){
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
-'members.export': { title: 'Export roster', purpose: 'Tick the columns you want, then download a CSV or print a PDF. It always exports the members your current search, tag, and status filters are showing - not the whole roster. Your column choice is remembered.' },
+'members.export': { title: 'Export roster', purpose: 'Tick the columns you want, then download a CSV or print a PDF. It always exports the members your current search, program, tag, and status filters are showing - not the whole roster. Money and attendance columns are rolled up live from payments and check-ins. Your column choice is remembered.' },
 'profile.sec_contact': { title: 'Contact', purpose: 'Phone, email, and address on file for this member. Use Edit in the header to change them.' },
 'profile.sec_family': { title: 'Family', purpose: 'Other members sharing this family account. Only shows when the member belongs to a family.' },
 'profile.sec_tags': { title: 'Tags', purpose: 'Labels for segmenting this member in reports and broadcasts. Add a tag to apply it immediately.' },
@@ -9048,7 +9048,18 @@ function ensureCheckoutModal(){
       '<div id="checkoutSteps" style="display:flex;gap:0.5rem;align-items:center;padding:0.85rem 1.4rem;border-bottom:1px solid var(--border);font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase"></div>',
       '<div id="checkoutBody" style="padding:1.2rem 1.4rem;overflow-y:auto;flex:1"></div>',
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.4rem;border-top:1px solid var(--border)">',
-        '<div id="checkoutTotal" style="font-size:0.95rem;color:var(--white)"></div>',
+        '<div style="display:flex;flex-direction:column;gap:0.4rem">',
+          '<div id="checkoutDscWrap" style="display:none;align-items:center;gap:0.4rem;flex-wrap:wrap">',
+            '<label style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--muted);cursor:pointer"><input type="checkbox" id="coDscOn" onchange="coDscToggle()" /><i class="fa-solid fa-tag" style="color:var(--gold)"></i> Discount</label>',
+            '<span id="coDscFields" style="display:none;align-items:center;gap:0.3rem">',
+              '<select id="coDscType" onchange="renderCheckoutTotal()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.75rem;padding:0.25rem 0.4rem"><option value="pct">% off</option><option value="amt">$ off</option></select>',
+              '<input id="coDscVal" type="number" min="0" step="0.01" placeholder="0" oninput="renderCheckoutTotal()" style="width:64px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.75rem;padding:0.25rem 0.4rem" />',
+              '<select id="coDscMode" onchange="renderCheckoutTotal()" style="display:none;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.75rem;padding:0.25rem 0.4rem"><option value="once">One time</option><option value="forever">Every cycle</option></select>',
+              '<input id="coDscReason" type="text" maxlength="300" placeholder="Reason (optional)" style="width:140px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.75rem;padding:0.25rem 0.4rem" />',
+            '</span>',
+          '</div>',
+          '<div id="checkoutTotal" style="font-size:0.95rem;color:var(--white)"></div>',
+        '</div>',
         '<div style="display:flex;gap:0.5rem">',
           '<button class="btn-sm" id="checkoutBackBtn" onclick="checkoutBack()" style="display:none">Back</button>',
           '<button class="panel-action gold" id="checkoutNextBtn" onclick="checkoutNext()" style="font-size:0.78rem">Next</button>',
@@ -9550,6 +9561,7 @@ function openProfileCheckout(){
 
 function openCheckout(studentId, lockCategory){
   ensureCheckoutModal();
+  coDscReset();
   var student = null;
   if (currentProfileStudent && currentProfileStudent.id === studentId){
     student = currentProfileStudent;
@@ -9793,11 +9805,78 @@ function checkoutCartTotal(){
   for (var i=0;i<_checkout.cart.length;i++){ t += _checkout.cart[i].price * _checkout.cart[i].qty; }
   return t;
 }
+// ── §CHECKOUT DISCOUNT — cart-level, mirrors the staff app ──────────────────
+var _coDscUid = null;
+async function coDscStaffUid(){
+  if(_coDscUid) return _coDscUid;
+  try{ var u=await sb.auth.getUser(); if(u&&u.data&&u.data.user) _coDscUid=u.data.user.id; }catch(e){}
+  return _coDscUid;
+}
+function coDscToggle(){
+  var on=document.getElementById('coDscOn').checked;
+  var f=document.getElementById('coDscFields');
+  if(f) f.style.display=on?'inline-flex':'none';
+  renderCheckoutTotal();
+}
+function coDscGet(){
+  var onEl=document.getElementById('coDscOn');
+  if(!onEl||!onEl.checked) return null;
+  if(!_checkout||!_checkout.cart||!_checkout.cart.length) return null;
+  var base=checkoutCartTotal(); if(!(base>0)) return null;
+  var type=(document.getElementById('coDscType')||{}).value||'pct';
+  var raw=parseFloat((document.getElementById('coDscVal')||{}).value);
+  if(!raw||raw<=0||isNaN(raw)) return null;
+  var baseCents=Math.round(base*100);
+  var cents=(type==='pct')?Math.round(baseCents*(Math.min(raw,100)/100)):Math.round(raw*100);
+  if(cents<=0) return null;
+  if(cents>baseCents) cents=baseCents;
+  var modeEl=document.getElementById('coDscMode');
+  var mode=(modeEl&&modeEl.style.display!=='none'&&modeEl.value==='forever')?'forever':'once';
+  var reason=((document.getElementById('coDscReason')||{}).value||'').trim();
+  return { cents:cents, mode:mode, reason:reason||null, net:(baseCents-cents)/100, base:base };
+}
+async function coDscPayload(payload){
+  var d=coDscGet(); if(!d) return payload;
+  payload.discount_cents=d.cents;
+  payload.discount_mode=d.mode;
+  if(d.reason) payload.discount_reason=d.reason;
+  var uid=await coDscStaffUid(); if(uid) payload.discounted_by=uid;
+  return payload;
+}
+function coDscReset(){
+  var on=document.getElementById('coDscOn'); if(on) on.checked=false;
+  var v=document.getElementById('coDscVal'); if(v) v.value='';
+  var r=document.getElementById('coDscReason'); if(r) r.value='';
+  var t=document.getElementById('coDscType'); if(t) t.value='pct';
+  var m=document.getElementById('coDscMode'); if(m) m.value='once';
+  var f=document.getElementById('coDscFields'); if(f) f.style.display='none';
+}
+
 function renderCheckoutTotal(){
   var el = document.getElementById('checkoutTotal');
   if (!el) return;
   var t = (_checkout && _checkout.cart) ? checkoutCartTotal() : 0;
-  el.innerHTML = 'Total <span style="color:var(--gold);margin-left:0.3rem">$' + t.toFixed(2) + '</span>';
+  var wrap = document.getElementById('checkoutDscWrap');
+  if (wrap) wrap.style.display = (t > 0) ? 'flex' : 'none';
+  // Every-cycle only makes sense on a recurring membership; a retail sale is one-time.
+  var modeEl = document.getElementById('coDscMode');
+  if (modeEl){
+    var rec = false;
+    try { rec = (checkoutCartClass() === 'membership') && !!checkoutMembershipIsRecurring(_checkout.cart[0]); } catch(e){ rec = false; }
+    modeEl.style.display = rec ? '' : 'none';
+  }
+  var d = coDscGet();
+  if (!d){
+    el.innerHTML = 'Total <span style="color:var(--gold);margin-left:0.3rem">$' + t.toFixed(2) + '</span>';
+    return;
+  }
+  if (d.net < 0.5){
+    el.innerHTML = '<span style="color:#E07070;font-size:0.8rem">$' + d.net.toFixed(2) + ' \u2014 too low to charge a card. Use Cash to comp it.</span>';
+    return;
+  }
+  el.innerHTML = 'Total <span style="text-decoration:line-through;color:var(--muted);margin-left:0.3rem">$' + t.toFixed(2) + '</span>' +
+    '<span style="color:var(--gold);margin-left:0.4rem">$' + d.net.toFixed(2) + '</span>' +
+    '<span style="color:var(--muted);font-size:0.72rem;margin-left:0.4rem">(\u2212$' + (d.cents/100).toFixed(2) + (d.mode==='forever' ? ' every cycle' : '') + ')</span>';
 }
 
 /* small HTML escaper so item names cannot break the markup */
@@ -10037,16 +10116,22 @@ async function checkoutCashMembership(){
   var sid = _checkout.studentId;
   var nowIso = new Date().toISOString();
   var today = nowIso.split('T')[0];
+  var _coD = coDscGet();
+  var _coUid = _coD ? (await coDscStaffUid()) : null;
 
   var pr = await sb.from('payments').insert({
     school_id: SID,
     student_id: sid,
-    amount: line.price,
+    amount: _coD ? _coD.net : line.price,
     type: 'membership',
     status: 'paid',
-    description: 'Cash - ' + line.name,
+    description: 'Cash - ' + line.name + (_coD ? ' (discounted)' : ''),
     created_at: nowIso,
-    paid_at: nowIso
+    paid_at: nowIso,
+    discount_cents: _coD ? _coD.cents : null,
+    discount_mode: _coD ? _coD.mode : null,
+    discount_reason: _coD ? _coD.reason : null,
+    discounted_by: _coUid
   });
   if (pr.error) throw new Error(pr.error.message);
 
@@ -10072,19 +10157,35 @@ async function checkoutCashMembership(){
 async function checkoutCashPos(){
   var sid = _checkout.studentId;
   var nowIso = new Date().toISOString();
+  var _coD = coDscGet();
+  var _coUid = _coD ? (await coDscStaffUid()) : null;
+  var _baseCents = Math.round(checkoutCartTotal() * 100);
+  var _alloc = 0;
 
   var inserts = [];
   for (var i=0;i<_checkout.cart.length;i++){
     var c = _checkout.cart[i];
+    var lineCents = Math.round(c.price * c.qty * 100);
+    var share = 0;
+    if (_coD && _baseCents > 0){
+      if (i === _checkout.cart.length - 1){ share = _coD.cents - _alloc; }
+      else { share = Math.round(_coD.cents * lineCents / _baseCents); _alloc += share; }
+      if (share > lineCents) share = lineCents;
+      if (share < 0) share = 0;
+    }
     inserts.push({
       school_id: SID,
       student_id: sid,
-      amount: c.price * c.qty,
+      amount: (lineCents - share) / 100,
       status: 'paid',
       type: (c.kind === 'sessionpack') ? 'session_pack' : 'retail_sale',
-      description: 'Cash - ' + c.name + (c.qty > 1 ? ' x' + c.qty : ''),
+      description: 'Cash - ' + c.name + (c.qty > 1 ? ' x' + c.qty : '') + (share > 0 ? ' (discounted)' : ''),
       created_at: nowIso,
-      paid_at: nowIso
+      paid_at: nowIso,
+      discount_cents: share || null,
+      discount_mode: share > 0 ? 'once' : null,
+      discount_reason: share > 0 ? (_coD ? _coD.reason : null) : null,
+      discounted_by: share > 0 ? _coUid : null
     });
   }
   var pr = await sb.from('payments').insert(inserts);
@@ -10184,13 +10285,13 @@ async function checkoutCompleteLink(){
       var r = await fetch(SURL + '/functions/v1/stripe-create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
-        body: JSON.stringify({
+        body: JSON.stringify(await coDscPayload({
           school_id: SID,
           student_id: _checkout.studentId,
           membership_id: _checkout.cart[0].id,
           success_url: window.location.origin + '/pay.html?paid=1',
           cancel_url: window.location.origin + '/pay.html?cancelled=1'
-        })
+        }))
       });
       var data = await r.json();
       if (!r.ok || data.error || !data.url) throw new Error(data.error || 'Could not create the payment link.');
@@ -10199,13 +10300,13 @@ async function checkoutCompleteLink(){
       var r2 = await fetch(SURL + '/functions/v1/create-pos-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
-        body: JSON.stringify({
+        body: JSON.stringify(await coDscPayload({
           school_id: SID,
           student_id: _checkout.studentId,
           line_items: checkoutPosLineItems(),
           success_url: window.location.origin + '/pay.html?paid=1',
           cancel_url: window.location.origin + '/pay.html?cancelled=1'
-        })
+        }))
       });
       var data2 = await r2.json();
       if (!r2.ok || data2.error || !data2.url) throw new Error(data2.error || 'Could not create the payment link.');
@@ -10353,6 +10454,7 @@ async function checkoutCompleteCard(force){
       return;
     }
     payload.idempotency_key = _checkout.idemKey;
+    payload = await coDscPayload(payload);
     var r = await fetch(SURL + '/functions/v1/' + endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken()) },
@@ -14370,6 +14472,14 @@ function exportReportPDF(){ window.print(); }
 var membersExportList = [];
 var ROSTER_COLS_KEY = 'nmao_roster_cols';
 var beltNameById = {};
+var rosterAggById = {};
+// CSV gets a bare number so Excel treats it as currency; PDF gets the $ form.
+function _rMoney(v,iso){
+  if(v==null||v==='') return '';
+  var n=Number(v); if(isNaN(n)) return '';
+  return iso ? n.toFixed(2) : '$'+n.toFixed(2);
+}
+function _rNum(v){ return (v==null||v==='')?'':String(v); }
 
 // Date-only values ('YYYY-MM-DD') must be parsed as LOCAL, not UTC, or a DOB
 // renders a day early in negative-offset timezones (e.g. Eastern).
@@ -14416,6 +14526,14 @@ var ROSTER_COLS = [
   {key:'mem_end',    label:'Membership Ends',   group:'Membership', def:false, get:function(s,iso){return _rDate(s.membership_end_date,iso);}},
   {key:'autopay',    label:'Billing Day',       group:'Membership', def:false, get:function(s){return s.autopay_day_override||'';}},
 
+  {key:'total_paid', label:'Lifetime Paid',     group:'Money',      def:false, get:function(s,iso){var a=rosterAggById[s.id]; return a?_rMoney(a.total_paid,iso):'';}},
+  {key:'last_paid',  label:'Last Payment',      group:'Money',      def:false, get:function(s,iso){var a=rosterAggById[s.id]; return a?_rMoney(a.last_payment_amount,iso):'';}},
+  {key:'last_paid_at',label:'Last Payment Date',group:'Money',      def:false, get:function(s,iso){var a=rosterAggById[s.id]; return a?_rDate(a.last_payment_at,iso):'';}},
+  {key:'paid_30d',   label:'Paid (30 days)',    group:'Money',      def:false, get:function(s,iso){var a=rosterAggById[s.id]; return a?_rMoney(a.paid_30d,iso):'';}},
+
+  {key:'att_total',  label:'Total Attendance',  group:'Progress',   def:false, get:function(s){var a=rosterAggById[s.id]; return a?_rNum(a.attendance_total):'';}},
+  {key:'att_30d',    label:'Attendance (30 days)',group:'Progress', def:false, get:function(s){var a=rosterAggById[s.id]; return a?_rNum(a.attendance_30d):'';}},
+  {key:'last_seen_at',label:'Last Check-In',    group:'Progress',   def:false, get:function(s,iso){var a=rosterAggById[s.id]; return a?_rDate(a.last_checkin_at,iso):'';}},
   {key:'belt',       label:'Belt',              group:'Progress',   def:false, get:function(s){return beltNameById[s.current_belt_id]||'';}},
   {key:'stripes',    label:'Stripes',           group:'Progress',   def:false, get:function(s){return s.stripes==null?'':String(s.stripes);}},
   {key:'belt_date',  label:'Belt Awarded',      group:'Progress',   def:false, get:function(s,iso){return _rDate(s.belt_awarded_date,iso);}},
@@ -14432,6 +14550,7 @@ var ROSTER_GROUPS = [
   {name:'Identity',   icon:'fa-id-badge'},
   {name:'Contact',    icon:'fa-address-book'},
   {name:'Membership', icon:'fa-id-card'},
+  {name:'Money',      icon:'fa-dollar-sign'},
   {name:'Progress',   icon:'fa-ranking-star'},
   {name:'Other',      icon:'fa-ellipsis'}
 ];
@@ -14483,6 +14602,16 @@ function renderRosterColPicker(){
   }).join('');
   rosterColCountSync();
 }
+// One RPC rolls up payments + attendance per student, server-side. Pulling the
+// raw rows into the browser would be thousands of records for a busy school.
+async function ensureRosterAggregates(){
+  if(Object.keys(rosterAggById).length) return;
+  try{
+    var r=await sb.rpc('get_roster_aggregates',{p_school_id:SID});
+    if(r.error) throw new Error(r.error.message);
+    (r.data||[]).forEach(function(x){ rosterAggById[x.student_id]=x; });
+  }catch(e){ console.warn('roster aggregates unavailable:',e && e.message); }
+}
 async function ensureBeltNames(){
   if(Object.keys(beltNameById).length) return;
   try{
@@ -14497,7 +14626,9 @@ async function openExportRoster(){
   setMsg('exportRosterMsg','','');
   renderRosterColPicker();
   document.getElementById('exportRosterModal').classList.add('active');
-  await ensureBeltNames();
+  setMsg('exportRosterMsg','Loading belt, payment and attendance data...','');
+  await Promise.all([ensureBeltNames(), ensureRosterAggregates()]);
+  setMsg('exportRosterMsg','','');
 }
 function closeExportRoster(){ document.getElementById('exportRosterModal').classList.remove('active'); }
 
