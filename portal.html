@@ -1165,18 +1165,37 @@ function updateWaiverBanner(){
 // ─────────────────────────────────────────────────────────────
 //  §JS: INIT
 // ─────────────────────────────────────────────────────────────
+// Supabase Auth lowercases every email, but students/families/instructors store
+// whatever casing was typed and carry no unique constraint. So .eq('email',...)
+// silently misses "JMcKay@aol.com", and .maybeSingle() ERRORS outright when two
+// kids share a parent's address - both land on "No account found".
+// Match case-insensitively, tolerate duplicates, then confirm an exact match in JS.
+// ilike's '_' wildcard also matches a literal underscore, so over-matching is safe
+// here precisely because _pickByEmail re-checks equality.
+function _emailRows(res){ return (res && !res.error && res.data) ? res.data : []; }
+function _pickByEmail(rows, email){
+  var want=String(email||'').trim().toLowerCase();
+  for(var i=0;i<(rows||[]).length;i++){
+    if(String(rows[i].email||'').trim().toLowerCase()===want) return rows[i];
+  }
+  return null;
+}
+
 async function resolveSchoolForSession(user){
   try{
     var sidFound=null;
-    var fa=await sb.from('families').select('school_id').eq('email',user.email).maybeSingle();
-    if(fa.data&&fa.data.school_id){sidFound=fa.data.school_id;}
+    var fa=await sb.from('families').select('school_id,email').ilike('email',user.email).limit(10);
+    var faRow=_pickByEmail(_emailRows(fa),user.email);
+    if(faRow&&faRow.school_id){sidFound=faRow.school_id;}
     if(!sidFound){
-      var st=await sb.from('students').select('school_id').eq('email',user.email).maybeSingle();
-      if(st.data&&st.data.school_id){sidFound=st.data.school_id;}
+      var st=await sb.from('students').select('school_id,email').ilike('email',user.email).limit(10);
+      var stRow=_pickByEmail(_emailRows(st),user.email);
+      if(stRow&&stRow.school_id){sidFound=stRow.school_id;}
     }
     if(!sidFound){
-      var ins=await sb.from('instructors').select('school_id').eq('email',user.email).eq('active',true).maybeSingle();
-      if(ins.data&&ins.data.school_id){sidFound=ins.data.school_id;}
+      var ins=await sb.from('instructors').select('school_id,email').ilike('email',user.email).eq('active',true).limit(10);
+      var insRow0=_pickByEmail(_emailRows(ins),user.email);
+      if(insRow0&&insRow0.school_id){sidFound=insRow0.school_id;}
     }
     if(!sidFound){return false;}
     SID=sidFound;
@@ -1282,30 +1301,33 @@ async function loadSchoolBranding(pre){
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
-sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)').eq('email',user.email).eq('school_id',SID).maybeSingle(),
-      sb.from('families').select('*').eq('email',user.email).eq('school_id',SID).maybeSingle(),
-      sb.from('instructors').select('*').eq('email',user.email).eq('active',true).eq('school_id',SID).maybeSingle()
+sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)').ilike('email',user.email).eq('school_id',SID).limit(10),
+      sb.from('families').select('*').ilike('email',user.email).eq('school_id',SID).limit(10),
+      sb.from('instructors').select('*').ilike('email',user.email).eq('active',true).eq('school_id',SID).limit(10)
     ]);
-    var studentR=results[0],familyR=results[1],instrR=results[2];
-    if(!familyR.error&&familyR.data){
-  SID=familyR.data.school_id;
+    var stuRow=_pickByEmail(_emailRows(results[0]),user.email);
+    var famRow=_pickByEmail(_emailRows(results[1]),user.email);
+    var insRow=_pickByEmail(_emailRows(results[2]),user.email);
+    if(famRow){
+  SID=famRow.school_id;
   await loadSchoolBranding();
-  currentFamily=familyR.data;
+  currentFamily=famRow;
   sessionStorage.setItem('nmao_user_type','family');
-  await showFamilyPortal(familyR.data);
-}else if(!studentR.error&&studentR.data){
-  SID=studentR.data.school_id;
+  await showFamilyPortal(famRow);
+}else if(stuRow){
+  SID=stuRow.school_id;
   await loadSchoolBranding();
-  currentStudent=studentR.data;
+  currentStudent=stuRow;
   sessionStorage.setItem('nmao_user_type','student');
-  if(!studentR.data.portal_onboarded){showOnboardingScreen(studentR.data);}
-  else{showStudentPortal(studentR.data);}
-}else if(!instrR.error&&instrR.data){
-      SID=instrR.data.school_id;
+  if(!stuRow.portal_onboarded){showOnboardingScreen(stuRow);}
+  else{showStudentPortal(stuRow);}
+}else if(insRow){
+      SID=insRow.school_id;
       await loadSchoolBranding();
       sessionStorage.setItem('nmao_user_type','instructor');
-      await showInstructorPortal(instrR.data);
+      await showInstructorPortal(insRow);
     }else{
+      console.warn('No portal account matched for', user.email);
       showNoAccountError(user.email);
     }
   }catch(e){
