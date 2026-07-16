@@ -453,6 +453,9 @@
     .nocap-checkin .btn-checkin{display:none !important;}
     .nocap-pos #suPay-card_now, .nocap-pos #suPay-cash{display:none !important;}
     .nocap-pos #renewCardBtn, .nocap-pos #renewNewOpenBtn{display:none !important;}
+    .nocap-text #slTextBtn{display:none !important;}
+    .nocap-portal_invite #slInviteBtn{display:none !important;}
+    .nocap-text.nocap-portal_invite #slContactBlock{display:none !important;}
   </style>
 </head>
 <body>
@@ -887,6 +890,22 @@
     <div id="slDetailView" style="display:none">
       <button class="sl-back" onclick="slShowList()"><i class="fa-solid fa-chevron-left"></i> All students</button>
       <div class="sl-student" id="slStudentName"></div>
+      <div id="slContactBlock" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.6rem 0 0.4rem">
+        <button class="su-btn su-btn-sec" id="slTextBtn" style="flex:1;min-width:145px" onclick="slToggleText()"><i class="fa-solid fa-comment-sms"></i> Send text</button>
+        <button class="su-btn su-btn-sec" id="slInviteBtn" style="flex:1;min-width:145px" onclick="slToggleInvite()"><i class="fa-solid fa-right-to-bracket"></i> Send portal login</button>
+      </div>
+      <div id="slTextPanel" style="display:none;margin:0.5rem 0 0.25rem">
+        <div class="su-field"><label>Message</label><textarea class="su-input" id="slTextBody" rows="3" placeholder="Type your message..."></textarea></div>
+        <button class="su-btn su-btn-next" id="slTextSend" style="width:100%" onclick="slSendText()"><i class="fa-solid fa-paper-plane"></i> Send text</button>
+      </div>
+      <div id="slInvitePanel" style="display:none;margin:0.5rem 0 0.25rem">
+        <div class="su-step-sub" style="margin-bottom:0.5rem">Send this student a sign-in link to their member portal.</div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="su-btn su-btn-sec" style="flex:1" onclick="slSendInvite('email')"><i class="fa-solid fa-envelope"></i> Email link</button>
+          <button class="su-btn su-btn-sec" style="flex:1" onclick="slSendInvite('sms')"><i class="fa-solid fa-comment-sms"></i> Text link</button>
+        </div>
+      </div>
+      <div class="su-msg" id="slContactMsg"></div>
       <div class="su-step-sub">Add class credits to one of this student's packs.</div>
       <div id="slPacks"></div>
       <div id="slAddForm" style="display:none">
@@ -2132,6 +2151,8 @@ function applyStaffCapabilities(){
   b.classList.toggle('nocap-lookup',  !staffCan('lookup'));
   b.classList.toggle('nocap-enroll',  !staffCan('enroll'));
   b.classList.toggle('nocap-pos',     !staffCan('pos'));
+  b.classList.toggle('nocap-text',          !staffCan('text'));
+  b.classList.toggle('nocap-portal_invite', !staffCan('portal_invite'));
 }
 
 function openSignup(){
@@ -2534,7 +2555,7 @@ async function openStudentLookup(){
   document.getElementById('slResults').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading students...</div>';
   document.getElementById('studentLookup').classList.add('open');
   try{
-    var r=await sb.from('students').select('id,first_name,last_name,status').eq('school_id',SID).is('deleted_at',null).order('first_name');
+    var r=await sb.from('students').select('id,first_name,last_name,status,email,phone').eq('school_id',SID).is('deleted_at',null).order('first_name');
     if(r.error) throw new Error(r.error.message);
     slRoster=r.data||[];
   }catch(e){ slRoster=[].concat(allStudents); }
@@ -2572,6 +2593,8 @@ function slSelectStudent(id){
   document.getElementById('slStudentName').textContent=slStudent.first_name+' '+slStudent.last_name;
   document.getElementById('slTitle').textContent='Add Classes';
   setSlMsg('','');
+  slHideContactPanels();
+  var _tb=document.getElementById('slTextBody'); if(_tb) _tb.value='';
   document.getElementById('slAddForm').style.display='none';
   document.getElementById('slPacks').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading packs...</div>';
   slLoadPacks(id);
@@ -2628,6 +2651,67 @@ async function slAddClasses(){
   finally{ btn.disabled=false; btn.innerHTML=oh; }
 }
 
+function setSlContactMsg(txt,cls){ var el=document.getElementById('slContactMsg'); if(!el) return; el.textContent=txt||''; el.className='su-msg'+(cls?(' '+cls):''); }
+function slHideContactPanels(){
+  var t=document.getElementById('slTextPanel'); if(t) t.style.display='none';
+  var i=document.getElementById('slInvitePanel'); if(i) i.style.display='none';
+  setSlContactMsg('','');
+}
+function slToggleText(){
+  if(!staffCan('text')) return;
+  var p=document.getElementById('slTextPanel'); if(!p) return;
+  var wasOpen=(p.style.display!=='none');
+  slHideContactPanels();
+  if(!wasOpen){ p.style.display='block'; var b=document.getElementById('slTextBody'); if(b) b.focus(); }
+}
+function slToggleInvite(){
+  if(!staffCan('portal_invite')) return;
+  var p=document.getElementById('slInvitePanel'); if(!p) return;
+  var wasOpen=(p.style.display!=='none');
+  slHideContactPanels();
+  if(!wasOpen) p.style.display='block';
+}
+async function slSendText(){
+  if(!staffCan('text')) return;
+  if(!slStudent) return;
+  var body=(document.getElementById('slTextBody').value||'').trim();
+  if(!body){ setSlContactMsg('Type a message first.','error'); return; }
+  if(!slStudent.phone){ setSlContactMsg('No phone number on file for this student.','error'); return; }
+  var btn=document.getElementById('slTextSend'); if(btn) btn.disabled=true;
+  setSlContactMsg('Sending...','');
+  try{
+    var r=await fetch(SURL+'/functions/v1/send-sms',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({ school_id:SID, student_id:slStudent.id, body:body })
+    });
+    var d=await r.json().catch(function(){ return {}; });
+    if(!r.ok||(d&&d.error)) throw new Error((d&&d.error)||'Could not send the text.');
+    document.getElementById('slTextBody').value='';
+    setSlContactMsg('Text sent.','success');
+    setTimeout(function(){ slHideContactPanels(); },1600);
+  }catch(e){ setSlContactMsg((e&&e.message)?e.message:'Could not send the text.','error'); }
+  if(btn) btn.disabled=false;
+}
+async function slSendInvite(channel){
+  if(!staffCan('portal_invite')) return;
+  if(!slStudent) return;
+  if(!slStudent.email){ setSlContactMsg('This student needs an email on file to create a sign-in link.','error'); return; }
+  if(channel==='sms' && !slStudent.phone){ setSlContactMsg('No phone number on file to text the link to.','error'); return; }
+  setSlContactMsg('Sending...','');
+  try{
+    var r=await fetch(SURL+'/functions/v1/send-portal-invite',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken()),'apikey':SKEY},
+      body:JSON.stringify({ school_id:SID, recipient_type:'student', recipient_ids:[slStudent.id], channel:channel })
+    });
+    var d=await r.json().catch(function(){ return {}; });
+    if(!r.ok||(d&&d.success===false)) throw new Error((d&&d.error)||'Could not send the login.');
+    if(!d||!d.sent){ throw new Error('Nothing was sent. Check this student has the contact details needed.'); }
+    setSlContactMsg('Portal login sent by '+(channel==='sms'?'text':'email')+'.','success');
+    setTimeout(function(){ slHideContactPanels(); },1800);
+  }catch(e){ setSlContactMsg((e&&e.message)?e.message:'Could not send the login.','error'); }
+}
 function setSlMsg(txt,cls){ var el=document.getElementById('slMsg'); if(!el) return; el.textContent=txt; el.className='su-msg'+(cls?(' '+cls):''); }
 
 /* ── Student lookup -> Sell / Renew a class pack ── */
