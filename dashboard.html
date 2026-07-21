@@ -3350,7 +3350,9 @@ async function initSessionGuard(){
     SID = school.id;
   } else {
     // Fallback path: instructor seat (legacy support for staff hitting dashboard.html)
-    var instrCheck = await sb.from('instructors').select('id,school_id').eq('email', user.email).eq('active', true).single();
+    // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
+    // keeps whatever casing was typed - .eq('email',...) misses "JSmith@x.com" entirely.
+    var instrCheck = await sb.from('instructors').select('id,school_id').eq('email_norm', String(user.email||'').trim().toLowerCase()).eq('active', true).single();
     if(instrCheck.error || !instrCheck.data){
       showSessionError(user, 'no-school');
       return false;
