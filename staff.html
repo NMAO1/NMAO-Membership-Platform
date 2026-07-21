@@ -1734,6 +1734,12 @@ if(!classSessionId){
       var leftAfter=Math.max(0,(parseInt(primary.classes_remaining)||0)-1);
       doneMsg+=' \u00b7 '+leftAfter+' class'+(leftAfter===1?'':'es')+' left';
       if(leftAfter<=1) doneType='warn';
+      // Keep the roster chip in lockstep with the toast: the DB trigger just
+      // debited this pack, so mirror that here instead of leaving packBalanceMap
+      // at its stale page-load value (the 20/20-vs-18 mismatch).
+      if(packBalanceMap[studentId]){
+        packBalanceMap[studentId].rem=Math.max(0,(parseInt(packBalanceMap[studentId].rem)||0)-1);
+      }
     }
     showToast(doneMsg,doneType);
   }
