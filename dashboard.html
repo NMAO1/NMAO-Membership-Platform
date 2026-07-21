@@ -2949,6 +2949,7 @@
         <button class="btn-sm" id="hiTabAtt" onclick="hiSetKind('attendance')">Attendance</button>
         <button class="btn-sm" id="hiTabPay" onclick="hiSetKind('payments')">Payments</button>
       </div>
+      <div class="field" style="margin-bottom:1rem"><label>Coming from</label><select id="hiPlatform" onchange="hiSetPlatform(this.value)" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.5rem 0.65rem;width:100%"><option value="">Other / generic CSV</option><option value="zenplanner">Zen Planner</option><option value="mindbody">MindBody</option><option value="kicksite">Kicksite</option></select></div>
       <div id="hiIntro" style="border-left:3px solid var(--gold);padding:0.6rem 0.85rem;margin-bottom:1rem;font-size:0.82rem;color:var(--muted2)"></div>
       <div class="field"><label>CSV file</label><input type="file" id="hiFile" accept=".csv" onchange="hiHandleFile(event)" /></div>
       <div id="hiMapSection" style="display:none">
@@ -8837,6 +8838,17 @@ async function buildImportPlan(){
    current pack (those classes were paid for on the old platform).
    ============================================================ */
 var HI_KIND='attendance';
+// Per-platform header aliases. These only PRE-SELECT dropdowns; the specialist
+// still confirms against the live preview and can override. No auto-import, so a
+// wrong guess is caught by eye, never silently applied. Verified against each
+// platform's export docs (Zen Planner Attendance, MindBody Attendance-without-
+// Revenue / Sales, Kicksite Attendance Log).
+var HI_PLATFORM='';
+var HI_ALIASES={
+  zenplanner:{ email:['email','person email'], date:['check in date','date','payment date'], amount:['amount','paid'], description:['description','item'], class:['session type','program'] },
+  mindbody:{   email:['email','client email'], date:['visit date','sale date','date'], amount:['total','amount'], description:['item','description'], class:['class','service'] },
+  kicksite:{   email:['email'], date:['date'], amount:['amount'], description:['description','note'], class:['program name','program'] }
+};
 var hiHeaders=[], hiRows=[], hiPlan=null;
 var HI_FIELDS={
   attendance:[
@@ -8885,13 +8897,25 @@ function hiHandleFile(ev){
   };
   reader.readAsText(file);
 }
+function hiSetPlatform(v){ HI_PLATFORM=v; if(hiHeaders.length){ hiBuildMap(); hiBuildPlan(); } }
+// Best header match for a field: platform aliases first, then the generic
+// substring guess. Returns '' if nothing plausible (specialist maps by hand).
+function hiGuessHeader(fieldKey){
+  var aliases=(HI_PLATFORM&&HI_ALIASES[HI_PLATFORM]&&HI_ALIASES[HI_PLATFORM][fieldKey])||[];
+  for(var a=0;a<aliases.length;a++){
+    for(var h=0;h<hiHeaders.length;h++){ if(hiHeaders[h].toLowerCase().trim()===aliases[a]) return hiHeaders[h]; }
+  }
+  // generic fallback: substring
+  for(var h2=0;h2<hiHeaders.length;h2++){ var n=hiHeaders[h2].toLowerCase().replace(/[^a-z]/g,''); if(n.indexOf(fieldKey)!==-1||(fieldKey==='date'&&n.indexOf('date')!==-1)) return hiHeaders[h2]; }
+  return '';
+}
 function hiMapped(key){ var el=document.getElementById('hi-map-'+key); return el?el.value:''; }
 function hiBuildMap(){
   var host=document.getElementById('hiMapRows');
   host.innerHTML=HI_FIELDS[HI_KIND].map(function(f){
+    var guess=hiGuessHeader(f.key);
     var opts='<option value="">-- Skip --</option>'+hiHeaders.map(function(h){
-      var norm=h.toLowerCase().replace(/[^a-z]/g,'');
-      var sel=(norm.indexOf(f.key)!==-1||(f.key==='date'&&norm.indexOf('date')!==-1))?' selected':'';
+      var sel=(h===guess)?' selected':'';
       return '<option value="'+_dEsc(h)+'"'+sel+'>'+_dEsc(h)+'</option>';
     }).join('');
     return '<div style="display:flex;align-items:center;gap:0.5rem"><span style="width:150px;font-size:0.82rem;color:var(--muted2)">'+f.label+(f.required?' *':'')+'</span><select id="hi-map-'+f.key+'" onchange="hiBuildPlan()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.4rem 0.6rem">'+opts+'</select></div>';
