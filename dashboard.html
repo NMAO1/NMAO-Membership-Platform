@@ -933,6 +933,7 @@
       <div class="content-heading"><h2>Members</h2><button class="help-hint-inline" onclick="openHelpPopover('members',this)" title="What is this page?">?</button><div class="rule-h"></div>
       <div style="display:flex;gap:0.5rem">
           <button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add Student</button>
+          <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openHistoryImport()"><i class="fa-solid fa-clock-rotate-left"></i> Import History</button>
           <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openImportTool()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
         </div>
       </div>
@@ -2939,6 +2940,34 @@
   </div>
 </div>
 
+<!-- §MODAL-HISTORY-IMPORT -->
+<div class="modal-overlay" id="historyImportModal">
+  <div class="modal" style="width:720px;max-width:96vw">
+    <div class="modal-header"><span class="modal-title">Import History</span><button class="help-hint-inline" onclick="openHelpPopover('members.history_import',this)" title="Help">?</button><button class="modal-close" onclick="closeHistoryImport()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+        <button class="btn-sm" id="hiTabAtt" onclick="hiSetKind('attendance')">Attendance</button>
+        <button class="btn-sm" id="hiTabPay" onclick="hiSetKind('payments')">Payments</button>
+      </div>
+      <div id="hiIntro" style="border-left:3px solid var(--gold);padding:0.6rem 0.85rem;margin-bottom:1rem;font-size:0.82rem;color:var(--muted2)"></div>
+      <div class="field"><label>CSV file</label><input type="file" id="hiFile" accept=".csv" onchange="hiHandleFile(event)" /></div>
+      <div id="hiMapSection" style="display:none">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:1rem 0 0.6rem">Map columns</div>
+        <div id="hiMapRows" style="display:grid;gap:0.5rem"></div>
+      </div>
+      <div id="hiPreviewSection" style="display:none">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:1rem 0 0.6rem">Preview <span id="hiPreviewCount" style="color:var(--muted2)"></span></div>
+        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:6px"><table style="width:100%;font-size:0.78rem"><thead id="hiPreviewHead"></thead><tbody id="hiPreviewBody"></tbody></table></div>
+        <div id="hiPlanInfo" style="font-size:0.82rem;color:var(--muted2);margin-top:0.75rem"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1.25rem">
+        <button class="panel-action gold" id="hiRunBtn" onclick="hiRun()" style="display:none"><i class="fa-solid fa-file-import" style="margin-right:0.3rem"></i>Import</button>
+      </div>
+      <p class="form-msg" id="hiMsg"></p>
+    </div>
+  </div>
+</div>
+
 <!-- §MODAL-REVBREAKDOWN -->
 <div class="modal-overlay" id="revenueBreakdownModal">
   <div class="modal" style="width:500px;max-width:95vw">
@@ -4829,6 +4858,7 @@ async function loadDiscountSummary(){
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'members.history_import': { title: 'Import history', purpose: 'Bring attendance and payment history from a previous platform (e.g. Zen Planner). Rows match to existing members by email. Imported attendance is recorded for reports and belt eligibility but does NOT deduct from current class packs - the old classes were already paid for elsewhere. Import members first, then their history.' },
 'members.export': { title: 'Export roster', purpose: 'Tick the columns you want, then download a CSV or print a PDF. It always exports the members your current search, program, tag, and status filters are showing - not the whole roster. Money and attendance columns are rolled up live from payments and check-ins. Your column choice is remembered.' },
 'profile.sec_contact': { title: 'Contact', purpose: 'Phone, email, and address on file for this member. Use Edit in the header to change them.' },
 'profile.sec_family': { title: 'Family', purpose: 'Other members sharing this family account. Only shows when the member belongs to a family.' },
@@ -8798,6 +8828,147 @@ async function buildImportPlan(){
   return importPlan;
 }
 /* ===== end §SMART-IMPORT ENGINE ===== */
+
+/* ============================================================
+   HISTORY IMPORT ENGINE - attendance + payment history from a
+   prior platform. Matches rows to existing students by email.
+   Attendance imports with session_id NULL so the deduction
+   trigger early-returns: history is RECORDED but never debits a
+   current pack (those classes were paid for on the old platform).
+   ============================================================ */
+var HI_KIND='attendance';
+var hiHeaders=[], hiRows=[], hiPlan=null;
+var HI_FIELDS={
+  attendance:[
+    {key:'email',   label:'Email',  required:true},
+    {key:'date',    label:'Date',   required:true},
+    {key:'class',   label:'Class (optional)', required:false}
+  ],
+  payments:[
+    {key:'email',       label:'Email',       required:true},
+    {key:'date',        label:'Date',        required:true},
+    {key:'amount',      label:'Amount',      required:true},
+    {key:'description', label:'Description (optional)', required:false}
+  ]
+};
+function openHistoryImport(){
+  hiHeaders=[]; hiRows=[]; hiPlan=null;
+  document.getElementById('hiFile').value='';
+  document.getElementById('hiMapSection').style.display='none';
+  document.getElementById('hiPreviewSection').style.display='none';
+  document.getElementById('hiRunBtn').style.display='none';
+  setMsg('hiMsg','','');
+  hiSetKind('attendance');
+  document.getElementById('historyImportModal').classList.add('active');
+}
+function closeHistoryImport(){ document.getElementById('historyImportModal').classList.remove('active'); }
+function hiSetKind(k){
+  HI_KIND=k;
+  document.getElementById('hiTabAtt').classList.toggle('sel', k==='attendance');
+  document.getElementById('hiTabPay').classList.toggle('sel', k==='payments');
+  document.getElementById('hiIntro').innerHTML = (k==='attendance')
+    ? 'Imported attendance is recorded for reports and belt eligibility. It does <strong>not</strong> deduct from current class packs. CSV needs at least <strong>Email</strong> and <strong>Date</strong>.'
+    : 'Imported payments appear in the ledger and lifetime-paid totals as historical records. CSV needs <strong>Email</strong>, <strong>Date</strong> and <strong>Amount</strong>.';
+  if(hiHeaders.length){ hiBuildMap(); hiBuildPreview(); hiBuildPlan(); }
+}
+function hiHandleFile(ev){
+  var file=ev.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var parsed=parseCSV(e.target.result);
+    if(!parsed.rows.length){ setMsg('hiMsg','File must have a header row and at least one data row.','error'); return; }
+    hiHeaders=parsed.headers; hiRows=parsed.rows;
+    hiBuildMap(); hiBuildPreview();
+    document.getElementById('hiMapSection').style.display='block';
+    document.getElementById('hiPreviewSection').style.display='block';
+    hiBuildPlan();
+  };
+  reader.readAsText(file);
+}
+function hiMapped(key){ var el=document.getElementById('hi-map-'+key); return el?el.value:''; }
+function hiBuildMap(){
+  var host=document.getElementById('hiMapRows');
+  host.innerHTML=HI_FIELDS[HI_KIND].map(function(f){
+    var opts='<option value="">-- Skip --</option>'+hiHeaders.map(function(h){
+      var norm=h.toLowerCase().replace(/[^a-z]/g,'');
+      var sel=(norm.indexOf(f.key)!==-1||(f.key==='date'&&norm.indexOf('date')!==-1))?' selected':'';
+      return '<option value="'+_dEsc(h)+'"'+sel+'>'+_dEsc(h)+'</option>';
+    }).join('');
+    return '<div style="display:flex;align-items:center;gap:0.5rem"><span style="width:150px;font-size:0.82rem;color:var(--muted2)">'+f.label+(f.required?' *':'')+'</span><select id="hi-map-'+f.key+'" onchange="hiBuildPlan()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.4rem 0.6rem">'+opts+'</select></div>';
+  }).join('');
+}
+function hiBuildPreview(){
+  document.getElementById('hiPreviewHead').innerHTML='<tr>'+hiHeaders.map(function(h){return '<th style="text-align:left;padding:0.4rem 0.6rem;border-bottom:1px solid var(--border)">'+_dEsc(h)+'</th>';}).join('')+'</tr>';
+  document.getElementById('hiPreviewBody').innerHTML=hiRows.slice(0,5).map(function(r){return '<tr>'+hiHeaders.map(function(h){return '<td style="padding:0.35rem 0.6rem">'+_dEsc(r[h]||'')+'</td>';}).join('')+'</tr>';}).join('');
+  document.getElementById('hiPreviewCount').textContent='('+hiRows.length+' rows)';
+}
+function hiDate(v){
+  if(!v) return null;
+  var d=normDob(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  var t=Date.parse(v); if(!isNaN(t)){ var dd=new Date(t); return dd.getFullYear()+'-'+('0'+(dd.getMonth()+1)).slice(-2)+'-'+('0'+dd.getDate()).slice(-2); }
+  return null;
+}
+async function hiBuildPlan(){
+  var need=HI_FIELDS[HI_KIND].filter(function(f){return f.required;});
+  for(var n=0;n<need.length;n++){ if(!hiMapped(need[n].key)){ document.getElementById('hiRunBtn').style.display='none'; document.getElementById('hiPlanInfo').textContent='Map '+need[n].label+' to continue.'; return; } }
+  var roster=await fetchImportRoster();
+  var byEmail={}; roster.forEach(function(s){ var e=normEmail(s.email); if(e) byEmail[e]=s; });
+  var mEmail=hiMapped('email'), mDate=hiMapped('date'), mAmt=hiMapped('amount');
+  var ok=0, noMatch=0, badDate=0, badAmt=0;
+  for(var i=0;i<hiRows.length;i++){
+    var row=hiRows[i];
+    var stu=byEmail[normEmail(row[mEmail])];
+    if(!stu){ noMatch++; continue; }
+    if(!hiDate(row[mDate])){ badDate++; continue; }
+    if(HI_KIND==='payments'){ var a=parseFloat(String(row[mAmt]).replace(/[^0-9.\-]/g,'')); if(isNaN(a)){ badAmt++; continue; } }
+    ok++;
+  }
+  hiPlan={ok:ok,noMatch:noMatch,badDate:badDate,badAmt:badAmt};
+  var parts=['<strong style="color:var(--white)">'+ok+'</strong> ready'];
+  if(noMatch) parts.push(noMatch+' unmatched email');
+  if(badDate) parts.push(badDate+' bad date');
+  if(badAmt) parts.push(badAmt+' bad amount');
+  document.getElementById('hiPlanInfo').innerHTML=parts.join(' \u00b7 ')+(noMatch?' <span style="color:var(--muted)">(import members first, then re-run)</span>':'');
+  document.getElementById('hiRunBtn').style.display=ok>0?'inline-flex':'none';
+}
+async function hiRun(){
+  if(!hiPlan||!hiPlan.ok){ return; }
+  setMsg('hiMsg','Importing '+hiPlan.ok+' rows\u2026','');
+  document.getElementById('hiRunBtn').disabled=true;
+  try{
+    var roster=await fetchImportRoster();
+    var byEmail={}; roster.forEach(function(s){ var e=normEmail(s.email); if(e) byEmail[e]=s; });
+    var mEmail=hiMapped('email'), mDate=hiMapped('date'), mAmt=hiMapped('amount'), mDesc=hiMapped('description');
+    var inserts=[];
+    for(var i=0;i<hiRows.length;i++){
+      var row=hiRows[i]; var stu=byEmail[normEmail(row[mEmail])]; if(!stu) continue;
+      var iso=hiDate(row[mDate]); if(!iso) continue;
+      var notedAt=iso+'T12:00:00Z';
+      if(HI_KIND==='attendance'){
+        inserts.push({ school_id:SID, student_id:stu.id, session_id:null, status:'present', noted_at:notedAt });
+      } else {
+        var amt=parseFloat(String(row[mAmt]).replace(/[^0-9.\-]/g,'')); if(isNaN(amt)) continue;
+        var desc=(mDesc&&row[mDesc])?String(row[mDesc]).slice(0,300):'Imported payment';
+        inserts.push({ school_id:SID, student_id:stu.id, type:'imported', status:'paid', amount:amt, description:desc, created_at:notedAt, paid_at:notedAt });
+      }
+    }
+    var table=(HI_KIND==='attendance')?'class_attendance':'payments';
+    var done=0;
+    for(var c=0;c<inserts.length;c+=500){
+      var chunk=inserts.slice(c,c+500);
+      var r=await sb.from(table).insert(chunk);
+      if(r.error) throw new Error(r.error.message);
+      done+=chunk.length;
+      setMsg('hiMsg','Imported '+done+' of '+inserts.length+'\u2026','');
+    }
+    setMsg('hiMsg','Imported '+done+' '+HI_KIND+' record'+(done!==1?'s':'')+'.','success');
+    document.getElementById('hiRunBtn').style.display='none';
+  }catch(e){
+    setMsg('hiMsg',(e&&e.message)?e.message:'Import failed.','error');
+  }
+  document.getElementById('hiRunBtn').disabled=false;
+}
 
 /* ============================================================
    §SMART-IMPORT REVIEW (Bite 2) — render the plan, capture decisions.
