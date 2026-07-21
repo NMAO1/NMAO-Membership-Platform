@@ -1155,9 +1155,11 @@ function setLoginMsg(t,c){var el=document.getElementById('loginMsg');el.textCont
 
 async function startStaffApp(user){
   // Verify instructor record — match on email (initial auth)
+  // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
+  // keeps whatever casing was typed - .eq('email',...) locks them out of the app.
   var r=await sb.from('instructors')
     .select('*')
-    .eq('email',user.email)
+    .eq('email_norm',String(user.email||'').trim().toLowerCase())
     .eq('active',true)
     .maybeSingle();
 
@@ -2385,10 +2387,18 @@ function dscToggle(ns){
 function dscSync(ns){
   var pv=document.getElementById(ns+'DscPreview'); if(!pv) return;
   var d=dscGet(ns);
-  if(!d){ pv.textContent=''; return; }
+  if(!d){ pv.textContent=''; pv.style.color=''; return; }
   var base=dscBase(ns);
   var modeEl=document.getElementById(ns+'DscMode');
   var modeTxt=(modeEl&&modeEl.value==='forever')?' every cycle':' on the first charge';
+  // Stripe cannot charge under $0.50, and a $0 checkout completes with no card at
+  // all - so surface this before a link ever gets sent.
+  if(d.net<0.5){
+    pv.style.color='#E07070';
+    pv.textContent='$'+base.toFixed(2)+' \u2192 $'+d.net.toFixed(2)+' \u2014 too low to charge. Card payments need at least $0.50. Use Cash to comp it.';
+    return;
+  }
+  pv.style.color='';
   pv.textContent='$'+base.toFixed(2)+' \u2192 $'+d.net.toFixed(2)+modeTxt+' (\u2212$'+(d.cents/100).toFixed(2)+')';
 }
 function dscGet(ns){
@@ -2822,7 +2832,7 @@ async function renewGo(method){
     var _rnPayload=await dscPayload('renew',{ school_id:SID, student_id:sid, membership_id:m.id, success_url:window.location.origin+window.location.pathname+'?renew=paid', cancel_url:window.location.origin+window.location.pathname+'?renew=cancelled' });
     var co=await fetch(SURL+'/functions/v1/stripe-create-checkout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY}, body:JSON.stringify(_rnPayload) });
     var cod=await co.json();
-    if(!co.ok||cod.error||!cod.url) throw new Error(cod.error||'Could not start checkout.');
+    if(!co.ok||cod.error||!cod.url) throw new Error(renewFriendlyError(cod&&cod.error?cod.error:'Could not start checkout.'));
     if(method==='card_open'){
       window.open(cod.url,'_blank');
       renewPending('Payment page opened in a new tab. The pack activates automatically once '+fn+' completes payment.');
