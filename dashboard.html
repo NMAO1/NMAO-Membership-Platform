@@ -2009,6 +2009,30 @@
           </div>
 
           <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-user-shield" style="color:var(--gold)"></i>Guardians <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_guardians',this)" title="Help">?</button></div>
+            <div id="profileGuardiansList"></div>
+            <div id="pgForm" style="display:none;border-top:1px solid var(--border);margin-top:0.85rem;padding-top:0.85rem">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field" style="margin:0"><label>First name</label><input type="text" id="pgFirst" /></div>
+                <div class="field" style="margin:0"><label>Last name</label><input type="text" id="pgLast" /></div>
+              </div>
+              <div class="field" style="margin-top:0.5rem"><label>Email (their portal login)</label><input type="email" id="pgEmail" /></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field" style="margin:0"><label>Phone</label><input type="tel" id="pgPhone" /></div>
+                <div class="field" style="margin:0"><label>Relationship</label><input type="text" id="pgRel" placeholder="Mother, Father, Grandparent" /></div>
+              </div>
+              <label class="check-item" style="margin-top:0.5rem"><input type="checkbox" id="pgPrimary" /><span class="check-item-label">Primary contact</span></label>
+              <label class="check-item"><input type="checkbox" id="pgPortal" checked /><span class="check-item-label">Allow portal access</span></label>
+              <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+                <button class="panel-action gold" style="font-size:0.72rem" onclick="saveGuardian()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                <button class="btn-sm" onclick="pgCancel()">Cancel</button>
+              </div>
+              <p class="form-msg" id="pgMsg"></p>
+            </div>
+            <button class="btn-sm" id="pgAddBtn" style="margin-top:0.75rem" onclick="pgOpenForm()"><i class="fa-solid fa-plus" style="margin-right:0.3rem"></i>Add guardian</button>
+          </div>
+
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
             <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tags" style="color:var(--gold)"></i>Tags <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_tags',this)" title="Help">?</button></div>
             <div id="profileTagsList" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.5rem"></div>
             <select id="profileTagAdd" onchange="addTagToStudent()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.45rem 0.65rem;width:100%"><option value="">+ Add Tag</option></select>
@@ -4859,6 +4883,7 @@ async function loadDiscountSummary(){
 function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.style.display=m.style.display==='none'?'block':'none'; }
 /* ====== CONTEXTUAL HELP HINTS (inline ? on page headings, localStorage toggle) ====== */
 var HELP_CONTENT = {
+'profile.sec_guardians': { title: 'Guardians', purpose: 'The adults who can access this student in the member portal. A student can have several - both parents, a grandparent, a caregiver - each with their own login. Turning off portal access revokes a guardian without deleting the record or their history.' },
 'members.history_import': { title: 'Import history', purpose: 'Bring attendance and payment history from a previous platform (e.g. Zen Planner). Rows match to existing members by email. Imported attendance is recorded for reports and belt eligibility but does NOT deduct from current class packs - the old classes were already paid for elsewhere. Import members first, then their history.' },
 'members.export': { title: 'Export roster', purpose: 'Tick the columns you want, then download a CSV or print a PDF. It always exports the members your current search, program, tag, and status filters are showing - not the whole roster. Money and attendance columns are rolled up live from payments and check-ins. Your column choice is remembered.' },
 'profile.sec_contact': { title: 'Contact', purpose: 'Phone, email, and address on file for this member. Use Edit in the header to change them.' },
@@ -7181,6 +7206,126 @@ async function loadProfileCardOnFile(sid){
 }
 
 // §PROFILE-FAMILY
+/* ===== GUARDIANS (profile panel) =====
+   Adults who can reach this student in the portal. Reads through
+   get_guardians_for_student(); writes go direct to the tables under the
+   school-scoped RLS policies. Unlinking removes the LINK, never the guardian
+   record - the same adult is usually attached to a sibling too. */
+var _pgSid=null, _pgEditing=null;
+
+async function buildProfileGuardians(sid){
+  _pgSid=sid; _pgEditing=null;
+  var host=document.getElementById('profileGuardiansList'); if(!host) return;
+  pgCancel();
+  host.innerHTML='<div style="font-size:0.78rem;color:var(--muted);font-style:italic">Loading...</div>';
+  try{
+    var r=await sb.rpc('get_guardians_for_student',{p_student_id:sid});
+    if(r.error) throw new Error(r.error.message);
+    var rows=r.data||[];
+    if(!rows.length){
+      host.innerHTML='<div style="font-size:0.78rem;color:var(--muted);font-style:italic">No guardians on file. Add one so a parent can reach this student in the portal.</div>';
+      return;
+    }
+    host.innerHTML=rows.map(function(g){
+      var nm=((g.first_name||'')+' '+(g.last_name||'')).trim()||'(unnamed)';
+      var chips='';
+      if(g.is_primary) chips+='<span style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.1rem 0.35rem;margin-left:0.4rem">Primary</span>';
+      if(!g.portal_access) chips+='<span style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#E07070;border:1px solid #E07070;border-radius:3px;padding:0.1rem 0.35rem;margin-left:0.4rem">No portal</span>';
+      return '<div style="border-bottom:1px solid var(--border);padding:0.5rem 0">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">'+
+          '<div style="min-width:0"><div style="font-size:0.85rem;color:var(--white)">'+_dEsc(nm)+chips+'</div>'+
+          '<div style="font-size:0.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis">'+_dEsc(g.relationship||'Guardian')+(g.email?' \u00b7 '+_dEsc(g.email):'')+(g.phone?' \u00b7 '+_dEsc(g.phone):'')+'</div></div>'+
+          '<div style="display:flex;gap:0.3rem;flex-shrink:0">'+
+            '<button class="btn-sm" style="font-size:0.65rem" title="Edit" onclick="pgOpenForm(\''+g.guardian_id+'\')"><i class="fa-solid fa-pen"></i></button>'+
+            '<button class="btn-sm" style="font-size:0.65rem" title="Remove from this student" onclick="unlinkGuardian(\''+g.guardian_id+'\')"><i class="fa-solid fa-link-slash"></i></button>'+
+          '</div>'+
+        '</div></div>';
+    }).join('');
+  }catch(e){
+    host.innerHTML='<div style="font-size:0.78rem;color:#E07070">Could not load guardians: '+_dEsc(e.message||'error')+'</div>';
+  }
+}
+function pgCancel(){
+  var f=document.getElementById('pgForm'); if(f) f.style.display='none';
+  var b=document.getElementById('pgAddBtn'); if(b) b.style.display='inline-flex';
+  _pgEditing=null;
+  setMsg('pgMsg','','');
+}
+async function pgOpenForm(gid){
+  _pgEditing=gid||null;
+  ['pgFirst','pgLast','pgEmail','pgPhone','pgRel'].forEach(function(id){var el=document.getElementById(id); if(el) el.value='';});
+  document.getElementById('pgPrimary').checked=false;
+  document.getElementById('pgPortal').checked=true;
+  setMsg('pgMsg','','');
+  if(gid){
+    try{
+      var r=await sb.rpc('get_guardians_for_student',{p_student_id:_pgSid});
+      var g=((r.data)||[]).filter(function(x){return x.guardian_id===gid;})[0];
+      if(g){
+        document.getElementById('pgFirst').value=g.first_name||'';
+        document.getElementById('pgLast').value=g.last_name||'';
+        document.getElementById('pgEmail').value=g.email||'';
+        document.getElementById('pgPhone').value=g.phone||'';
+        document.getElementById('pgRel').value=g.relationship||'';
+        document.getElementById('pgPrimary').checked=!!g.is_primary;
+        document.getElementById('pgPortal').checked=g.portal_access!==false;
+      }
+    }catch(e){}
+  }
+  document.getElementById('pgForm').style.display='block';
+  document.getElementById('pgAddBtn').style.display='none';
+}
+async function saveGuardian(){
+  if(!_pgSid) return;
+  var email=(document.getElementById('pgEmail').value||'').trim();
+  var first=(document.getElementById('pgFirst').value||'').trim();
+  var last=(document.getElementById('pgLast').value||'').trim();
+  if(!email && !first && !last){ setMsg('pgMsg','Give at least a name or an email.','error'); return; }
+  if(email && email.indexOf('@')===-1){ setMsg('pgMsg','That email does not look right.','error'); return; }
+  var isPrimary=document.getElementById('pgPrimary').checked;
+  var payload={
+    first_name:first||null, last_name:last||null,
+    email:email||null,
+    phone:(document.getElementById('pgPhone').value||'').trim()||null,
+    relationship:(document.getElementById('pgRel').value||'').trim()||null,
+    portal_access:document.getElementById('pgPortal').checked
+  };
+  setMsg('pgMsg','Saving...','');
+  try{
+    var gid=_pgEditing;
+    if(gid){
+      var u=await sb.from('guardians').update(payload).eq('id',gid);
+      if(u.error) throw new Error(u.error.message);
+    }else{
+      payload.school_id=SID;
+      var i=await sb.from('guardians').insert(payload).select('id').single();
+      if(i.error) throw new Error(i.error.message);
+      gid=i.data.id;
+      var l=await sb.from('guardian_students').insert({school_id:SID,guardian_id:gid,student_id:_pgSid,is_primary:isPrimary});
+      if(l.error) throw new Error(l.error.message);
+    }
+    if(gid && _pgEditing){
+      var lu=await sb.from('guardian_students').update({is_primary:isPrimary}).eq('guardian_id',gid).eq('student_id',_pgSid);
+      if(lu.error) throw new Error(lu.error.message);
+    }
+    // Only one primary per student.
+    if(isPrimary){
+      await sb.from('guardian_students').update({is_primary:false}).eq('student_id',_pgSid).neq('guardian_id',gid);
+    }
+    pgCancel();
+    await buildProfileGuardians(_pgSid);
+  }catch(e){ setMsg('pgMsg',(e&&e.message)?e.message:'Could not save.','error'); }
+}
+async function unlinkGuardian(gid){
+  if(!_pgSid) return;
+  if(!confirm('Remove this guardian from this student? Their record stays, in case they are attached to a sibling.')) return;
+  try{
+    var d=await sb.from('guardian_students').delete().eq('guardian_id',gid).eq('student_id',_pgSid);
+    if(d.error) throw new Error(d.error.message);
+    await buildProfileGuardians(_pgSid);
+  }catch(e){ alert(e.message||'Could not remove.'); }
+}
+
 async function buildProfileFamily(sid){
   var fam=currentProfileStudent?currentProfileStudent.family_id:null;
   var tile=document.getElementById('profileFamilyTile');
@@ -7802,6 +7947,8 @@ async function openStudentProfile(sid) {
   await loadStudentSessions(sid);
   await loadProfileCardOnFile(sid);
   await buildProfileVitals(sid);
+  await buildProfileFamily(sid);
+  await buildProfileGuardians(sid);
   document.getElementById('manualPayDate').value = localDateStr(new Date());
 }
 function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
