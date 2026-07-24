@@ -1338,7 +1338,7 @@ sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id
 function showNoAccountError(email){
   hideAllScreens();
   document.getElementById('portalScreen').style.display='block';
-  document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">No account found</div><div style="font-size:0.85rem;color:var(--muted)">No account found for <strong>'+email+'</strong>.<br>Please contact your school to make sure your email is on file.</div></div>';
+  document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#E07070;margin-bottom:1rem;display:block"></i><div style="font-size:0.95rem;color:#E07070;margin-bottom:0.5rem">No account found</div><div style="font-size:0.85rem;color:var(--muted)">You are signed in as <strong>'+email+'</strong>, but no member at this school uses that address.<br><br>If your school recently updated your email, sign in again with the new one.</div><button onclick="portalSignOut()" style="margin-top:1.5rem;background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.8rem 1.6rem;cursor:pointer">Sign in with a different email</button><div style="font-size:0.78rem;color:var(--muted);margin-top:1rem">Still stuck? Contact your school to check the email on file.</div></div>';
 }
 function showSchoolNotFound(){
   hideAllScreens();
