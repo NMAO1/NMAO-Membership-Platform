@@ -1135,6 +1135,7 @@
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem">
             <button class="alert-type-btn selected" id="pi-type-student" onclick="setPortalInviteType('student')"><i class="fa-solid fa-user"></i> Students</button>
             <button class="alert-type-btn" id="pi-type-family" onclick="setPortalInviteType('family')"><i class="fa-solid fa-users"></i> Families</button>
+            <button class="alert-type-btn" id="pi-type-guardian" onclick="setPortalInviteType('guardian')"><i class="fa-solid fa-user-shield"></i> Guardians</button>
           </div>
 
           <!-- §PI-CHANNEL-TOGGLE -->
@@ -5178,25 +5179,25 @@ var HELP_CONTENT = {
 'memberships.sec_basics': { title: 'Plan basics', purpose: 'The plan name, description, and which programs it covers.' },
 'memberships.sec_commitment': { title: 'Commitment and cancellation', purpose: 'Optional term length, early-cancel fees, and whether members can cancel or pause themselves from the portal.' },
 'memberships.sec_display': { title: 'Display and public sign-up', purpose: 'Where this plan appears: visibility, featured placement, and public QR/link sign-up with an optional offer headline.' },
-'memberships.mem_prorate': { title: 'Prorate first charge', purpose: 'Charges a partial amount at signup for the days until the 1st, then bills the full amount on the 1st of each cycle. Works for any interval.' },
+'memberships.mem_prorate': { title: 'Prorate first charge', purpose: 'Only their FIRST bill is adjusted for a partial period; every bill after is full price. Example: a $120/mo plan, they join on the 21st, and billing day is the 1st — on. They pay ~$40 now (10 days), then $120 on the 1st going forward. Off: they pay the full $120 today. Use it so everyone lands on the same billing day (e.g. the 1st) without overcharging mid-month joiners.' },
   'memberships.sec_allowance': { title: 'Class Allowance', purpose: 'How many classes the plan includes and over what period, plus autopay timing and visibility.' },
   'memberships.mem_name': { title: 'Membership Name', purpose: 'The plan name students see, like Adult Unlimited or 10-Class Pack.' },
   'memberships.mem_desc': { title: 'Description', purpose: 'Optional details about the plan, shown at signup.' },
   'memberships.mem_programs': { title: 'Programs', purpose: 'Which programs this plan grants access to. Check all that apply, like Karate and BJJ.' },
-  'memberships.mem_type': { title: 'Type', purpose: 'The billing model: Monthly, Yearly, Trial, or Class Pack. It sets how the plan charges.' },
+  'memberships.mem_type': { title: 'Type — how it charges', purpose: 'How money is collected. Monthly bills the same amount every month (e.g. $150/mo, ongoing). Yearly bills once a year (e.g. $1,500/yr). Class Pack is a one-time charge for a fixed number of classes (e.g. $200 for 20 classes, no recurring bill). Trial is a short paid intro that charges once and does not renew (e.g. $49 for 2 weeks). Tip: for a FREE trial, use Monthly/Class Pack and set the price to $0 — you do not need Trial type for that.' },
   'memberships.mem_length': { title: 'Length', purpose: 'How long each billing interval is, like 1 month. The unit beside it sets months, weeks, or days.' },
   'memberships.mem_price': { title: 'Price', purpose: 'What the member pays each interval. For a class pack, this is the one-time price.' },
   'memberships.mem_signup': { title: 'Signup Fee', purpose: 'A one-time fee charged when the member first signs up. Set 0 for none.' },
-  'memberships.mem_limittype': { title: 'Class Access', purpose: 'How attendance is limited: Unlimited, a number Per Day, Week, Month, or Year, or a fixed Class Pack count.' },
+  'memberships.mem_limittype': { title: 'Class Access', purpose: 'How many classes this plan allows. Unlimited: attend any class, any time (a standard monthly membership). Per Week/Month: a recurring cap that resets each period (e.g. "2 per week"). Class Pack: a fixed bucket that counts down and does NOT reset (e.g. 20 classes total, then they buy more). Rule of thumb: recurring membership → Unlimited or Per Week; a punch-card style offer → Class Pack.' },
   'memberships.mem_classes': { title: 'Number of Classes', purpose: 'The count that goes with the limit above, like 3 per week or 10 in a pack.' },
-  'memberships.mem_cycle': { title: 'Custom Class Period', purpose: 'Optional. Override the period the class allowance resets over. Leave blank to follow the billing cycle.' },
-  'memberships.mem_autopayday': { title: 'Autopay Billing Day', purpose: 'When autopay charges: the signup anniversary, the 1st, the 15th, or a custom day.' },
+  'memberships.mem_cycle': { title: 'Custom Class Period', purpose: 'Advanced — usually leave blank. Normally the class allowance resets on the same schedule as billing (bill monthly → classes reset monthly). Use this only when they differ: e.g. you bill once a month but want the "8 classes" to reset every WEEK. Blank = follow the billing cycle, which is what most plans want.' },
+  'memberships.mem_autopayday': { title: 'Autopay Billing Day', purpose: 'Which day of the month recurring payments hit. Anniversary charges on whatever day they joined (join the 8th → billed the 8th monthly). 1st or 15th puts everyone on the same day, which makes your income predictable — pair this with Prorate so mid-month joiners are not overcharged. Custom lets you pick any day.' },
   'memberships.mem_customday': { title: 'Day of Month', purpose: 'The specific day, 1 to 28, that autopay runs when you choose Custom Day above.' },
-  'memberships.mem_visibility': { title: 'Visibility', purpose: 'Where the plan shows. Public appears in your widgets and member portal; Widget Only stays hidden until you select it for a specific widget; Hidden is staff-only.' },
+  'memberships.mem_visibility': { title: 'Visibility', purpose: 'Who can see this plan. Public: shows on your sign-up widgets and member portal — anyone can pick it (e.g. your standard monthly). Widget Only: hidden everywhere until you drop it into one specific sign-up page (e.g. a landing-page-only promo). Hidden: staff sell it manually, the public never sees it (e.g. a comped or family rate). When unsure, Public.' },
   'memberships.mem_autorenew': { title: 'Auto-Renew', purpose: 'When on, the plan renews automatically at the end of each cycle instead of ending.' },
   'memberships.mem_autopay': { title: 'Autopay', purpose: 'When on, the members card on file is charged automatically each cycle.' },
-  'memberships.mem_featured': { title: 'Featured', purpose: 'When on, this plan is highlighted on your signup pages to draw attention.' },
-  'memberships.mem_trial': { title: 'Trial', purpose: 'When on, the plan shows a Trial badge on your public signup pages, marking it as a trial offer. This is separate from setting Type to Trial.' },
+  'memberships.mem_featured': { title: 'Featured', purpose: 'Visual highlight only — pushes this plan to the top of your sign-up page and gives it a "Most Popular"-style emphasis, so it is the one people notice first. Does not change price or billing. Best used on the ONE plan you most want new members to choose. (The Trial badge marks a plan as a trial; Featured just makes a plan stand out — you can use either, or both.)' },
+  'memberships.mem_trial': { title: 'Trial badge (display only)', purpose: 'Just a label. When on, this plan shows a "Trial" tag on your public sign-up page so newcomers spot it first — it does NOT change how or what the plan charges. Example: a $49 two-week intro shows with a Trial badge so it stands out. This is only about how the plan LOOKS to the public; the Type field above is what controls the actual billing. You can tick this on any plan, whatever its Type.' },
   leads: {
     title: 'Leads',
     purpose: 'Your prospect pipeline: people who showed interest but have not joined yet, tracked from first contact to signup.',
@@ -13825,13 +13826,28 @@ async function fetchPortalInviteRecipients(){
   if(el)el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:2rem;text-align:center"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading...</div>';
   try{
     var type=portalInviteState.type;
-    var table=type==="family"?"families":"students";
+    var table=type==="family"?"families":(type==="guardian"?"guardians":"students");
     var cols=type==="family"
       ? "id, email, name, phone, portal_invited_at"
-      : "id, email, first_name, last_name, phone, portal_invited_at, portal_onboarded";
-    var r=await sb.from(table).select(cols).eq("school_id",SID).order(type==="family"?"name":"first_name");
+      : (type==="guardian"
+          ? "id, email, first_name, last_name, phone, portal_invited_at"
+          : "id, email, first_name, last_name, phone, portal_invited_at, portal_onboarded");
+    var q=sb.from(table).select(cols).eq("school_id",SID);
+    if(type==="guardian"){ q=q.is("deleted_at",null).eq("portal_access",true); }
+    var r=await q.order(type==="family"?"name":(type==="guardian"?"last_name":"first_name"));
     if(r.error){throw new Error(r.error.message);}
     portalInviteState.recipients=r.data||[];
+    if(type==="guardian"&&portalInviteState.recipients.length){
+      try{
+        var lk=await sb.from("guardian_students").select("guardian_id, students(first_name,last_name)").eq("school_id",SID);
+        var kidMap={};
+        (lk.data||[]).forEach(function(x){
+          var st=x.students; if(!st) return;
+          (kidMap[x.guardian_id]=kidMap[x.guardian_id]||[]).push(((st.first_name||"")+" "+(st.last_name||"")).trim());
+        });
+        portalInviteState.recipients.forEach(function(g){ g._for=(kidMap[g.id]||[]).join(", "); });
+      }catch(e){ console.warn("guardian child lookup failed:",e); }
+    }
     portalInviteState.selected={};
     renderPortalInviteList();
   }catch(e){
@@ -13856,9 +13872,11 @@ function setPortalInviteType(type){
   portalInviteState.type=type;
   document.getElementById("pi-type-student").classList.toggle("selected",type==="student");
   document.getElementById("pi-type-family").classList.toggle("selected",type==="family");
+  var gBtn=document.getElementById("pi-type-guardian");
+  if(gBtn) gBtn.classList.toggle("selected",type==="guardian");
   var pendingChip=document.getElementById("pi-filter-pending");
   var onboardedChip=document.getElementById("pi-filter-onboarded");
-  if(type==="family"){
+  if(type==="family"||type==="guardian"){
     if(pendingChip)pendingChip.style.display="none";
     if(onboardedChip)onboardedChip.style.display="none";
     if(portalInviteState.filter==="pending"||portalInviteState.filter==="onboarded"){
@@ -13918,7 +13936,7 @@ function renderPortalInviteList(){
   var countEl=document.getElementById("pi-count");
   if(countEl)countEl.textContent=filtered.length+" of "+totalCount+" shown";
   if(!filtered.length){
-    var noun=portalInviteState.type==="family"?"families":"students";
+    var noun=portalInviteState.type==="family"?"families":(portalInviteState.type==="guardian"?"guardians":"students");
     var msg=totalCount?"No matches with current filters.":"No "+noun+" yet.";
     el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:2rem;text-align:center"><i class="fa-solid fa-magnifying-glass" style="font-size:1.3rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>'+msg+'</div>';
     syncSelectAllCheckbox(filtered);
@@ -13935,6 +13953,8 @@ function renderPortalInviteRow(r){
   var name=type==="family"
     ? (r.name||"(Unnamed family)")
     : ((r.first_name||"")+" "+(r.last_name||"")).trim();
+  if(!name) name=type==="guardian"?"(Unnamed guardian)":"(Unnamed)";
+  if(type==="guardian"&&r._for) name+=' <span style="font-size:0.68rem;color:var(--muted)">for '+escapePIHtml(r._for)+'</span>';
   var hasEmail=!!(r.email&&String(r.email).trim());
   var isSelected=!!portalInviteState.selected[r.id];
   var statusBadge="";
