@@ -986,32 +986,6 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     PROMOTE MODAL
-════════════════════════════════════════════ -->
-
-<div id="promoteModal">
-  <div class="promote-sheet">
-    <div class="section-head">Belt Promotion</div>
-    <div class="promote-title" id="promoteStudentName">Student Name</div>
-    <div class="promote-belt-vis">
-      <div class="belt-swatch" id="promoteFromSwatch"></div>
-      <span style="color:var(--muted)">→</span>
-      <div class="belt-swatch" id="promoteToSwatch"></div>
-      <div>
-        <div style="font-size:0.88rem;color:var(--white)" id="promoteToName"></div>
-        <div style="font-size:0.72rem;color:var(--muted)" id="promoteFromName"></div>
-      </div>
-    </div>
-    <div class="promote-sub" id="promoteSub"></div>
-    <div class="promote-btns">
-      <button class="btn-cancel-promote" onclick="closePromoteModal()">Cancel</button>
-      <button class="btn-confirm-promote" id="promoteConfirmBtn" onclick="confirmPromotion()">
-        <i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Confirm Promotion
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- ════════════════════════════════════════════
      MEMBERSHIP ALERTS MODAL
@@ -1107,7 +1081,7 @@ var currentClassData=null; // class data for the active view
 var checkedInIds=new Set();// student IDs checked into current session
 var rsvpStudentIds=new Set();// student IDs RSVPd via class_enrollments for current class+date
 var cvActiveTab='rsvp';
-var promoteData=null;
+
 var eligibleStudentIds=new Set();// walk-in candidates: not RSVPd and not checked in
 var packBalanceMap={};
 function buildPackBalanceMap(rows){
@@ -1802,54 +1776,7 @@ function isEligible(s){
   return eligibleStudentIds.has(s.id);
 }
 
-function openPromoteModal(studentId){
-  var student=allStudents.find(function(s){return s.id===studentId;});
-  if(!student)return;
-  var beltLevel=allBeltLevels.find(function(l){return l.id===student.current_belt_id;})||null;
-  var idx=beltLevel?allBeltLevels.indexOf(beltLevel):-1;
-  var nextLevel=allBeltLevels[idx+1]||null;
-  if(!nextLevel){showToast('Already at highest rank','warn');return;}
-  promoteData={student:student,fromLevel:beltLevel,toLevel:nextLevel};
-  document.getElementById('promoteStudentName').textContent=student.first_name+' '+student.last_name;
-  document.getElementById('promoteFromSwatch').style.background=beltLevel?beltLevel.color_hex:'#888';
-  document.getElementById('promoteToSwatch').style.background=nextLevel.color_hex;
-  document.getElementById('promoteFromName').textContent=(beltLevel?beltLevel.name:'Starting')+' Belt';
-  document.getElementById('promoteToName').textContent=nextLevel.name+' Belt';
-  document.getElementById('promoteSub').textContent='This will record a promotion and update '+student.first_name+' to '+nextLevel.name+' belt.';
-  document.getElementById('promoteModal').classList.add('open');
-}
-
-function closePromoteModal(){document.getElementById('promoteModal').classList.remove('open');}
-
-async function confirmPromotion(){
-  if(!promoteData)return;
-  var btn=document.getElementById('promoteConfirmBtn');
-  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.4rem"></i>Promoting...';
-  var s=promoteData.student;var fromL=promoteData.fromLevel;var toL=promoteData.toLevel;
-  var instrName=getInstrName(currentInstructor);
-  var [ur,pr]=await Promise.all([
-    sb.from('students').update({current_belt_id:toL.id,skills_completed:0}).eq('id',s.id),
-    sb.from('belt_promotions').insert({
-      school_id:SID,student_id:s.id,
-      belt_from:fromL?fromL.name:'Starting',belt_to:toL.name,
-      promoted_at:new Date().toISOString(),
-      promoted_by_name:instrName,
-    })
-  ]);
-  if(ur.error){showToast('Error: '+ur.error.message,'err');}
-  else{
-    // Update local state
-    s.current_belt_id=toL.id;s.skills_completed=0;
-    closePromoteModal();
-    showToast(s.first_name+' promoted to '+toL.name+'!','ok');
-    renderCvAllStudents(document.getElementById('cvSearch').value);
-    renderCvEligible();
-    renderCvCheckedIn();
-  }
-  btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-ranking-star" style="margin-right:0.4rem"></i>Confirm Promotion';
-}
-
-// ─────────────────────────────────────────────────────────────
+async // ─────────────────────────────────────────────────────────────
 //  SESSIONS TAB
 // ─────────────────────────────────────────────────────────────
 async function buildSessionsTab(){
