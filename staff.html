@@ -927,6 +927,13 @@
           <button class="su-btn su-btn-next" id="slgSaveBtn" style="width:100%;margin-top:0.5rem" onclick="slSaveGuardian()"><i class="fa-solid fa-floppy-disk"></i> Save guardian</button>
         </div>
       </div>
+      <div id="slNotesBlock" style="margin:0.6rem 0">
+        <div style="font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.4rem">Notes</div>
+        <div id="slNotesList" style="font-size:0.78rem;color:var(--muted2);white-space:pre-wrap;max-height:140px;overflow-y:auto;margin-bottom:0.5rem"></div>
+        <textarea class="su-input" id="slNoteInput" rows="2" placeholder="Add a note (e.g. called mom, left message)"></textarea>
+        <div class="su-msg" id="slNoteMsg"></div>
+        <button class="su-btn su-btn-sec" id="slNoteSaveBtn" style="width:100%;margin-top:0.4rem" onclick="slSaveNote()"><i class="fa-solid fa-plus"></i> Add note</button>
+      </div>
       <div id="slContactBlock" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.6rem 0 0.4rem">
         <button class="su-btn su-btn-sec" id="slTextBtn" style="flex:1;min-width:145px" onclick="slToggleText()"><i class="fa-solid fa-comment-sms"></i> Send text</button>
         <button class="su-btn su-btn-sec" id="slInviteBtn" style="flex:1;min-width:145px" onclick="slToggleInvite()"><i class="fa-solid fa-right-to-bracket"></i> Send portal login</button>
@@ -2536,7 +2543,7 @@ async function openStudentLookup(){
   document.getElementById('slResults').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading students...</div>';
   document.getElementById('studentLookup').classList.add('open');
   try{
-    var r=await sb.from('students').select('id,first_name,last_name,status,email,phone,date_of_birth,programs(name,color)').eq('school_id',SID).is('deleted_at',null).order('first_name');
+    var r=await sb.from('students').select('id,first_name,last_name,status,email,phone,date_of_birth,notes,programs(name,color)').eq('school_id',SID).is('deleted_at',null).order('first_name');
     if(r.error) throw new Error(r.error.message);
     slRoster=r.data||[];
   }catch(e){ slRoster=[].concat(allStudents); }
@@ -2574,6 +2581,7 @@ function slSelectStudent(id){
   document.getElementById('slStudentName').textContent=slStudent.first_name+' '+slStudent.last_name;
   document.getElementById('slTitle').textContent='Add Classes';
   slBuildOverview(slStudent);
+  slRenderNotes(slStudent);
   var _ef=document.getElementById('slEditForm'); if(_ef) _ef.style.display='none';
   slLoadGuardians(id);
   var _gf=document.getElementById('slGuardianForm'); if(_gf) _gf.style.display='none';
@@ -2596,14 +2604,35 @@ async function slBuildOverview(st){
   rows.push('<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem"><span style="width:8px;height:8px;border-radius:50%;background:'+statusColor+'"></span><span style="font-size:0.82rem;color:var(--white);text-transform:capitalize">'+(st.status||'unknown')+'</span>'+(prog?'<span style="font-size:0.75rem;color:var(--muted)"> \u00b7 '+_slEsc(prog)+'</span>':'')+(age!=null?'<span style="font-size:0.75rem;color:var(--muted)"> \u00b7 age '+age+'</span>':'')+'</div>');
   rows.push('<div style="font-size:0.75rem;color:var(--muted2)">'+(st.email?_slEsc(st.email):'<span style="color:#C97A7A">no email on file</span>')+(st.phone?' \u00b7 '+_slEsc(st.phone):'')+'</div>');
   host.innerHTML=rows.join('');
-  // membership status line (async, non-blocking)
+  // membership + classes-remaining line (async, non-blocking).
+  // Uses the bucket-aware kiosk RPC - the same authoritative source check-in uses.
   try{
     var m=await sb.rpc('get_student_membership_for_kiosk',{p_student_id:st.id});
     if(!m.error && m.data && m.data.length){
-      var names=m.data.map(function(x){return x.membership_name||x.name;}).filter(Boolean);
-      if(names.length) host.innerHTML+='<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.3rem"><i class="fa-solid fa-id-card" style="opacity:0.6"></i> '+_slEsc(names.join(', '))+'</div>';
+      var memLines=m.data.map(function(x){
+        var nm=x.membership_name||x.name||'Membership';
+        var rem=slClassesRemaining(x);
+        return _slEsc(nm)+(rem!==null?' <span style="color:'+(rem<=2?'#C9A84C':'var(--muted2)')+'">\u00b7 '+rem+' left</span>':'');
+      });
+      host.innerHTML+='<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.3rem"><i class="fa-solid fa-id-card" style="opacity:0.6"></i> '+memLines.join('<br>')+'</div>';
     }
   }catch(e){}
+}
+// Classes remaining from the kiosk RPC row. Bucket-aware: class_pack uses the raw
+// remaining count; recurring caps (per_week/month) show remaining in the current
+// cycle. Returns null when the plan has no class limit (unlimited) - nothing to show.
+function slClassesRemaining(x){
+  if(!x) return null;
+  var lim=parseInt(x.class_limit_count)||0;
+  if(!lim) return null; // unlimited or no cap
+  if(x.classes_remaining!==null&&x.classes_remaining!==undefined){
+    var r=parseInt(x.classes_remaining); if(!isNaN(r)) return Math.max(0,r);
+  }
+  // fallback: allowance+rollover minus used, if the RPC exposed those
+  var allow=(parseInt(x.cycle_allowance)||0)+(parseInt(x.rollover_balance)||0);
+  var used=parseInt(x.classes_used)||0;
+  if(allow>0) return Math.max(0,allow-used);
+  return null;
 }
 function _slEsc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
@@ -2664,6 +2693,37 @@ async function slSaveStudentEdit(){
     setSleMsg('Saved.','success');
     document.getElementById('slEditForm').style.display='none';
   }catch(e){ setSleMsg((e&&e.message)?e.message:'Could not save.','error'); }
+  if(btn) btn.disabled=false;
+}
+
+// ---- Notes (append-only log; same students.notes field the desktop uses) ----
+function slRenderNotes(st){
+  var host=document.getElementById('slNotesList'); if(!host) return;
+  var n=(st&&st.notes)?String(st.notes).trim():'';
+  host.textContent = n || 'No notes yet.';
+  host.style.fontStyle = n ? 'normal' : 'italic';
+}
+function setSlNoteMsg(t,k){ var el=document.getElementById('slNoteMsg'); if(!el) return; el.textContent=t; el.className='su-msg'+(k?' '+k:''); }
+async function slSaveNote(){
+  if(!slStudent) return;
+  var txt=(document.getElementById('slNoteInput').value||'').trim();
+  if(!txt){ setSlNoteMsg('Type a note first.','error'); return; }
+  var who=getInstrName(currentInstructor||{});
+  var ts=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var stamp='['+ts+(who?' \u00b7 '+who:'')+'] '+txt;
+  var existing=(slStudent.notes||'').trim();
+  var merged=existing?existing+'\n\n'+stamp:stamp;
+  var btn=document.getElementById('slNoteSaveBtn'); if(btn) btn.disabled=true;
+  setSlNoteMsg('Saving...','');
+  try{
+    var r=await sb.from('students').update({notes:merged}).eq('id',slStudent.id);
+    if(r.error) throw new Error(r.error.message);
+    slStudent.notes=merged;
+    var rosterHit=slRoster.find(function(x){return x.id===slStudent.id;}); if(rosterHit) rosterHit.notes=merged;
+    document.getElementById('slNoteInput').value='';
+    slRenderNotes(slStudent);
+    setSlNoteMsg('','');
+  }catch(e){ setSlNoteMsg((e&&e.message)?e.message:'Could not save.','error'); }
   if(btn) btn.disabled=false;
 }
 
