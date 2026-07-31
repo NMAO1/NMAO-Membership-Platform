@@ -449,6 +449,7 @@
 
     /* Per-staff capability gating (body classes set at load; owner is always full) */
     .nocap-enroll #ctaSignup{display:none;}
+    .nocap-enroll #slEditBtn{display:none !important;}
     .nocap-lookup #ctaLookup{display:none;}
     .nocap-checkin .btn-checkin{display:none !important;}
     .nocap-pos #suPay-card_now, .nocap-pos #suPay-cash{display:none !important;}
@@ -890,6 +891,42 @@
     <div id="slDetailView" style="display:none">
       <button class="sl-back" onclick="slShowList()"><i class="fa-solid fa-chevron-left"></i> All students</button>
       <div class="sl-student" id="slStudentName"></div>
+      <div id="slOverview" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.7rem 0.85rem;margin:0.5rem 0"></div>
+      <button class="su-btn su-btn-sec" id="slEditBtn" style="padding:0.3rem 0.7rem;font-size:0.72rem;margin-bottom:0.5rem" onclick="slToggleEditForm()"><i class="fa-solid fa-pen"></i> Edit info</button>
+      <div id="slEditForm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.7rem 0.85rem;margin-bottom:0.5rem">
+        <div style="display:flex;gap:0.4rem">
+          <div class="su-field" style="flex:1;margin:0"><label>First name</label><input class="su-input" id="sleFirst" type="text" /></div>
+          <div class="su-field" style="flex:1;margin:0"><label>Last name</label><input class="su-input" id="sleLast" type="text" /></div>
+        </div>
+        <div class="su-field" style="margin:0.4rem 0 0"><label>Email</label><input class="su-input" id="sleEmail" type="email" /></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.4rem">
+          <div class="su-field" style="flex:1;margin:0"><label>Phone</label><input class="su-input" id="slePhone" type="tel" /></div>
+          <div class="su-field" style="flex:1;margin:0"><label>Date of birth</label><input class="su-input" id="sleDob" type="date" /></div>
+        </div>
+        <div class="su-field" style="margin-top:0.4rem"><label>Status</label><select class="su-input" id="sleStatus"><option value="active">Active</option><option value="paused">Paused</option><option value="inactive">Inactive</option></select></div>
+        <div class="su-msg" id="sleMsg"></div>
+        <button class="su-btn su-btn-next" id="sleSaveBtn" style="width:100%;margin-top:0.5rem" onclick="slSaveStudentEdit()"><i class="fa-solid fa-floppy-disk"></i> Save changes</button>
+      </div>
+      <div id="slGuardianBlock" style="margin:0.6rem 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+          <div style="font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);font-weight:600">Guardians</div>
+          <button class="su-btn su-btn-sec" id="slAddGuardianBtn" style="padding:0.25rem 0.6rem;font-size:0.72rem" onclick="slToggleGuardianForm()"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>
+        <div id="slGuardianList"></div>
+        <div id="slGuardianForm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.7rem 0.85rem;margin-top:0.4rem">
+          <div style="display:flex;gap:0.4rem">
+            <div class="su-field" style="flex:1;margin:0"><label>First name</label><input class="su-input" id="slgFirst" type="text" /></div>
+            <div class="su-field" style="flex:1;margin:0"><label>Last name</label><input class="su-input" id="slgLast" type="text" /></div>
+          </div>
+          <div class="su-field" style="margin:0.4rem 0 0"><label>Email (their portal login)</label><input class="su-input" id="slgEmail" type="email" /></div>
+          <div style="display:flex;gap:0.4rem;margin-top:0.4rem">
+            <div class="su-field" style="flex:1;margin:0"><label>Phone</label><input class="su-input" id="slgPhone" type="tel" /></div>
+            <div class="su-field" style="flex:1;margin:0"><label>Relationship</label><input class="su-input" id="slgRel" type="text" placeholder="Mother, Father" /></div>
+          </div>
+          <div class="su-msg" id="slgMsg"></div>
+          <button class="su-btn su-btn-next" id="slgSaveBtn" style="width:100%;margin-top:0.5rem" onclick="slSaveGuardian()"><i class="fa-solid fa-floppy-disk"></i> Save guardian</button>
+        </div>
+      </div>
       <div id="slContactBlock" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.6rem 0 0.4rem">
         <button class="su-btn su-btn-sec" id="slTextBtn" style="flex:1;min-width:145px" onclick="slToggleText()"><i class="fa-solid fa-comment-sms"></i> Send text</button>
         <button class="su-btn su-btn-sec" id="slInviteBtn" style="flex:1;min-width:145px" onclick="slToggleInvite()"><i class="fa-solid fa-right-to-bracket"></i> Send portal login</button>
@@ -2571,7 +2608,7 @@ async function openStudentLookup(){
   document.getElementById('slResults').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading students...</div>';
   document.getElementById('studentLookup').classList.add('open');
   try{
-    var r=await sb.from('students').select('id,first_name,last_name,status,email,phone').eq('school_id',SID).is('deleted_at',null).order('first_name');
+    var r=await sb.from('students').select('id,first_name,last_name,status,email,phone,date_of_birth,programs(name,color)').eq('school_id',SID).is('deleted_at',null).order('first_name');
     if(r.error) throw new Error(r.error.message);
     slRoster=r.data||[];
   }catch(e){ slRoster=[].concat(allStudents); }
@@ -2608,12 +2645,155 @@ function slSelectStudent(id){
   document.getElementById('slDetailView').style.display='block';
   document.getElementById('slStudentName').textContent=slStudent.first_name+' '+slStudent.last_name;
   document.getElementById('slTitle').textContent='Add Classes';
+  slBuildOverview(slStudent);
+  var _ef=document.getElementById('slEditForm'); if(_ef) _ef.style.display='none';
+  slLoadGuardians(id);
+  var _gf=document.getElementById('slGuardianForm'); if(_gf) _gf.style.display='none';
   setSlMsg('','');
   slHideContactPanels();
   var _tb=document.getElementById('slTextBody'); if(_tb) _tb.value='';
   document.getElementById('slAddForm').style.display='none';
   document.getElementById('slPacks').innerHTML='<div class="su-empty"><i class="fa-solid fa-circle-notch spin"></i> Loading packs...</div>';
   slLoadPacks(id);
+}
+
+// ---- Student overview (read-only glance) ----
+function slAge(dob){ if(!dob) return null; var d=new Date(dob); if(isNaN(d)) return null; var t=new Date(); var a=t.getFullYear()-d.getFullYear(); var m=t.getMonth()-d.getMonth(); if(m<0||(m===0&&t.getDate()<d.getDate())) a--; return a; }
+async function slBuildOverview(st){
+  var host=document.getElementById('slOverview'); if(!host) return;
+  var prog=st.programs?(st.programs.name||''):'';
+  var age=slAge(st.date_of_birth);
+  var statusColor=st.status==='active'?'#5A9A6A':(st.status==='paused'?'#C9A84C':'var(--muted)');
+  var rows=[];
+  rows.push('<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem"><span style="width:8px;height:8px;border-radius:50%;background:'+statusColor+'"></span><span style="font-size:0.82rem;color:var(--white);text-transform:capitalize">'+(st.status||'unknown')+'</span>'+(prog?'<span style="font-size:0.75rem;color:var(--muted)"> \u00b7 '+_slEsc(prog)+'</span>':'')+(age!=null?'<span style="font-size:0.75rem;color:var(--muted)"> \u00b7 age '+age+'</span>':'')+'</div>');
+  rows.push('<div style="font-size:0.75rem;color:var(--muted2)">'+(st.email?_slEsc(st.email):'<span style="color:#C97A7A">no email on file</span>')+(st.phone?' \u00b7 '+_slEsc(st.phone):'')+'</div>');
+  host.innerHTML=rows.join('');
+  // membership status line (async, non-blocking)
+  try{
+    var m=await sb.rpc('get_student_membership_for_kiosk',{p_student_id:st.id});
+    if(!m.error && m.data && m.data.length){
+      var names=m.data.map(function(x){return x.membership_name||x.name;}).filter(Boolean);
+      if(names.length) host.innerHTML+='<div style="font-size:0.75rem;color:var(--muted2);margin-top:0.3rem"><i class="fa-solid fa-id-card" style="opacity:0.6"></i> '+_slEsc(names.join(', '))+'</div>';
+    }
+  }catch(e){}
+}
+function _slEsc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+// ---- Student edit (contact/status/dob) ----
+function slToggleEditForm(){
+  if(!staffCan('enroll')) return;
+  var f=document.getElementById('slEditForm'); if(!f||!slStudent) return;
+  var open=(f.style.display!=='none');
+  if(open){ f.style.display='none'; return; }
+  document.getElementById('sleFirst').value=slStudent.first_name||'';
+  document.getElementById('sleLast').value=slStudent.last_name||'';
+  document.getElementById('sleEmail').value=slStudent.email||'';
+  document.getElementById('slePhone').value=slStudent.phone||'';
+  document.getElementById('sleDob').value=slStudent.date_of_birth||'';
+  document.getElementById('sleStatus').value=slStudent.status||'active';
+  setSleMsg('','');
+  f.style.display='block';
+}
+function setSleMsg(t,k){ var el=document.getElementById('sleMsg'); if(!el) return; el.textContent=t; el.className='su-msg'+(k?' '+k:''); }
+async function slSaveStudentEdit(){
+  if(!staffCan('enroll')||!slStudent) return;
+  var email=(document.getElementById('sleEmail').value||'').trim();
+  var first=(document.getElementById('sleFirst').value||'').trim();
+  if(!first){ setSleMsg('First name is required.','error'); return; }
+  if(email&&email.indexOf('@')===-1){ setSleMsg('That email does not look right.','error'); return; }
+  var dob=(document.getElementById('sleDob').value||'').trim();
+  var payload={
+    first_name:first,
+    last_name:(document.getElementById('sleLast').value||'').trim()||null,
+    email:email||null,
+    phone:(document.getElementById('slePhone').value||'').trim()||null,
+    date_of_birth:dob||null,
+    status:document.getElementById('sleStatus').value
+  };
+  var btn=document.getElementById('sleSaveBtn'); if(btn) btn.disabled=true;
+  setSleMsg('Saving...','');
+  try{
+    var r=await sb.from('students').update(payload).eq('id',slStudent.id);
+    if(r.error) throw new Error(r.error.message);
+    // reflect locally so the overview + roster update without a refetch
+    Object.keys(payload).forEach(function(k){ slStudent[k]=payload[k]; });
+    var rosterHit=slRoster.find(function(x){return x.id===slStudent.id;}); if(rosterHit) Object.keys(payload).forEach(function(k){ rosterHit[k]=payload[k]; });
+    slBuildOverview(slStudent);
+    setSleMsg('Saved.','success');
+    document.getElementById('slEditForm').style.display='none';
+  }catch(e){ setSleMsg((e&&e.message)?e.message:'Could not save.','error'); }
+  if(btn) btn.disabled=false;
+}
+
+// ---- Guardians (view + add) ----
+async function slLoadGuardians(studentId){
+  var host=document.getElementById('slGuardianList'); if(!host) return;
+  host.innerHTML='<div style="font-size:0.75rem;color:var(--muted);font-style:italic">Loading...</div>';
+  try{
+    var r=await sb.rpc('get_guardians_for_student',{p_student_id:studentId});
+    if(r.error) throw new Error(r.error.message);
+    var rows=r.data||[];
+    if(!rows.length){ host.innerHTML='<div style="font-size:0.75rem;color:var(--muted);font-style:italic">No guardians yet.</div>'; return; }
+    host.innerHTML=rows.map(function(g){
+      var nm=((g.first_name||'')+' '+(g.last_name||'')).trim()||'(unnamed)';
+      var canInvite=staffCan('portal_invite')&&g.email&&g.portal_access!==false;
+      var invBtn='';
+      if(canInvite){
+        invBtn+='<button class="su-btn su-btn-sec" title="Email link" style="padding:0.2rem 0.5rem;font-size:0.68rem" onclick="slInviteGuardian(\''+g.guardian_id+'\',\'email\')"><i class="fa-solid fa-envelope"></i></button>';
+        if(g.phone) invBtn+='<button class="su-btn su-btn-sec" title="Text link" style="padding:0.2rem 0.5rem;font-size:0.68rem;margin-left:0.25rem" onclick="slInviteGuardian(\''+g.guardian_id+'\',\'sms\')"><i class="fa-solid fa-comment-sms"></i></button>';
+      }
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;padding:0.35rem 0;border-bottom:1px solid var(--border)">'+
+        '<div style="min-width:0"><div style="font-size:0.8rem;color:var(--white)">'+_slEsc(nm)+(g.is_primary?' <span style="font-size:0.6rem;color:var(--gold)">PRIMARY</span>':'')+'</div>'+
+        '<div style="font-size:0.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_slEsc(g.relationship||'Guardian')+(g.email?' \u00b7 '+_slEsc(g.email):'')+'</div></div>'+invBtn+'</div>';
+    }).join('');
+  }catch(e){ host.innerHTML='<div style="font-size:0.75rem;color:#C97A7A">Could not load guardians.</div>'; }
+}
+function slToggleGuardianForm(){
+  var f=document.getElementById('slGuardianForm'); if(!f) return;
+  var open=(f.style.display!=='none');
+  f.style.display=open?'none':'block';
+  if(!open){ ['slgFirst','slgLast','slgEmail','slgPhone','slgRel'].forEach(function(id){var el=document.getElementById(id); if(el) el.value='';}); setSlgMsg('',''); }
+}
+function setSlgMsg(t,k){ var el=document.getElementById('slgMsg'); if(!el) return; el.textContent=t; el.className='su-msg'+(k?' '+k:''); }
+async function slSaveGuardian(){
+  if(!slStudent) return;
+  var email=(document.getElementById('slgEmail').value||'').trim();
+  var first=(document.getElementById('slgFirst').value||'').trim();
+  var last=(document.getElementById('slgLast').value||'').trim();
+  if(!email&&!first&&!last){ setSlgMsg('Add at least a name or email.','error'); return; }
+  if(email&&email.indexOf('@')===-1){ setSlgMsg('That email does not look right.','error'); return; }
+  var btn=document.getElementById('slgSaveBtn'); if(btn) btn.disabled=true;
+  setSlgMsg('Saving...','');
+  try{
+    var ins=await sb.from('guardians').insert({school_id:SID,first_name:first||null,last_name:last||null,email:email||null,phone:(document.getElementById('slgPhone').value||'').trim()||null,relationship:(document.getElementById('slgRel').value||'').trim()||null,portal_access:true}).select('id').single();
+    if(ins.error) throw new Error(ins.error.message);
+    var lk=await sb.from('guardian_students').insert({school_id:SID,guardian_id:ins.data.id,student_id:slStudent.id,is_primary:false});
+    if(lk.error) throw new Error(lk.error.message);
+    setSlgMsg('Guardian added.','success');
+    document.getElementById('slGuardianForm').style.display='none';
+    slLoadGuardians(slStudent.id);
+  }catch(e){ setSlgMsg((e&&e.message)?e.message:'Could not save.','error'); }
+  if(btn) btn.disabled=false;
+}
+async function slInviteGuardian(guardianId,channel){
+  if(!staffCan('portal_invite')) return;
+  channel=channel||'email';
+  setSlContactMsg(channel==='sms'?'Texting invite...':'Sending invite...','');
+  try{
+    var r=await fetch(SURL+'/functions/v1/send-portal-invite',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken()},
+      body:JSON.stringify({recipient_type:'guardian',recipient_ids:[guardianId],channel:channel})
+    });
+    var d=await r.json();
+    if(d.success===false||d.error) throw new Error(d.error||'Invite failed.');
+    // The EF skips silently-per-recipient; surface a skip as a real message.
+    if(d.skipped&&d.sent===0){
+      var reason=(d.errors&&d.errors[0]&&d.errors[0].reason)||'could not send';
+      throw new Error(reason);
+    }
+    setSlContactMsg(channel==='sms'?'Guardian invite texted.':'Guardian invite sent.','success');
+  }catch(e){ setSlContactMsg((e&&e.message)?e.message:'Could not send invite.','error'); }
 }
 
 async function slLoadPacks(id){
