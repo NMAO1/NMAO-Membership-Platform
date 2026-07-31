@@ -449,7 +449,7 @@
 
     /* Per-staff capability gating (body classes set at load; owner is always full) */
     .nocap-enroll #ctaSignup{display:none;}
-    .nocap-enroll #slEditBtn{display:none !important;}
+    .nocap-edit_student #slEditBtn{display:none !important;}
     .nocap-lookup #ctaLookup{display:none;}
     .nocap-checkin .btn-checkin{display:none !important;}
     .nocap-pos #suPay-card_now, .nocap-pos #suPay-cash{display:none !important;}
@@ -2198,6 +2198,7 @@ function applyStaffCapabilities(){
   b.classList.toggle('nocap-pos',     !staffCan('pos'));
   b.classList.toggle('nocap-text',          !staffCan('text'));
   b.classList.toggle('nocap-portal_invite', !staffCan('portal_invite'));
+  b.classList.toggle('nocap-edit_student', !staffCan('edit_student'));
 }
 
 function openSignup(){
@@ -2681,7 +2682,7 @@ function _slEsc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){re
 
 // ---- Student edit (contact/status/dob) ----
 function slToggleEditForm(){
-  if(!staffCan('enroll')) return;
+  if(!staffCan('edit_student')) return;
   var f=document.getElementById('slEditForm'); if(!f||!slStudent) return;
   var open=(f.style.display!=='none');
   if(open){ f.style.display='none'; return; }
@@ -2696,7 +2697,7 @@ function slToggleEditForm(){
 }
 function setSleMsg(t,k){ var el=document.getElementById('sleMsg'); if(!el) return; el.textContent=t; el.className='su-msg'+(k?' '+k:''); }
 async function slSaveStudentEdit(){
-  if(!staffCan('enroll')||!slStudent) return;
+  if(!staffCan('edit_student')||!slStudent) return;
   var email=(document.getElementById('sleEmail').value||'').trim();
   var first=(document.getElementById('sleFirst').value||'').trim();
   if(!first){ setSleMsg('First name is required.','error'); return; }
@@ -2710,11 +2711,25 @@ async function slSaveStudentEdit(){
     date_of_birth:dob||null,
     status:document.getElementById('sleStatus').value
   };
+  // snapshot old values so we can log what actually changed
+  var _before={ first_name:slStudent.first_name, last_name:slStudent.last_name, email:slStudent.email, phone:slStudent.phone, date_of_birth:slStudent.date_of_birth, status:slStudent.status };
   var btn=document.getElementById('sleSaveBtn'); if(btn) btn.disabled=true;
   setSleMsg('Saving...','');
   try{
     var r=await sb.from('students').update(payload).eq('id',slStudent.id);
     if(r.error) throw new Error(r.error.message);
+    // audit trail: one row per field that actually changed (best-effort; never blocks the save)
+    try{
+      var _who=(currentInstructor&&currentInstructor.id)||null;
+      var _whoName=getInstrName(currentInstructor||{});
+      var _rows=[];
+      Object.keys(payload).forEach(function(f){
+        var ov=_before[f]==null?'':String(_before[f]);
+        var nv=payload[f]==null?'':String(payload[f]);
+        if(ov!==nv) _rows.push({school_id:SID,student_id:slStudent.id,changed_by:_who,changed_by_name:_whoName,field:f,old_value:ov||null,new_value:nv||null,source:'staff_app'});
+      });
+      if(_rows.length) await sb.from('student_change_log').insert(_rows);
+    }catch(logErr){ console.warn('change-log write failed:',logErr); }
     // reflect locally so the overview + roster update without a refetch
     Object.keys(payload).forEach(function(k){ slStudent[k]=payload[k]; });
     var rosterHit=slRoster.find(function(x){return x.id===slStudent.id;}); if(rosterHit) Object.keys(payload).forEach(function(k){ rosterHit[k]=payload[k]; });
