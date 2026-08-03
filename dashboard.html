@@ -4137,7 +4137,7 @@ async function doCancelPlan(){
   var go=document.getElementById('cancelPlanGo'), msg=document.getElementById('cancelPlanMsg');
   if(go){go.disabled=true;} if(msg){ msg.textContent='Cancelling\u2026'; msg.style.color='var(--muted)'; }
   try{
-    var r=await fetch(SURL+'/functions/v1/cancel-platform-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+    var r=await fetch(SURL+'/functions/v1/cancel-platform-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID})});
     var d=await r.json();
     if(!r.ok||d.error){ throw new Error(d.error||'Could not cancel.'); }
     var when=d.current_period_end?new Date(d.current_period_end*1000).toLocaleDateString():'the end of your billing period';
@@ -4149,7 +4149,7 @@ async function doCancelPlan(){
 async function openBillingPortal(){
   try{
     var ret = window.location.origin + window.location.pathname + '?billing=managed';
-    var r = await fetch(SURL+'/functions/v1/create-billing-portal-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID, return_url:ret})});
+    var r = await fetch(SURL+'/functions/v1/create-billing-portal-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID, return_url:ret})});
     var d = await r.json();
     if(d && d.url){ window.location.href = d.url; return; }
     alert(d && d.error ? d.error : 'Could not open billing right now. Please contact support@nmao.us.');
@@ -6290,7 +6290,7 @@ async function chargeCancelFee(smId){
     var _uid=(_sess&&_sess.data&&_sess.data.session)?_sess.data.session.user.id:null;
     var cents=Math.round(info.amount*100);
     var pl={school_id:SID,student_id:info.student_id,line_items:[{name:'Early-cancel fee - '+info.name,unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:_uid,idempotency_key:'cancelfeecollect-'+smId+'-'+cents};
-    var r=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify(pl)});
+    var r=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(pl)});
     var d=await r.json();
     if(!r.ok||!d||d.error){ var em=(d&&d.error)?d.error:'Charge failed'; if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file for this member. Use Mark collected after collecting manually.'); } else { alert('Charge failed: '+em); } return; }
     await sb.from('student_memberships').update({early_cancel_fee_collected_at:new Date().toISOString()}).eq('id',smId);
@@ -7055,7 +7055,7 @@ var saveResult = await saveSessionRow();
   try{
     var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
       body: JSON.stringify({school_id: SID, student_id: studentId, line_items: [bookSessionLineItem()]}),
     });
     var data = await r.json();
@@ -11144,7 +11144,7 @@ async function cancelMembershipDo(i, when){
         var _sess = await sb.auth.getSession();
         var _uid = (_sess && _sess.data && _sess.data.session) ? _sess.data.session.user.id : null;
         var _pl = { school_id: SID, student_id: _sid, line_items: [{ name: 'Early-cancel fee - '+row.name, unit_amount: _cents, quantity: 1, product_id: null, item_type: 'custom' }], applied_by: _uid, idempotency_key: 'cancelfee-'+row.smId+'-'+_cents };
-        var _cr = await fetch(SURL + '/functions/v1/create-pos-charge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY }, body: JSON.stringify(_pl) });
+        var _cr = await fetch(SURL + '/functions/v1/create-pos-charge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken()) }, body: JSON.stringify(_pl) });
         var _cd = await _cr.json();
         if (!_cr.ok || !_cd || _cd.error){
           var _em = (_cd && _cd.error) ? _cd.error : 'Charge failed';
@@ -12615,7 +12615,7 @@ async function _chargeOneBeltTestFee(bs){
   var uid=(sess&&sess.data&&sess.data.session)?sess.data.session.user.id:null;
   var payload={ school_id:SID, student_id:sid, line_items:[{name:label,unit_amount:cents,quantity:1,product_id:null,item_type:"custom"}], applied_by:uid, idempotency_key:"belttest-"+bs.id+"-"+cents };
   try{
-    var r=await fetch(SURL+"/functions/v1/create-pos-charge",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SKEY},body:JSON.stringify(payload)});
+    var r=await fetch(SURL+"/functions/v1/create-pos-charge",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await authToken())},body:JSON.stringify(payload)});
     var data=await r.json();
     if(!r.ok||!data||data.error){
       var em=(data&&data.error)?data.error:"Charge failed";
@@ -13136,7 +13136,7 @@ async function checkoutPOS_cardOnFile(){
     var _uid = (_sess && _sess.data && _sess.data.session) ? _sess.data.session.user.id : null;
     var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({
         school_id: SID,
         student_id: posSelectedStudentId,
@@ -15077,7 +15077,7 @@ async function connectStripe(){
     var returnUrl=window.location.origin+window.location.pathname;
     var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
       body:JSON.stringify({school_id:SID,return_url:returnUrl})
     });
     var data=await r.json();
@@ -15101,7 +15101,7 @@ async function handleStripeOAuthReturn(){
   try{
     var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
       body:JSON.stringify({action:'callback',code:code,state:state})
     });
     var data=await r.json();
