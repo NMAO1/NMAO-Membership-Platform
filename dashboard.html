@@ -7176,7 +7176,7 @@ async function loadProfileCardOnFile(sid){
   try{
     var r = await fetch(SURL + '/functions/v1/get-student-card', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
       body: JSON.stringify({school_id: SID, student_id: sid}),
     });
     var data = await r.json();
@@ -7494,7 +7494,7 @@ async function removeStudentCard(sid){
   try{
     var r = await fetch(SURL + '/functions/v1/remove-student-card', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
       body: JSON.stringify({school_id: SID, student_id: sid}),
     });
     var data = await r.json();
@@ -8472,7 +8472,7 @@ async function sendStudentMessage(){
   try{
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
       body:JSON.stringify({school_id:SID, student_id:currentProfileStudent.id, body:body})
     });
     if(r.ok){
@@ -10356,7 +10356,7 @@ function checkoutLoadCard(){
   var sid = _checkout.studentId;
   fetch(SURL + '/functions/v1/get-student-card', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+    headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
     body: JSON.stringify({ school_id: SID, student_id: sid })
   }).then(function(r){ return r.json(); }).then(function(data){
     _checkout.cardLoaded = true;
@@ -13704,7 +13704,7 @@ async function sendSmsReplyInline(){
     if(!currentSmsStudentId && currentSmsSenderId) payload.to_phone=currentSmsSenderId;
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
       body:JSON.stringify(payload)
     });
     if(r.ok){
@@ -13793,7 +13793,7 @@ async function composeSendSms(){
     else { payload.to_phone=toPhone; }
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
       body:JSON.stringify(payload)
     });
     if(r.ok){
