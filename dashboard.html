@@ -3548,7 +3548,7 @@ var sessionBookInstructorName = null;
 var currentRevPeriod        = null; var selectedReportRecipients = [];
 var importCSVData           = [], importHeaders = [];
 var currentInstructorProfile= null;
-var currentSmsSenderId      = null, currentSmsStudentId = null;
+var currentSmsSenderId      = null, currentSmsStudentId = null, currentSmsThreadPhone = null;
 var currentSessionTabActive = 'upcoming';
 
 function hideLoading() { var el=document.getElementById('loadingScreen'); if(el) el.style.display='none'; }
@@ -6462,7 +6462,7 @@ async function buildMemberDrill(){
   }catch(e){}
   var stripeDates={};
   try{
-    var dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+    var dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID})});
     var dd=await dr.json(); if(dd&&dd.dates) stripeDates=dd.dates;
   }catch(e){}
   var html='';
@@ -9757,7 +9757,7 @@ async function mdSaveBillingDay(){
   if(!d){ msg.style.color='#E07070'; msg.textContent='Pick a date.'; return; }
   msg.style.color='var(--muted)'; msg.textContent='Updating Stripe\u2026';
   try{
-    var r=await fetch(SURL+'/functions/v1/edit-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sm.stripe_subscription_id,new_charge_date:d})});
+    var r=await fetch(SURL+'/functions/v1/edit-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID,subscription_id:sm.stripe_subscription_id,new_charge_date:d})});
     var data=await r.json();
     if(!r.ok||!data||data.error){ msg.style.color='#E07070'; msg.textContent=(data&&data.error)?data.error:'Update failed.'; return; }
     msg.style.color='#5A9A6A'; msg.textContent='Billing day updated.';
@@ -9826,7 +9826,7 @@ async function loadUpcomingRevenue(){
     try{
       var _hasSub=false; for(var z=0;z<rows.length;z++){ if(rows[z].stripe_subscription_id){ _hasSub=true; break; } }
       if(_hasSub){
-        var _dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID})});
+        var _dr=await fetch(SURL+'/functions/v1/get-subscription-renewal-dates',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID})});
         var _dd=await _dr.json();
         if(_dd && _dd.dates) stripeDates=_dd.dates;
       }
@@ -13677,6 +13677,10 @@ async function loadSmsThread(key){
     if(student){q=q.eq('student_id',key);}else{q=q.or('from_phone.eq.'+key+',to_phone.eq.'+key);}
     var r=await q;
     var data=r.data||[];
+    // Capture the real counterparty phone so replies go to a number, never the thread id.
+    var _inb=data.find(function(m){return m.direction==='inbound'&&m.from_phone;});
+    var _out=data.find(function(m){return m.direction==='outbound'&&m.to_phone;});
+    currentSmsThreadPhone=(_inb&&_inb.from_phone)||(_out&&_out.to_phone)||null;
     var unreadIds=data.filter(function(m){return m.direction==='inbound'&&!m.read;}).map(function(m){return m.id;});
     if(unreadIds.length){
       await sb.from('sms_inbox').update({read:true}).in('id',unreadIds);
@@ -13701,7 +13705,9 @@ async function sendSmsReplyInline(){
   if(!body) return;
   try{
     var payload={school_id:SID, student_id:currentSmsStudentId||null, body:body};
-    if(!currentSmsStudentId && currentSmsSenderId) payload.to_phone=currentSmsSenderId;
+    // Reply to the real thread phone; only fall back to sender if it's a phone, not a UUID thread id.
+    if(currentSmsThreadPhone) payload.to_phone=currentSmsThreadPhone;
+    else if(!currentSmsStudentId && currentSmsSenderId && !/^[0-9a-f-]{36}$/i.test(String(currentSmsSenderId))) payload.to_phone=currentSmsSenderId;
     var r=await fetch(SURL+'/functions/v1/send-sms',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':SC_BEARER},
