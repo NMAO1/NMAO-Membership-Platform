@@ -475,6 +475,7 @@
     <div class="login-desc">Enter your instructor email and password.</div>
     <input type="email" id="loginEmail" class="input-field" placeholder="instructor@email.com" autocomplete="username" />
     <input type="password" id="loginPassword" class="input-field" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem" onkeydown="if(event.key==='Enter')submitStaffLogin()" />
+    <label style="display:flex;align-items:center;gap:0.5rem;margin-top:0.65rem;cursor:pointer;font-size:0.82rem;color:var(--muted,#8a8278)"><input type="checkbox" id="staffKeepSignedIn" checked style="width:auto;cursor:pointer" />Keep me signed in on this device</label>
     <button class="btn-login" id="loginBtn" onclick="submitStaffLogin()">
       <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In
     </button>
@@ -1137,7 +1138,9 @@ var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 async function authToken(){ try{ var _s=await sb.auth.getSession(); if(_s&&_s.data&&_s.data.session&&_s.data.session.access_token) return _s.data.session.access_token; }catch(e){} return SKEY; }
 var SID=null;
 var STAFF_URL=window.location.origin+window.location.pathname;
-var sb=supabase.createClient(SURL,SKEY);
+var KEEP_SIGNED_IN_KEY='nmao_staff_keep_signed_in';
+var keepSignedIn=(localStorage.getItem(KEEP_SIGNED_IN_KEY)!=='false'); // default: stay signed in on this device
+var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var INSTR_COLORS=['#C9A84C','#5A9A6A','#5A7A9A','#9A7A5A','#7A5A9A','#9A5A7A','#5A9A9A'];
@@ -1250,6 +1253,7 @@ function showStaffPasswordStep(){
 async function submitStaffLogin(){
   var email=document.getElementById('loginEmail').value.trim();
   var pw=document.getElementById('loginPassword').value;
+  try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
   if(!email||!email.includes('@')){setLoginMsg('Enter a valid email.','er');return;}
   if(!pw){setLoginMsg('Enter your password, or use the code option below.','er');return;}
   var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Signing in...';
@@ -1277,6 +1281,7 @@ async function sendStaffCode(){
 }
 async function verifyStaffCode(){
   var email=document.getElementById('codeEmail').value.trim();
+  try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
   var token=(document.getElementById('codeInput').value||'').replace(/\D/g,'');
   if(!token){setCodeMsg('Enter the code from your email.','er');return;}
   var btn=document.getElementById('verifyCodeBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Verifying...';
