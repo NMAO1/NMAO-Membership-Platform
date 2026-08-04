@@ -1115,6 +1115,7 @@ var INSTR_COLORS=['#C9A84C','#5A9A6A','#5A7A9A','#9A7A5A','#7A5A9A','#9A5A7A','#
 //  STATE
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var currentInstructor=null;
+var currentAuthUser=null;
 var schoolData={};
 var allStudents=[];        // all students for school, loaded once
 var allBeltLevels=[];      // all belt levels, loaded once
@@ -1257,8 +1258,8 @@ async function verifyStaffCode(){
   await startStaffApp(r.data.session.user);
 }
 function maybePromptStaffPassword(){
-  if(!currentInstructor) return;
-  if(currentInstructor.password_set) return;
+  var u=currentAuthUser;
+  if(u&&u.user_metadata&&u.user_metadata.password_set) return;
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
 }
 async function saveStaffPassword(){
@@ -1269,7 +1270,7 @@ async function saveStaffPassword(){
   if(!pw||pw.length<6){msg.textContent='Password must be at least 6 characters.';msg.className='login-msg er';return;}
   if(pw!==pw2){msg.textContent='Passwords do not match.';msg.className='login-msg er';return;}
   var btn=document.getElementById('staffPwBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Saving...';
-  var r=await sb.auth.updateUser({password:pw});
+  var r=await sb.auth.updateUser({password:pw,data:{password_set:true}});
   if(r.error){msg.textContent=r.error.message;msg.className='login-msg er';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';return;}
   try{ if(currentInstructor&&currentInstructor.id){ await sb.from('instructors').update({password_set:true}).eq('id',currentInstructor.id); currentInstructor.password_set=true; } }catch(e){}
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='none';
@@ -1277,6 +1278,7 @@ async function saveStaffPassword(){
 function skipStaffPassword(){ var m=document.getElementById('staffPwModal'); if(m) m.style.display='none'; }
 
 async function startStaffApp(user){
+  currentAuthUser=user;
   // Verify instructor record \u2014 match on email (initial auth)
   // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
   // keeps whatever casing was typed - .eq('email',...) locks them out of the app.
@@ -1338,6 +1340,38 @@ async function loadCoreData(){
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  TODAY TAB
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// -- Shift-aware schedule (added): single source of truth = get_member_class_schedule,
+//    the SAME RPC the member portal uses, so staff and members see identical classes
+//    (summer/holiday schedule_shifts applied). Falls back to base recurrence if the RPC
+//    is unavailable. Returns { 'YYYY-MM-DD': [class objs] } for the date range.
+async function getShiftSchedule(startStr,endStr){
+  var byDate={};
+  var slug=(schoolData&&schoolData.slug)?schoolData.slug:'';
+  if(slug){
+    try{
+      var rr=await sb.rpc('get_member_class_schedule',{p_slug:slug,p_start:startStr,p_end:endStr});
+      if(!rr.error&&rr.data){
+        rr.data.forEach(function(row){
+          var ds=row.session_date; if(!ds) return;
+          if(!byDate[ds]) byDate[ds]=[];
+          byDate[ds].push({id:row.class_id,name:row.class_name,start_time:row.start_time,end_time:row.end_time,style:row.style,age_group:row.age_group,level:row.level,capacity:row.capacity,program_id:row.program_id});
+        });
+        Object.keys(byDate).forEach(function(k){byDate[k].sort(function(a,b){return a.start_time>b.start_time?1:-1;});});
+        return byDate;
+      }
+      if(rr.error) console.warn('get_member_class_schedule error, using base recurrence:',rr.error);
+    }catch(e){ console.warn('shift schedule RPC threw, using base recurrence:',e); }
+  }
+  // Fallback: base recurrence per date (shift-blind) if slug/RPC unavailable
+  var d=new Date(startStr+'T00:00:00'), end=new Date(endStr+'T00:00:00');
+  while(d<=end){
+    var ds=ymd(d), dn=DAYS[d.getDay()];
+    byDate[ds]=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dn);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    d.setDate(d.getDate()+1);
+  }
+  return byDate;
+}
+
 async function buildTodayTab(){
   var now=new Date();
   var vd=viewDate;                       // currently-viewed day (day switcher)
@@ -1352,7 +1386,8 @@ async function buildTodayTab(){
   var dayPill=document.getElementById('dayTodayPill');if(dayPill)dayPill.style.display=isToday?'none':'inline-flex';
   var headEl=document.getElementById('todayClassesHead');if(headEl)headEl.textContent=isToday?'Classes Today':('Classes \u00b7 '+vd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}));
   var today=DAYS[vd.getDay()];
-  var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
+  var _sched=await getShiftSchedule(vdStr,vdStr);
+  var todayClasses=_sched[vdStr]||[];
   document.getElementById('qsClasses').textContent=todayClasses.length;
   // Live counts: union of RSVPs (class_enrollments) + check-ins (class_attendance)
   var counts=await fetchEnrollmentCounts(vdStr,vdStr);
@@ -1460,6 +1495,7 @@ async function buildClassesTab(){
   var endStr=end.toISOString().split('T')[0];
   // Live counts across the whole week
   var counts=await fetchEnrollmentCounts(todayStr,endStr);
+  var sched=await getShiftSchedule(todayStr,endStr);
   var html='';var hasAny=false;
 
   for(var i=0;i<7;i++){
@@ -1469,7 +1505,7 @@ async function buildClassesTab(){
     var isToday=i===0;
     var dayLabel=isToday?'Today \u2014 '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
 
-    var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
+    var dayClasses=sched[dateStr]||[];
     if(!dayClasses.length)continue;
     hasAny=true;
     html+='<div class="day-block"><div class="day-label">'+dayLabel+'</div>';
