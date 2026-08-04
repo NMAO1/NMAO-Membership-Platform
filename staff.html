@@ -516,7 +516,38 @@
 <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      SET-PASSWORD MODAL (first run / self-serve)
 ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
-<div id="staffPwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10090;align-items:center;justify-content:center;padding:1rem">
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     DAY ROSTER OVERLAY (tiles drill-down)
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
+<style>
+.dr-tab{flex:1;background:var(--surface,#141414);border:1px solid var(--border,#2a2520);color:var(--muted,#8a8278);font-family:var(--font-ui,sans-serif);font-size:0.8rem;padding:0.55rem;cursor:pointer;letter-spacing:0.04em}
+.dr-tab.active{background:var(--gold);color:#0a0a0a;border-color:var(--gold);font-weight:700}
+.dr-class{margin-bottom:1rem;border:1px solid var(--border,#2a2520);border-left:3px solid var(--gold)}
+.dr-class-head{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;background:var(--surface,#141414);cursor:pointer}
+.dr-class-time{font-size:0.8rem;color:var(--gold);min-width:66px}
+.dr-class-name{flex:1;color:var(--white,#f5f0e8);font-size:0.9rem}
+.dr-class-count{font-size:0.72rem;color:var(--muted,#8a8278)}
+.dr-student{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.9rem;border-top:1px solid #1a1a1a}
+.dr-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}
+.dr-dot.in{background:#5A9A6A}
+.dr-name{flex:1;color:var(--white,#f5f0e8);font-size:0.85rem}
+.dr-tag{font-size:0.68rem;color:#7DBD7D}
+.dr-tag.muted{color:var(--muted,#8a8278)}
+.dr-empty{padding:0.9rem;color:var(--muted,#8a8278);font-style:italic;font-size:0.82rem}
+</style>
+<div id="dayRosterOverlay" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:10080;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.1rem;border-bottom:1px solid var(--border,#2a2520)">
+    <div id="drTitle" style="font-family:var(--font-display,Georgia),serif;font-size:1.1rem;color:var(--gold)">Roster</div>
+    <button onclick="closeDayRoster()" style="background:none;border:none;color:var(--muted,#8a8278);font-size:1.35rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div style="display:flex;gap:0.5rem;padding:0.7rem 1.1rem;border-bottom:1px solid var(--border,#2a2520)">
+    <button id="drTabAll" class="dr-tab active" onclick="setDayRosterMode('all')">Projected</button>
+    <button id="drTabIn" class="dr-tab" onclick="setDayRosterMode('checkedin')">Checked In</button>
+  </div>
+  <div id="drBody" style="flex:1;overflow-y:auto;padding:0.9rem 1.1rem"></div>
+</div>
+<div id="staffPwModal"
+ style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10090;align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--surface,#141414);border:1px solid var(--border,#2a2520);max-width:380px;width:100%;padding:1.5rem">
     <div style="font-family:var(--font-display,Georgia),serif;font-size:1.2rem;color:var(--gold);margin-bottom:0.4rem">Set your password</div>
     <div style="font-size:0.85rem;color:var(--muted,#8a8278);margin-bottom:0.9rem">Set a password so next time you can sign in with just your email and password.</div>
@@ -590,9 +621,9 @@
   </div>
 
   <div class="quick-stats">
-    <div class="qstat"><div class="qstat-num" id="qsClasses">&mdash;</div><div class="qstat-lbl">Classes</div></div>
-    <div class="qstat"><div class="qstat-num" id="qsExpected">&mdash;</div><div class="qstat-lbl">Expected</div></div>
-    <div class="qstat"><div class="qstat-num" id="qsCheckedIn">&mdash;</div><div class="qstat-lbl">Checked In</div></div>
+    <div class="qstat" style="cursor:pointer" onclick="openDayRoster('all')"><div class="qstat-num" id="qsClasses">&mdash;</div><div class="qstat-lbl">Classes</div></div>
+    <div class="qstat" style="cursor:pointer" onclick="openDayRoster('all')"><div class="qstat-num" id="qsExpected">&mdash;</div><div class="qstat-lbl">Expected</div></div>
+    <div class="qstat" style="cursor:pointer" onclick="openDayRoster('checkedin')"><div class="qstat-num" id="qsCheckedIn">&mdash;</div><div class="qstat-lbl">Checked In</div></div>
   </div>
 
   <div class="day-switch">
@@ -1598,7 +1629,58 @@ async function openClassView(classId,dateStr){
   renderCvEligible('');
   renderCvAllStudents('');
 }
+// -- Day roster (tiles drill-down): projected + checked-in students per class,
+//    scoped to the viewed day, using the SAME shift-aware class list as the schedule.
+var drMode='all';
+function openDayRoster(mode){
+  drMode=(mode==='checkedin')?'checkedin':'all';
+  var ta=document.getElementById('drTabAll'),tc=document.getElementById('drTabIn');
+  if(ta)ta.classList.toggle('active',drMode==='all');
+  if(tc)tc.classList.toggle('active',drMode==='checkedin');
+  var o=document.getElementById('dayRosterOverlay'); if(o)o.style.display='flex';
+  renderDayRoster();
+}
+function setDayRosterMode(mode){ openDayRoster(mode); }
+function closeDayRoster(){ var o=document.getElementById('dayRosterOverlay'); if(o)o.style.display='none'; }
+async function fetchDayRoster(dateStr){
+  var byClass={};
+  function ensure(cid){ if(!byClass[cid])byClass[cid]={projected:{},checkedIn:{}}; return byClass[cid]; }
+  try{
+    var er=await sb.from('class_enrollments').select('class_id,student_id,status').eq('school_id',SID).eq('session_date',dateStr).in('status',['enrolled','attended']);
+    (er.data||[]).forEach(function(e){ ensure(e.class_id).projected[e.student_id]=true; });
+    var sr=await sb.from('class_sessions').select('class_id,class_attendance(student_id)').eq('school_id',SID).eq('session_date',dateStr);
+    (sr.data||[]).forEach(function(s){ (s.class_attendance||[]).forEach(function(a){ var c=ensure(s.class_id); c.projected[a.student_id]=true; c.checkedIn[a.student_id]=true; }); });
+  }catch(e){ console.error('fetchDayRoster error:',e); }
+  return byClass;
+}
+async function renderDayRoster(){
+  var vd=viewDate,vdStr=ymd(vd);
+  var el=document.getElementById('drBody'); if(!el)return;
+  el.innerHTML='<div class="dr-empty">Loading...</div>';
+  var tt=document.getElementById('drTitle'); if(tt)tt.textContent='Roster \u00b7 '+vd.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  var sched=await getShiftSchedule(vdStr,vdStr);
+  var classes=sched[vdStr]||[];
+  var roster=await fetchDayRoster(vdStr);
+  var sMap={}; allStudents.forEach(function(s){sMap[s.id]=s;});
+  var html='',anyShown=false;
+  classes.forEach(function(c){
+    var r=roster[c.id]||{projected:{},checkedIn:{}};
+    var ids=Object.keys(r.projected).filter(function(sid){ return drMode!=='checkedin'||r.checkedIn[sid]; });
+    ids.sort(function(a,b){ var na=(sMap[a]?((sMap[a].first_name||'')+' '+(sMap[a].last_name||'')):'z').toLowerCase(),nb=(sMap[b]?((sMap[b].first_name||'')+' '+(sMap[b].last_name||'')):'z').toLowerCase(); return na>nb?1:-1; });
+    if(drMode==='checkedin'&&ids.length===0) return;
+    anyShown=true;
+    var rows='';
+    ids.forEach(function(sid){
+      var ci=!!r.checkedIn[sid]; var s=sMap[sid];
+      var nm=s?((s.first_name||'')+' '+(s.last_name||'')).trim():'Unknown student';
+      rows+='<div class="dr-student"><span class="dr-dot'+(ci?' in':'')+'"></span><span class="dr-name">'+nm+'</span><span class="dr-tag'+(ci?'':' muted')+'">'+(ci?'Checked in':'Expected')+'</span></div>';
+    });
+    html+='<div class="dr-class"><div class="dr-class-head" onclick="closeDayRoster();openClassView(\''+c.id+'\',\''+vdStr+'\')"><span class="dr-class-time">'+fmtTime(c.start_time)+'</span><span class="dr-class-name">'+(c.name||'Class')+'</span><span class="dr-class-count">'+ids.length+'</span></div>'+(rows||'<div class="dr-empty">No students.</div>')+'</div>';
+  });
+  el.innerHTML=anyShown?html:'<div class="dr-empty" style="text-align:center;padding:2rem">No '+(drMode==='checkedin'?'check-ins':'projected students')+' for this day.</div>';
+}
 function closeClassView(){
+
   document.getElementById('classView').classList.remove('open');
   if(!currentClassData)return;
   // Refresh today stats and pills (qsExpected, qsCheckedIn, today rows)
