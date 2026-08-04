@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Staff App — NMAO</title>
+  <title>Staff App ‚Äî NMAO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ── BASE ─────────────────────────────────────── */
+    /* ‚îÄ‚îÄ BASE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
     :root{
       --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:color-mix(in srgb,var(--gold) 9%,transparent);
@@ -37,7 +37,7 @@
     ::-webkit-scrollbar-thumb{background:var(--border2);}
 
 ```
-/* ── LOGIN ────────────────────────────────────── */
+/* ‚îÄ‚îÄ LOGIN ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #loginScreen{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:100vh;min-height:100dvh;padding:1.5rem;background:var(--black);
@@ -58,13 +58,13 @@
 .login-msg.er{color:#E07070;}
 .staff-badge{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.25rem 0.65rem;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);margin-bottom:1.5rem;}
 
-/* ── SUCCESS ─────────────────────────────────── */
+/* ‚îÄ‚îÄ SUCCESS ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;text-align:center;padding:2rem;}
 .success-icon{font-size:2.5rem;color:var(--gold);margin-bottom:1rem;}
 .success-title{font-family:var(--font-display);font-size:1.4rem;margin-bottom:0.5rem;}
 .success-desc{font-size:0.88rem;color:var(--muted);max-width:320px;line-height:1.6;}
 
-/* ── STAFF APP SHELL ─────────────────────────── */
+/* ‚îÄ‚îÄ STAFF APP SHELL ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #staffApp{display:none;height:100vh;flex-direction:column;position:relative;overflow:hidden;}
 
 /* Sticky header */
@@ -107,11 +107,11 @@
   font-family:var(--font-ui);min-width:16px;text-align:center;
 }
 
-/* ── TABS ────────────────────────────────────── */
+/* ‚îÄ‚îÄ TABS ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .tab-panel{display:none;padding:1rem;}
 .tab-panel.active{display:block;}
 
-/* ── TODAY TAB ───────────────────────────────── */
+/* ‚îÄ‚îÄ TODAY TAB ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .today-greeting{margin-bottom:1.5rem;}
 .greeting-name{font-family:var(--font-display);font-size:1.6rem;color:var(--white);line-height:1.2;}
 .greeting-date{font-size:0.82rem;color:var(--muted);margin-top:0.25rem;}
@@ -156,7 +156,7 @@
 .class-chevron{color:var(--muted);font-size:0.85rem;}
 .no-classes{text-align:center;padding:3rem 1rem;color:var(--muted);font-style:italic;background:var(--surface);border:1px solid var(--border);}
 
-/* ── CLASS VIEW OVERLAY ──────────────────────── */
+/* ‚îÄ‚îÄ CLASS VIEW OVERLAY ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #classView{
   position:absolute;top:var(--header-h);left:0;right:0;bottom:0;
   background:var(--black);z-index:80;
@@ -244,11 +244,11 @@
 .empty-state i{font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;}
 .empty-state-text{font-size:0.88rem;font-style:italic;}
 
-/* ── CLASSES TAB ─────────────────────────────── */
+/* ‚îÄ‚îÄ CLASSES TAB ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .day-block{margin-bottom:1.25rem;}
 .day-label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border);}
 
-/* ── SESSIONS TAB ────────────────────────────── */
+/* ‚îÄ‚îÄ SESSIONS TAB ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .sessions-board{display:flex;flex-direction:column;gap:0.85rem;}
 .session-slot{
   background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--border);
@@ -268,7 +268,7 @@
 .btn-book-slot:hover{border-color:var(--gold);color:var(--gold);}
 .instr-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:0.35rem;}
 
-/* ── TESTS TAB ───────────────────────────────── */
+/* ‚îÄ‚îÄ TESTS TAB ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .test-card{background:var(--surface);border:1px solid var(--border);padding:1rem;margin-bottom:0.85rem;}
 .test-card-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.75rem;}
 .test-date{font-family:var(--font-display);font-size:1rem;color:var(--white);}
@@ -283,7 +283,7 @@
 .btn-hold:hover,.btn-hold.selected{background:#C07070;color:var(--black);}
 .tests-no-setup{text-align:center;padding:3rem 1rem;color:var(--muted);}
 
-/* ── PROFILE TAB ─────────────────────────────── */
+/* ‚îÄ‚îÄ PROFILE TAB ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .profile-hero{background:var(--surface);border:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
 .profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--gold-dk);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
 .profile-name{font-family:var(--font-display);font-size:1.3rem;color:var(--white);}
@@ -308,7 +308,7 @@
 }
 .btn-signout:hover{border-color:var(--red);color:#C07070;}
 
-/* ── PROMOTE MODAL ───────────────────────────── */
+/* ‚îÄ‚îÄ PROMOTE MODAL ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #promoteModal{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;
   align-items:flex-end;justify-content:center;padding-bottom:0;
@@ -328,8 +328,8 @@
 .btn-confirm-promote{flex:1;height:var(--tap);background:var(--gold);color:var(--black);border:none;font-family:var(--font-display);font-size:0.82rem;letter-spacing:0.14em;text-transform:uppercase;}
 .btn-cancel-promote{flex:0 0 auto;height:var(--tap);padding:0 1.25rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;}
 
-/* ── TOAST ───────────────────────────────────── */
-/* ── NEW-STUDENT SIGNUP WIZARD ─────────────────── */
+/* ‚îÄ‚îÄ TOAST ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
+/* ‚îÄ‚îÄ NEW-STUDENT SIGNUP WIZARD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .su-cta{display:flex;align-items:center;gap:0.85rem;background:var(--gold-bg);border:1px solid var(--gold);padding:0.95rem 1.1rem;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
 .su-cta:active{background:color-mix(in srgb,var(--gold) 16%,transparent);}
 .su-cta-icon{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--black);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
@@ -391,7 +391,7 @@
 .su-sum-row b{color:var(--white);font-weight:600;text-align:right;}
 .su-sum-total b{color:var(--gold);font-size:1rem;font-family:var(--font-display);}
 
-/* ── §STAFF: DISCOUNT — shared control for signup + pack flows ───────────── */
+/* ‚îÄ‚îÄ ¬ßSTAFF: DISCOUNT ‚Äî shared control for signup + pack flows ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .dsc-wrap{border:1px solid var(--line,#2a2a2a);border-radius:8px;padding:0.7rem 0.8rem;margin:0.75rem 0}
 .dsc-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem}
 .dsc-lbl{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2)}
@@ -441,7 +441,7 @@
 #toast.toast-warn i{color:#D4A070;}
 #toast.toast-err i{color:#C07070;}
 
-/* ── SPINNER ─────────────────────────────────── */
+/* ‚îÄ‚îÄ SPINNER ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 .spin{animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading-row{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:2rem;color:var(--muted);font-size:0.88rem;font-style:italic;}
@@ -461,29 +461,51 @@
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      LOGIN SCREEN
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <div id="loginScreen">
   <div class="login-mark" id="loginMark">NMAO</div>
   <div class="login-sub" id="loginSubSchool">Staff Portal</div>
   <div class="staff-badge"><i class="fa-solid fa-shield-halved"></i> Instructors Only</div>
-  <div class="login-card">
+  <div class="login-card" id="loginPwCard">
     <div class="login-eyebrow">Staff App</div>
     <div class="login-title">Sign in</div>
-    <div class="login-desc">Enter your instructor email. We'll send a secure sign-in link.</div>
-    <input type="email" id="loginEmail" class="input-field" placeholder="instructor@email.com" onkeydown="if(event.key==='Enter')sendStaffLink()" />
-    <button class="btn-login" id="loginBtn" onclick="sendStaffLink()">
-      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link
+    <div class="login-desc">Enter your instructor email and password.</div>
+    <input type="email" id="loginEmail" class="input-field" placeholder="instructor@email.com" autocomplete="username" />
+    <input type="password" id="loginPassword" class="input-field" placeholder="Password" autocomplete="current-password" style="margin-top:0.5rem" onkeydown="if(event.key==='Enter')submitStaffLogin()" />
+    <button class="btn-login" id="loginBtn" onclick="submitStaffLogin()">
+      <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In
     </button>
     <div class="login-msg" id="loginMsg"></div>
+    <div style="margin-top:0.85rem;text-align:center;font-size:0.82rem">
+      <a href="#" onclick="showStaffCodeStep();return false;" style="color:var(--gold);text-decoration:none">First time here, or forgot your password?</a>
+    </div>
+  </div>
+
+  <div class="login-card" id="loginCodeCard" style="display:none">
+    <div class="login-eyebrow">Staff App</div>
+    <div class="login-title">Email me a code</div>
+    <div class="login-desc">We will email a 6-digit code to your instructor email. Enter it below to sign in, then set a password.</div>
+    <input type="email" id="codeEmail" class="input-field" placeholder="instructor@email.com" autocomplete="username" />
+    <button class="btn-login" id="sendCodeBtn" onclick="sendStaffCode()">
+      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Email My Code
+    </button>
+    <input type="text" inputmode="numeric" id="codeInput" class="input-field" placeholder="6-digit code" autocomplete="one-time-code" style="margin-top:0.6rem;display:none" onkeydown="if(event.key==='Enter')verifyStaffCode()" />
+    <button class="btn-login" id="verifyCodeBtn" onclick="verifyStaffCode()" style="display:none;margin-top:0.5rem">
+      <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Verify and Sign In
+    </button>
+    <div class="login-msg" id="codeMsg"></div>
+    <div style="margin-top:0.85rem;text-align:center;font-size:0.82rem">
+      <a href="#" onclick="showStaffPasswordStep();return false;" style="color:var(--gold);text-decoration:none">Back to password sign in</a>
+    </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      SUCCESS SCREEN
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <div id="successScreen">
   <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
@@ -491,9 +513,24 @@
   <div class="success-desc">Sign-in link sent to <strong id="sentEmail"></strong>. Tap it on your phone to open the staff app.</div>
 </div>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     SET-PASSWORD MODAL (first run / self-serve)
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
+<div id="staffPwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10090;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface,#141414);border:1px solid var(--border,#2a2520);max-width:380px;width:100%;padding:1.5rem">
+    <div style="font-family:var(--font-display,Georgia),serif;font-size:1.2rem;color:var(--gold);margin-bottom:0.4rem">Set your password</div>
+    <div style="font-size:0.85rem;color:var(--muted,#8a8278);margin-bottom:0.9rem">Set a password so next time you can sign in with just your email and password.</div>
+    <input type="password" id="staffNewPw" class="input-field" placeholder="New password (6+ characters)" autocomplete="new-password" />
+    <input type="password" id="staffNewPw2" class="input-field" placeholder="Confirm password" autocomplete="new-password" style="margin-top:0.5rem" onkeydown="if(event.key==='Enter')saveStaffPassword()" />
+    <button class="btn-login" id="staffPwBtn" onclick="saveStaffPassword()" style="margin-top:0.7rem"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password</button>
+    <div class="login-msg" id="staffPwMsg"></div>
+    <div style="margin-top:0.7rem;text-align:center;font-size:0.8rem"><a href="#" onclick="skipStaffPassword();return false;" style="color:var(--muted,#8a8278);text-decoration:none">Skip for now</a></div>
+  </div>
+</div>
+
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      STAFF APP
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <div id="staffApp">
 
@@ -553,9 +590,9 @@
   </div>
 
   <div class="quick-stats">
-    <div class="qstat"><div class="qstat-num" id="qsClasses">—</div><div class="qstat-lbl">Classes</div></div>
-    <div class="qstat"><div class="qstat-num" id="qsExpected">—</div><div class="qstat-lbl">Expected</div></div>
-    <div class="qstat"><div class="qstat-num" id="qsCheckedIn">—</div><div class="qstat-lbl">Checked In</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsClasses">‚Äî</div><div class="qstat-lbl">Classes</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsExpected">‚Äî</div><div class="qstat-lbl">Expected</div></div>
+    <div class="qstat"><div class="qstat-num" id="qsCheckedIn">‚Äî</div><div class="qstat-lbl">Checked In</div></div>
   </div>
 
   <div class="day-switch">
@@ -609,9 +646,9 @@
   </div>
 
   <div class="profile-stat-row">
-    <div class="profile-stat"><div class="profile-stat-num" id="psTodayClasses">—</div><div class="profile-stat-lbl">Today</div></div>
-    <div class="profile-stat"><div class="profile-stat-num" id="psThisWeek">—</div><div class="profile-stat-lbl">This Week</div></div>
-    <div class="profile-stat"><div class="profile-stat-num" id="psStudents">—</div><div class="profile-stat-lbl">Students</div></div>
+    <div class="profile-stat"><div class="profile-stat-num" id="psTodayClasses">‚Äî</div><div class="profile-stat-lbl">Today</div></div>
+    <div class="profile-stat"><div class="profile-stat-num" id="psThisWeek">‚Äî</div><div class="profile-stat-lbl">This Week</div></div>
+    <div class="profile-stat"><div class="profile-stat-num" id="psStudents">‚Äî</div><div class="profile-stat-lbl">Students</div></div>
   </div>
 
   <div class="profile-info" id="profileInfoCard"></div>
@@ -661,7 +698,7 @@
         <i class="fa-solid fa-user-plus"></i> Eligible <span class="cv-tab-badge" id="cvBadgeEligible">0</span>
       </button>
       <button class="cv-tab" id="cvtAll" onclick="switchCvTab('all')">
-        <i class="fa-solid fa-users"></i> All <span class="cv-tab-badge" id="cvBadgeAll">—</span>
+        <i class="fa-solid fa-users"></i> All <span class="cv-tab-badge" id="cvBadgeAll">‚Äî</span>
       </button>
     </div>
     <div class="cv-content">
@@ -714,9 +751,9 @@
 
 </div><!-- end staffApp -->
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      NEW-STUDENT SIGNUP WIZARD
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div class="su-overlay" id="signupWizard">
   <div class="su-head">
     <div class="su-head-title">New Student Sign-Up</div>
@@ -734,7 +771,7 @@
   </div>
 
   <div class="su-body">
-    <!-- STEP 1 — Student info -->
+    <!-- STEP 1 ‚Äî Student info -->
     <div class="su-step active" id="suStep1">
       <div class="su-step-head">Who are we signing up?</div>
       <div class="su-step-sub">Enter the new student's details. Email is used for their portal login and welcome email; phone lets us text a card-save link.</div>
@@ -753,13 +790,13 @@
       <div class="su-field">
         <label>Email</label>
         <input class="su-input" id="suEmail" type="email" autocomplete="off" placeholder="name@example.com" />
-        <div class="su-hint">Recommended — required to send the portal login / welcome email.</div>
+        <div class="su-hint">Recommended ‚Äî required to send the portal login / welcome email.</div>
       </div>
 
       <div class="su-field">
         <label>Phone</label>
         <input class="su-input" id="suPhone" type="tel" autocomplete="off" placeholder="+1 555 555 1234" />
-        <div class="su-hint">Recommended — used to text the card-save link.</div>
+        <div class="su-hint">Recommended ‚Äî used to text the card-save link.</div>
       </div>
 
       <div class="su-field">
@@ -770,7 +807,7 @@
       <div class="su-msg" id="suMsg1"></div>
     </div>
 
-    <!-- STEP 2 — Plan -->
+    <!-- STEP 2 ‚Äî Plan -->
     <div class="su-step" id="suStep2">
       <div class="su-step-head">Choose a plan</div>
       <div class="su-step-sub">Pick how this student will train and pay.</div>
@@ -824,7 +861,7 @@
       <div class="su-msg" id="suMsg2"></div>
     </div>
 
-    <!-- STEP 3 — Payment -->
+    <!-- STEP 3 ‚Äî Payment -->
     <div class="su-step" id="suStep3">
       <div class="su-step-head">Payment</div>
       <div class="su-step-sub">Review and choose how they will pay.</div>
@@ -863,7 +900,7 @@
       <div class="su-msg" id="suMsg3"></div>
     </div>
 
-    <!-- STEP 4 — Done -->
+    <!-- STEP 4 ‚Äî Done -->
     <div class="su-step" id="suStep4"></div>
   </div>
 
@@ -873,9 +910,9 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     STUDENT LOOKUP — quick actions (Add Classes)
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     STUDENT LOOKUP ‚Äî quick actions (Add Classes)
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div class="su-overlay" id="studentLookup">
   <div class="su-head">
     <div class="su-head-title" id="slTitle">Find a Student</div>
@@ -994,9 +1031,9 @@
 </div>
 
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      MEMBERSHIP ALERTS MODAL
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <div id="alertsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
   <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.5rem;animation:slideUp 0.25s ease;max-height:70vh;display:flex;flex-direction:column;">
@@ -1008,9 +1045,9 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      BOOK SESSION MODAL (simplified)
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <div id="bookSessionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
   <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.75rem 1.5rem;animation:slideUp 0.25s ease;">
@@ -1034,9 +1071,9 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      ATTENDANCE HISTORY MODAL
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="attendanceHistoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;">
   <div style="background:var(--surface);border-top:1px solid var(--border);width:100%;max-width:600px;padding:1.5rem;animation:slideUp 0.25s ease;max-height:80vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
@@ -1055,14 +1092,14 @@
 
 <div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastText">Done</span></div>
 
-<!-- ════════════════════════════════════════════
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
      JAVASCRIPT
-════════════════════════════════════════════ -->
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 
 <script>
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  CONSTANTS
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 // Signed-in staff member's access token, so payment functions can verify POS permission (falls back to anon).
@@ -1074,9 +1111,9 @@ var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var INSTR_COLORS=['#C9A84C','#5A9A6A','#5A7A9A','#9A7A5A','#7A5A9A','#9A5A7A','#5A9A9A'];
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  STATE
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var currentInstructor=null;
 var schoolData={};
 var allStudents=[];        // all students for school, loaded once
@@ -1106,9 +1143,9 @@ var coveringStudentIds=new Set();// students whose active memberships cover the 
 var membershipAlerts=[];   // students with inactive memberships who checked in today
 var viewDate=new Date();   // Today tab: the day currently being viewed (day switcher)
 function ymd(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  INIT
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function init(){
   try{
     await loadSchoolBranding();
@@ -1148,7 +1185,7 @@ async function loadSchoolBranding(){
     var sn=r.data.name||'NMAO';
     document.getElementById('staffSchoolName').textContent=sn;
     document.getElementById('loginMark').textContent=sn;
-    document.title=sn+' — Staff App';
+    document.title=sn+' ‚Äî Staff App';
     if(r.data.logo_url){
       var img=document.getElementById('staffLogoImg');
       img.src=r.data.logo_url;img.style.display='block';
@@ -1157,22 +1194,90 @@ async function loadSchoolBranding(){
   }catch(e){}
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  AUTH
-// ─────────────────────────────────────────────────────────────
-async function sendStaffLink(){
-  var email=document.getElementById('loginEmail').value.trim();
-  if(!email||!email.includes('@')){setLoginMsg('Enter a valid email.','er');return;}
-  var btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Sending...';
-  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
-  if(r.error){setLoginMsg(r.error.message,'er');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Sign-In Link';}
-  else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  AUTH ‚Äî password primary; 6-digit email code for setup/recovery.
+//  Mirrors the member portal. The code path avoids the mobile
+//  magic-link webview trap (the session is created in this browser).
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+function setLoginMsg(t,c){var el=document.getElementById('loginMsg');if(el){el.textContent=t;el.className='login-msg '+(c||'');}}
+function setCodeMsg(t,c){var el=document.getElementById('codeMsg');if(el){el.textContent=t;el.className='login-msg '+(c||'');}}
+function showStaffCodeStep(){
+  var pc=document.getElementById('loginPwCard'); if(pc) pc.style.display='none';
+  var cc=document.getElementById('loginCodeCard'); if(cc) cc.style.display='block';
+  var ce=document.getElementById('codeEmail'); var le=document.getElementById('loginEmail');
+  if(ce&&le&&le.value) ce.value=le.value.trim();
+  setCodeMsg('','');
 }
-function setLoginMsg(t,c){var el=document.getElementById('loginMsg');el.textContent=t;el.className='login-msg '+(c||'');}
+function showStaffPasswordStep(){
+  var cc=document.getElementById('loginCodeCard'); if(cc) cc.style.display='none';
+  var pc=document.getElementById('loginPwCard'); if(pc) pc.style.display='block';
+}
+async function submitStaffLogin(){
+  var email=document.getElementById('loginEmail').value.trim();
+  var pw=document.getElementById('loginPassword').value;
+  if(!email||!email.includes('@')){setLoginMsg('Enter a valid email.','er');return;}
+  if(!pw){setLoginMsg('Enter your password, or use the code option below.','er');return;}
+  var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Signing in...';
+  var r=await sb.auth.signInWithPassword({email:email,password:pw});
+  if(r.error||!r.data||!r.data.session){
+    var m=(r.error&&r.error.message)||'Sign in failed.';
+    if(m.toLowerCase().indexOf('invalid')!==-1) m='Invalid email or password. Try again, or use the code option below.';
+    setLoginMsg(m,'er');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In';return;
+  }
+  document.getElementById('loginScreen').style.display='none';
+  await startStaffApp(r.data.session.user);
+}
+async function sendStaffCode(){
+  var email=document.getElementById('codeEmail').value.trim();
+  if(!email||!email.includes('@')){setCodeMsg('Enter a valid email.','er');return;}
+  var btn=document.getElementById('sendCodeBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Sending...';
+  // emailRedirectTo keeps a working magic link in the SAME email as the code, so staff
+  // can EITHER enter the code (mobile-safe) OR click the link (desktop) to sign in.
+  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
+  btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Email My Code';
+  if(r.error){setCodeMsg(r.error.message,'er');return;}
+  var ci=document.getElementById('codeInput'); if(ci) ci.style.display='block';
+  var vb=document.getElementById('verifyCodeBtn'); if(vb) vb.style.display='block';
+  setCodeMsg('We emailed '+email+' a 6-digit code and a sign-in link. Enter the code above, or tap the link.','');
+}
+async function verifyStaffCode(){
+  var email=document.getElementById('codeEmail').value.trim();
+  var token=(document.getElementById('codeInput').value||'').replace(/\D/g,'');
+  if(!token){setCodeMsg('Enter the 6-digit code from your email.','er');return;}
+  var btn=document.getElementById('verifyCodeBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Verifying...';
+  var r=await sb.auth.verifyOtp({email:email,token:token,type:'email'});
+  if(r.error||!r.data||!r.data.session){
+    setCodeMsg((r.error&&r.error.message)||'That code did not work. Request a new one.','er');
+    btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Verify and Sign In';return;
+  }
+  document.getElementById('loginScreen').style.display='none';
+  await startStaffApp(r.data.session.user);
+}
+function maybePromptStaffPassword(){
+  if(!currentInstructor) return;
+  if(currentInstructor.password_set) return;
+  var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
+}
+async function saveStaffPassword(){
+  var pw=document.getElementById('staffNewPw').value;
+  var pw2=document.getElementById('staffNewPw2').value;
+  var msg=document.getElementById('staffPwMsg');
+  msg.textContent='';msg.className='login-msg';
+  if(!pw||pw.length<6){msg.textContent='Password must be at least 6 characters.';msg.className='login-msg er';return;}
+  if(pw!==pw2){msg.textContent='Passwords do not match.';msg.className='login-msg er';return;}
+  var btn=document.getElementById('staffPwBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Saving...';
+  var r=await sb.auth.updateUser({password:pw});
+  if(r.error){msg.textContent=r.error.message;msg.className='login-msg er';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';return;}
+  try{ if(currentInstructor&&currentInstructor.id){ await sb.from('instructors').update({password_set:true}).eq('id',currentInstructor.id); currentInstructor.password_set=true; } }catch(e){}
+  var m=document.getElementById('staffPwModal'); if(m) m.style.display='none';
+}
+function skipStaffPassword(){ var m=document.getElementById('staffPwModal'); if(m) m.style.display='none'; }
 
 async function startStaffApp(user){
-  // Verify instructor record — match on email (initial auth)
+  // Verify instructor record ‚Äî match on email (initial auth)
   // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
   // keeps whatever casing was typed - .eq('email',...) locks them out of the app.
   var r=await sb.from('instructors')
@@ -1206,12 +1311,13 @@ async function startStaffApp(user){
   await loadCoreData();
   buildTodayTab();
   buildProfileTab();
+  maybePromptStaffPassword();
 }
 
 
-// ─────────────────────────────────────────────────────────────
-//  CORE DATA — loaded once, used everywhere
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  CORE DATA ‚Äî loaded once, used everywhere
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function loadCoreData(){
   var [studR,classR,instrR,levR,packR]=await Promise.all([
     sb.from('students').select('*, programs(name,color), memberships(name,billing_type,price)').eq('school_id',SID).in('status',['active','trial','paused']).order('first_name'),
@@ -1229,9 +1335,9 @@ async function loadCoreData(){
   allInstructors.forEach(function(ins,i){ins._color=INSTR_COLORS[i%INSTR_COLORS.length];});
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  TODAY TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildTodayTab(){
   var now=new Date();
   var vd=viewDate;                       // currently-viewed day (day switcher)
@@ -1242,9 +1348,9 @@ async function buildTodayTab(){
   var todayStr=ymd(now);                 // real today (for is-today test)
   var vdStr=ymd(vd);                      // the day being shown
   var isToday=(vdStr===todayStr);
-  document.getElementById('todayDate').textContent=(isToday?'Today · ':'')+vd.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('todayDate').textContent=(isToday?'Today ¬∑ ':'')+vd.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   var dayPill=document.getElementById('dayTodayPill');if(dayPill)dayPill.style.display=isToday?'none':'inline-flex';
-  var headEl=document.getElementById('todayClassesHead');if(headEl)headEl.textContent=isToday?'Classes Today':('Classes · '+vd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}));
+  var headEl=document.getElementById('todayClassesHead');if(headEl)headEl.textContent=isToday?'Classes Today':('Classes ¬∑ '+vd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}));
   var today=DAYS[vd.getDay()];
   var todayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(today);});
   document.getElementById('qsClasses').textContent=todayClasses.length;
@@ -1254,8 +1360,8 @@ async function buildTodayTab(){
   todayClasses.forEach(function(c){
     totalExpected+=(counts[c.id]&&counts[c.id][vdStr])||0;
   });
-  document.getElementById('qsExpected').textContent=totalExpected||'—';
-  // Sessions for the viewed day — drives Live badges and the day-scoped checked-in count
+  document.getElementById('qsExpected').textContent=totalExpected||'‚Äî';
+  // Sessions for the viewed day ‚Äî drives Live badges and the day-scoped checked-in count
   var sessR=await sb.from('class_sessions').select('id,class_id').eq('school_id',SID).eq('session_date',vdStr);
   var sessMap={};var sessIds=[];(sessR.data||[]).forEach(function(s){sessMap[s.class_id]=s.id;sessIds.push(s.id);});
   var dayAtt=[];
@@ -1273,7 +1379,7 @@ async function buildTodayTab(){
   }
   el.innerHTML=todayClasses.map(function(c){
     var cn=c.name||c.title||'Class';
-    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+    var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' ¬∑ ');
     var hasSess=!!sessMap[c.id];
     var liveCount=(counts[c.id]&&counts[c.id][vdStr])||0;
     var cap=c.capacity||c.max_students||c.enrolled_count||0;
@@ -1282,7 +1388,7 @@ async function buildTodayTab(){
   document.getElementById('psTodayClasses').textContent=todayClasses.length;
 }
 
-// ── Day switcher (Today tab) ──
+// ‚îÄ‚îÄ Day switcher (Today tab) ‚îÄ‚îÄ
 function shiftDay(delta){
   var d=new Date(viewDate);
   d.setDate(d.getDate()+delta);
@@ -1328,7 +1434,7 @@ function showMembershipAlerts(){
   if(!membershipAlerts.length){showToast('No membership alerts today','ok');return;}
   var listEl=document.getElementById('alertsModalList');
   listEl.innerHTML=membershipAlerts.map(function(s){
-    var cn=s.programs?s.programs.name:'—';
+    var cn=s.programs?s.programs.name:'‚Äî';
     var st=s.status||'unknown';
     return '<div style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">'+
       '<div style="width:40px;height:40px;border-radius:50%;background:var(--amber-bg);border:1px solid var(--amber-border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:0.85rem;color:var(--amber);flex-shrink:0">'+
@@ -1342,9 +1448,9 @@ function showMembershipAlerts(){
   document.getElementById('alertsModal').style.display='flex';
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  CLASSES TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildClassesTab(){
   var el=document.getElementById('classesWeekList');
   var now=new Date();
@@ -1361,7 +1467,7 @@ async function buildClassesTab(){
     var dateStr=d.toISOString().split('T')[0];
     var dayName=DAYS[d.getDay()];
     var isToday=i===0;
-    var dayLabel=isToday?'Today — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    var dayLabel=isToday?'Today ‚Äî '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
 
     var dayClasses=allClasses.filter(function(c){return c.days_of_week&&c.days_of_week.includes(dayName);}).sort(function(a,b){return a.start_time>b.start_time?1:-1;});
     if(!dayClasses.length)continue;
@@ -1369,7 +1475,7 @@ async function buildClassesTab(){
     html+='<div class="day-block"><div class="day-label">'+dayLabel+'</div>';
     dayClasses.forEach(function(c){
       var cn=c.name||c.title||'Class';
-      var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' · ');
+      var tags=[c.style,c.age_group,c.level].filter(Boolean).join(' ¬∑ ');
       var liveCount=(counts[c.id]&&counts[c.id][dateStr])||0;
       var cap=c.capacity||c.max_students||c.enrolled_count||0;
       html+='<div class="class-row" onclick="openClassView(\''+c.id+'\',\''+dateStr+'\')">'+
@@ -1384,9 +1490,9 @@ async function buildClassesTab(){
   el.innerHTML=html;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  CLASS VIEW — 3-part (All | Checked In | Eligible)
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  CLASS VIEW ‚Äî 3-part (All | Checked In | Eligible)
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function openClassView(classId,dateStr){
   currentClassData=allClasses.find(function(c){return c.id===classId;})||null;
   if(!currentClassData)return;
@@ -1395,7 +1501,7 @@ async function openClassView(classId,dateStr){
   rsvpStudentIds=new Set();
   eligibleStudentIds=new Set();
   coveringStudentIds=new Set();
-  // §STAFF-ELIGIBLE-COVERAGE — fetch students whose active memberships cover
+  // ¬ßSTAFF-ELIGIBLE-COVERAGE ‚Äî fetch students whose active memberships cover
   // this class's program. Used by recomputeEligible to filter the Eligible tab.
   if(currentClassData.program_id){
     try{
@@ -1409,7 +1515,7 @@ async function openClassView(classId,dateStr){
   document.getElementById('classView').classList.add('open');
   var cn=currentClassData.name||currentClassData.title||'Class';
   document.getElementById('cvClassName').textContent=cn;
-  document.getElementById('cvClassTime').textContent=fmtTime(currentClassData.start_time)+(currentClassData.end_time?' — '+fmtTime(currentClassData.end_time):'');
+  document.getElementById('cvClassTime').textContent=fmtTime(currentClassData.start_time)+(currentClassData.end_time?' ‚Äî '+fmtTime(currentClassData.end_time):'');
 
   // Sync panel visibility to current tab (without rendering empty state)
   setActiveTabVisibility(cvActiveTab);
@@ -1466,7 +1572,7 @@ function closeClassView(){
   if(classesPanel&&classesPanel.classList.contains('active'))buildClassesTab();
 }
 
-// ── All Students ──
+// ‚îÄ‚îÄ All Students ‚îÄ‚îÄ
 function renderCvAllStudents(searchTerm){
   var q=(searchTerm||'').toLowerCase().trim();
   var sorted=[].concat(allStudents).sort(function(a,b){
@@ -1484,7 +1590,7 @@ function renderCvAllStudents(searchTerm){
   el.innerHTML=sorted.map(function(s){return renderStudentRow(s,true);}).join('');
 }
 
-// ── Checked In ──
+// ‚îÄ‚îÄ Checked In ‚îÄ‚îÄ
 function renderCvCheckedIn(){
   var checked=allStudents.filter(function(s){return checkedInIds.has(s.id);});
   document.getElementById('cvBadgeCheckin').textContent=checkedInIds.size;
@@ -1496,7 +1602,7 @@ function renderCvCheckedIn(){
   el.innerHTML=checked.map(function(s){return renderStudentRow(s,false);}).join('');
 }
 
-// ── RSVPd ──
+// ‚îÄ‚îÄ RSVPd ‚îÄ‚îÄ
 function renderCvRsvp(){
   var rsvpd=allStudents.filter(function(s){return rsvpStudentIds.has(s.id);});
   rsvpd.sort(function(a,b){return (a.first_name+a.last_name)<(b.first_name+b.last_name)?-1:1;});
@@ -1509,7 +1615,7 @@ function renderCvRsvp(){
   el.innerHTML=rsvpd.map(function(s){return renderStudentRow(s,true);}).join('');
 }
 
-// ── Eligible (walk-in: not RSVPd, not checked in) ──
+// ‚îÄ‚îÄ Eligible (walk-in: not RSVPd, not checked in) ‚îÄ‚îÄ
 function renderCvEligible(searchTerm){
   var q=(searchTerm||'').toLowerCase().trim();
   var eligible=allStudents.filter(function(s){return eligibleStudentIds.has(s.id);});
@@ -1606,9 +1712,9 @@ function switchCvTab(tab){
   else if(tab==='all')renderCvAllStudents('');
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  CHECK IN
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function toggleCheckin(studentId,event){
   if(!staffCan('checkin')){ if(event&&event.stopPropagation)event.stopPropagation(); return; }
   event.stopPropagation();
@@ -1625,7 +1731,7 @@ async function toggleCheckin(studentId,event){
     checkedInIds.delete(studentId);
     showToast('Check-in removed','warn');
  }else{
-// §STAFF: CAP_CHECK — soft override using SECURITY DEFINER RPC.
+// ¬ßSTAFF: CAP_CHECK ‚Äî soft override using SECURITY DEFINER RPC.
     // Picks the OLDEST active membership that covers the current class's program
     // (Phase 11.E: FIFO, oldest credits used first; was most-recent prior to 11.E).
     // If at cap, shows a confirm() dialog allowing staff to override. Memberships not
@@ -1646,7 +1752,7 @@ async function toggleCheckin(studentId,event){
           }
         }
       }
-      // §STAFF: EXPIRY_CHECK — expired pack prompts staff discretion (override allowed).
+      // ¬ßSTAFF: EXPIRY_CHECK ‚Äî expired pack prompts staff discretion (override allowed).
       // Mirrors the cap-override pattern below; staff have judgment authority, kiosk does not.
       if(primary&&primary.is_expired){
         var expDateStr='';
@@ -1671,24 +1777,24 @@ async function toggleCheckin(studentId,event){
               var capBucketTotal=(primary.class_limit_type==='class_pack')?capLimit:((parseInt(primary.cycle_allowance)||0)+(parseInt(primary.rollover_balance)||0));
               var capBucketUsed=capBucketTotal-capBucketRem;
               if(primary.class_limit_type==='class_pack'){
-                capMsg='Class pack used up — '+capBucketUsed+' of '+capBucketTotal+' classes used.';
+                capMsg='Class pack used up ‚Äî '+capBucketUsed+' of '+capBucketTotal+' classes used.';
               }else if(primary.class_limit_type==='per_week'){
-                capMsg='Weekly limit reached — '+capBucketUsed+' of '+capBucketTotal+' classes used this week.';
+                capMsg='Weekly limit reached ‚Äî '+capBucketUsed+' of '+capBucketTotal+' classes used this week.';
               }else if(primary.class_limit_type==='per_month'){
-                capMsg='Monthly limit reached — '+capBucketUsed+' of '+capBucketTotal+' classes used this month.';
+                capMsg='Monthly limit reached ‚Äî '+capBucketUsed+' of '+capBucketTotal+' classes used this month.';
               }else{
-                capMsg='Class limit reached — '+capBucketUsed+' of '+capBucketTotal+' classes used.';
+                capMsg='Class limit reached ‚Äî '+capBucketUsed+' of '+capBucketTotal+' classes used.';
               }
             }
           }else if(primary.class_limit_type==='class_pack'){
             var capUsed=parseInt(primary.classes_used)||0;
-            if(capUsed>=capLimit) capMsg='Class pack used up — '+capUsed+' of '+capLimit+' classes used.';
+            if(capUsed>=capLimit) capMsg='Class pack used up ‚Äî '+capUsed+' of '+capLimit+' classes used.';
           }else if(primary.class_limit_type==='per_week'){
             var capWeek=parseInt(primary.attendance_last_7)||0;
-            if(capWeek>=capLimit) capMsg='Weekly limit reached — '+capWeek+' of '+capLimit+' classes used this week.';
+            if(capWeek>=capLimit) capMsg='Weekly limit reached ‚Äî '+capWeek+' of '+capLimit+' classes used this week.';
           }else if(primary.class_limit_type==='per_month'){
             var capMonth=parseInt(primary.attendance_last_30)||0;
-            if(capMonth>=capLimit) capMsg='Monthly limit reached — '+capMonth+' of '+capLimit+' classes used this month.';
+            if(capMonth>=capLimit) capMsg='Monthly limit reached ‚Äî '+capMonth+' of '+capLimit+' classes used this month.';
           }
           if(capMsg){
             if(!confirm(capMsg+'\n\nCheck in anyway?')){
@@ -1713,7 +1819,7 @@ if(!classSessionId){
   if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
   classSessionId=cr.data.id;
 }
-    // Insert attendance — stamp the viewed day for off-today (back-fill / future) check-ins
+    // Insert attendance ‚Äî stamp the viewed day for off-today (back-fill / future) check-ins
     var todayLocal=ymd(new Date());
     var notedAt;
     if(!currentClassData._dateStr||currentClassData._dateStr===todayLocal){
@@ -1775,17 +1881,17 @@ if(!classSessionId){
   document.getElementById('qsCheckedIn').textContent=checkedInIds.size;
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  BELT PROMOTION
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function isEligible(s){
   // Sync check against pre-computed set from buildEligibleList()
   return eligibleStudentIds.has(s.id);
 }
 
-async // ─────────────────────────────────────────────────────────────
+async // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  SESSIONS TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildSessionsTab(){
   var el=document.getElementById('sessionsBoard');
   try{
@@ -1799,12 +1905,12 @@ async function buildSessionsTab(){
     el.innerHTML=sessions.map(function(sess){
       var typeName=sess.session_types?sess.session_types.name:'Session';
       var typeColor=sess.session_types?sess.session_types.color:INSTR_COLORS[0];
-      var instrObj=sess.instructors;var instrName=instrObj?getInstrName(instrObj):'—';
+      var instrObj=sess.instructors;var instrName=instrObj?getInstrName(instrObj):'‚Äî';
       var dt=new Date(sess.session_date+'T00:00:00');
       var dateLabel=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       return '<div class="session-slot booked" style="border-left-color:'+typeColor+'">'+
         '<div style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">'+dateLabel+'</div>'+
-        '<div class="session-slot-time">'+fmtTime(sess.start_time)+(sess.end_time?' — '+fmtTime(sess.end_time):'')+'</div>'+
+        '<div class="session-slot-time">'+fmtTime(sess.start_time)+(sess.end_time?' ‚Äî '+fmtTime(sess.end_time):'')+'</div>'+
         '<div class="session-slot-type"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+typeColor+';margin-right:0.4rem"></span>'+typeName+'</div>'+
         '<div class="session-slot-instr"><i class="fa-solid fa-user-tie" style="margin-right:0.35rem;color:var(--gold);font-size:0.75rem"></i>'+instrName+'</div>'+
       '</div>';
@@ -1878,9 +1984,9 @@ async function saveBookedSession(){
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  TESTS TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildTestsTab(){
   var el=document.getElementById('testsList');
   try{
@@ -1902,7 +2008,7 @@ async function buildTestsTab(){
         (students.length?students.map(function(ts){
           var s=ts.students;if(!s)return '';
           var bl=allBeltLevels.find(function(l){return l.id===s.current_belt_id;})||null;
-          var beltName=bl?bl.name:'—';
+          var beltName=bl?bl.name:'‚Äî';
           var isPassed=ts.result==='passed';var isHeld=ts.result==='held';
           return '<div class="test-student-row">'+
             '<div style="flex:1"><div class="test-student-name">'+s.first_name+' '+s.last_name+'</div>'+
@@ -1931,9 +2037,9 @@ async function recordTestResult(testStudentId,result,btn){
   showToast(result==='passed'?'Passed!':'Held for next test','ok');
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  PROFILE TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildProfileTab(){
   var s=currentInstructor;
   var name=getInstrName(s);
@@ -1962,10 +2068,10 @@ async function buildProfileTab(){
   document.getElementById('psThisWeek').textContent=wkCount;
 
   document.getElementById('profileInfoCard').innerHTML=[
-    '<div class="profile-info-row"><div class="profile-info-label">Email</div><div class="profile-info-value">'+(s.email||'—')+'</div></div>',
+    '<div class="profile-info-row"><div class="profile-info-label">Email</div><div class="profile-info-value">'+(s.email||'‚Äî')+'</div></div>',
     '<div class="profile-info-row"><div class="profile-info-label">Role</div><div class="profile-info-value">'+(s.role?s.role.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}):'Instructor')+'</div></div>',
     s.nmao_cert_expiry?'<div class="profile-info-row"><div class="profile-info-label">Cert Expiry</div><div class="profile-info-value">'+new Date(s.nmao_cert_expiry+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</div></div>':'',
-    '<div class="profile-info-row"><div class="profile-info-label">School</div><div class="profile-info-value">'+(schoolData.name||'—')+'</div></div>'
+    '<div class="profile-info-row"><div class="profile-info-label">School</div><div class="profile-info-value">'+(schoolData.name||'‚Äî')+'</div></div>'
   ].join('');
   renderClusterEditor(s);
 }
@@ -2008,9 +2114,9 @@ async function saveClusterSettings(){
   msg.style.color='#5A9A6A'; msg.textContent='Saved.';
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  NAVIGATION
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function switchTab(name){
   var tabs=['Today','Classes','Sessions','Tests','Profile'];
   tabs.forEach(function(t){
@@ -2039,9 +2145,9 @@ function switchTab(name){
 return "in_progress";
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §ENROLLMENT-COUNTS — union of class_enrollments + class_attendance
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßENROLLMENT-COUNTS ‚Äî union of class_enrollments + class_attendance
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function fetchEnrollmentCounts(startDate,endDate){
   var queries=await Promise.all([
     sb.from('class_enrollments')
@@ -2093,9 +2199,9 @@ function enrollBadgeHTML(count,capacity){
   return '<span style="font-family:var(--font-display);font-size:1.1rem;color:'+color+';line-height:1">'+c+capPart+'</span>';
 }
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  UTILITIES
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function getInstrName(i){
   if(!i)return 'Instructor';
   if(i.first_name)return i.first_name+(i.last_name?' '+i.last_name:'');
@@ -2115,7 +2221,7 @@ function isLight(hex){
 }
 
 var toastTimer=null;
-/* ═══════════════ NEW-STUDENT SIGNUP WIZARD ═══════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê NEW-STUDENT SIGNUP WIZARD ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 var signupState={ step:1, maxStep:3, student:{}, planMode:'plan', selMembershipId:null, plan:null, payment:null, studentId:null };
 var suPlanLoaded=false, suPrograms=[], suMemberships=[], suMemProgs={};
 
@@ -2219,7 +2325,7 @@ function setSuMsg(id,txt,cls){
   el.className='su-msg'+(cls?(' '+cls):'');
 }
 
-/* ── Signup Step 2: plan / pack / custom ── */
+/* ‚îÄ‚îÄ Signup Step 2: plan / pack / custom ‚îÄ‚îÄ */
 async function suLoadPlanData(){
   if(suPlanLoaded) return;
   try{
@@ -2339,7 +2445,7 @@ function suCommitStep2(){
   return true;
 }
 
-// ── §STAFF: DISCOUNT ENGINE — shared by the signup + pack flows ─────────────
+// ‚îÄ‚îÄ ¬ßSTAFF: DISCOUNT ENGINE ‚Äî shared by the signup + pack flows ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 // dscGet(ns, basePrice) -> null when off/zero, else { cents, mode, reason, net }
 var _dscStaffUid=null;
 async function dscStaffUid(){
@@ -2417,7 +2523,7 @@ function dscReset(ns){
 
 function suEsc(s){ s=(s==null)?'':String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* ── Signup Step 3: payment + commit ── */
+/* ‚îÄ‚îÄ Signup Step 3: payment + commit ‚îÄ‚îÄ */
 function suEnterPayStep(){
   var p=signupState.plan||{}; var stu=signupState.student||{};
   var nm=((stu.first_name||'')+' '+(stu.last_name||'')).replace(/^\s+|\s+$/g,'');
@@ -2532,7 +2638,7 @@ function suRenderDone(kind, info){
     '<button class="su-btn su-btn-next" style="max-width:260px;margin:1.5rem auto 0" onclick="openSignup()"><i class="fa-solid fa-user-plus"></i> Sign up another</button></div>';
 }
 
-/* ── Student lookup -> Add Classes ── */
+/* ‚îÄ‚îÄ Student lookup -> Add Classes ‚îÄ‚îÄ */
 var slStudent=null, slPacks=[], slSelectedPackId=null, slRoster=[];
 
 async function openStudentLookup(){
@@ -2912,7 +3018,7 @@ async function slSendInvite(channel){
 }
 function setSlMsg(txt,cls){ var el=document.getElementById('slMsg'); if(!el) return; el.textContent=txt; el.className='su-msg'+(cls?(' '+cls):''); }
 
-/* ── Student lookup -> Sell / Renew a class pack ── */
+/* ‚îÄ‚îÄ Student lookup -> Sell / Renew a class pack ‚îÄ‚îÄ */
 var renewPacks=[], renewSelMemId=null, renewBusy=false, renewIdemKey=null;
 
 function renewNewIdem(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'idem_'+Date.now()+'_'+Math.random().toString(36).slice(2); }
@@ -3049,12 +3155,12 @@ async function renewGo(method){
 
 function shareBookingPage(){
   var slug=(schoolData&&schoolData.slug)?schoolData.slug:'';
-  if(!slug){ showToast('No booking link yet — set the portal link in Settings first.','err'); return; }
+  if(!slug){ showToast('No booking link yet ‚Äî set the portal link in Settings first.','err'); return; }
   var url='https://app.nmao.us/classes.html?s='+slug;
   if(navigator.share){
     navigator.share({title:(schoolData.name||'Class Schedule'),text:'Book a class with us!',url:url}).catch(function(){});
   }else if(navigator.clipboard){
-    navigator.clipboard.writeText(url).then(function(){showToast('Booking link copied!','ok');},function(){showToast('Could not copy — please copy manually.','err');});
+    navigator.clipboard.writeText(url).then(function(){showToast('Booking link copied!','ok');},function(){showToast('Could not copy ‚Äî please copy manually.','err');});
   }else{
     showToast(url,'ok');
   }
@@ -3070,9 +3176,9 @@ function showToast(msg,type){
 
 async function staffSignOut(){await sb.auth.signOut();window.location.reload();}
 
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  BOOT
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 init();
 </script>
 
