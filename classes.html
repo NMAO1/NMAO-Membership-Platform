@@ -203,7 +203,7 @@
         .eq('slug', slug).maybeSingle();
       if(r.error || !r.data){ showError('This schedule link is not active or does not exist. Please contact the school.'); return; }
       school = r.data;
-      document.title = 'Class Schedule ‚Äî ' + school.name;
+      document.title = 'Class Schedule \u2014 ' + school.name;
       document.getElementById('schoolLogoText').textContent = school.name;
       if(school.logo_url){
         var img=document.getElementById('schoolLogoImg'); img.src=school.logo_url; img.style.display='block';
@@ -244,14 +244,14 @@
     function rangeLabel(s,e){
       if(view==='day') return DAY_LABEL[s.getDay()]+', '+MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate();
       if(view==='month') return MONTHS[s.getMonth()]+' '+s.getFullYear();
-      return MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate()+' ‚Äì '+MONTHS[e.getMonth()].slice(0,3)+' '+e.getDate();
+      return MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate()+' \u2013 '+MONTHS[e.getMonth()].slice(0,3)+' '+e.getDate();
     }
 
     async function loadSchedule(){
       var rg=computeRange();
       document.getElementById('rangeLabel').textContent = rangeLabel(rg.start, rg.end);
       loadShiftBanner(rg);
-      document.getElementById('scheduleBox').innerHTML = '<div class="empty">Loading‚Ä¶</div>';
+      document.getElementById('scheduleBox').innerHTML = '<div class="empty">Loading\u2026</div>';
       var r = await sb.rpc('get_public_class_schedule', { p_slug:slug, p_start:ymd(rg.start), p_end:ymd(rg.end) });
       if(r.error){ document.getElementById('scheduleBox').innerHTML='<div class="empty">Could not load the schedule.</div>'; return; }
       rows = r.data || [];
@@ -261,7 +261,6 @@
 
     function renderSchedule(){
       var box=document.getElementById('scheduleBox');
-      if(view==='week'){ renderWeekGrid(box); return; }
       if(!rows.length){ box.innerHTML='<div class="empty">No classes scheduled in this range.</div>'; return; }
       var byDay={}, order=[];
       for(var i=0;i<rows.length;i++){
@@ -279,8 +278,8 @@
           var c=list[k]; var idx=rows.indexOf(c);
           var full = (c.capacity!=null && c.spots_left!=null && c.spots_left<=0);
           html += '<div class="class-card">'
-            + '<div class="cc-top"><span class="cc-name">'+esc(c.class_name)+'</span><span class="cc-time">'+fmtTime(c.start_time)+(c.end_time?(' ‚Äì '+fmtTime(c.end_time)):'')+'</span></div>'
-            + '<div class="cc-meta">'+esc(c.program_name||'')+(c.instructor_name?(' ¬∑ with '+esc(c.instructor_name)):'')+'</div>';
+            + '<div class="cc-top"><span class="cc-name">'+esc(c.class_name)+'</span><span class="cc-time">'+fmtTime(c.start_time)+(c.end_time?(' \u2013 '+fmtTime(c.end_time)):'')+'</span></div>'
+            + '<div class="cc-meta">'+esc(c.program_name||'')+(c.instructor_name?(' \u00b7 with '+esc(c.instructor_name)):'')+'</div>';
           if(showSpots && c.capacity!=null && c.spots_left!=null){
             if(full) html += '<div class="cc-full">Class full</div>';
             else html += '<div class="cc-spots'+(c.spots_left<=3?' low':'')+'">'+c.spots_left+' spot'+(c.spots_left===1?'':'s')+' left</div>';
@@ -360,7 +359,7 @@
 
     function classSummary(c){
       var parts=c.session_date.split('-'); var dd=new Date(parseInt(parts[0],10),parseInt(parts[1],10)-1,parseInt(parts[2],10));
-      return esc(c.class_name)+' ¬∑ '+DAY_LABEL[dd.getDay()]+' '+MONTHS[dd.getMonth()].slice(0,3)+' '+dd.getDate()+' ¬∑ '+fmtTime(c.start_time);
+      return esc(c.class_name)+' \u00b7 '+DAY_LABEL[dd.getDay()]+' '+MONTHS[dd.getMonth()].slice(0,3)+' '+dd.getDate()+' \u00b7 '+fmtTime(c.start_time);
     }
 
     function openReserve(idx){
@@ -378,7 +377,7 @@
       var c=rows[idx]; var contact=document.getElementById('resContact').value.trim();
       var msg=document.getElementById('resMsg'); msg.className='modal-msg';
       if(!contact){ msg.className='modal-msg err'; msg.textContent='Please enter your email or phone.'; return; }
-      var btn=document.getElementById('resBtn'); btn.disabled=true; msg.textContent='Reserving‚Ä¶';
+      var btn=document.getElementById('resBtn'); btn.disabled=true; msg.textContent='Reserving\u2026';
       var res=await callEF({ action:'reserve', slug:slug, class_id:c.class_id, session_date:c.session_date, email_or_phone:contact });
       if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
       lastReserve={ token:res.cancel_token, contact:contact };
@@ -392,7 +391,7 @@
     }
     async function submitCancel(){
       if(!lastReserve) return;
-      var msg=document.getElementById('cxMsg'); if(msg){ msg.className='modal-msg'; msg.textContent='Cancelling‚Ä¶'; }
+      var msg=document.getElementById('cxMsg'); if(msg){ msg.className='modal-msg'; msg.textContent='Cancelling\u2026'; }
       var res=await callEF({ action:'cancel', slug:slug, cancel_token:lastReserve.token, email_or_phone:lastReserve.contact });
       if(msg){ msg.className='modal-msg '+((res&&res.ok)?'ok':'err'); msg.textContent=(res&&res.message)||(res&&res.error)||'Done.'; }
     }
@@ -420,7 +419,7 @@
       var sms=document.getElementById('tSms').checked;
       var msg=document.getElementById('tMsg'); msg.className='modal-msg';
       if(!first || !email){ msg.className='modal-msg err'; msg.textContent='Please enter your first name and email.'; return; }
-      var btn=document.getElementById('tBtn'); btn.disabled=true; msg.textContent='Booking‚Ä¶';
+      var btn=document.getElementById('tBtn'); btn.disabled=true; msg.textContent='Booking\u2026';
       var res=await callEF({ action:'trial', slug:slug, class_id:c.class_id, session_date:c.session_date, first:first, last:last, email:email, phone:phone, sms_consent:sms });
       if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
       openModal(
