@@ -141,6 +141,7 @@
     var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     var slug = '', school = null, view = 'week', anchor = new Date(), rows = [], showSpots = true;
+    function goPortalLogin(){ location.href='https://app.nmao.us/portal.html'+(slug?('?s='+encodeURIComponent(slug)):''); }
     var lastReserve = null; // {token, contact} for the confirmation cancel button
 
     function ymd(d){ var m=d.getMonth()+1, day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
@@ -202,7 +203,7 @@
         .eq('slug', slug).maybeSingle();
       if(r.error || !r.data){ showError('This schedule link is not active or does not exist. Please contact the school.'); return; }
       school = r.data;
-      document.title = 'Class Schedule — ' + school.name;
+      document.title = 'Class Schedule ‚Äî ' + school.name;
       document.getElementById('schoolLogoText').textContent = school.name;
       if(school.logo_url){
         var img=document.getElementById('schoolLogoImg'); img.src=school.logo_url; img.style.display='block';
@@ -243,14 +244,14 @@
     function rangeLabel(s,e){
       if(view==='day') return DAY_LABEL[s.getDay()]+', '+MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate();
       if(view==='month') return MONTHS[s.getMonth()]+' '+s.getFullYear();
-      return MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate()+' – '+MONTHS[e.getMonth()].slice(0,3)+' '+e.getDate();
+      return MONTHS[s.getMonth()].slice(0,3)+' '+s.getDate()+' ‚Äì '+MONTHS[e.getMonth()].slice(0,3)+' '+e.getDate();
     }
 
     async function loadSchedule(){
       var rg=computeRange();
       document.getElementById('rangeLabel').textContent = rangeLabel(rg.start, rg.end);
       loadShiftBanner(rg);
-      document.getElementById('scheduleBox').innerHTML = '<div class="empty">Loading…</div>';
+      document.getElementById('scheduleBox').innerHTML = '<div class="empty">Loading‚Ä¶</div>';
       var r = await sb.rpc('get_public_class_schedule', { p_slug:slug, p_start:ymd(rg.start), p_end:ymd(rg.end) });
       if(r.error){ document.getElementById('scheduleBox').innerHTML='<div class="empty">Could not load the schedule.</div>'; return; }
       rows = r.data || [];
@@ -278,14 +279,14 @@
           var c=list[k]; var idx=rows.indexOf(c);
           var full = (c.capacity!=null && c.spots_left!=null && c.spots_left<=0);
           html += '<div class="class-card">'
-            + '<div class="cc-top"><span class="cc-name">'+esc(c.class_name)+'</span><span class="cc-time">'+fmtTime(c.start_time)+(c.end_time?(' – '+fmtTime(c.end_time)):'')+'</span></div>'
-            + '<div class="cc-meta">'+esc(c.program_name||'')+(c.instructor_name?(' · with '+esc(c.instructor_name)):'')+'</div>';
+            + '<div class="cc-top"><span class="cc-name">'+esc(c.class_name)+'</span><span class="cc-time">'+fmtTime(c.start_time)+(c.end_time?(' ‚Äì '+fmtTime(c.end_time)):'')+'</span></div>'
+            + '<div class="cc-meta">'+esc(c.program_name||'')+(c.instructor_name?(' ¬∑ with '+esc(c.instructor_name)):'')+'</div>';
           if(showSpots && c.capacity!=null && c.spots_left!=null){
             if(full) html += '<div class="cc-full">Class full</div>';
             else html += '<div class="cc-spots'+(c.spots_left<=3?' low':'')+'">'+c.spots_left+' spot'+(c.spots_left===1?'':'s')+' left</div>';
           }
           html += '<div class="cc-actions">';
-          html += '<button class="btn btn-primary" '+(full?'disabled':'')+' onclick="openReserve('+idx+')">Reserve</button>';
+          html += '<button class="btn btn-primary" '+(full?'disabled':'')+' onclick="goPortalLogin()">Log in to book</button>';
           if(c.trial_enabled) html += '<button class="btn btn-ghost" '+(full?'disabled':'')+' onclick="openTrial('+idx+')">Try a free class</button>';
           html += '</div></div>';
         }
@@ -331,7 +332,7 @@
       if(c.program_name||c.instructor_name){ h+='<div class="cc-meta">'+esc(c.program_name||'')+(c.instructor_name?(' with '+esc(c.instructor_name)):'')+'</div>'; }
       if(showSpots && c.capacity!=null && c.spots_left!=null){ h+= full?'<div class="cc-full">Class full</div>':'<div class="cc-spots'+(c.spots_left<=3?' low':'')+'">'+c.spots_left+' spot'+(c.spots_left===1?'':'s')+' left</div>'; }
       h+='<div class="cc-actions" style="margin-top:1rem">';
-      h+='<button class="btn btn-primary" '+(full?'disabled':'')+' onclick="openReserve('+idx+')">Reserve</button>';
+      h+='<button class="btn btn-primary" '+(full?'disabled':'')+' onclick="goPortalLogin()">Log in to book</button>';
       if(c.trial_enabled){ h+='<button class="btn btn-ghost" '+(full?'disabled':'')+' onclick="openTrial('+idx+')">Try a free class</button>'; }
       h+='</div>';
       openModal(h);
@@ -359,7 +360,7 @@
 
     function classSummary(c){
       var parts=c.session_date.split('-'); var dd=new Date(parseInt(parts[0],10),parseInt(parts[1],10)-1,parseInt(parts[2],10));
-      return esc(c.class_name)+' · '+DAY_LABEL[dd.getDay()]+' '+MONTHS[dd.getMonth()].slice(0,3)+' '+dd.getDate()+' · '+fmtTime(c.start_time);
+      return esc(c.class_name)+' ¬∑ '+DAY_LABEL[dd.getDay()]+' '+MONTHS[dd.getMonth()].slice(0,3)+' '+dd.getDate()+' ¬∑ '+fmtTime(c.start_time);
     }
 
     function openReserve(idx){
@@ -370,14 +371,14 @@
         '<div class="field"><label>Email or phone on your account</label><input type="text" id="resContact" placeholder="you@example.com" /></div>'+
         '<button class="btn btn-primary" style="width:100%" id="resBtn" onclick="submitReserve('+idx+')">Reserve</button>'+
         '<div class="modal-msg" id="resMsg"></div>'+
-        '<div class="modal-sub" style="margin-top:0.75rem">New here? Close this and tap “Try a free class.”</div>'
+        '<div class="modal-sub" style="margin-top:0.75rem">New here? Close this and tap ‚ÄúTry a free class.‚Äù</div>'
       );
     }
     async function submitReserve(idx){
       var c=rows[idx]; var contact=document.getElementById('resContact').value.trim();
       var msg=document.getElementById('resMsg'); msg.className='modal-msg';
       if(!contact){ msg.className='modal-msg err'; msg.textContent='Please enter your email or phone.'; return; }
-      var btn=document.getElementById('resBtn'); btn.disabled=true; msg.textContent='Reserving…';
+      var btn=document.getElementById('resBtn'); btn.disabled=true; msg.textContent='Reserving‚Ä¶';
       var res=await callEF({ action:'reserve', slug:slug, class_id:c.class_id, session_date:c.session_date, email_or_phone:contact });
       if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
       lastReserve={ token:res.cancel_token, contact:contact };
@@ -391,7 +392,7 @@
     }
     async function submitCancel(){
       if(!lastReserve) return;
-      var msg=document.getElementById('cxMsg'); if(msg){ msg.className='modal-msg'; msg.textContent='Cancelling…'; }
+      var msg=document.getElementById('cxMsg'); if(msg){ msg.className='modal-msg'; msg.textContent='Cancelling‚Ä¶'; }
       var res=await callEF({ action:'cancel', slug:slug, cancel_token:lastReserve.token, email_or_phone:lastReserve.contact });
       if(msg){ msg.className='modal-msg '+((res&&res.ok)?'ok':'err'); msg.textContent=(res&&res.message)||(res&&res.error)||'Done.'; }
     }
@@ -419,7 +420,7 @@
       var sms=document.getElementById('tSms').checked;
       var msg=document.getElementById('tMsg'); msg.className='modal-msg';
       if(!first || !email){ msg.className='modal-msg err'; msg.textContent='Please enter your first name and email.'; return; }
-      var btn=document.getElementById('tBtn'); btn.disabled=true; msg.textContent='Booking…';
+      var btn=document.getElementById('tBtn'); btn.disabled=true; msg.textContent='Booking‚Ä¶';
       var res=await callEF({ action:'trial', slug:slug, class_id:c.class_id, session_date:c.session_date, first:first, last:last, email:email, phone:phone, sms_consent:sms });
       if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
       openModal(
