@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Member Portal — NMAO</title>
+  <title>Member Portal ‚Äî NMAO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&family=Inter:wght@300;400;600&family=Oswald:wght@300;400;600&family=Nunito:wght@300;400;700&display=swap" rel="stylesheet" />
@@ -11,9 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
 
-/* ══════════════════════════════════════════
-   §CSS: RESET_AND_VARS
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: RESET_AND_VARS
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
@@ -23,9 +23,9 @@
 }
 body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-height:100vh;font-size:15px;}
 
-/* ══════════════════════════════════════════
-   §CSS: LOGIN
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: LOGIN
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .login-logo-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;}
 .login-logo-img{max-height:64px;max-width:160px;object-fit:contain;}
@@ -45,17 +45,17 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .form-msg.success{color:var(--green);}
 .form-msg.error{color:#E07070;}
 
-/* ══════════════════════════════════════════
-   §CSS: SUCCESS
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: SUCCESS
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #successScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;}
 .success-icon{font-size:3rem;color:var(--gold);margin-bottom:1.5rem;}
 .success-title{font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;}
 .success-sub{font-size:0.92rem;color:var(--muted);max-width:380px;line-height:1.7;}
 
-/* ══════════════════════════════════════════
-   §CSS: PORTAL_HEADER
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: PORTAL_HEADER
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .portal-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .portal-header-left{display:flex;align-items:center;gap:0.85rem;}
 .portal-header-logo{max-height:40px;max-width:120px;object-fit:contain;}
@@ -65,9 +65,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .portal-signout:hover{border-color:var(--gold);color:var(--gold);}
 .portal-body{max-width:720px;margin:0 auto;padding:2rem 1.5rem;}
 
-/* ══════════════════════════════════════════
-   §CSS: CHIPS_AND_SHARED
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: CHIPS_AND_SHARED
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .chip{font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:2px;}
 .chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
 .chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
@@ -105,11 +105,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .sched-day-dot.has-class{background:var(--muted);}
 .sched-day-dot.active{background:var(--gold);transform:scale(1.3);}
 
-/* ══════════════════════════════════════════
-   §CSS: STUDENT_PORTAL
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: STUDENT_PORTAL
    NOTE: portal-tabs now scrolls horizontally
    to support 8 tabs without cramping.
-══════════════════════════════════════════ */
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .portal-tabs{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
 .portal-tab{flex:1 1 25%;min-width:0;display:flex;align-items:center;justify-content:center;height:48px;padding:0 0.5rem;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;white-space:nowrap;line-height:1;overflow:hidden;}
 .portal-tab.active{color:var(--gold);border-color:var(--gold);}
@@ -139,7 +139,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .milestone-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.8s ease;}
 .att-row{display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold);margin-bottom:0.4rem;}
 .video-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold-dk);margin-bottom:0.5rem;}
-/* §CSS-CURRICULUM — accordion for belt curriculum at-or-below */
+/* ¬ßCSS-CURRICULUM ‚Äî accordion for belt curriculum at-or-below */
 .curriculum-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -229,9 +229,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .announcement-cta{display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.2rem;text-decoration:none;margin-top:0.5rem;}
 .announcement-date{font-size:0.68rem;color:var(--muted);margin-top:0.5rem;}
 
-/* ══════════════════════════════════════════
-   §CSS: ONBOARDING
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: ONBOARDING
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #onboardingScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .onboarding-card{background:var(--surface);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:520px;}
 .onboarding-logo-wrap{text-align:center;margin-bottom:2rem;}
@@ -251,7 +251,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-get-started{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;margin-top:1.25rem;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
 .btn-get-started:hover{opacity:0.9;}
 
-/* §CSS-ONBOARD-FIX — narrow-viewport layout for onboarding cards */
+/* ¬ßCSS-ONBOARD-FIX ‚Äî narrow-viewport layout for onboarding cards */
 .onboard-step {
   align-items: flex-start;
   flex-wrap: wrap;
@@ -270,9 +270,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     margin-top: 0.5rem;
   }
 }
-/* ══════════════════════════════════════════
-   §CSS: FAMILY_PORTAL
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: FAMILY_PORTAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 
 .child-switcher-bar{background:var(--black);border-bottom:1px solid var(--border);padding:0.85rem 1.5rem;display:flex;align-items:center;gap:1rem;}
 .child-switcher-label{font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;flex-shrink:0;}
@@ -315,9 +315,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .mini-belt-bar{display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;}
 .mini-belt-swatch{width:28px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,0.15);}
 
-/* ══════════════════════════════════════════
-   §CSS: INSTRUCTOR_PORTAL
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: INSTRUCTOR_PORTAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #instructorPortalScreen{display:none;}
 .instructor-greeting{font-family:var(--font-display);font-size:1.8rem;color:var(--white);margin-bottom:0.25rem;}
 .instructor-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;}
@@ -329,9 +329,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .staff-app-link{display:flex;align-items:center;gap:0.85rem;padding:1.1rem 1.35rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin-top:1.5rem;cursor:pointer;text-decoration:none;transition:border-color 0.2s;}
 .staff-app-link:hover{border-color:var(--gold);}
 
-/* ══════════════════════════════════════════
-   §CSS: WAIVER_MODAL
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: WAIVER_MODAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #waiverModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
 #waiverModal.active{display:flex;}
 .waiver-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;}
@@ -346,12 +346,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .waiver-body table{width:100%;table-layout:fixed;}
 .waiver-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;justify-content:flex-end;flex-shrink:0;}
 .btn-sign-waiver{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.75rem 1.75rem;border:none;cursor:pointer;}
-/* ══════════════════════════════════════════
-   §CSS: WAIVER_SIGN_SECTION
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: WAIVER_SIGN_SECTION
    Opt-in checkboxes, ESIGN consent, typed-name signature,
    inline status, and disabled sign-button state.
    Phase 1 waiver upgrade.
-══════════════════════════════════════════ */
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .waiver-sign-section{padding:1.25rem 1.5rem;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);}
 .waiver-sign-heading{font-family:var(--font-display);font-size:0.75rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
 
@@ -375,11 +375,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .waiver-sign-msg.error{color:#E07070;}
 .waiver-sign-msg.success{color:var(--green);}
 
-/* ══════════════════════════════════════════
-   §CSS: WAIVER_BANNER
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: WAIVER_BANNER
    Persistent unsigned-waiver banner shown inside #portalScreen
    when currentStudent.waiver_signed is false.
-══════════════════════════════════════════ */
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .waiver-banner{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin:0 auto 1rem;max-width:720px;padding:0.9rem 1.2rem;display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap;}
 .waiver-banner-icon{color:var(--gold);font-size:1.1rem;flex-shrink:0;}
 .waiver-banner-text{flex:1;font-size:0.85rem;color:var(--white);line-height:1.4;min-width:200px;}
@@ -388,18 +388,18 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .waiver-banner-btn{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.6rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;transition:opacity 0.2s;}
 .waiver-banner-btn:hover{opacity:0.9;}
 
-/* ══════════════════════════════════════════
-   §CSS: CHILD_WAIVER_PILL
-   Family portal — per-child sign-waiver pill on hero card,
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: CHILD_WAIVER_PILL
+   Family portal ‚Äî per-child sign-waiver pill on hero card,
    shown when child.waiver_signed is false.
-══════════════════════════════════════════ */
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .child-waiver-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.35rem 0.7rem;margin-top:0.5rem;cursor:pointer;transition:all 0.15s;}
 .child-waiver-pill:hover{background:var(--gold);color:var(--black);}
 .child-waiver-pill i{font-size:0.75rem;}
     
-/* ══════════════════════════════════════════
-   §CSS: CONTACT_MODAL
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: CONTACT_MODAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #contactModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:1rem;}
 #contactModal.active{display:flex;}
 .contact-card{background:var(--surface);border:1px solid var(--border);width:100%;max-width:440px;padding:2rem;}
@@ -411,9 +411,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .contact-field input:focus{border-color:var(--gold);}
 .btn-save-contact{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.9rem;border:none;cursor:pointer;margin-top:0.5rem;}
 
-/* ══════════════════════════════════════════
-   §CSS: CELEBRATION
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: CELEBRATION
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 #celebrationOverlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);backdrop-filter:blur(4px);}
 #celebrationOverlay.active{display:flex;}
 .celebration-card{background:var(--surface);border:1px solid var(--gold-dk);padding:2.5rem 2rem;max-width:440px;width:90%;text-align:center;animation:celebIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
@@ -430,10 +430,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 @keyframes particleRise{0%{opacity:0;transform:translateY(0) scale(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(-80vh) scale(1.5);}}
 @keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
 
-/* ══════════════════════════════════════════
-   §CSS: SESSIONS_TAB [NEW]
-   Search: §CSS: SESSIONS_TAB
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: SESSIONS_TAB [NEW]
+   Search: ¬ßCSS: SESSIONS_TAB
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .session-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;}
 .session-card.upcoming{border-left:3px solid var(--gold);}
 .session-card.past{border-left:3px solid var(--border);opacity:0.75;}
@@ -447,10 +447,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .session-meta-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem;color:var(--muted2);margin-top:0.35rem;}
 .session-notes{font-size:0.78rem;color:var(--muted2);margin-top:0.5rem;font-style:italic;border-top:1px solid var(--border);padding-top:0.45rem;}
 
-/* ══════════════════════════════════════════
-   §CSS: PACKS_TAB [NEW]
-   Search: §CSS: PACKS_TAB
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: PACKS_TAB [NEW]
+   Search: ¬ßCSS: PACKS_TAB
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .pack-balance-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1.1rem 1.35rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:1.35rem;}
 .pack-count-big{font-family:var(--font-display);font-size:3rem;color:var(--gold);line-height:1;flex-shrink:0;}
 .pack-balance-info{flex:1;}
@@ -471,10 +471,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-confirm-buy:hover{opacity:0.9;}
 .btn-cancel-buy{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 0.85rem;cursor:pointer;}
 
-/* ══════════════════════════════════════════
-   §CSS: BOOK_TAB [NEW]
-   Search: §CSS: BOOK_TAB
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: BOOK_TAB [NEW]
+   Search: ¬ßCSS: BOOK_TAB
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .instructor-book-card{background:var(--surface);border:1px solid var(--border);padding:1.35rem;margin-bottom:0.75rem;}
 .instructor-book-inner{display:flex;gap:1.25rem;align-items:flex-start;}
 .instructor-book-avatar{width:58px;height:58px;border-radius:50%;border:2px solid var(--border);background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
@@ -484,10 +484,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-book-now{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.65rem 1.4rem;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.45rem;margin-top:0.85rem;transition:opacity 0.2s;}
 .btn-book-now:hover{opacity:0.9;}
 
-/* ══════════════════════════════════════════
-   §CSS: SHOP_TAB
-   Search: §CSS: SHOP_TAB
-══════════════════════════════════════════ */
+/* ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+   ¬ßCSS: SHOP_TAB
+   Search: ¬ßCSS: SHOP_TAB
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .shop-product-card{background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.35rem;margin-bottom:0.5rem;}
 .shop-product-row{display:flex;gap:1rem;margin-bottom:0.85rem;}
 .shop-product-info{flex:1;min-width:0;}
@@ -507,7 +507,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-buy-product{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1.1rem;border:none;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all 0.2s;}
 .btn-buy-product:hover{opacity:0.9;}
 
-/* §CSS: SHOP_CART — cart panel + items + checkout */
+/* ¬ßCSS: SHOP_CART ‚Äî cart panel + items + checkout */
 .shop-cart-panel{background:var(--surface);border:1px solid var(--gold-dk);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.25rem;border-radius:4px;}
 .shop-cart-header{font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem;display:flex;align-items:center;justify-content:space-between;}
 .shop-cart-list{margin-bottom:1rem;}
@@ -530,7 +530,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .btn-clear-cart{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.55rem 0.9rem;cursor:pointer;flex-shrink:0;}
 .btn-clear-cart:hover{border-color:#E07070;color:#E07070;}
 
-/* §CSS: TAB_BADGE_NOTIF — shared notification dot for Shop and Updates tabs */
+/* ¬ßCSS: TAB_BADGE_NOTIF ‚Äî shared notification dot for Shop and Updates tabs */
 .shop-badge-notif,.tab-badge-notif{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#E07070;color:white;font-size:0.6rem;font-weight:700;border-radius:9px;margin-left:0.35rem;line-height:1;}
 
 #firstRunPwModal,#changePwModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:1rem}
@@ -550,9 +550,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 
 <canvas id="confettiCanvas" style="display:none"></canvas>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: LOGIN_SCREEN
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: LOGIN_SCREEN
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="loginScreen">
   <div class="login-logo-wrap">
     <img id="loginLogoImg" class="login-logo-img" src="" alt="" style="display:none" />
@@ -598,18 +598,18 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: SUCCESS_SCREEN
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: SUCCESS_SCREEN
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="successScreen">
   <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
   <div class="success-title">Check your email</div>
   <div class="success-sub">We sent a sign-in link to <strong id="sentEmail"></strong>. Click the link in your email to access your member portal.</div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: ONBOARDING_SCREEN
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: ONBOARDING_SCREEN
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="onboardingScreen">
   <input type="file" id="onboardPhotoInput" accept="image/*" style="display:none" onchange="handleOnboardPhotoUpload(event)" />
   <div class="onboarding-card">
@@ -659,9 +659,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: STUDENT_PORTAL
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: STUDENT_PORTAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="portalScreen" style="display:none">
   <div class="portal-header">
     <div class="portal-header-left">
@@ -711,11 +711,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div>
 
-      <!-- ════════════════════════════════════
-           §SECTION: STUDENT_TABS
-           Tab order: Schedule · Updates · Profile
-           Progress · Attendance · Sessions · Packs · Book
-      ════════════════════════════════════ -->
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: STUDENT_TABS
+           Tab order: Schedule ¬∑ Updates ¬∑ Profile
+           Progress ¬∑ Attendance ¬∑ Sessions ¬∑ Packs ¬∑ Book
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
     <div class="portal-tabs">
         <div class="portal-tab active" id="ptab-schedule"    onclick="switchPortalTab('schedule')"><i class="fa-solid fa-calendar-day"></i> Schedule</div>
         <div class="portal-tab"        id="ptab-updates"     onclick="switchPortalTab('updates')"><i class="fa-solid fa-bullhorn"></i> Alerts<span class="tab-badge-notif" id="updatesBadgeNotif" style="display:none">0</span></div>
@@ -728,9 +728,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-tab"        id="ptab-shop"        onclick="switchPortalTab('shop')"><i class="fa-solid fa-bag-shopping"></i> Shop<span class="shop-badge-notif" id="shopBadgeNotif" style="display:none">0</span></div>
       </div>
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_SCHEDULE
-      ════════════════════════════════════ -->
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_SCHEDULE
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabSchedule">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-calendar-week"></i> This Week's Classes</div>
@@ -738,9 +738,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div>
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_UPDATES
-      ════════════════════════════════════ -->
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_UPDATES
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabUpdates" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-bullhorn"></i> School Announcements</div>
@@ -748,12 +748,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div>
 
-      <!-- ════════════════════════════════════
-       §SECTION: TAB_PROFILE
-       Contains: Membership · Contact · Curriculum
-       (Referral section reserved — schema exists in DB,
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+       ¬ßSECTION: TAB_PROFILE
+       Contains: Membership ¬∑ Contact ¬∑ Curriculum
+       (Referral section reserved ‚Äî schema exists in DB,
         UI not yet built. See Bible v11 F1 notes.)
-  ════════════════════════════════════ -->
+  ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabProfile" style="display:none">
      <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-id-card"></i> Membership</div>
@@ -762,7 +762,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
        <div class="portal-section" id="startMembershipSection" style="display:none">
           <div class="section-label"><i class="fa-solid fa-circle-check"></i> Activate Membership</div>
           <div class="info-card">
-            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing. You'll enter your card on a secure Stripe page — your first payment is prorated to the next billing date, and future payments run automatically.</p>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing. You'll enter your card on a secure Stripe page ‚Äî your first payment is prorated to the next billing date, and future payments run automatically.</p>
             <button class="btn-gold" id="startMembershipBtn" onclick="startMembership()"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start my membership</button>
             <p class="form-msg" id="startMembershipMsg"></p>
           </div>
@@ -794,10 +794,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div><!-- END portalTabCurriculum -->
 
- <!-- ════════════════════════════════════
-           §SECTION: TAB_PROGRESS [MERGED]
-           Order: Class Tracker (countdown) → Belt Progress (conditional) → Recent Attendance
-      ════════════════════════════════════ -->
+ <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_PROGRESS [MERGED]
+           Order: Class Tracker (countdown) ‚Üí Belt Progress (conditional) ‚Üí Recent Attendance
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabProgress" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-chart-line"></i> Class Tracker</div>
@@ -814,12 +814,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       </div>
 
 
-<!-- ════════════════════════════════════
-           §SECTION: TAB_SESSIONS [MERGED]
-           Tables: student_session_packs · session_packs · sessions · session_types
-           Order: Active Packs → Buy a Pack → Upcoming Private Sessions
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_SESSIONS [MERGED]
+           Tables: student_session_packs ¬∑ session_packs ¬∑ sessions ¬∑ session_types
+           Order: Active Packs ‚Üí Buy a Pack ‚Üí Upcoming Private Sessions
            Past Sessions hidden from UI (kept in DB).
-      ════════════════════════════════════ -->
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabSessions" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-layer-group"></i> Your Active Packs</div>
@@ -837,11 +837,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
       </div>
 
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_BOOK [NEW]
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_BOOK [NEW]
            Table: instructors (booking_link_enabled=true)
-           Search: §SECTION: TAB_BOOK
-      ════════════════════════════════════ -->
+           Search: ¬ßSECTION: TAB_BOOK
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabBook" style="display:none">
         <div class="portal-section">
           <div class="section-label"><i class="fa-solid fa-calendar-plus"></i> Book a Private Session</div>
@@ -850,12 +850,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div>
 
-      <!-- ════════════════════════════════════
-           §SECTION: TAB_SHOP
+      <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+           ¬ßSECTION: TAB_SHOP
            Table: products (active=true, member_app=true)
            Cart-based checkout via create-pos-checkout EF
-           Search: §SECTION: TAB_SHOP
-      ════════════════════════════════════ -->
+           Search: ¬ßSECTION: TAB_SHOP
+      ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
       <div id="portalTabEvents" style="display:none">
         <style>
         .event-card{border:1px solid var(--border);background:var(--surface);margin-bottom:0.75rem}
@@ -895,9 +895,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 </div><!-- end portalScreen -->
 
 
-<!-- ════════════════════════════════════════════
-     §SECTION: INSTRUCTOR_PORTAL
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: INSTRUCTOR_PORTAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="instructorPortalScreen">
   <div class="portal-header">
     <div class="portal-header-left">
@@ -927,12 +927,12 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: CELEBRATION_OVERLAY
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: CELEBRATION_OVERLAY
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="celebrationOverlay">
   <div class="celebration-card">
-    <span class="celebration-emoji" id="celebEmoji">🎊</span>
+    <span class="celebration-emoji" id="celebEmoji">üéä</span>
     <div class="celebration-number" id="celebNumber">100</div>
     <div class="celebration-label">Classes Attended</div>
     <div class="celebration-message" id="celebMessage">You have built something real.</div>
@@ -940,9 +940,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: WAIVER_MODAL
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: WAIVER_MODAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="waiverModal">
   <div class="waiver-card">
     <div class="waiver-header">
@@ -980,14 +980,14 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     </div>
     <div class="waiver-footer">
       <button style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.65rem 1.25rem;cursor:pointer" onclick="document.getElementById('waiverModal').classList.remove('active')">Cancel</button>
-      <button class="btn-sign-waiver" id="signWaiverBtn" onclick="signWaiver()" disabled><i class="fa-solid fa-signature" style="margin-right:0.4rem"></i>I Agree — Sign Waiver</button>
+      <button class="btn-sign-waiver" id="signWaiverBtn" onclick="signWaiver()" disabled><i class="fa-solid fa-signature" style="margin-right:0.4rem"></i>I Agree ‚Äî Sign Waiver</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     §SECTION: CONTACT_MODAL
-════════════════════════════════════════════ -->
+<!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+     ¬ßSECTION: CONTACT_MODAL
+‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê -->
 <div id="contactModal">
   <div class="contact-card">
     <div class="contact-card-title">Verify Contact Info</div>
@@ -1000,9 +1000,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
   </div>
 </div>
 <script>
-// ─────────────────────────────────────────────────────────────
-//  §JS: CONSTANTS
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: CONSTANTS
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var SURL='https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var SID=null;
@@ -1022,14 +1022,14 @@ var keepSignedIn=keepSignedInPref!=='false';
 var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
 
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
-var ANIM_EMOJIS={confetti:'🎊',belt:'🥋',stars:'⭐',fire:'🔥',petals:'🌸',lightning:'⚡',trophy:'🏆',bullseye:'🎯'};
+var ANIM_EMOJIS={confetti:'üéä',belt:'ü•ã',stars:'‚≠ê',fire:'üî•',petals:'üå∏',lightning:'‚ö°',trophy:'üèÜ',bullseye:'üéØ'};
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1,000 classes. You have achieved something extraordinary. This mat is yours.'};
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: STATE
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: STATE
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var currentStudent=null;
 var currentFamily=null;
 var familyChildren=[];
@@ -1053,17 +1053,17 @@ var FAM_VIEW_KEY='nmao_fam_view';
 var scheduleViewMode=(function(){try{return localStorage.getItem(SCHED_VIEW_KEY)==='week'?'week':'day';}catch(e){return 'day';}})();
 var familyViewMode=(function(){try{return localStorage.getItem(FAM_VIEW_KEY)==='grid'?'grid':'list';}catch(e){return 'list';}})();
 var enrollmentCounts={};
-// lazy-load flags for new tabs — reset in buildPortal
+// lazy-load flags for new tabs ‚Äî reset in buildPortal
 var sessionsLoaded=false;
 var bookLoaded=false;
 var shopLoaded=false;
 
-// Shop cart state — array of {id,name,price,qty,image_url,track_inventory,inventory_qty}
-// Resets on page reload (including Stripe redirect return). v1 — no persistence.
+// Shop cart state ‚Äî array of {id,name,price,qty,image_url,track_inventory,inventory_qty}
+// Resets on page reload (including Stripe redirect return). v1 ‚Äî no persistence.
 var shopCart=[];
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: WAIVER_SIGNING
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: WAIVER_SIGNING
 //  Module-scope state and helpers for the upgraded waiver flow.
 //
 //  waiverSigningContext: the student record currently being signed
@@ -1072,10 +1072,10 @@ var shopCart=[];
 //  so the family-portal pill flow works even though currentStudent is
 //  null on the family branch.
 //
-//  waiverScrollMaxPct: forensic signal — max scroll percentage
+//  waiverScrollMaxPct: forensic signal ‚Äî max scroll percentage
 //  achieved in the waiver body during the current modal session.
 //  Captured at submit and sent to the Edge Function. Non-blocking.
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var waiverSigningContext = null;
 var waiverScrollMaxPct = 0;
 var waiverScrollListenerAttached = false;
@@ -1162,9 +1162,9 @@ function updateWaiverBanner(){
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: INIT
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: INIT
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 // Supabase Auth lowercases every email, but students/families/instructors store
 // whatever casing was typed and carry no unique constraint. So .eq('email',...)
 // silently misses "JMcKay@aol.com", and .maybeSingle() ERRORS outright when two
@@ -1252,9 +1252,9 @@ async function init(){
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: SCHOOL_BRANDING
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: SCHOOL_BRANDING
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function loadSchoolBranding(pre){
   try{
     var d;
@@ -1277,7 +1277,7 @@ async function loadSchoolBranding(pre){
     ['loginSchoolName','portalSchoolName','instrSchoolName','onboardSchoolName'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.textContent=sn;
     });
-    document.title=sn+' — Member Portal';
+    document.title=sn+' ‚Äî Member Portal';
     if(d.logo_url){
       document.getElementById('loginLogoImg').src=d.logo_url;
       document.getElementById('loginLogoImg').style.display='block';
@@ -1295,9 +1295,9 @@ async function loadSchoolBranding(pre){
   }catch(e){console.error('loadSchoolBranding error:',e);}
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: LOGIN_ROUTING
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: LOGIN_ROUTING
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function detectUserTypeAndRoute(user){
   try{
     var results=await Promise.all([
@@ -1350,9 +1350,10 @@ function hideAllScreens(){
   ['loginScreen','successScreen','onboardingScreen','portalScreen','instructorPortalScreen'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: MAGIC_LINK
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: MAGIC_LINK
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+async function portalToken(){ try{ var _s=await sb.auth.getSession(); if(_s&&_s.data&&_s.data.session&&_s.data.session.access_token) return _s.data.session.access_token; }catch(e){} return SKEY; }
 async function submitLogin(){
   var email=document.getElementById('loginEmail').value.trim();
   var password=document.getElementById('loginPassword').value;
@@ -1385,9 +1386,9 @@ async function sendMagicLink(){
 
 function setLoginMsg(text,type){var el=document.getElementById('loginMsg');el.textContent=text;el.className='form-msg '+(type||'');}
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: ONBOARDING
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: ONBOARDING
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function showOnboardingScreen(student){
   hideAllScreens();
   document.getElementById('onboardingScreen').style.display='flex';
@@ -1417,7 +1418,7 @@ function refreshOnboardingSteps(student){
   if(hasContact){
     contactStep.classList.add('done');
     if(contactIcon)contactIcon.innerHTML='<i class="fa-solid fa-circle-check" style="color:#7DBD7D;font-size:1.2rem"></i>';
-    if(contactSub)contactSub.textContent=student.email+(student.phone?' · '+student.phone:'');
+    if(contactSub)contactSub.textContent=student.email+(student.phone?' ¬∑ '+student.phone:'');
     if(contactBtn){contactBtn.textContent='Edit';contactBtn.style.borderColor='var(--green)';contactBtn.style.color='#7DBD7D';}
   }else{
     contactStep.classList.remove('done');
@@ -1630,7 +1631,7 @@ async function signWaiver(){
       throw new Error(data.error || 'Failed to record signature. Please try again.');
     }
 
-    // SUCCESS — update local state to match server
+    // SUCCESS ‚Äî update local state to match server
     var signedAt = data.signed_at || new Date().toISOString();
     ctx.waiver_signed = true;
     ctx.waiver_signed_at = signedAt;
@@ -1702,9 +1703,9 @@ async function completeOnboarding(){
   maybePromptFirstRunPassword();
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: STUDENT_PORTAL
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: STUDENT_PORTAL
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function showStudentPortal(student){
   hideAllScreens();
   document.getElementById('portalScreen').style.display='block';
@@ -1783,9 +1784,9 @@ renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_m
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: SCHEDULE
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: SCHEDULE
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
@@ -1920,7 +1921,7 @@ function setScheduleViewMode(mode){
   try{ localStorage.setItem(SCHED_VIEW_KEY,scheduleViewMode); }catch(e){}
   renderScheduleView();
 }
-// Dispatcher — every re-render (including after an RSVP) keeps the chosen view.
+// Dispatcher ‚Äî every re-render (including after an RSVP) keeps the chosen view.
 function renderScheduleView(){
   if(scheduleViewMode==='week') renderScheduleWeek(); else renderScheduleDay();
 }
@@ -1957,7 +1958,7 @@ function renderScheduleDay(){
   el.innerHTML=html;
 }
 
-// Week view — the same cards, grouped under a header per day, whole week at a glance.
+// Week view ‚Äî the same cards, grouped under a header per day, whole week at a glance.
 function renderScheduleWeek(){
   var el=document.getElementById('scheduleList'); if(!el)return;
   var now=new Date();
@@ -1987,9 +1988,9 @@ function navScheduleDay(dir){
   var idx=diffs.indexOf(scheduleViewDay)+dir;
   if(idx>=0&&idx<diffs.length){scheduleViewDay=diffs[idx];renderScheduleDay();}
 }
-// ─────────────────────────────────────────────────────────────
-//  §JS: RSVP
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: RSVP
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function toggleRSVP(classId,sessionDate,btn){
   if(currentStudent && (currentStudent.status==='alumni'||currentStudent.status==='paused'||currentStudent.status==='lapsed')){ alert('Your membership is currently inactive. Please renew to reserve classes.'); return; }
   if(!currentStudent) return;
@@ -2039,11 +2040,11 @@ async function toggleRSVP(classId,sessionDate,btn){
 }
 
   
-// ─────────────────────────────────────────────────────────────
-//  §JS: AUTO_CHECK_IN (client-side fallback)
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: AUTO_CHECK_IN (client-side fallback)
 //  Server-side: pg_cron job fires every 15 min (see Project Bible)
 //  This fires on portal load as a belt-and-suspenders backup
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function processAutoCheckIn(){
   if(isFamilyMode) return;
   if(!currentStudent) return;
@@ -2073,7 +2074,7 @@ async function processAutoCheckIn(){
       var diff=nowMins-startMins;
       if(diff<0||diff>90) continue;
 
-      // Get or create class_session — always filter by school_id
+      // Get or create class_session ‚Äî always filter by school_id
       var sr=await sb.from('class_sessions')
         .select('id')
         .eq('class_id',enr.class_id)
@@ -2093,7 +2094,7 @@ async function processAutoCheckIn(){
 }
       if(!sessionId) continue;
 
-      // Check if already checked in — filter by school_id
+      // Check if already checked in ‚Äî filter by school_id
       var ar=await sb.from('class_attendance')
         .select('id')
         .eq('session_id',sessionId)
@@ -2102,7 +2103,7 @@ async function processAutoCheckIn(){
         .limit(1);
       if(ar.data&&ar.data.length) continue; // Already checked in
 
-      // Insert attendance — deduction handled by DB trigger
+      // Insert attendance ‚Äî deduction handled by DB trigger
       var ins=await sb.from('class_attendance').insert({
         session_id:sessionId,
         student_id:currentStudent.id,
@@ -2126,9 +2127,9 @@ async function processAutoCheckIn(){
 }
 
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: ANNOUNCEMENTS
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: ANNOUNCEMENTS
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildAnnouncements(){
   try{
     var nowIsoP1=new Date().toISOString();
@@ -2148,18 +2149,18 @@ async function buildAnnouncements(){
  }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: UPDATES_BADGE_NOTIF — count of announcements sent since
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: UPDATES_BADGE_NOTIF ‚Äî count of announcements sent since
 //  the student last viewed the Updates tab.
-//  Mirrors the §JS: SHOP_TAB badge pattern (checkShopUpdates / clearShopBadge).
-//  Key: nmao_updates_last_viewed_<studentId> — ISO timestamp.
-// ─────────────────────────────────────────────────────────────
+//  Mirrors the ¬ßJS: SHOP_TAB badge pattern (checkShopUpdates / clearShopBadge).
+//  Key: nmao_updates_last_viewed_<studentId> ‚Äî ISO timestamp.
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function checkUpdatesNotif(){
   if(!currentStudent) return;
   var key='nmao_updates_last_viewed_'+currentStudent.id;
   var lastViewed=localStorage.getItem(key);
   if(!lastViewed){
-    // First-ever load — set baseline so badge only reflects future announcements
+    // First-ever load ‚Äî set baseline so badge only reflects future announcements
     localStorage.setItem(key,new Date().toISOString());
     return;
   }
@@ -2195,7 +2196,7 @@ function clearUpdatesBadge(){
 }
 
 
-  // §CURRICULUM — utility: extract YouTube video ID from common URL shapes
+  // ¬ßCURRICULUM ‚Äî utility: extract YouTube video ID from common URL shapes
 function ytVideoIdFromUrl(url){
   if(!url) return null;
   var m = url.match(/[?&]v=([^&]+)/);
@@ -2207,7 +2208,7 @@ function ytVideoIdFromUrl(url){
   return null;
 }
 
-// §CURRICULUM — render accordion of all belt levels at-or-below current rank
+// ¬ßCURRICULUM ‚Äî render accordion of all belt levels at-or-below current rank
 // levels: array pre-sorted ascending by sort_order, with belt_level_videos joined
 // currentBeltId: id of student current_belt_id
 // containerId: DOM id of the wrapper where the accordion HTML will be written
@@ -2266,7 +2267,7 @@ function renderCurriculumAccordion(levels, currentBeltId, containerId){
   container.innerHTML = html;
 }
 
-// §CURRICULUM — onclick handler for accordion headers
+// ¬ßCURRICULUM ‚Äî onclick handler for accordion headers
 function toggleCurriculumLevel(btn){
   var body = btn.nextElementSibling;
   var icon = btn.querySelector('.curriculum-chev');
@@ -2279,7 +2280,7 @@ function toggleCurriculumLevel(btn){
   }
 }
 
-// §CURRICULUM — onclick handler for thumbnail: swap to autoplay iframe
+// ¬ßCURRICULUM ‚Äî onclick handler for thumbnail: swap to autoplay iframe
 function playCurriculumVideo(div){
   var vid = div.getAttribute('data-yt-id');
   if(!vid) return;
@@ -2288,9 +2289,9 @@ function playCurriculumVideo(div){
   div.style.cursor = 'default';
   div.onclick = null;
 }
-// ─────────────────────────────────────────────────────────────
-//  §JS: BELT_SECTION
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: BELT_SECTION
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildBeltSection(s,levels){
   document.getElementById('beltSection').style.display='block';
   var cb=null;for(var i=0;i<levels.length;i++){if(levels[i].id===s.current_belt_id){cb=levels[i];break;}}
@@ -2310,7 +2311,7 @@ async function buildBeltSection(s,levels){
   if(cb&&nb&&(cb.classes_required||0)>0){
     var count=await getClassesSincePromotion(s);var req=cb.classes_required;
     var pct=Math.min(100,Math.round((count/req)*100));var eligible=count>=req;
-    html+='<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted2);margin-bottom:0.3rem"><span><i class="fa-solid fa-chart-line" style="margin-right:0.3rem"></i>Progress toward '+nb.name+'</span><span>'+count+'/'+req+'</span></div><div class="belt-bar-bg"><div class="belt-bar-fill" style="width:'+pct+'%;background:'+(eligible?'#5A9A6A':'var(--gold)')+'"></div></div>'+(eligible?'<div class="eligible-badge"><i class="fa-solid fa-check"></i>Eligible for promotion — speak to your instructor!</div>':'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-hourglass-half" style="margin-right:0.3rem"></i>'+(req-count)+' more classes until eligible</div>')+'</div>';
+    html+='<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted2);margin-bottom:0.3rem"><span><i class="fa-solid fa-chart-line" style="margin-right:0.3rem"></i>Progress toward '+nb.name+'</span><span>'+count+'/'+req+'</span></div><div class="belt-bar-bg"><div class="belt-bar-fill" style="width:'+pct+'%;background:'+(eligible?'#5A9A6A':'var(--gold)')+'"></div></div>'+(eligible?'<div class="eligible-badge"><i class="fa-solid fa-check"></i>Eligible for promotion ‚Äî speak to your instructor!</div>':'<div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-hourglass-half" style="margin-right:0.3rem"></i>'+(req-count)+' more classes until eligible</div>')+'</div>';
   }else if(nb){
     html+='<div style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:1rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>No class minimum for this promotion.</div>';
   }
@@ -2339,9 +2340,9 @@ async function getClassesSincePromotion(s){
   var r=await q;return r.count||0;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: TRACKER
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: TRACKER
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildTracker(s){
   var r=await sb.from('class_attendance').select('*',{count:'exact',head:true}).eq('student_id',s.id);
   var total=r.count||0;
@@ -2352,9 +2353,9 @@ async function buildTracker(s){
   checkMilestones(total,s.id);
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: MILESTONES_CELEBRATION
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: MILESTONES_CELEBRATION
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function checkMilestones(total,studentId){
   var storageKey='nmao_celebrated_'+studentId;var celebrated={};
   try{var stored=localStorage.getItem(storageKey);if(stored)celebrated=JSON.parse(stored);}catch(e){}
@@ -2366,7 +2367,7 @@ function checkMilestones(total,studentId){
 function showCelebration(milestone){
   var saved=milestoneSettings[milestone]||{};var animKey=saved.animation||'confetti';
   var message=saved.message||DEFAULT_MESSAGES[milestone]||'Amazing achievement!';
-  var emoji=ANIM_EMOJIS[animKey]||'🎊';
+  var emoji=ANIM_EMOJIS[animKey]||'üéä';
   document.getElementById('celebEmoji').textContent=emoji;
   document.getElementById('celebNumber').textContent=milestone.toLocaleString();
   document.getElementById('celebMessage').textContent=message;
@@ -2378,22 +2379,22 @@ function stopAnimation(){if(celebrationTimeout){clearTimeout(celebrationTimeout)
 function startAnimation(animKey){
   stopAnimation();
   if(animKey==='confetti'){launchConfetti();}
-  else if(animKey==='belt'){launchParticles(['🥋','⬛','🟡'],40,8000,'fall');}
-  else if(animKey==='stars'){launchParticles(['⭐','🌟','✨'],50,6000,'fall');}
-  else if(animKey==='fire'){launchParticles(['🔥','💥'],35,5000,'rise');}
-  else if(animKey==='petals'){launchParticles(['🌸','🌺','🌼'],45,7000,'fall');}
+  else if(animKey==='belt'){launchParticles(['ü•ã','‚¨õ','üü°'],40,8000,'fall');}
+  else if(animKey==='stars'){launchParticles(['‚≠ê','üåü','‚ú®'],50,6000,'fall');}
+  else if(animKey==='fire'){launchParticles(['üî•','üí•'],35,5000,'rise');}
+  else if(animKey==='petals'){launchParticles(['üå∏','üå∫','üåº'],45,7000,'fall');}
   else if(animKey==='lightning'){launchLightning();}
-  else if(animKey==='trophy'){launchParticles(['🏆','🥇','⭐'],30,6000,'burst');}
-  else if(animKey==='bullseye'){launchParticles(['🎯','💎','◆'],40,5000,'burst');}
+  else if(animKey==='trophy'){launchParticles(['üèÜ','ü•á','‚≠ê'],30,6000,'burst');}
+  else if(animKey==='bullseye'){launchParticles(['üéØ','üíé','‚óÜ'],40,5000,'burst');}
   celebrationTimeout=setTimeout(stopAnimation,9000);
 }
 function launchConfetti(){var canvas=document.getElementById('confettiCanvas');canvas.style.display='block';canvas.width=window.innerWidth;canvas.height=window.innerHeight;var ctx=canvas.getContext('2d');var colors=['#C9A84C','#8B6914','#F5F0E8','#E8D48A','#4A7A5A'];var pieces=[];for(var i=0;i<180;i++){pieces.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,w:8+Math.random()*8,h:4+Math.random()*6,color:colors[Math.floor(Math.random()*colors.length)],vx:(Math.random()-0.5)*4,vy:2+Math.random()*4,rot:Math.random()*360,rotV:(Math.random()-0.5)*6,alpha:1});}var frame=0;function draw(){if(frame>200){canvas.style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);return;}ctx.clearRect(0,0,canvas.width,canvas.height);pieces.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;p.vy+=0.05;if(frame>140)p.alpha=Math.max(0,p.alpha-0.025);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();});frame++;requestAnimationFrame(draw);}draw();}
 function launchParticles(emojis,count,duration,mode){var launched=0;particleInterval=setInterval(function(){if(launched>=count){clearInterval(particleInterval);particleInterval=null;return;}var el=document.createElement('div');el.className='particle';el.textContent=emojis[Math.floor(Math.random()*emojis.length)];el.style.fontSize=(1.2+Math.random()*1.5)+'rem';var dur=(1.5+Math.random()*2.5)+'s';if(mode==='fall'){el.style.left=Math.random()*100+'vw';el.style.top='-5vh';el.style.animationName='particleFall';el.style.animationDuration=dur;}else if(mode==='rise'){el.style.left=Math.random()*100+'vw';el.style.bottom='0';el.style.animationName='particleRise';el.style.animationDuration=dur;}else if(mode==='burst'){el.style.left='50vw';el.style.top='50vh';var angle=Math.random()*360;var dist=20+Math.random()*40;el.style.setProperty('--tx',Math.cos(angle*Math.PI/180)*dist+'vw');el.style.setProperty('--ty',Math.sin(angle*Math.PI/180)*dist+'vh');el.style.animationName='particleBurst';el.style.animationDuration=dur;}el.style.animationFillMode='forwards';document.body.appendChild(el);setTimeout(function(){el.remove();},parseFloat(dur)*1000+100);launched++;},duration/count);}
 function launchLightning(){var canvas=document.getElementById('confettiCanvas');canvas.style.display='block';canvas.width=window.innerWidth;canvas.height=window.innerHeight;var ctx=canvas.getContext('2d');var frame=0;function draw(){if(frame>60){canvas.style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);return;}ctx.clearRect(0,0,canvas.width,canvas.height);if(frame%8<3){ctx.shadowBlur=20;ctx.shadowColor='var(--gold)';ctx.strokeStyle='rgba(201,168,76,'+(0.8-frame/80)+')';ctx.lineWidth=2+Math.random()*3;ctx.beginPath();var x=Math.random()*canvas.width;ctx.moveTo(x,0);for(var i=0;i<8;i++){x+=(Math.random()-0.5)*80;ctx.lineTo(x,canvas.height*(i+1)/8);}ctx.stroke();ctx.shadowBlur=0;}frame++;requestAnimationFrame(draw);}draw();}
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: ATTENDANCE
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: ATTENDANCE
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function handlePortalPhotoUpload(event){
   if(!currentStudent)return;
   var file=event.target.files[0];if(!file)return;
@@ -2418,14 +2419,14 @@ async function buildAttendance(sid){
   el.innerHTML=data.map(function(a){var sess=a.class_sessions;var cls=sess&&sess.classes;var cn=cls?(cls.name||cls.title||'Class'):'Class';var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'--');var tm=(sess&&sess.start_time)?fmtTime(sess.start_time):'';return '<div class="att-row"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-person-walking" style="color:var(--gold);margin-right:0.5rem"></i>'+cn+'</div><div style="font-size:0.75rem;color:var(--muted)">'+dt+(tm?' &bull; '+tm:'')+'</div></div>';}).join('');
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: SWITCH_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: SWITCH_TAB
 //  Updated to include all 8 tabs + lazy-load new ones on first open
-// ─────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-//  §JS: EVENTS_TAB — member event registration + partial-attendance day-picker
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: EVENTS_TAB ‚Äî member event registration + partial-attendance day-picker
 //  Submits via register-public (student_id path). Paid -> stripe-create-checkout.
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var eventsLoaded=false;
 var _evState={events:[],openId:null,sessions:{},tiers:{},avail:{},tierId:null,picked:[],busy:false};
 function _evEsc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -2522,7 +2523,7 @@ function renderEventRegister(ev){
       '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.4rem">'+_evState.picked.length+" of "+tier.sessions_included+' selected</div>';
   }
   var price=tier?parseFloat(tier.price)||0:0;
-  var btnLabel=price>0?'<i class="fa-solid fa-credit-card" style="margin-right:0.4rem"></i>Register — $'+price.toFixed(2):'<i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Register';
+  var btnLabel=price>0?'<i class="fa-solid fa-credit-card" style="margin-right:0.4rem"></i>Register ‚Äî $'+price.toFixed(2):'<i class="fa-solid fa-check" style="margin-right:0.4rem"></i>Register';
   return '<div class="section-label" style="margin-top:0.5rem">Choose an Option</div>'+tierHTML+pickHTML+
     '<button class="btn-ev-register" id="evRegBtn-'+id+'" onclick="evRegister(\''+id+'\')" style="margin-top:1rem">'+btnLabel+'</button>'+
     '<div id="evRegMsg-'+id+'" style="margin-top:0.5rem"></div>';
@@ -2544,7 +2545,7 @@ async function evRegister(id){
     var data=await r.json();
     if(!r.ok||data.error) throw new Error(data.error||"Registration failed.");
     if(data.requires_payment){
-      if(msg)msg.innerHTML='<span style="color:var(--muted);font-size:0.82rem">Redirecting to secure payment…</span>';
+      if(msg)msg.innerHTML='<span style="color:var(--muted);font-size:0.82rem">Redirecting to secure payment‚Ä¶</span>';
       var base=window.location.href.split("?")[0];
       var co=await fetch(SURL+"/functions/v1/stripe-create-checkout",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SKEY},body:JSON.stringify({kind:"event_registration",school_id:ev.school_id,event_registration_id:data.registration_id,event_id:id,student_id:currentStudent.id,guest_name:(currentStudent.first_name||"")+" "+(currentStudent.last_name||""),guest_email:currentStudent.email,amount_cents:data.amount_cents,tier_label:tier.label,save_card:false,success_url:base+"?evpaid=1",cancel_url:base+"?evcancel=1"})});
       var cd=await co.json();
@@ -2580,11 +2581,11 @@ function switchPortalTab(tab){
   if(tab==='updates'){clearUpdatesBadge();}
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: SESSIONS_TAB [NEW]
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: SESSIONS_TAB [NEW]
 //  Tables: sessions (joined with session_types)
-//  Search: §JS: SESSIONS_TAB
-// ─────────────────────────────────────────────────────────────
+//  Search: ¬ßJS: SESSIONS_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildSessions(s){
   var upEl=document.getElementById('sessionsUpcomingList');
   var today=new Date().toISOString().split('T')[0];
@@ -2635,11 +2636,11 @@ function buildSessionCard(x,isUpcoming){
   return html;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: PACKS_TAB [NEW]
-//  Tables: student_session_packs · session_packs · payments
-//  Search: §JS: PACKS_TAB
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: PACKS_TAB [NEW]
+//  Tables: student_session_packs ¬∑ session_packs ¬∑ payments
+//  Search: ¬ßJS: PACKS_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildPacks(s){
   var balEl=document.getElementById('packsBalanceList');
   var buyEl=document.getElementById('packsBuyList');
@@ -2744,7 +2745,7 @@ function hidePackConfirm(packId){
     var cancelUrl=origin+'?card_update_cancelled=1';
     var r=await fetch(SURL+'/functions/v1/create-card-update-session',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},
       body:JSON.stringify({
         school_id:SID,
         student_id:currentStudent.id,
@@ -2831,7 +2832,7 @@ async function doSelfPause(){
     }
     if(sub){
       var resumesUnix=Math.floor(new Date(resumeDate+'T12:00:00').getTime()/1000);
-      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'pause',resumes_at:resumesUnix})});
+      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'pause',resumes_at:resumesUnix})});
       var d=await resp.json().catch(function(){return {};});
       if(!resp.ok||(d&&d.error)) throw new Error('Could not pause billing \u2014 please contact the school.');
     }
@@ -2848,7 +2849,7 @@ async function doSelfResume(){
     if(r.error) throw new Error(r.error.message||'Could not resume.');
     var sub=(r.data&&r.data.stripe_subscription_id);
     if(sub){
-      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'resume'})});
+      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'resume'})});
       var d=await resp.json().catch(function(){return {};});
       if(!resp.ok||(d&&d.error)) throw new Error('Could not resume billing \u2014 please contact the school.');
     }
@@ -2913,7 +2914,7 @@ async function doSelfCancel(){
     }
 
     if(sub){
-      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'period_end'})});
+      var resp=await fetch(SURL+'/functions/v1/cancel-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,subscription_id:sub,when:'period_end'})});
       var d=await resp.json().catch(function(){return {};});
       if(!resp.ok||(d&&d.error)) throw new Error('Could not stop billing \u2014 please contact the school.');
       closeSelfCancel(); alert('Your membership will end at the close of your current billing period, and will not renew.'+chargeNote); location.reload();
@@ -2930,7 +2931,7 @@ async function startMembership(){
   var msg=document.getElementById('startMembershipMsg');
   if(msg){msg.textContent='';msg.className='form-msg';}
   if(!currentStudent||!currentStudent.membership_id){
-    if(msg){msg.textContent='No membership is assigned to your account yet — please contact the school.';msg.className='form-msg error';}
+    if(msg){msg.textContent='No membership is assigned to your account yet ‚Äî please contact the school.';msg.className='form-msg error';}
     return;
   }
   var btn=document.getElementById('startMembershipBtn');
@@ -3004,12 +3005,12 @@ async function executePurchasePack(packId){
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: BOOK_TAB [NEW]
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: BOOK_TAB [NEW]
 //  Table: instructors (booking_link_enabled=true, active=true)
 //  Links to: book.html?slug=SLUG or book.html?instructor=UUID
-//  Search: §JS: BOOK_TAB
-// ─────────────────────────────────────────────────────────────
+//  Search: ¬ßJS: BOOK_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildBook(){
   var el=document.getElementById('bookInstructorList');
   try{
@@ -3037,7 +3038,7 @@ async function buildBook(){
         else if(typeof instr.specialties==='string')specs=instr.specialties.split(',').map(function(x){return x.trim();}).filter(Boolean);
       }
       var specsHtml=specs.length?'<div style="margin-top:0.5rem">'+specs.map(function(sp){return '<span class="specialty-tag">'+sp+'</span>';}).join('')+'</div>':'';
-      var bioHtml=instr.bio?'<div class="instructor-book-bio">'+instr.bio.slice(0,180)+(instr.bio.length>180?'…':'')+'</div>':'';
+      var bioHtml=instr.bio?'<div class="instructor-book-bio">'+instr.bio.slice(0,180)+(instr.bio.length>180?'‚Ä¶':'')+'</div>':'';
       return '<div class="instructor-book-card">'+
         '<div class="instructor-book-inner">'+
           '<div class="instructor-book-avatar">'+avatarHtml+'</div>'+
@@ -3056,15 +3057,15 @@ async function buildBook(){
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: SHOP_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: SHOP_TAB
 //  Table: products (active=true, member_app=true)
 //  Endpoint: create-pos-checkout with item_type='product'
 //  Return: ?shop_success=1 / ?shop_cancel=1
 //  Cart flow: Add items to shopCart, then one Stripe Checkout for all
 //  Badge: queries products with updated_at > localStorage timestamp
-//  Search: §JS: SHOP_TAB
-// ─────────────────────────────────────────────────────────────
+//  Search: ¬ßJS: SHOP_TAB
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildShop(){
   var el=document.getElementById('shopList');
   try{
@@ -3347,7 +3348,7 @@ function handleShopReturnParams(){
   window.history.replaceState({}, '', cleanUrl);
   if(typeof switchPortalTab==='function') switchPortalTab('profile');
   if(started){ showPortalToast('Membership started! Your billing is all set.', 'success'); }
-  else if(cancelled){ showPortalToast('Checkout cancelled — no changes were made.', 'info'); }
+  else if(cancelled){ showPortalToast('Checkout cancelled ‚Äî no changes were made.', 'info'); }
 }
 
 function handleCardUpdateReturnParams(){
@@ -3366,13 +3367,13 @@ function handleCardUpdateReturnParams(){
   }
 }
   
-// §SHOP_BADGE_NOTIF — show count of products updated since student last viewed shop
+// ¬ßSHOP_BADGE_NOTIF ‚Äî show count of products updated since student last viewed shop
 async function checkShopUpdates(){
   if(!currentStudent) return;
   var key='nmao_shop_last_viewed_'+currentStudent.id;
   var lastViewed=localStorage.getItem(key);
   if(!lastViewed){
-    // First-ever load — set baseline so badge only reflects future changes
+    // First-ever load ‚Äî set baseline so badge only reflects future changes
     localStorage.setItem(key,new Date().toISOString());
     return;
   }
@@ -3405,9 +3406,9 @@ function clearShopBadge(){
   if(badge) badge.style.display='none';
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: FAMILY_PORTAL
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: FAMILY_PORTAL
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 var afSelectedPlan=null;
 function afEsc(s){ return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function closeAddFamily(){ document.getElementById('addFamilyModal').style.display='none'; }
@@ -3460,7 +3461,7 @@ async function showFamilyPortal(family){
     return;
   }
   var sel=document.getElementById('childSelect');
-  sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';var marker=c.waiver_signed?'':' \u26A0';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' — '+prog+marker+'</option>';}).join('');
+  sel.innerHTML=familyChildren.map(function(c){var prog=c.programs?c.programs.name:'Member';var marker=c.waiver_signed?'':' \u26A0';return '<option value="'+c.id+'">'+c.first_name+' '+c.last_name+' ‚Äî '+prog+marker+'</option>';}).join('');
   document.getElementById('childSwitcherBar').style.display='flex';
   selectedChildId=familyChildren[0].id;
   currentStudent=familyChildren[0];
@@ -3486,9 +3487,9 @@ async function switchChild(){
   if(tabName==='sessions'||tabName==='book'||tabName==='shop'){switchPortalTab(tabName);}
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: FAMILY_SCHEDULE
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: FAMILY_SCHEDULE
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
   async function buildFamilySchedule(){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
@@ -3541,7 +3542,7 @@ async function switchChild(){
 
 var familyGridOpen=null;
 
-// Shared day filter — program-gated classes for one date, sorted. Used by list AND grid.
+// Shared day filter ‚Äî program-gated classes for one date, sorted. Used by list AND grid.
 function familyDayClasses(dateStr,dayName){
   var dayClasses;
   if(familyByDate&&Object.keys(familyByDate).length){
@@ -3628,7 +3629,7 @@ function setFamilyViewMode(mode){
   renderFamilySchedule();
 }
 
-// Dispatcher — keeps every existing call site working.
+// Dispatcher ‚Äî keeps every existing call site working.
 function renderFamilySchedule(){
   if(familyViewMode==='grid'){ renderFamilyGrid(); return; }
   var el=document.getElementById('scheduleList');
@@ -3652,7 +3653,7 @@ function renderFamilySchedule(){
   updateFamilyConfirmBar();
 }
 
-// Week grid — the whole week at a glance; tap a class to pick who is going.
+// Week grid ‚Äî the whole week at a glance; tap a class to pick who is going.
 function renderFamilyGrid(){
   var el=document.getElementById('scheduleList');
   var now=new Date();
@@ -3746,7 +3747,7 @@ function updateFamilyConfirmBar(){
   var parts=[];
   if(todayCount>0)parts.push(todayCount+' check-in'+(todayCount!==1?'s':''));
   if(reserveCount>0)parts.push(reserveCount+' reservation'+(reserveCount!==1?'s':''));
-  if(summary)summary.innerHTML='<span class="family-confirm-count">'+totalSel+'</span> selected — '+parts.join(', ');
+  if(summary)summary.innerHTML='<span class="family-confirm-count">'+totalSel+'</span> selected ‚Äî '+parts.join(', ');
 }
 
 async function confirmFamilySelections(){
@@ -3785,9 +3786,9 @@ async function confirmFamilySelections(){
   setTimeout(function(){if(bar)bar.style.display='none';},2000);
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: INSTRUCTOR_PORTAL
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: INSTRUCTOR_PORTAL
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function showInstructorPortal(instructor){
   hideAllScreens();
   document.getElementById('instructorPortalScreen').style.display='block';
@@ -3849,9 +3850,9 @@ async function buildInstructorTodayClasses(){
  return "in_progress";
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: ENROLLMENT-COUNTS — union of class_enrollments + class_attendance
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: ENROLLMENT-COUNTS ‚Äî union of class_enrollments + class_attendance
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function fetchEnrollmentCounts(startDate,endDate){
   var queries=await Promise.all([
     sb.from('class_enrollments')
@@ -3903,9 +3904,9 @@ function enrollBadgeHTML(count,capacity){
   return '<span style="color:'+color+';font-weight:600">'+c+'/'+cap+'</span>';
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: UTILITIES
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: UTILITIES
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function emptyState(icon,msg){
   return '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface);border:1px solid var(--border)"><i class="fa-solid '+icon+'" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.75rem"></i>'+msg+'</div>';
 }
@@ -3923,10 +3924,10 @@ function fmtTime(t){
 
 async function portalSignOut(){await sb.auth.signOut();window.location.reload();}
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: STRIPE_RETURN
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: STRIPE_RETURN
 //  Handles ?pack_success=1 / ?pack_cancel=1 after Stripe redirect
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function handlePackReturnParams(){
   var params=new URLSearchParams(window.location.search);
   var success=params.get('pack_success');
@@ -3938,7 +3939,7 @@ function handlePackReturnParams(){
   // Switch to Packs tab so the user sees the new balance (or the offer they cancelled from)
   if(typeof switchPortalTab==='function') switchPortalTab('sessions');
   if(success){
-    // Webhook may need a couple seconds to credit the pack — refresh after a beat
+    // Webhook may need a couple seconds to credit the pack ‚Äî refresh after a beat
     setTimeout(function(){
       if(currentStudent) buildPacks(currentStudent);
     }, 1500);
@@ -3961,9 +3962,9 @@ function showPortalToast(msg, kind){
   setTimeout(function(){ if(t.parentNode) t.remove(); }, 4500);
 }
 
-// ─────────────────────────────────────────────────────────────
-//  §JS: BOOT
-// ─────────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+//  ¬ßJS: BOOT
+// ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 init();
 </script>
 
