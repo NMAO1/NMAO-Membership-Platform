@@ -2541,7 +2541,7 @@ async function evRegister(id){
   _evState.busy=true;
   var btn=document.getElementById("evRegBtn-"+id); if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';}
   try{
-    var r=await fetch(SURL+"/functions/v1/register-public",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SKEY},body:JSON.stringify({event_id:id,tier_id:tier.id,session_ids:_evState.picked,student_id:currentStudent.id})});
+    var r=await fetch(SURL+"/functions/v1/register-public",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await portalToken())},body:JSON.stringify({event_id:id,tier_id:tier.id,session_ids:_evState.picked,student_id:currentStudent.id})});
     var data=await r.json();
     if(!r.ok||data.error) throw new Error(data.error||"Registration failed.");
     if(data.requires_payment){
