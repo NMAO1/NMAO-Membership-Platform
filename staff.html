@@ -481,27 +481,10 @@
     </button>
     <div class="login-msg" id="loginMsg"></div>
     <div style="margin-top:0.85rem;text-align:center;font-size:0.82rem">
-      <a href="#" onclick="showStaffCodeStep();return false;" style="color:var(--gold);text-decoration:none">First time here, or forgot your password?</a>
+      <a href="#" onclick="sendStaffMagicLink();return false;" style="color:var(--gold);text-decoration:none">First time here, or forgot your password? Email me a magic link</a>
     </div>
   </div>
 
-  <div class="login-card" id="loginCodeCard" style="display:none">
-    <div class="login-eyebrow">Staff App</div>
-    <div class="login-title">Email me a code</div>
-    <div class="login-desc">We will email a code to your instructor email. Enter it below to sign in, then set a password.</div>
-    <input type="email" id="codeEmail" class="input-field" placeholder="instructor@email.com" autocomplete="username" />
-    <button class="btn-login" id="sendCodeBtn" onclick="sendStaffCode()">
-      <i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Email My Code
-    </button>
-    <input type="text" inputmode="numeric" id="codeInput" class="input-field" placeholder="Enter the code from your email" autocomplete="one-time-code" style="margin-top:0.6rem;display:none" onkeydown="if(event.key==='Enter')verifyStaffCode()" />
-    <button class="btn-login" id="verifyCodeBtn" onclick="verifyStaffCode()" style="display:none;margin-top:0.5rem">
-      <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Verify and Sign In
-    </button>
-    <div class="login-msg" id="codeMsg"></div>
-    <div style="margin-top:0.85rem;text-align:center;font-size:0.82rem">
-      <a href="#" onclick="showStaffPasswordStep();return false;" style="color:var(--gold);text-decoration:none">Back to password sign in</a>
-    </div>
-  </div>
 </div>
 
 <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
@@ -550,13 +533,13 @@
 <div id="staffPwModal"
  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10090;align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--surface,#141414);border:1px solid var(--border,#2a2520);max-width:380px;width:100%;padding:1.5rem">
-    <div style="font-family:var(--font-display,Georgia),serif;font-size:1.2rem;color:var(--gold);margin-bottom:0.4rem">Set your password</div>
-    <div style="font-size:0.85rem;color:var(--muted,#8a8278);margin-bottom:0.9rem">Set a password so next time you can sign in with just your email and password.</div>
+    <div id="staffPwTitle" style="font-family:var(--font-display,Georgia),serif;font-size:1.2rem;color:var(--gold);margin-bottom:0.4rem">Set your password</div>
+    <div id="staffPwDesc" style="font-size:0.85rem;color:var(--muted,#8a8278);margin-bottom:0.9rem">Set a password so next time you can sign in with just your email and password.</div>
     <input type="password" id="staffNewPw" class="input-field" placeholder="New password (6+ characters)" autocomplete="new-password" />
     <input type="password" id="staffNewPw2" class="input-field" placeholder="Confirm password" autocomplete="new-password" style="margin-top:0.5rem" onkeydown="if(event.key==='Enter')saveStaffPassword()" />
     <button class="btn-login" id="staffPwBtn" onclick="saveStaffPassword()" style="margin-top:0.7rem"><i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password</button>
     <div class="login-msg" id="staffPwMsg"></div>
-    <div style="margin-top:0.7rem;text-align:center;font-size:0.8rem"><a href="#" onclick="skipStaffPassword();return false;" style="color:var(--muted,#8a8278);text-decoration:none">Skip for now</a></div>
+    <div id="staffPwSkip" style="margin-top:0.7rem;text-align:center;font-size:0.8rem"><a href="#" onclick="skipStaffPassword();return false;" style="color:var(--muted,#8a8278);text-decoration:none">Skip for now</a></div>
   </div>
 </div>
 
@@ -699,6 +682,9 @@
     <div id="clMsg" style="font-size:0.8rem;margin-top:0.5rem;text-align:center"></div>
   </div>
 
+  <button class="btn-signout" onclick="openStaffChangePw()" style="margin-bottom:0.6rem">
+    <i class="fa-solid fa-key" style="margin-right:0.5rem"></i>Change Password
+  </button>
   <button class="btn-signout" onclick="staffSignOut()">
     <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.5rem"></i>Sign Out
   </button>
@@ -1234,61 +1220,36 @@ async function loadSchoolBranding(){
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  AUTH \u2014 password primary; 6-digit email code for setup/recovery.
-//  Mirrors the member portal. The code path avoids the mobile
-//  magic-link webview trap (the session is created in this browser).
+//  Mirrors the member portal: password sign-in, plus a magic link for
+//  first-time setup and password recovery. No 6-digit code step.
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function setLoginMsg(t,c){var el=document.getElementById('loginMsg');if(el){el.textContent=t;el.className='login-msg '+(c||'');}}
-function setCodeMsg(t,c){var el=document.getElementById('codeMsg');if(el){el.textContent=t;el.className='login-msg '+(c||'');}}
-function showStaffCodeStep(){
-  var pc=document.getElementById('loginPwCard'); if(pc) pc.style.display='none';
-  var cc=document.getElementById('loginCodeCard'); if(cc) cc.style.display='block';
-  var ce=document.getElementById('codeEmail'); var le=document.getElementById('loginEmail');
-  if(ce&&le&&le.value) ce.value=le.value.trim();
-  setCodeMsg('','');
-}
-function showStaffPasswordStep(){
-  var cc=document.getElementById('loginCodeCard'); if(cc) cc.style.display='none';
-  var pc=document.getElementById('loginPwCard'); if(pc) pc.style.display='block';
+// Forgot / first-time: email a magic link (mirrors the member portal). Uses the
+// email already typed into the sign-in card; the link signs the user in, then the
+// first-run set-password modal prompts them to choose a password.
+async function sendStaffMagicLink(){
+  var email=document.getElementById('loginEmail').value.trim();
+  if(!email||!email.includes('@')){setLoginMsg('Enter your email above first, then click this link again.','er');return;}
+  setLoginMsg('Sending magic link...','');
+  try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
+  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
+  if(r.error){setLoginMsg(r.error.message,'er');return;}
+  var se=document.getElementById('sentEmail'); if(se) se.textContent=email;
+  document.getElementById('loginScreen').style.display='none';
+  var ss=document.getElementById('successScreen'); if(ss) ss.style.display='flex';
 }
 async function submitStaffLogin(){
   var email=document.getElementById('loginEmail').value.trim();
   var pw=document.getElementById('loginPassword').value;
   try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
   if(!email||!email.includes('@')){setLoginMsg('Enter a valid email.','er');return;}
-  if(!pw){setLoginMsg('Enter your password, or use the code option below.','er');return;}
+  if(!pw){setLoginMsg('Enter your password, or use the magic link option below.','er');return;}
   var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Signing in...';
   var r=await sb.auth.signInWithPassword({email:email,password:pw});
   if(r.error||!r.data||!r.data.session){
     var m=(r.error&&r.error.message)||'Sign in failed.';
-    if(m.toLowerCase().indexOf('invalid')!==-1) m='Invalid email or password. Try again, or use the code option below.';
+    if(m.toLowerCase().indexOf('invalid')!==-1) m='Invalid email or password. Try again, or use the magic link option below.';
     setLoginMsg(m,'er');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In';return;
-  }
-  document.getElementById('loginScreen').style.display='none';
-  await startStaffApp(r.data.session.user);
-}
-async function sendStaffCode(){
-  var email=document.getElementById('codeEmail').value.trim();
-  if(!email||!email.includes('@')){setCodeMsg('Enter a valid email.','er');return;}
-  var btn=document.getElementById('sendCodeBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Sending...';
-  // emailRedirectTo keeps a working magic link in the SAME email as the code, so staff
-  // can EITHER enter the code (mobile-safe) OR click the link (desktop) to sign in.
-  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
-  btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Email My Code';
-  if(r.error){setCodeMsg(r.error.message,'er');return;}
-  var ci=document.getElementById('codeInput'); if(ci) ci.style.display='block';
-  var vb=document.getElementById('verifyCodeBtn'); if(vb) vb.style.display='block';
-  setCodeMsg('We emailed '+email+' a code and a sign-in link. Enter it above, or tap the link.','');
-}
-async function verifyStaffCode(){
-  var email=document.getElementById('codeEmail').value.trim();
-  try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
-  var token=(document.getElementById('codeInput').value||'').replace(/\D/g,'');
-  if(!token){setCodeMsg('Enter the code from your email.','er');return;}
-  var btn=document.getElementById('verifyCodeBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Verifying...';
-  var r=await sb.auth.verifyOtp({email:email,token:token,type:'email'});
-  if(r.error||!r.data||!r.data.session){
-    setCodeMsg((r.error&&r.error.message)||'That code did not work. Request a new one.','er');
-    btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Verify and Sign In';return;
   }
   document.getElementById('loginScreen').style.display='none';
   await startStaffApp(r.data.session.user);
@@ -1296,8 +1257,23 @@ async function verifyStaffCode(){
 function maybePromptStaffPassword(){
   var u=currentAuthUser;
   if(u&&u.user_metadata&&u.user_metadata.password_set) return;
+  setStaffPwMode('firstrun');
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
 }
+// One modal serves both first-run setup and a deliberate change from the Profile tab.
+function setStaffPwMode(mode){
+  var change=mode==='change';
+  var t=document.getElementById('staffPwTitle'); if(t) t.textContent=change?'Change password':'Set your password';
+  var d=document.getElementById('staffPwDesc'); if(d) d.textContent=change
+    ? 'Update the password you use to sign in to the staff portal.'
+    : 'Set a password so next time you can sign in with just your email and password.';
+  var sk=document.getElementById('staffPwSkip'); if(sk) sk.style.display=change?'none':'block';
+  var a=document.getElementById('staffNewPw'); if(a) a.value='';
+  var b=document.getElementById('staffNewPw2'); if(b) b.value='';
+  var msg=document.getElementById('staffPwMsg'); if(msg){ msg.textContent=''; msg.className='login-msg'; }
+}
+// Opened from the Profile tab (Change Password button).
+function openStaffChangePw(){ setStaffPwMode('change'); var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex'; }
 async function saveStaffPassword(){
   var pw=document.getElementById('staffNewPw').value;
   var pw2=document.getElementById('staffNewPw2').value;
