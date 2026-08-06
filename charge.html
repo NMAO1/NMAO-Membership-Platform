@@ -94,6 +94,27 @@ const STU  = P.get('stu') || '';
 const AMT  = Math.max(0, parseFloat(P.get('amt') || '0') || 0);
 const DESC = (P.get('desc') || 'In-person charge').slice(0, 120);
 
+// Optional itemized retail cart (base64url JSON of [{n,a(cents),q,p,t}]).
+function b64urlDecode(s){ s = String(s).replace(/-/g,'+').replace(/_/g,'/'); while(s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
+let ITEMS = null;
+(function(){
+  const raw = P.get('items');
+  if(!raw) return;
+  try{
+    const arr = JSON.parse(b64urlDecode(raw));
+    if(Array.isArray(arr) && arr.length){
+      ITEMS = arr.map(function(i){
+        return { name: String(i.n || 'Item'), unit_amount: Math.max(0, Math.round(i.a || 0)),
+                 quantity: Math.max(1, parseInt(i.q) || 1), product_id: i.p || null, item_type: i.t || 'custom' };
+      });
+    }
+  }catch(e){}
+})();
+const CHARGE_TOTAL = ITEMS ? (ITEMS.reduce(function(s,i){ return s + i.unit_amount * i.quantity; }, 0) / 100) : AMT;
+const LINE_ITEMS = ITEMS
+  ? ITEMS.map(function(i){ return { name: i.name + (i.quantity > 1 ? ' x' + i.quantity : ''), unit_amount: i.unit_amount, quantity: i.quantity, product_id: i.product_id, item_type: i.item_type }; })
+  : [{ name: DESC, unit_amount: Math.round(AMT * 100), quantity: 1, product_id: null, item_type: 'custom' }];
+
 const $ = (id) => document.getElementById(id);
 function show(el){ el.classList.remove('hide'); }
 function hide(el){ el.classList.add('hide'); }
@@ -156,19 +177,19 @@ $('signoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload
 // ---- Charge screen ----
 async function enterCharge(){
   hide($('loginCard')); show($('chargeCard'));
-  $('amtLine').textContent = money(AMT);
-  $('descLine').textContent = DESC;
+  $('amtLine').textContent = money(CHARGE_TOTAL);
+  $('descLine').textContent = ITEMS ? ITEMS.map(function(i){ return i.quantity + 'x ' + i.name; }).join(', ') : DESC;
   // Look up the member name (staff can read their school's students via RLS).
   try{
     const { data } = await sb.from('students').select('first_name,last_name').eq('id', STU).single();
     const nm = data ? [data.first_name, data.last_name].filter(Boolean).join(' ') : '';
     $('toLine').textContent = nm ? ('Charging ' + nm) : 'Charging member';
   }catch(e){ $('toLine').textContent = 'Charging member'; }
-  if(!(AMT > 0)){ setMsg($('chargeMsg'), 'No amount was provided.', 'err'); $('chargeBtn').disabled = true; }
+  if(!(CHARGE_TOTAL > 0)){ setMsg($('chargeMsg'), 'No amount was provided.', 'err'); $('chargeBtn').disabled = true; }
 }
 
 $('chargeBtn').onclick = async () => {
-  if(!(AMT > 0) || !SID || !STU){ setMsg($('chargeMsg'), 'Missing charge details.', 'err'); return; }
+  if(!(CHARGE_TOTAL > 0) || !SID || !STU){ setMsg($('chargeMsg'), 'Missing charge details.', 'err'); return; }
   $('chargeBtn').disabled = true;
   $('chargeBtn').innerHTML = '<span class="spin"></span> Charging...';
   setMsg($('chargeMsg'), '', '');
@@ -178,7 +199,7 @@ $('chargeBtn').onclick = async () => {
     const body = {
       school_id: SID,
       student_id: STU,
-      line_items: [{ name: DESC, unit_amount: Math.round(AMT * 100), quantity: 1, product_id: null, item_type: 'custom' }],
+      line_items: LINE_ITEMS,
       idempotency_key: uuid()
     };
     const r = await fetch(SUPABASE_URL + '/functions/v1/create-pos-charge', {
@@ -190,7 +211,7 @@ $('chargeBtn').onclick = async () => {
       throw new Error(friendly(em));
     }
     const card = (d && d.brand && d.last4) ? (String(d.brand).toUpperCase() + ' ****' + d.last4) : 'card on file';
-    setMsg($('chargeMsg'), 'Charged ' + money(AMT) + ' to ' + card + '. You can close this page.', 'ok');
+    setMsg($('chargeMsg'), 'Charged ' + money(CHARGE_TOTAL) + ' to ' + card + '. You can close this page.', 'ok');
     $('chargeBtn').innerHTML = 'Charged';
   }catch(e){
     setMsg($('chargeMsg'), (e && e.message) || 'The charge did not go through.', 'err');
