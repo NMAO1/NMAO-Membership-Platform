@@ -1294,8 +1294,12 @@ async function verifyStaffCode(){
   await startStaffApp(r.data.session.user);
 }
 function maybePromptStaffPassword(){
-  var u=currentAuthUser;
-  if(u&&u.user_metadata&&u.user_metadata.password_set) return;
+  // Mirror portal.html: gate on the freshly-loaded DB record, NOT auth metadata.
+  // user_metadata.password_set can be pre-stamped at invite time (or go stale on the
+  // in-memory session), which suppresses the prompt so staff are never asked and fall
+  // back to the email code every login. instructors.password_set is the source of truth.
+  if(!currentInstructor) return;
+  if(currentInstructor.password_set) return;
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
 }
 async function saveStaffPassword(){
