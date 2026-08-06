@@ -104,7 +104,8 @@ let ITEMS = null;
     const arr = JSON.parse(b64urlDecode(raw));
     if(Array.isArray(arr) && arr.length){
       ITEMS = arr.map(function(i){
-        return { name: String(i.n || 'Item'), unit_amount: Math.max(0, Math.round(i.a || 0)),
+        // unit_amount may be negative (a discount line) so the Stripe charge nets down.
+        return { name: String(i.n || 'Item'), unit_amount: Math.round(i.a || 0),
                  quantity: Math.max(1, parseInt(i.q) || 1), product_id: i.p || null, item_type: i.t || 'custom' };
       });
     }
