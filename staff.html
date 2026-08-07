@@ -36,7 +36,6 @@
     ::-webkit-scrollbar-track{background:var(--black);}
     ::-webkit-scrollbar-thumb{background:var(--border2);}
 
-```
 /* ‚îÄ‚îÄ LOGIN ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
 #loginScreen{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -445,7 +444,6 @@
 .spin{animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading-row{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:2rem;color:var(--muted);font-size:0.88rem;font-style:italic;}
-```
 
     /* Per-staff capability gating (body classes set at load; owner is always full) */
     .nocap-enroll #ctaSignup{display:none;}
@@ -568,7 +566,6 @@
 
   <div class="staff-content" id="staffContent">
 
-```
 <!-- TODAY TAB -->
 <div class="tab-panel active" id="tabToday">
  <div class="today-greeting">
@@ -689,7 +686,6 @@
     <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right:0.5rem"></i>Sign Out
   </button>
 </div>
-```
 
   </div><!-- end staff-content -->
 
@@ -1255,8 +1251,11 @@ async function submitStaffLogin(){
   await startStaffApp(r.data.session.user);
 }
 function maybePromptStaffPassword(){
-  var u=currentAuthUser;
-  if(u&&u.user_metadata&&u.user_metadata.password_set) return;
+  // Gate on the freshly-loaded DB record, NOT auth metadata — user_metadata.password_set
+  // can be pre-stamped at invite time or go stale on the in-memory session, suppressing the
+  // prompt so staff are never asked. instructors.password_set is the source of truth.
+  if(!currentInstructor) return;
+  if(currentInstructor.password_set) return;
   setStaffPwMode('firstrun');
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
 }

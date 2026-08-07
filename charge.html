@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>NMAO - Charge Card on File</title>
+<style>
+  :root{
+    --accent:#c8a24a; --bg:#0f1115; --surface:#1a1d24; --border:#2a2f3a;
+    --text:#f4f5f7; --muted:#9aa0ab; --accent-text:#101216;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:460px;margin:0 auto;padding:28px 20px 48px;min-height:100vh;
+    display:flex;flex-direction:column;}
+  .brandhead{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .brandhead img{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--surface)}
+  .brandhead .name{font-weight:700;font-size:1.05rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+  h1{font-size:1.35rem;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:.9rem;margin:0 0 18px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:0 0 6px;letter-spacing:.02em}
+  input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg);color:var(--text);font-size:1rem;margin-bottom:14px}
+  input:focus{outline:none;border-color:var(--accent)}
+  button{width:100%;padding:14px;border:none;border-radius:11px;background:var(--accent);
+    color:var(--accent-text);font-size:1rem;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .ghost{background:none;color:var(--muted);font-weight:500;margin-top:6px}
+  .amt{font-size:2.4rem;font-weight:800;margin:6px 0 2px}
+  .to{color:var(--muted);font-size:.95rem;margin-bottom:2px}
+  .desc{color:var(--text);font-size:.95rem;margin-top:6px}
+  .msg{font-size:.9rem;margin:10px 0 0;padding:11px 13px;border-radius:9px;display:none}
+  .msg.err{display:block;background:#3a1d1d;color:#ffb4b4;border:1px solid #5a2a2a}
+  .msg.ok{display:block;background:#173a24;color:#a9f0c1;border:1px solid #275a3a}
+  .hide{display:none!important}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,.25);
+    border-top-color:var(--accent-text);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{color:var(--muted);font-size:.72rem;text-align:center;margin-top:auto;padding-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandhead"><img id="brandLogo" alt="" class="hide" /><div class="name" id="brandName">NMAO</div></div>
+
+  <!-- LOGIN -->
+  <div class="card" id="loginCard">
+    <h1>Staff sign-in</h1>
+    <p class="sub">Sign in to charge this member's card on file.</p>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="username" inputmode="email" />
+    <div id="pwWrap">
+      <label>Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
+    </div>
+    <div id="codeWrap" class="hide">
+      <label>6-digit code (sent to your email)</label>
+      <input id="code" type="text" inputmode="numeric" maxlength="6" />
+    </div>
+    <button id="loginBtn">Sign In</button>
+    <button class="ghost" id="codeToggle">Email me a 6-digit code instead</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- CHARGE -->
+  <div class="card hide" id="chargeCard">
+    <h1>Charge card on file</h1>
+    <p class="to" id="toLine">Loading member...</p>
+    <div class="amt" id="amtLine">$0.00</div>
+    <div class="desc" id="descLine"></div>
+    <div style="height:16px"></div>
+    <button id="chargeBtn">Charge saved card</button>
+    <button class="ghost" id="signoutBtn">Sign out</button>
+    <div class="msg" id="chargeMsg"></div>
+  </div>
+
+  <div class="foot">Payments are processed securely by Stripe. NMAO never stores card numbers.</div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+const sb = createClient(SUPABASE_URL, ANON);
+
+const P = new URLSearchParams(location.search);
+const slug = P.get('s') || '';
+const SID  = P.get('sid') || '';
+const STU  = P.get('stu') || '';
+const AMT  = Math.max(0, parseFloat(P.get('amt') || '0') || 0);
+const DESC = (P.get('desc') || 'In-person charge').slice(0, 120);
+
+// Optional itemized retail cart (base64url JSON of [{n,a(cents),q,p,t}]).
+function b64urlDecode(s){ s = String(s).replace(/-/g,'+').replace(/_/g,'/'); while(s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
+let ITEMS = null;
+(function(){
+  const raw = P.get('items');
+  if(!raw) return;
+  try{
+    const arr = JSON.parse(b64urlDecode(raw));
+    if(Array.isArray(arr) && arr.length){
+      ITEMS = arr.map(function(i){
+        // unit_amount may be negative (a discount line) so the Stripe charge nets down.
+        return { name: String(i.n || 'Item'), unit_amount: Math.round(i.a || 0),
+                 quantity: Math.max(1, parseInt(i.q) || 1), product_id: i.p || null, item_type: i.t || 'custom' };
+      });
+    }
+  }catch(e){}
+})();
+const CHARGE_TOTAL = ITEMS ? (ITEMS.reduce(function(s,i){ return s + i.unit_amount * i.quantity; }, 0) / 100) : AMT;
+const LINE_ITEMS = ITEMS
+  ? ITEMS.map(function(i){ return { name: i.name + (i.quantity > 1 ? ' x' + i.quantity : ''), unit_amount: i.unit_amount, quantity: i.quantity, product_id: i.product_id, item_type: i.item_type }; })
+  : [{ name: DESC, unit_amount: Math.round(AMT * 100), quantity: 1, product_id: null, item_type: 'custom' }];
+
+const $ = (id) => document.getElementById(id);
+function show(el){ el.classList.remove('hide'); }
+function hide(el){ el.classList.add('hide'); }
+function setMsg(el, txt, kind){ el.textContent = txt || ''; el.className = 'msg' + (txt ? (' ' + kind) : ''); }
+function money(n){ return '$' + Number(n).toFixed(2); }
+function uuid(){ try{ return crypto.randomUUID(); }catch(e){ return 'idem_' + Date.now() + '_' + Math.random().toString(36).slice(2); } }
+
+// ---- Optional branding ----
+(async function brand(){
+  if(!slug) return;
+  try{
+    const { data } = await sb.rpc('get_school_branding_by_slug', { p_slug: slug });
+    const b = Array.isArray(data) ? data[0] : data;
+    if(!b) return;
+    const r = document.documentElement.style;
+    if(b.color) r.setProperty('--accent', b.color);
+    if(b.bg_color) r.setProperty('--bg', b.bg_color);
+    if(b.surface_color) r.setProperty('--surface', b.surface_color);
+    if(b.border_color) r.setProperty('--border', b.border_color);
+    if(b.font_color) r.setProperty('--text', b.font_color);
+    if(b.name) $('brandName').textContent = b.name;
+    if(b.logo_url){ $('brandLogo').src = b.logo_url; show($('brandLogo')); }
+  }catch(e){}
+})();
+
+// ---- Auth ----
+let codeMode = false;
+$('codeToggle').onclick = async () => {
+  const email = $('email').value.trim();
+  if(codeMode){ codeMode = false; hide($('codeWrap')); show($('pwWrap')); $('codeToggle').textContent = 'Email me a 6-digit code instead'; $('loginBtn').textContent = 'Sign In'; return; }
+  if(!email){ setMsg($('loginMsg'), 'Enter your email first.', 'err'); return; }
+  setMsg($('loginMsg'), 'Sending code...', 'ok');
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
+  if(error){ setMsg($('loginMsg'), error.message, 'err'); return; }
+  codeMode = true; hide($('pwWrap')); show($('codeWrap'));
+  $('codeToggle').textContent = 'Use password instead';
+  $('loginBtn').textContent = 'Verify Code';
+  setMsg($('loginMsg'), 'Code sent. Check your email.', 'ok');
+};
+
+$('loginBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  $('loginBtn').disabled = true;
+  try{
+    if(codeMode){
+      const code = $('code').value.trim();
+      const { error } = await sb.auth.verifyOtp({ email, token: code, type: 'email' });
+      if(error) throw error;
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password: $('password').value });
+      if(error) throw error;
+    }
+    await enterCharge();
+  }catch(e){ setMsg($('loginMsg'), (e && e.message) || 'Sign-in failed.', 'err'); }
+  finally{ $('loginBtn').disabled = false; }
+};
+
+$('signoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ---- Charge screen ----
+async function enterCharge(){
+  hide($('loginCard')); show($('chargeCard'));
+  $('amtLine').textContent = money(CHARGE_TOTAL);
+  $('descLine').textContent = ITEMS ? ITEMS.map(function(i){ return i.quantity + 'x ' + i.name; }).join(', ') : DESC;
+  // Look up the member name (staff can read their school's students via RLS).
+  try{
+    const { data } = await sb.from('students').select('first_name,last_name').eq('id', STU).single();
+    const nm = data ? [data.first_name, data.last_name].filter(Boolean).join(' ') : '';
+    $('toLine').textContent = nm ? ('Charging ' + nm) : 'Charging member';
+  }catch(e){ $('toLine').textContent = 'Charging member'; }
+  if(!(CHARGE_TOTAL > 0)){ setMsg($('chargeMsg'), 'No amount was provided.', 'err'); $('chargeBtn').disabled = true; }
+}
+
+$('chargeBtn').onclick = async () => {
+  if(!(CHARGE_TOTAL > 0) || !SID || !STU){ setMsg($('chargeMsg'), 'Missing charge details.', 'err'); return; }
+  $('chargeBtn').disabled = true;
+  $('chargeBtn').innerHTML = '<span class="spin"></span> Charging...';
+  setMsg($('chargeMsg'), '', '');
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    const token = (session && session.access_token) || ANON;
+    const body = {
+      school_id: SID,
+      student_id: STU,
+      line_items: LINE_ITEMS,
+      idempotency_key: uuid()
+    };
+    const r = await fetch(SUPABASE_URL + '/functions/v1/create-pos-charge', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }, body: JSON.stringify(body)
+    });
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok || (d && d.error)){
+      const em = (d && d.error) ? String(d.error) : ('Charge failed (' + r.status + ').');
+      throw new Error(friendly(em));
+    }
+    const card = (d && d.brand && d.last4) ? (String(d.brand).toUpperCase() + ' ****' + d.last4) : 'card on file';
+    setMsg($('chargeMsg'), 'Charged ' + money(CHARGE_TOTAL) + ' to ' + card + '. You can close this page.', 'ok');
+    $('chargeBtn').innerHTML = 'Charged';
+  }catch(e){
+    setMsg($('chargeMsg'), (e && e.message) || 'The charge did not go through.', 'err');
+    $('chargeBtn').disabled = false;
+    $('chargeBtn').innerHTML = 'Try again';
+  }
+};
+
+function friendly(em){
+  if(em.indexOf('NO_SAVED_CARD') === 0) return 'No saved card on file for this member. Collect payment another way, or have them add a card in the member portal.';
+  if(em.indexOf('AUTHENTICATION_REQUIRED') === 0) return 'That card needs extra verification (3-D Secure). Ask the member to pay via a payment link instead.';
+  if(em.indexOf('Not authorized') !== -1 || em.indexOf('permission') !== -1) return 'Your staff account is not allowed to take payments.';
+  return em.replace(/^[A-Z_]+:\s*/, '') || 'The charge did not go through.';
+}
+
+// Resume an existing session (staff signs in once, then stays signed in).
+(async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ await enterCharge(); }
+})();
+</script>
+</body>
+</html>

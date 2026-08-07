@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>NMAO - Choose a Plan</title>
+<style>
+  :root{
+    --accent:#c8a24a; --bg:#0f1115; --surface:#1a1d24; --border:#2a2f3a;
+    --text:#f4f5f7; --muted:#9aa0ab; --accent-text:#101216;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:460px;margin:0 auto;padding:28px 20px 48px;min-height:100vh;display:flex;flex-direction:column}
+  .brandhead{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .brandhead img{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--surface)}
+  .brandhead .name{font-weight:700;font-size:1.05rem}
+  h1{font-size:1.35rem;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:.9rem;margin:0 0 18px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:0 0 6px;letter-spacing:.02em}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+  input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg);color:var(--text);font-size:1rem;margin-bottom:12px}
+  input:focus{outline:none;border-color:var(--accent)}
+  .plan{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:15px;margin-bottom:11px;cursor:pointer;transition:border-color .15s}
+  .plan.sel{border-color:var(--accent)}
+  .plan .pn{flex:1}
+  .plan .pname{font-weight:600}
+  .plan .pmeta{color:var(--muted);font-size:.82rem;margin-top:2px}
+  .plan .price{color:var(--accent);font-weight:700;white-space:nowrap}
+  .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex:0 0 auto}
+  .plan.sel .radio{border-color:var(--accent);background:radial-gradient(circle at center,var(--accent) 0 6px,transparent 7px)}
+  button{width:100%;padding:15px;border:none;border-radius:12px;background:var(--accent);
+    color:var(--accent-text);font-size:1rem;font-weight:700;cursor:pointer;margin-top:8px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .ghost{background:none;color:var(--muted);font-weight:500}
+  .seg{display:flex;gap:0;border:1px solid var(--border);border-radius:9px;overflow:hidden;width:120px}
+  .seg button{margin:0;border-radius:0;padding:8px 0;font-size:.85rem;background:var(--bg);color:var(--muted)}
+  .seg button.on{background:var(--accent);color:var(--accent-text)}
+  .row{display:flex;gap:10px;align-items:center}
+  .row input{margin-bottom:0}
+  .dscline{display:flex;justify-content:space-between;margin-top:10px;font-size:.95rem}
+  .dscline .net{color:var(--accent);font-weight:700}
+  .msg{font-size:.9rem;margin:12px 0 0;padding:11px 13px;border-radius:9px;display:none}
+  .msg.err{display:block;background:#3a1d1d;color:#ffb4b4;border:1px solid #5a2a2a}
+  .msg.ok{display:block;background:#173a24;color:#a9f0c1;border:1px solid #275a3a}
+  .hide{display:none!important}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,.25);
+    border-top-color:var(--accent-text);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{color:var(--muted);font-size:.72rem;text-align:center;margin-top:auto;padding-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandhead"><img id="brandLogo" alt="" class="hide" /><div class="name" id="brandName">NMAO</div></div>
+
+  <div id="done" class="hide">
+    <h1>Payment complete</h1>
+    <p class="sub">The membership is active. You can close this page.</p>
+  </div>
+
+  <div id="cancelled" class="hide">
+    <h1>Checkout cancelled</h1>
+    <p class="sub">No payment was taken. You can pick a plan again below.</p>
+  </div>
+
+  <!-- STAFF LOGIN (gate so only staff can enroll / apply discounts) -->
+  <div class="card hide" id="loginCard">
+    <h1>Staff sign-in</h1>
+    <p class="sub">Sign in to enroll this member.</p>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="username" inputmode="email" />
+    <div id="pwWrap">
+      <label>Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
+    </div>
+    <div id="codeWrap" class="hide">
+      <label>6-digit code (sent to your email)</label>
+      <input id="code" type="text" inputmode="numeric" maxlength="6" />
+    </div>
+    <button id="loginBtn">Sign In</button>
+    <button class="ghost" id="codeToggle">Email me a 6-digit code instead</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- PLAN PICKER + DISCOUNT -->
+  <div id="picker" class="hide">
+    <h1>Choose a plan</h1>
+    <p class="sub" id="forLine">Select a membership to enroll.</p>
+    <div id="plans"><div class="sub"><span class="spin"></span> Loading plans...</div></div>
+
+    <div class="card hide" id="dscCard">
+      <div class="row" style="justify-content:space-between">
+        <label style="margin:0">Discount (optional)</label>
+        <div class="seg">
+          <button id="dscPct" class="on">%</button>
+          <button id="dscFixed">$</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="dscVal" inputmode="decimal" placeholder="0" style="width:96px" />
+        <input id="dscReason" placeholder="Reason (optional)" />
+      </div>
+      <div id="dscModeWrap" class="row hide" style="justify-content:space-between;margin-top:10px">
+        <label style="margin:0">Applies</label>
+        <div class="seg" style="width:200px">
+          <button id="dscOnce" class="on">First payment</button>
+          <button id="dscForever">Every cycle</button>
+        </div>
+      </div>
+      <div class="dscline"><span class="sub" style="margin:0">After discount</span><span class="net" id="netLine">-</span></div>
+    </div>
+
+    <button id="goBtn" disabled>Continue to payment</button>
+    <button class="ghost" id="signoutBtn">Sign out</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="foot">Payments are processed securely by Stripe. NMAO never stores card numbers.</div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+const sb = createClient(SUPABASE_URL, ANON);
+
+const P = new URLSearchParams(location.search);
+const slug = P.get('s') || '';
+const SID  = P.get('sid') || '';
+const STU  = P.get('stu') || '';
+const $ = (id) => document.getElementById(id);
+function money(n){ return '$' + (Number(n) || 0).toFixed(2); }
+function setMsg(el, txt, kind){ el.textContent = txt || ''; el.className = 'msg' + (txt ? (' ' + kind) : ''); }
+
+if(P.get('paid') === '1'){ $('done').classList.remove('hide'); }
+else if(P.get('cancelled') === '1'){ $('cancelled').classList.remove('hide'); }
+
+// Optional branding.
+(async function brand(){
+  if(!slug) return;
+  try{
+    const { data } = await sb.rpc('get_school_branding_by_slug', { p_slug: slug });
+    const b = Array.isArray(data) ? data[0] : data;
+    if(!b) return;
+    const r = document.documentElement.style;
+    if(b.color) r.setProperty('--accent', b.color);
+    if(b.bg_color) r.setProperty('--bg', b.bg_color);
+    if(b.surface_color) r.setProperty('--surface', b.surface_color);
+    if(b.border_color) r.setProperty('--border', b.border_color);
+    if(b.font_color) r.setProperty('--text', b.font_color);
+    if(b.name) $('brandName').textContent = b.name;
+    if(b.logo_url){ $('brandLogo').src = b.logo_url; $('brandLogo').classList.remove('hide'); }
+  }catch(e){}
+})();
+
+// ---- Auth ----
+let codeMode = false;
+$('codeToggle').onclick = async () => {
+  const email = $('email').value.trim();
+  if(codeMode){ codeMode = false; $('codeWrap').classList.add('hide'); $('pwWrap').classList.remove('hide'); $('codeToggle').textContent = 'Email me a 6-digit code instead'; $('loginBtn').textContent = 'Sign In'; return; }
+  if(!email){ setMsg($('loginMsg'), 'Enter your email first.', 'err'); return; }
+  setMsg($('loginMsg'), 'Sending code...', 'ok');
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
+  if(error){ setMsg($('loginMsg'), error.message, 'err'); return; }
+  codeMode = true; $('pwWrap').classList.add('hide'); $('codeWrap').classList.remove('hide');
+  $('codeToggle').textContent = 'Use password instead'; $('loginBtn').textContent = 'Verify Code';
+  setMsg($('loginMsg'), 'Code sent. Check your email.', 'ok');
+};
+$('loginBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  $('loginBtn').disabled = true;
+  try{
+    if(codeMode){
+      const { error } = await sb.auth.verifyOtp({ email, token: $('code').value.trim(), type: 'email' });
+      if(error) throw error;
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password: $('password').value });
+      if(error) throw error;
+    }
+    enterPicker();
+  }catch(e){ setMsg($('loginMsg'), (e && e.message) || 'Sign-in failed.', 'err'); }
+  finally{ $('loginBtn').disabled = false; }
+};
+$('signoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ---- Discount state ----
+let dscType = 'pct';    // 'pct' | 'fixed'
+let dscMode = 'once';   // 'once' | 'forever'
+function setSeg(onEl, offEl){ onEl.classList.add('on'); offEl.classList.remove('on'); }
+$('dscPct').onclick = () => { dscType = 'pct'; setSeg($('dscPct'), $('dscFixed')); refreshNet(); };
+$('dscFixed').onclick = () => { dscType = 'fixed'; setSeg($('dscFixed'), $('dscPct')); refreshNet(); };
+$('dscOnce').onclick = () => { dscMode = 'once'; setSeg($('dscOnce'), $('dscForever')); };
+$('dscForever').onclick = () => { dscMode = 'forever'; setSeg($('dscForever'), $('dscOnce')); };
+$('dscVal').oninput = refreshNet;
+
+let selected = null, plans = [];
+
+function selectedPlan(){ return plans.find(p => p.id === selected); }
+function isPack(m){ return m && m.billing_type === 'class_pack'; }
+
+// Discount cents on the selected plan's price (mirrors staff.html dscGet).
+function discountCents(){
+  const m = selectedPlan(); if(!m) return 0;
+  const baseCents = Math.round((parseFloat(m.price) || 0) * 100);
+  const raw = parseFloat($('dscVal').value);
+  if(!raw || raw <= 0 || isNaN(raw) || baseCents <= 0) return 0;
+  let cents = (dscType === 'pct') ? Math.round(baseCents * (Math.min(raw, 100) / 100)) : Math.round(raw * 100);
+  if(cents < 0) cents = 0;
+  if(cents > baseCents) cents = baseCents;
+  return cents;
+}
+function refreshNet(){
+  const m = selectedPlan(); if(!m){ return; }
+  const baseCents = Math.round((parseFloat(m.price) || 0) * 100);
+  const net = (baseCents - discountCents()) / 100;
+  $('netLine').textContent = money(net);
+}
+
+async function loadPlans(){
+  if(!SID){ $('plans').innerHTML = '<div class="msg err" style="display:block">Missing school.</div>'; return; }
+  try{
+    const { data, error } = await sb.rpc('get_public_memberships', { p_school_id: SID });
+    if(error) throw error;
+    plans = (data || []).filter(m => m && !m.is_custom);
+    if(!plans.length){ $('plans').innerHTML = '<div class="sub">No plans are published yet. Add one in the dashboard.</div>'; return; }
+    renderPlans();
+  }catch(e){ $('plans').innerHTML = '<div class="msg err" style="display:block">' + ((e && e.message) || 'Could not load plans.') + '</div>'; }
+}
+function renderPlans(){
+  $('plans').innerHTML = plans.map((m) => {
+    const sel = (selected === m.id) ? ' sel' : '';
+    return '<div class="plan' + sel + '" data-id="' + m.id + '"><div class="pn"><div class="pname"></div><div class="pmeta"></div></div><div class="price">' + money(parseFloat(m.price) || 0) + '</div><div class="radio"></div></div>';
+  }).join('');
+  $('plans').querySelectorAll('.plan').forEach((node, i) => {
+    const m = plans[i];
+    node.querySelector('.pname').textContent = m.name || 'Membership';
+    const fee = parseFloat(m.signup_fee) || 0;
+    let meta = isPack(m) ? ((m.class_limit_count ? (m.class_limit_count + '-class pack') : 'Class pack'))
+             : (m.billing_type === 'recurring' ? 'Monthly membership' : 'Membership');
+    if(fee > 0) meta += ' + ' + money(fee) + ' signup';
+    node.querySelector('.pmeta').textContent = meta;
+    node.onclick = () => {
+      selected = m.id; renderPlans();
+      $('goBtn').disabled = false;
+      $('dscCard').classList.remove('hide');
+      // once/forever only matters for recurring plans
+      $('dscModeWrap').classList.toggle('hide', isPack(m));
+      if(isPack(m)){ dscMode = 'once'; setSeg($('dscOnce'), $('dscForever')); }
+      refreshNet();
+    };
+  });
+}
+
+$('goBtn').onclick = async () => {
+  if(!selected){ return; }
+  if(!STU){ setMsg($('msg'), 'This checkout needs a student. Re-open it from the student.', 'err'); return; }
+  $('goBtn').disabled = true;
+  $('goBtn').innerHTML = '<span class="spin"></span> Starting checkout...';
+  setMsg($('msg'), '', '');
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    const token = (session && session.access_token) || ANON;
+    const base = location.origin + location.pathname + '?s=' + encodeURIComponent(slug) + '&sid=' + encodeURIComponent(SID) + '&stu=' + encodeURIComponent(STU);
+    const body = {
+      school_id: SID, student_id: STU, membership_id: selected,
+      success_url: base + '&paid=1', cancel_url: base + '&cancelled=1'
+    };
+    const dc = discountCents();
+    if(dc > 0){
+      body.discount_cents = dc;
+      body.discount_mode = isPack(selectedPlan()) ? 'once' : dscMode;
+      const reason = ($('dscReason').value || '').trim();
+      if(reason) body.discount_reason = reason;
+      if(session && session.user) body.discounted_by = session.user.id;
+    }
+    const r = await fetch(SUPABASE_URL + '/functions/v1/stripe-create-checkout', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }, body: JSON.stringify(body)
+    });
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok || !d || d.error || !d.url) throw new Error((d && d.error) || 'Could not start checkout.');
+    location.href = d.url;
+  }catch(e){
+    setMsg($('msg'), (e && e.message) || 'Could not start checkout.', 'err');
+    $('goBtn').disabled = false; $('goBtn').innerHTML = 'Continue to payment';
+  }
+};
+
+// ---- Boot ----
+async function enterPicker(){
+  $('loginCard').classList.add('hide');
+  $('picker').classList.remove('hide');
+  try{
+    const { data } = await sb.from('students').select('first_name,last_name').eq('id', STU).single();
+    const nm = data ? [data.first_name, data.last_name].filter(Boolean).join(' ') : '';
+    $('forLine').textContent = nm ? ('Enrolling ' + nm) : 'Select a membership to enroll.';
+  }catch(e){}
+  loadPlans();
+}
+(async function boot(){
+  if(P.get('paid') === '1') return;   // show success, no picker
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ enterPicker(); } else { $('loginCard').classList.remove('hide'); }
+})();
+</script>
+</body>
+</html>
