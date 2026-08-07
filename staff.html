@@ -1164,6 +1164,8 @@ function ymd(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  INIT
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+var pendingMagicUser=null;   // magic-link session detected at load, awaiting password setup
+var pwPromptHandled=false;   // the set-password step already ran this session
 async function init(){
   try{
     await loadSchoolBranding();
@@ -1172,7 +1174,13 @@ async function init(){
       var res=await sb.auth.getSession();
       if(res.data&&res.data.session){
         window.history.replaceState(null,'',window.location.pathname);
-        await startStaffApp(res.data.session.user);
+        // Arrived via the email magic link. Offer to set a password right here on the
+        // sign-in screen (like a password reset) BEFORE loading the app, so a staffer
+        // who only ever gets a link can create a password to use next time.
+        pendingMagicUser=res.data.session.user;
+        document.getElementById('loginScreen').style.display='flex';
+        setStaffPwMode('reset');
+        var _pm=document.getElementById('staffPwModal'); if(_pm) _pm.style.display='flex';
         return;
       }
     }
@@ -1261,6 +1269,7 @@ async function submitStaffLogin(){
   await startStaffApp(r.data.session.user);
 }
 function maybePromptStaffPassword(){
+  if(pwPromptHandled) return;      // the magic-link reset step already offered it this session
   // Gate on the freshly-loaded DB record, NOT auth metadata — user_metadata.password_set
   // can be pre-stamped at invite time or go stale on the in-memory session, suppressing the
   // prompt so staff are never asked. instructors.password_set is the source of truth.
@@ -1272,10 +1281,13 @@ function maybePromptStaffPassword(){
 // One modal serves both first-run setup and a deliberate change from the Profile tab.
 function setStaffPwMode(mode){
   var change=mode==='change';
-  var t=document.getElementById('staffPwTitle'); if(t) t.textContent=change?'Change password':'Set your password';
+  var reset=mode==='reset';
+  var t=document.getElementById('staffPwTitle'); if(t) t.textContent=change?'Change password':(reset?'Set a new password':'Set your password');
   var d=document.getElementById('staffPwDesc'); if(d) d.textContent=change
     ? 'Update the password you use to sign in to the staff portal.'
-    : 'Set a password so next time you can sign in with just your email and password.';
+    : (reset
+      ? "You're signed in through your email link. Create a password now so next time you can sign in with just your email and password."
+      : 'Set a password so next time you can sign in with just your email and password.');
   var sk=document.getElementById('staffPwSkip'); if(sk) sk.style.display=change?'none':'block';
   var a=document.getElementById('staffNewPw'); if(a) a.value='';
   var b=document.getElementById('staffNewPw2'); if(b) b.value='';
@@ -1293,10 +1305,22 @@ async function saveStaffPassword(){
   var btn=document.getElementById('staffPwBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin" style="margin-right:0.5rem"></i>Saving...';
   var r=await sb.auth.updateUser({password:pw,data:{password_set:true}});
   if(r.error){msg.textContent=r.error.message;msg.className='login-msg er';btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk" style="margin-right:0.5rem"></i>Save Password';return;}
-  try{ if(currentInstructor&&currentInstructor.id){ await sb.from('instructors').update({password_set:true}).eq('id',currentInstructor.id); currentInstructor.password_set=true; } }catch(e){}
+  try{
+    if(currentInstructor&&currentInstructor.id){ await sb.from('instructors').update({password_set:true}).eq('id',currentInstructor.id); currentInstructor.password_set=true; }
+    else if(pendingMagicUser){ await sb.from('instructors').update({password_set:true}).eq('email_norm',String(pendingMagicUser.email||'').trim().toLowerCase()); }
+  }catch(e){}
+  pwPromptHandled=true;
   var m=document.getElementById('staffPwModal'); if(m) m.style.display='none';
+  // Post-magic-link reset flow: continue into the app now, signed in with the new password.
+  if(pendingMagicUser){ var _u=pendingMagicUser; pendingMagicUser=null; await startStaffApp(_u); }
 }
-function skipStaffPassword(){ var m=document.getElementById('staffPwModal'); if(m) m.style.display='none'; }
+function skipStaffPassword(){
+  pwPromptHandled=true;
+  var m=document.getElementById('staffPwModal'); if(m) m.style.display='none';
+  // Magic-link arrival with no password set yet: still load the app (they're signed in);
+  // they can set one later from Profile - Change Password.
+  if(pendingMagicUser){ var _u=pendingMagicUser; pendingMagicUser=null; startStaffApp(_u); }
+}
 
 async function startStaffApp(user){
   currentAuthUser=user;
