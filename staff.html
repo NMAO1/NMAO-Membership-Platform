@@ -1175,6 +1175,15 @@ async function init(){
         return;
       }
     }
+    // A magic link that arrived expired / already-used (email scanners consume the
+    // one-time token) lands here with an error in the hash - explain it instead of
+    // silently dropping the user on an empty sign-in screen.
+    if(hash&&(hash.indexOf('error')!==-1||hash.indexOf('otp_expired')!==-1)){
+      window.history.replaceState(null,'',window.location.pathname);
+      document.getElementById('loginScreen').style.display='flex';
+      setLoginMsg('That sign-in link already expired or was already used. Enter your email above and tap "Email me a magic link" for a fresh one.','er');
+      return;
+    }
     var r=await sb.auth.getSession();
     if(r.data&&r.data.session){
       await startStaffApp(r.data.session.user);
