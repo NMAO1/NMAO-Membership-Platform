@@ -3228,6 +3228,7 @@
           <div id="posCreditCardLine" style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem"></div>
         </div>
         <button id="posBtnCardOnFile" class="btn-gold-full" style="margin-top:0.75rem;opacity:0.5;cursor:not-allowed" onclick="checkoutPOS_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Charge Card on File</button>
+        <button id="posBtnNewCard" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_newCard()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Charge New Card</button>
         <button id="posBtnPaymentLink" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Send Payment Link</button>
         <button id="posBtnCash" class="btn-sm" style="margin-top:0.5rem;width:100%;text-align:center" onclick="checkoutPOS_cash()"><i class="fa-solid fa-money-bill-wave" style="margin-right:0.5rem"></i>Cash / Other</button>
         <button class="btn-sm" style="margin-top:0.5rem;width:100%;text-align:center" onclick="clearPOSCart()">Clear Cart</button>
@@ -3238,6 +3239,22 @@
 </div>
 
  <!-- ¬ßMODAL-POS-PAYMENTLINK -->
+<div class="modal-overlay" id="posNewCardModal">
+  <div class="modal" style="width:min(92vw,420px)">
+    <div class="modal-header"><span class="modal-title">Charge New Card</span><button class="modal-close" onclick="closePOSNewCard()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="padding:1.25rem 1.5rem">
+      <div id="posNewCardAmount" style="text-align:center;font-size:1.5rem;color:var(--gold);font-family:var(--font-display);margin-bottom:1rem">$0.00</div>
+      <div class="field"><label>Name on card (optional)</label><input type="text" id="posNewCardName" placeholder="Name or company" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.6rem 0.85rem;outline:none" /></div>
+      <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0.75rem 0 0.4rem;display:block">Card details</label>
+      <div id="posCardElement" style="background:var(--black);border:1px solid var(--border);padding:0.9rem 0.85rem"></div>
+      <button class="btn-gold-full" id="posNewCardChargeBtn" style="margin-top:1rem" onclick="confirmPOSNewCard()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Charge <span id="posNewCardBtnAmt"></span></button>
+      <p class="form-msg" id="posNewCardMsg" style="margin-top:0.6rem;text-align:center"></p>
+      <p style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem">Processed securely by Stripe. Card details never touch our servers.</p>
+    </div>
+  </div>
+</div>
+
+ <!-- POS PAYMENT LINK -->
 <div class="modal-overlay" id="posPaymentLinkModal">
   <div class="modal" style="width:460px;max-width:95vw;padding:0">
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;display:flex;justify-content:space-between;align-items:center">
@@ -13071,6 +13088,16 @@ function updatePOSCheckoutButtons(){
   cashBtn.style.opacity = hasItems ? '1' : '0.5';
   cashBtn.style.cursor = hasItems ? 'pointer' : 'not-allowed';
 
+  // Charge New Card: keyed entry for a guest or student. Requires items;
+  // a pack in the cart needs a student to credit it to.
+  var newCardBtn = document.getElementById('posBtnNewCard');
+  if(newCardBtn){
+    var ncOK = hasItems && (!hasPack || hasStudent);
+    newCardBtn.disabled = !ncOK;
+    newCardBtn.style.opacity = ncOK ? '1' : '0.5';
+    newCardBtn.style.cursor = ncOK ? 'pointer' : 'not-allowed';
+  }
+
   renderPosCreditRow();
 }
 
@@ -13175,7 +13202,98 @@ async function checkoutPOS_cardOnFile(){
   }
 }
 
-// Payment Link path ‚Äî generates Stripe Checkout URL, displays QR + share options
+// New-card path — operator keys a card at POS (guest or student), one-time charge.
+// Uses Stripe Elements so the card number never touches our servers. Requires the
+// create-pos-payment-intent edge function (supabase/functions/create-pos-payment-intent).
+var _posStripe=null,_posElements=null,_posCard=null,_posCS=null,_posPIid=null,_posChargeAmt=0;
+function ensureStripeJs(){
+  return new Promise(function(resolve,reject){
+    if(window.Stripe){resolve();return;}
+    var s=document.createElement('script'); s.src='https://js.stripe.com/v3/';
+    s.onload=function(){resolve();}; s.onerror=function(){reject(new Error('Could not load Stripe.'));};
+    document.head.appendChild(s);
+  });
+}
+async function checkoutPOS_newCard(){
+  if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
+  if(posCartHasPack() && !posSelectedStudentId){setMsg('posMsg','Select a student first - session packs need an owner.','error');return;}
+  setMsg('posMsg','Preparing secure card entry...','');
+  try{
+    await ensureStripeJs();
+    var r=await fetch(SURL+'/functions/v1/create-pos-payment-intent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({school_id:SID,student_id:posSelectedStudentId||null,line_items:posCartLineItems(),description:'POS sale'})
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.client_secret){setMsg('posMsg',(data&&data.error)||'Could not start card charge.','error');return;}
+    _posCS=data.client_secret; _posPIid=data.payment_intent_id; _posChargeAmt=posCartTotal();
+    _posStripe=Stripe(data.publishable_key,{stripeAccount:data.account_id});
+    _posElements=_posStripe.elements();
+    _posCard=_posElements.create('card',{style:{base:{color:'#F5F0E8',fontFamily:'Lato, sans-serif',fontSize:'15px','::placeholder':{color:'#7A7060'}},invalid:{color:'#E07070'}}});
+    var mount=document.getElementById('posCardElement'); mount.innerHTML='';
+    _posCard.mount('#posCardElement');
+    var amt='$'+_posChargeAmt.toFixed(2);
+    document.getElementById('posNewCardAmount').textContent=amt;
+    document.getElementById('posNewCardBtnAmt').textContent=amt;
+    var m=document.getElementById('posNewCardMsg'); m.textContent=''; m.className='form-msg';
+    var b=document.getElementById('posNewCardChargeBtn'); b.disabled=false;
+    setMsg('posMsg','','');
+    document.getElementById('posNewCardModal').classList.add('active');
+  }catch(e){ setMsg('posMsg', e.message||'Could not start card charge.','error'); }
+}
+function closePOSNewCard(){
+  document.getElementById('posNewCardModal').classList.remove('active');
+  if(_posCard){ try{_posCard.destroy();}catch(e){} _posCard=null; }
+  _posCS=null; _posPIid=null;
+}
+async function confirmPOSNewCard(){
+  if(!_posStripe||!_posCS) return;
+  var msg=document.getElementById('posNewCardMsg'); msg.textContent=''; msg.className='form-msg';
+  var btn=document.getElementById('posNewCardChargeBtn'); var _h=btn.innerHTML; btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Charging...';
+  try{
+    var name=document.getElementById('posNewCardName').value.trim();
+    var res=await _posStripe.confirmCardPayment(_posCS,{payment_method:{card:_posCard,billing_details:name?{name:name}:undefined}});
+    if(res.error){ msg.textContent=res.error.message||'Card was declined.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+    if(res.paymentIntent && res.paymentIntent.status==='succeeded'){
+      await recordPOSPaid('card', _posPIid);
+      msg.textContent='Charged $'+_posChargeAmt.toFixed(2)+' successfully.'; msg.className='form-msg success';
+      var amtDone=_posChargeAmt;
+      setTimeout(function(){
+        closePOSNewCard();
+        setMsg('posMsg','Card sale complete! $'+amtDone.toFixed(2)+' charged.','success');
+        clearPOSCart(); loadRevenue();
+        setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();},2000);
+      },800);
+    } else {
+      msg.textContent='Payment did not complete. Please try again.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h;
+    }
+  }catch(e){ msg.textContent=e.message||'Charge failed.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; }
+}
+// Record a paid POS sale (mirrors the cash path; adds status paid + Stripe PI id + pack credit).
+async function recordPOSPaid(method, piId){
+  var nowIso=new Date().toISOString();
+  var inserts=posCart.map(function(c){
+    return { school_id:SID, student_id:posSelectedStudentId||null, amount:c.price*c.qty, status:'paid',
+      type:c.type==='pack'?'session_pack':'retail_sale', description:c.name+(c.qty>1?' x'+c.qty:''),
+      stripe_payment_intent_id:piId||null, paid_at:nowIso, notes:(method==='card'?'POS new card':null), created_at:nowIso };
+  });
+  var r=await sb.from('payments').insert(inserts);
+  if(r.error){ throw new Error('Charged, but recording failed: '+r.error.message); }
+  for(var i=0;i<posCart.length;i++){
+    var item=posCart[i];
+    if(item.type==='pack' && posSelectedStudentId && item.pack){
+      var pack=item.pack; var expiry=null;
+      if(pack.expiry_days){ var exp=new Date(); exp.setDate(exp.getDate()+pack.expiry_days); expiry=localDateStr(exp); }
+      for(var q=0;q<item.qty;q++){
+        await sb.from('student_session_packs').insert({ school_id:SID, student_id:posSelectedStudentId, session_pack_id:pack.id, session_type_id:pack.session_type_id||null, name:pack.name, sessions_remaining:pack.quantity, sessions_total:pack.quantity, expires_at:expiry?expiry+'T00:00:00':null, pack_kind:pack.kind, status:'active' });
+      }
+    }
+  }
+}
+
+// Payment Link path — generates Stripe Checkout URL, displays QR + share options
 async function checkoutPOS_paymentLink(){
   if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
   if(posCartHasPack() && !posSelectedStudentId){setMsg('posMsg','Select a student first - session packs need an owner.','error');return;}

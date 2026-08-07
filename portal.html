@@ -770,8 +770,8 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         <div class="portal-section" id="cardUpdateSection" style="display:none">
           <div class="section-label"><i class="fa-solid fa-credit-card"></i> Payment Method</div>
           <div class="info-card">
-            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Update the card used for membership auto-renewals. You will be redirected to a secure Stripe page to enter the new card.</p>
-            <button class="btn-gold" id="updateCardBtn" onclick="startCardUpdate()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Update Payment Card</button>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Add or update a card on file for your account. You'll be redirected to a secure Stripe page to enter the card. If you have a membership, this is also the card used for auto-renewals.</p>
+            <button class="btn-gold" id="updateCardBtn" onclick="startCardUpdate()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Add / Update Card</button>
             <p class="form-msg" id="cardUpdateMsg"></p>
           </div>
         </div>
@@ -1748,7 +1748,7 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
-renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_member_card_updates && (hasActiveSub || hasAwaitingCard))document.getElementById('cardUpdateSection').style.display='';
+renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_member_card_updates)document.getElementById('cardUpdateSection').style.display='';
   document.getElementById('contactCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-envelope" style="margin-right:0.3rem"></i>Email</div><div class="info-value">'+(s.email||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-phone" style="margin-right:0.3rem"></i>Phone</div><div class="info-value">'+(s.phone||'--')+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-cake-candles" style="margin-right:0.3rem"></i>Birthday</div><div class="info-value">'+(s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
   if(s.programs&&s.programs.belt_system==='Belt Progression'){
     var bsid=s.programs.belt_system_id;var levels=[];
