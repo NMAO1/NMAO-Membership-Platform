@@ -1281,7 +1281,8 @@
         var anchorMin = timeToMins(('' + instructor.cluster_anchor_time).substring(0,5));
         var clDir     = instructor.cluster_direction || 'before';
         var clOpen    = parseInt(instructor.cluster_open_count) || 1;
-        slots = generateClusterSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate, anchorMin, clDir, clOpen);
+        var clEndMin  = instructor.cluster_end_time ? timeToMins(('' + instructor.cluster_end_time).substring(0,5)) : null;
+        slots = generateClusterSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate, anchorMin, clDir, clOpen, clEndMin);
       } else {
         slots = generateSlots(dayAvail.start_time, dayAvail.end_time, duration, buffer, dayBookings, minHours, selectedDate);
       }
@@ -1306,9 +1307,12 @@
     // Cascading/clustered slots: show only the N slots nearest the instructor's
     // anchor time (in the chosen direction); each booking reveals the next one.
     // Grid is aligned TO the anchor so a slot ends exactly at it.
-    function generateClusterSlots(startTime, endTime, duration, buffer, existingBookings, minAdvanceHours, dateStr, anchorMin, direction, openCount) {
+    function generateClusterSlots(startTime, endTime, duration, buffer, existingBookings, minAdvanceHours, dateStr, anchorMin, direction, openCount, clusterEndMin) {
       var start     = timeToMins(startTime);
       var end       = timeToMins(endTime);
+      // Optional cascade end time bounds the FAR edge of the window (the anchor is the near edge).
+      var lowBound  = (clusterEndMin != null && clusterEndMin < anchorMin) ? Math.max(start, clusterEndMin) : start;
+      var highBound = (clusterEndMin != null && clusterEndMin > anchorMin) ? Math.min(end, clusterEndMin) : end;
       var increment = duration + (buffer || 0);
       var now       = new Date();
       var cands     = [];
@@ -1337,11 +1341,11 @@
 
       // Before the anchor: slots ending at/before it, stepping back (aligned so one ends exactly at anchor)
       if (direction === 'before' || direction === 'both') {
-        for (var tb = anchorMin - duration; tb >= start; tb -= increment) push(tb);
+        for (var tb = anchorMin - duration; tb >= lowBound; tb -= increment) push(tb);
       }
       // After the anchor: slots starting at/after it, stepping forward
       if (direction === 'after' || direction === 'both') {
-        for (var ta = anchorMin; ta + duration <= end; ta += increment) push(ta);
+        for (var ta = anchorMin; ta + duration <= highBound; ta += increment) push(ta);
       }
 
       // Nearest to the anchor first, then keep the first N unbooked (the frontier)
