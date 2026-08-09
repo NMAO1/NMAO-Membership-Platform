@@ -480,7 +480,7 @@
     </button>
     <div class="login-msg" id="loginMsg"></div>
     <div style="margin-top:0.85rem;text-align:center;font-size:0.82rem">
-      <a href="#" onclick="sendStaffMagicLink();return false;" style="color:var(--gold);text-decoration:none">First time here, or need to set / reset your password? Email me a sign-in link</a>
+      <a href="#" onclick="sendStaffMagicLink();return false;" style="color:var(--gold);text-decoration:none">First time here, or forgot your password? Email me a link to set a new one</a>
     </div>
   </div>
 
@@ -1123,7 +1123,29 @@ var SID=null;
 var STAFF_URL=window.location.origin+window.location.pathname;
 var KEEP_SIGNED_IN_KEY='nmao_staff_keep_signed_in';
 var keepSignedIn=(localStorage.getItem(KEEP_SIGNED_IN_KEY)!=='false'); // default: stay signed in on this device
-var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
+// flowType 'implicit' returns the session token in the URL hash (#access_token),
+// NOT a PKCE ?code= that only exchanges in the browser that requested it. Staff
+// open the email link on a phone / in an in-app webview / a different tab, where a
+// PKCE code_verifier isn't present — that's why the link "only brings them to the
+// login page." Implicit tokens aren't browser-bound, so the session establishes
+// wherever the link opens.
+var sb=supabase.createClient(SURL,SKEY,{auth:{flowType:'implicit',persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
+// A "Forgot / set your password" reset fires PASSWORD_RECOVERY once the recovery
+// session is established. This event is the RELIABLE signal (survives the hash
+// being consumed by detectSessionInUrl) — force the create-a-new-password window
+// whenever it fires, regardless of password_set, so passwordless staff always get it.
+var recoveryMode=false;
+sb.auth.onAuthStateChange(function(event,session){
+  if(event==='PASSWORD_RECOVERY'){ recoveryMode=true; showStaffSetPassword(session?session.user:null); }
+});
+function showStaffSetPassword(user){
+  if(user) pendingMagicUser=user;
+  try{ window.history.replaceState(null,'',window.location.pathname); }catch(e){}
+  var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='flex';
+  var ss=document.getElementById('successScreen'); if(ss) ss.style.display='none';
+  if(typeof setStaffPwMode==='function') setStaffPwMode('reset');
+  var m=document.getElementById('staffPwModal'); if(m) m.style.display='flex';
+}
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var INSTR_COLORS=['#C9A84C','#5A9A6A','#5A7A9A','#9A7A5A','#7A5A9A','#9A5A7A','#5A9A9A'];
@@ -1195,6 +1217,11 @@ async function init(){
     }
     var r=await sb.auth.getSession();
     if(r.data&&r.data.session){
+      // If they arrived through a password-reset link, force the create-password
+      // window rather than dropping them straight into the app.
+      if(recoveryMode || (window.location.href.indexOf('type=recovery')!==-1)){
+        showStaffSetPassword(r.data.session.user); return;
+      }
       await startStaffApp(r.data.session.user);
     }else{
       document.getElementById('loginScreen').style.display='flex';
@@ -1241,12 +1268,15 @@ function setLoginMsg(t,c){var el=document.getElementById('loginMsg');if(el){el.t
 // Forgot / first-time: email a magic link (mirrors the member portal). Uses the
 // email already typed into the sign-in card; the link signs the user in, then the
 // first-run set-password modal prompts them to choose a password.
+// Forgot / first-time: email a password-RESET link (not a sign-in magic link).
+// On return it fires PASSWORD_RECOVERY → the create-a-new-password window opens
+// (see onAuthStateChange above), so a staffer who never had a password can set one.
 async function sendStaffMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
   if(!email||!email.includes('@')){setLoginMsg('Enter your email above first, then click this link again.','er');return;}
-  setLoginMsg('Sending magic link...','');
+  setLoginMsg('Sending your password link...','');
   try{var _kc=document.getElementById('staffKeepSignedIn'); if(_kc) localStorage.setItem(KEEP_SIGNED_IN_KEY,_kc.checked?'true':'false');}catch(e){}
-  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:STAFF_URL}});
+  var r=await sb.auth.resetPasswordForEmail(email,{redirectTo:STAFF_URL});
   if(r.error){setLoginMsg(r.error.message,'er');return;}
   var se=document.getElementById('sentEmail'); if(se) se.textContent=email;
   document.getElementById('loginScreen').style.display='none';

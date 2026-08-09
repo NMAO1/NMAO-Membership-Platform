@@ -2685,7 +2685,7 @@
       </div>
       <div style="display:flex;gap:0.5rem;flex-shrink:0">
         <button class="btn-sm gold" onclick="openEditInstructorFromProfile()"><i class="fa-solid fa-pen"></i> Edit</button>
-        <button class="btn-sm" id="instrSendLinkBtn" onclick="sendInstructorMagicLinkFromProfile()"><i class="fa-solid fa-link"></i> Send Link</button>
+        <button class="btn-sm" id="instrSendLinkBtn" onclick="setInstructorPasswordFromProfile()"><i class="fa-solid fa-key"></i> Set Password</button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1.4fr;max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
@@ -3385,7 +3385,10 @@ function copyQrFlyer(){
   var t=document.getElementById('qrFlyerText').textContent;
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}
 }
-var sb   = supabase.createClient(SURL, SKEY);
+// flowType pinned to 'implicit' so auth behavior is deterministic regardless of the
+// (unpinned) supabase-js version — email links return a hash token, not a PKCE code
+// bound to the initiating browser. (Keeps default persistSession/localStorage.)
+var sb   = supabase.createClient(SURL, SKEY, {auth:{flowType:'implicit'}});
 // ¬ßSC_BEARER ‚Äî current session token for owner/instructor-authenticated EF calls
 // (send-communication). Falls back to anon when signed out; the EF rejects anon, so the
 // fallback is harmless. Refreshed on every auth event incl. hourly token refresh.
@@ -11620,7 +11623,7 @@ function renderInstructors(){
       '<td>'+(instr.active?'<span class="chip chip-active">active</span>':'<span class="chip chip-expired">inactive</span>')+'</td>' +
       '<td style="display:flex;gap:0.35rem;flex-wrap:wrap;padding:0.65rem 1rem">' +
         '<button class="btn-sm gold" onclick="openInstructorProfile(\''+instr.id+'\')" title="View full profile"><i class="fa-solid fa-eye"></i></button>' +
-        '<button class="btn-sm" id="mlink-'+instr.id+'" onclick="sendInstructorMagicLink(\''+instr.id+'\')" title="Send staff link"><i class="fa-solid fa-link"></i></button>' +
+        '<button class="btn-sm" id="mlink-'+instr.id+'" onclick="setInstructorPassword(\''+instr.id+'\')" title="Set / reset staff password"><i class="fa-solid fa-key"></i></button>' +
         '<button class="btn-sm" onclick="openEditInstructor(\''+instr.id+'\')"><i class="fa-solid fa-pen"></i></button>' +
         '<button class="btn-sm" id="abtn-'+instr.id+'" onclick="toggleInstructorActive(\''+instr.id+'\')" style="border-color:'+(instr.active?'rgba(154,90,90,0.4)':'rgba(90,154,106,0.4)')+';color:'+(instr.active?'#C07070':'#7DBD7D')+'">'+(instr.active?'Deactivate':'Activate')+'</button>' +
       '</td></tr>';
@@ -11721,14 +11724,49 @@ async function toggleInstructorActive(instrId){
   var r=await sb.from('instructors').update({active:newActive}).eq('id',instrId);
   if(!r.error){instr.active=newActive;renderInstructors();}
 }
-async function sendInstructorMagicLink(instrId){
+// Provision a temporary password for a staff member (via the gated staff-set-password
+// edge function) instead of a one-time magic link — email scanners consume links and
+// mobile webviews isolate the session, which is why staff couldn't get in. The
+// function also creates the auth user if needed and (re)links auth_user_id, then the
+// staffer signs in with email + this password and sets their own on first sign-in.
+async function setInstructorPassword(instrId){
   var instr=allInstructors.find(function(x){return x.id===instrId;});
-  if(!instr||!instr.email){alert('This instructor has no email address on file.');return;}
+  if(!instr||!instr.email){alert('This instructor has no email address on file. Add one first.');return;}
+  var who=(((instr.first_name||'')+' '+(instr.last_name||'')).trim())||instr.email;
+  if(!confirm('Set a temporary password for '+who+' ('+instr.email+')?\n\nYou\'ll get a password to share. They sign in with their email + that password, then set their own.')) return;
   var btn=document.getElementById('mlink-'+instrId);
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i>';}
-var r=await sb.auth.signInWithOtp({email:instr.email,options:{emailRedirectTo:APP_URL+'staff.html'}});
-  if(r.error){if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-link"></i>';}alert('Error: '+r.error.message);}
-  else{if(btn){btn.innerHTML='<i class="fa-solid fa-check"></i>';btn.style.color='#7DBD7D';}setTimeout(function(){if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-link"></i>';btn.style.color='';}},3000);}
+  try{
+    var sess=await sb.auth.getSession();
+    var tok=(sess&&sess.data&&sess.data.session&&sess.data.session.access_token)||SKEY;
+    var r=await fetch(SURL+'/functions/v1/staff-set-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({instructor_id:instrId})});
+    var d=await r.json().catch(function(){return {};});
+    if(!r.ok||!d.ok){ throw new Error(d.error||('Could not set the password ('+r.status+').')); }
+    instr.password_set=false;
+    showTempPasswordModal(d.email||instr.email, d.temp_password, d.created);
+  }catch(e){ alert('Error: '+((e&&e.message)||e)); }
+  finally{ if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-key"></i>';} }
+}
+// Shows the generated temp password once, to copy and hand off (XSS-safe: textContent).
+function showTempPasswordModal(email,pw,created){
+  var ex=document.getElementById('tmpPwOverlay'); if(ex) ex.remove();
+  var ov=document.createElement('div'); ov.id='tmpPwOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:1rem';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--surface,#1a1a1a);border:1px solid var(--border,#333);border-radius:14px;padding:1.5rem;max-width:430px;width:100%;color:var(--white,#fff)';
+  var h=document.createElement('h3'); h.style.cssText='margin:0 0 .5rem;font-size:1.1rem'; h.textContent='Temporary password '+(created?'created':'set');
+  var p=document.createElement('p'); p.style.cssText='font-size:.85rem;color:var(--muted,#999);margin:0 0 1rem;line-height:1.5';
+  p.textContent='Share these with '+email+'. They sign in at the staff app with their email + this password, then set their own on first sign-in.';
+  var row=document.createElement('div'); row.style.cssText='background:#000;border:1px solid var(--border,#333);border-radius:9px;padding:.7rem .8rem;font-family:monospace;font-size:1.05rem;display:flex;justify-content:space-between;align-items:center;gap:.75rem';
+  var val=document.createElement('span'); val.textContent=pw; val.style.userSelect='all';
+  var copy=document.createElement('button'); copy.className='btn-sm'; copy.textContent='Copy';
+  copy.onclick=function(){ try{navigator.clipboard.writeText(pw);copy.textContent='Copied';}catch(e){} };
+  row.appendChild(val); row.appendChild(copy);
+  var foot=document.createElement('div'); foot.style.cssText='text-align:right;margin-top:1.1rem';
+  var done=document.createElement('button'); done.className='btn-sm'; done.textContent='Done'; done.onclick=function(){ ov.remove(); };
+  foot.appendChild(done);
+  box.appendChild(h); box.appendChild(p); box.appendChild(row); box.appendChild(foot);
+  ov.appendChild(box); document.body.appendChild(ov);
 }
 
 // Instructor Profile Modal
@@ -11776,7 +11814,7 @@ async function openInstructorProfile(instrId){
   await calcInstructorPayroll(instr);
   // Switch to schedule tab
   switchInstrTab('schedule');
-  document.getElementById('instrSendLinkBtn').onclick=function(){ sendInstructorMagicLink(instrId); };
+  document.getElementById('instrSendLinkBtn').onclick=function(){ setInstructorPassword(instrId); };
   document.getElementById('instructorProfileModal').classList.add('active');
   // Load schedule
   renderInstrSchedule(instr);
@@ -11995,7 +12033,7 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 
-function sendInstructorMagicLinkFromProfile(){ if(currentInstructorProfile) sendInstructorMagicLink(currentInstructorProfile.id); }
+function setInstructorPasswordFromProfile(){ if(currentInstructorProfile) setInstructorPassword(currentInstructorProfile.id); }
 function showToast(message){
   var toast=document.getElementById('dashToast');
   if(!toast){
