@@ -3396,6 +3396,7 @@ var SC_BEARER = 'Bearer ' + SKEY;
 sb.auth.onAuthStateChange(function(_e, session){
   SC_BEARER = 'Bearer ' + ((session && session.access_token) || SKEY);
 });
+  sb.auth.getSession().then(function(r){ SC_BEARER = 'Bearer ' + ((r && r.data && r.data.session && r.data.session.access_token) || SKEY); });
   // ¬ßSESSION-GUARD ‚Äî Multi-tenant identity verification and display
 // ¬ßUTILS ‚Äî timezone-safe local date string (returns YYYY-MM-DD in viewer local time)
 // Use instead of localDateStr(d) which silently shifts to UTC after 7pm ET
