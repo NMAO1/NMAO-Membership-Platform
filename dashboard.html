@@ -7485,7 +7485,7 @@ async function replaceStudentCard(sid){
   try{
     var r = await fetch(SURL + '/functions/v1/create-card-update-session', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({
         school_id: SID,
         student_id: sid,
@@ -7553,7 +7553,7 @@ async function openSendUpdateCardLink(sid){
   try{
     var r = await fetch(SURL + '/functions/v1/create-card-update-session', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({
         school_id: SID,
         student_id: sid,
@@ -7609,7 +7609,7 @@ async function sendUpdateCardLinkSMS(){
   try{
     var r = await fetch(SURL + '/functions/v1/send-communication', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({
         school_id: SID,
         channel: 'sms',
@@ -9909,14 +9909,14 @@ function openUpcomingBreakdown(win){
 }
 
 async function autoSendCardLink(sid){
-  var lr=await fetch(SURL+'/functions/v1/create-card-update-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID,student_id:sid,success_url:window.location.origin+window.location.pathname+'?card_updated=1',cancel_url:window.location.origin+window.location.pathname+'?card_update_cancelled=1'})});
+  var lr=await fetch(SURL+'/functions/v1/create-card-update-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid,success_url:window.location.origin+window.location.pathname+'?card_updated=1',cancel_url:window.location.origin+window.location.pathname+'?card_update_cancelled=1'})});
   var ld=await lr.json();
   if(ld.error||!ld.url) throw new Error(ld.error||'Could not generate link');
   var fn='there', ph='';
   if(currentProfileStudent && currentProfileStudent.id===sid){ fn=currentProfileStudent.first_name||'there'; ph=currentProfileStudent.phone||''; }
   else { var sr=await sb.from('students').select('first_name,phone').eq('id',sid).single(); if(sr.data){ fn=sr.data.first_name||'there'; ph=sr.data.phone||''; } }
   if(!ph) throw new Error('NO_PHONE');
-  var cr=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID,channel:'sms',body:'Hi '+fn+', please tap to update your card on file: '+ld.url,recipients:[{phone:ph,first_name:fn}]})});
+  var cr=await fetch(SURL+'/functions/v1/send-communication',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,channel:'sms',body:'Hi '+fn+', please tap to update your card on file: '+ld.url,recipients:[{phone:ph,first_name:fn}]})});
   var cd=await cr.json();
   if(cd&&cd.error) throw new Error(cd.error);
   return true;
