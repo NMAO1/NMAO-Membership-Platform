@@ -571,7 +571,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
     <button class="btn-gold" id="loginBtn" onclick="submitLogin()"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In</button>
     <p class="form-msg" id="loginMsg"></p>
     <div style="text-align:center;margin-top:1rem;font-size:0.85rem">
-     <a href="javascript:void(0)" onclick="sendMagicLink()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Forgot password? Email me a magic link</a>
+     <a href="javascript:void(0)" onclick="sendMagicLink()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Forgot password? Email me a reset link</a>
     </div>
   </div>
 </div>
@@ -604,7 +604,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 <div id="successScreen">
   <div class="success-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
   <div class="success-title">Check your email</div>
-  <div class="success-sub">We sent a sign-in link to <strong id="sentEmail"></strong>. Click the link in your email to access your member portal.</div>
+  <div class="success-sub">We sent a password setup link to <strong id="sentEmail"></strong>. Open it to set your password, then you're in — you'll sign in with your email and password from now on.</div>
 </div>
 
 <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
@@ -1021,6 +1021,21 @@ var keepSignedInPref=localStorage.getItem(KEEP_SIGNED_IN_KEY);
 var keepSignedIn=keepSignedInPref!=='false';
 var sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:keepSignedIn,autoRefreshToken:true,storage:keepSignedIn?window.localStorage:window.sessionStorage}});
 
+// §SETUP-LINK — a password-setup link (generateLink type:"recovery" from
+// send-portal-invite, or the login screen's "reset link") fires PASSWORD_RECOVERY
+// once its token is parsed. Show "Set Your Password" instead of auto-routing, so the
+// member sets a password on this page (mobile-webview-safe) and then signs in normally.
+var recoveryMode=false;
+try{ sb.auth.onAuthStateChange(function(event,session){ if(event==='PASSWORD_RECOVERY'){ recoveryMode=true; showRecoverySetPassword(); } }); }catch(e){}
+function showRecoverySetPassword(){
+  try{ document.getElementById('loginScreen').style.display='none'; }catch(e){}
+  try{ var _sc=document.getElementById('successScreen'); if(_sc) _sc.style.display='none'; }catch(e){}
+  document.getElementById('firstRunPwInput').value='';
+  document.getElementById('firstRunPwConfirm').value='';
+  document.getElementById('firstRunPwMsg').textContent='';
+  document.getElementById('firstRunPwModal').classList.add('active');
+}
+
 var MILESTONES=[10,25,50,100,200,300,400,500,600,700,800,900,1000];
 var ANIM_EMOJIS={confetti:'üéä',belt:'ü•ã',stars:'‚≠ê',fire:'üî•',petals:'üå∏',lightning:'‚ö°',trophy:'üèÜ',bullseye:'üéØ'};
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1,000 classes. You have achieved something extraordinary. This mat is yours.'};
@@ -1231,6 +1246,14 @@ async function init(){
   try{
     var hash=window.location.hash;
     if(hash&&hash.includes('access_token')){
+      // §SETUP-LINK — a recovery/setup link lands here too. Show "Set Your Password"
+      // rather than auto-routing (the onAuthStateChange handler may also fire).
+      if(recoveryMode || hash.indexOf('type=recovery')!==-1 || window.location.href.indexOf('type=recovery')!==-1){
+        recoveryMode=true;
+        if(!SID){ try{ var _r=await sb.auth.getSession(); if(_r.data&&_r.data.session) await resolveSchoolForSession(_r.data.session.user); }catch(e){} }
+        showRecoverySetPassword();
+        return;
+      }
       var res=await sb.auth.getSession();
       if(res.data&&res.data.session){
         if(!SID){var okA=await resolveSchoolForSession(res.data.session.user);if(!okA){showNoAccountError(res.data.session.user.email);return;}}
@@ -1359,13 +1382,13 @@ async function submitLogin(){
   var password=document.getElementById('loginPassword').value;
   var keepCheckbox=document.getElementById('keepSignedIn');
   if(!email||!email.includes('@')){setLoginMsg('Please enter a valid email address.','error');return;}
-  if(!password){setLoginMsg('Please enter your password, or use the magic link option below.','error');return;}
+  if(!password){setLoginMsg('Please enter your password, or use the reset link option below.','error');return;}
   localStorage.setItem(KEEP_SIGNED_IN_KEY, keepCheckbox.checked?'true':'false');
   var btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Signing in...';
   var r=await sb.auth.signInWithPassword({email:email,password:password});
   if(r.error){
     var msg=r.error.message;
-    if(msg&&msg.toLowerCase().indexOf('invalid')!==-1){msg='Invalid email or password. Try again, or use the magic link option below.';}
+    if(msg&&msg.toLowerCase().indexOf('invalid')!==-1){msg='Invalid email or password. Try again, or use the reset link option below.';}
     setLoginMsg(msg,'error');
     btn.disabled=false;
     btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:0.5rem"></i>Sign In';
@@ -1378,8 +1401,10 @@ async function submitLogin(){
 async function sendMagicLink(){
   var email=document.getElementById('loginEmail').value.trim();
   if(!email||!email.includes('@')){setLoginMsg('Please enter your email address above first, then click this link again.','error');return;}
-  setLoginMsg('Sending magic link...','');
-  var r=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:PORTAL_URL+'?s='+SCHOOL_SLUG}});
+  setLoginMsg('Sending your password reset link...','');
+  // §SETUP-LINK — password reset link (not an auto-login magic link). Lands on the
+  // "Set Your Password" screen (fires PASSWORD_RECOVERY), which survives mobile webviews.
+  var r=await sb.auth.resetPasswordForEmail(email,{redirectTo:PORTAL_URL+(SCHOOL_SLUG?'?s='+SCHOOL_SLUG:'')});
   if(r.error){setLoginMsg(r.error.message,'error');}
   else{document.getElementById('sentEmail').textContent=email;document.getElementById('loginScreen').style.display='none';document.getElementById('successScreen').style.display='flex';}
 }
@@ -1528,6 +1553,21 @@ async function saveFirstRunPassword(){
   }
   document.getElementById('firstRunPwModal').classList.remove('active');
   showPortalToast('Password set! You can now use your email and password to sign in.','success');
+  // §SETUP-LINK — came in via a recovery/setup link (no routed session yet): the member
+  // now has a valid session, so route them straight into their portal. Stamp password_set
+  // by email BEFORE routing so the portal doesn't re-prompt the first-run password modal.
+  if(recoveryMode){
+    recoveryMode=false;
+    try{
+      var _s=await sb.auth.getSession();
+      if(_s.data&&_s.data.session){
+        if(!SID){ var _ok=await resolveSchoolForSession(_s.data.session.user); if(!_ok){ showNoAccountError(_s.data.session.user.email); return; } }
+        try{ var _q=sb.from('students').update({password_set:true}).ilike('email',_s.data.session.user.email); if(SID)_q=_q.eq('school_id',SID); await _q; }catch(e){}
+        window.history.replaceState(null,'',window.location.pathname+(SCHOOL_SLUG?'?s='+SCHOOL_SLUG:''));
+        await detectUserTypeAndRoute(_s.data.session.user);
+      }
+    }catch(e){}
+  }
 }
 
 async function openWaiverModal(){
