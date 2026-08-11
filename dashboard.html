@@ -7354,29 +7354,37 @@ async function unlinkGuardian(gid){
 async function buildProfileFamily(sid){
   var fam=currentProfileStudent?currentProfileStudent.family_id:null;
   var tile=document.getElementById('profileFamilyTile');
-  if(!fam){ if(tile) tile.style.display='none'; return; }
+  // Always render the Family tile so "+ Add family member" is available even for
+  // solo students (creating the family + linking the first sibling happens on click).
+  if(!tile){
+    var anchor=document.getElementById('profileContactInfo');
+    var contactTile=anchor?anchor.parentElement:null;
+    var grid=contactTile?contactTile.parentElement:null;
+    if(!grid) return;
+    tile=document.createElement('div');
+    tile.id='profileFamilyTile';
+    tile.innerHTML='<div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Family</div><div id="profileFamilyList"></div><button class="btn-sm" style="margin-top:0.7rem;font-size:0.68rem;padding:0.35rem 0.7rem" onclick="openAddFamilyMember()"><i class="fa-solid fa-user-plus" style="margin-right:0.35rem"></i>Add family member</button>';
+    if(contactTile.nextElementSibling) grid.insertBefore(tile,contactTile.nextElementSibling);
+    else grid.appendChild(tile);
+  }
+  tile.style.display='block';
+  var listEl=document.getElementById('profileFamilyList');
   try{
-    var r=await sb.from('students').select('id,first_name,last_name,status').eq('family_id',fam).neq('id',sid).is('deleted_at',null).order('first_name');
-    var data=r.data||[];
-    if(!data.length){ if(tile) tile.style.display='none'; return; }
-    if(!tile){
-      var anchor=document.getElementById('profileContactInfo');
-      var contactTile=anchor?anchor.parentElement:null;
-      var grid=contactTile?contactTile.parentElement:null;
-      if(!grid) return;
-      tile=document.createElement('div');
-      tile.id='profileFamilyTile';
-      tile.innerHTML='<div style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Family</div><div id="profileFamilyList"></div>';
-      if(contactTile.nextElementSibling) grid.insertBefore(tile,contactTile.nextElementSibling);
-      else grid.appendChild(tile);
+    var data=[];
+    if(fam){
+      var r=await sb.from('students').select('id,first_name,last_name,status').eq('family_id',fam).neq('id',sid).is('deleted_at',null).order('first_name');
+      data=r.data||[];
     }
-    tile.style.display='block';
-    document.getElementById('profileFamilyList').innerHTML=data.map(function(m){
-      var nm=(m.first_name||'')+' '+(m.last_name||'');
-      var sc=m.status==='active'?'#5A9A6A':'var(--muted)';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border)"><span style="font-size:0.85rem;color:#F5F0E8"><i class="fa-solid fa-user" style="color:'+sc+';margin-right:0.4rem;font-size:0.72rem"></i>'+nm+'</span><button class="btn-sm" style="font-size:0.62rem;padding:0.2rem 0.5rem" onclick="openStudentProfile(\''+m.id+'\')">View</button></div>';
-    }).join('');
-  }catch(e){ if(tile) tile.style.display='none'; }
+    if(!data.length){
+      listEl.innerHTML='<div style="font-size:0.78rem;color:var(--muted);font-style:italic;padding:0.2rem 0">'+(fam?'No other family members yet.':'Not in a family yet — add a member to group them and share one card on file.')+'</div>';
+    } else {
+      listEl.innerHTML=data.map(function(m){
+        var nm=(m.first_name||'')+' '+(m.last_name||'');
+        var sc=m.status==='active'?'#5A9A6A':'var(--muted)';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border)"><span style="font-size:0.85rem;color:#F5F0E8"><i class="fa-solid fa-user" style="color:'+sc+';margin-right:0.4rem;font-size:0.72rem"></i>'+nm+'</span><button class="btn-sm" style="font-size:0.62rem;padding:0.2rem 0.5rem" onclick="openStudentProfile(\''+m.id+'\')">View</button></div>';
+      }).join('');
+    }
+  }catch(e){ if(listEl) listEl.innerHTML=''; }
 }
   
 // §PROFILE-VITALS
@@ -7809,7 +7817,11 @@ function renderMembersTableFiltered(list) {
 }
 
 // Add / Edit Student
+// §FAMILY-ADD — when set, the next saveStudent() insert links the new child to this
+// family so the existing family-aware "Charge Card on File" bills the shared card.
+var _afmFamilyId=null;
 function openAddStudent() {
+  _afmFamilyId=null;
   var today = localDateStr(new Date());
   document.getElementById('addStudentTitle').textContent = 'Add New Student';
   document.getElementById('stuEditId').value    = '';
@@ -7826,7 +7838,37 @@ function openAddStudent() {
   populateStudentProgramDropdown();
   document.getElementById('addStudentModal').classList.add('active');
 }
-function closeAddStudent() { document.getElementById('addStudentModal').classList.remove('active'); }
+function closeAddStudent() { _afmFamilyId=null; document.getElementById('addStudentModal').classList.remove('active'); }
+// §FAMILY-ADD — add a sibling from a student's profile. Ensures the family exists
+// (auto-creating one + linking this student if they're solo, like Sarah Formont),
+// then opens the standard Add Student modal pre-linked to that family. The child is
+// enrolled by the normal saveStudent() path; billing is the existing family-aware
+// "Charge Card on File" (create-membership-subscription / create-pos-charge), which
+// already resolves the family's shared connected customer. No new billing path.
+async function openAddFamilyMember(){
+  var parent=currentProfileStudent;
+  if(!parent||!parent.id){ return; }
+  var famId=parent.family_id;
+  if(!famId){
+    // Solo student — create the family and link them so a shared card can attach.
+    var famName=((parent.last_name||parent.first_name||'New')+' Family');
+    var fr=await sb.from('families').insert({ school_id:SID, name:famName, email:(parent.email||null), phone:(parent.phone||null) }).select('id').single();
+    if(fr.error||!fr.data){ showToast('Could not create family: '+((fr.error&&fr.error.message)||'unknown'),'error'); return; }
+    famId=fr.data.id;
+    var lr=await sb.from('students').update({ family_id:famId }).eq('id',parent.id);
+    if(lr.error){ showToast('Could not link to family: '+lr.error.message,'error'); return; }
+    parent.family_id=famId;
+    if(typeof loadStudents==='function') await loadStudents();
+  }
+  // openAddStudent() clears the form (and _afmFamilyId) — set the family AFTER it.
+  openAddStudent();
+  _afmFamilyId=famId;
+  document.getElementById('addStudentTitle').textContent='Add Family Member';
+  document.getElementById('stuLast').value=parent.last_name||'';
+  if(parent.email) document.getElementById('stuEmail').value=parent.email;
+  if(parent.phone) document.getElementById('stuPhone').value=parent.phone;
+  setMsg('studentMsg','New member will join the '+((parent.last_name||'')+' family').trim()+' and share the family card on file.','');
+}
 function populateStudentProgramDropdown() {
   var sel = document.getElementById('stuProgram');
   sel.innerHTML = '<option value="">-- Select a Program --</option>';
@@ -7893,8 +7935,9 @@ async function saveStudent() {
   }
 
 var r;
+  var _famAdd=_afmFamilyId; // capture before any reset
   if (eid) { r=await sb.from('students').update(payload).eq('id',eid); }
-  else { payload.school_id=SID; payload.source='manual'; r=await sb.from('students').insert(payload).select('id').single(); }
+  else { payload.school_id=SID; payload.source=_famAdd?'family_add':'manual'; if(_famAdd) payload.family_id=_famAdd; r=await sb.from('students').insert(payload).select('id').single(); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
   else {
     // §JUNCTION-ON-CREATE — new students get an active student_memberships row so they are
@@ -7902,7 +7945,10 @@ var r;
     if (!eid && r.data && r.data.id) {
       await sb.from('student_memberships').insert({ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())) });
     }
-    setMsg('studentMsg',first+' '+last+(eid?' updated!':' added!'),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid); buildSetupChecklist(); setTimeout(closeAddStudent,1200);
+    setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!')),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
+    // Family add: refresh the parent profile's Family tile so the new sibling shows immediately.
+    else if(_famAdd && currentProfileStudent && currentProfileStudent.id) await buildProfileFamily(currentProfileStudent.id);
+    buildSetupChecklist(); setTimeout(closeAddStudent,1200);
   }
 }
 
