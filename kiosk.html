@@ -840,7 +840,7 @@ async function showCelebration(student,classCount,beltColor,callback){
     }else{milestoneEl.style.display='none';}
     var newCelebrated=celebrated.concat([hit]);
     student.celebrated_milestones=newCelebrated;
-    await sb.from('students').update({celebrated_milestones:newCelebrated}).eq('id',student.id);
+    await sb.rpc('kiosk_mark_milestones_celebrated',{p_student_id:student.id,p_milestones:newCelebrated});
     // Fire confetti for milestone celebrations
     if(typeof confetti==='function'){
       var goldColors=[accentColor,'#C9A84C','#F5D578','#A78A2A'];
@@ -854,7 +854,7 @@ async function showCelebration(student,classCount,beltColor,callback){
     }
     var newCelebrated=celebrated.concat([hit]);
     student.celebrated_milestones=newCelebrated;
-    await sb.from('students').update({celebrated_milestones:newCelebrated}).eq('id',student.id);
+    await sb.rpc('kiosk_mark_milestones_celebrated',{p_student_id:student.id,p_milestones:newCelebrated});
   }else{milestoneEl.style.display='none';}
   prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');
