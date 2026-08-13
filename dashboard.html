@@ -935,6 +935,7 @@
           <button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add Student</button>
           <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openHistoryImport()"><i class="fa-solid fa-clock-rotate-left"></i> Import History</button>
           <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openImportTool()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
+          <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openSelfUpload(this)" title="Upload your source documents (roster, billing, waivers, branding) to onboarding"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Documents</button>
         </div>
       </div>
       <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center">
@@ -8900,6 +8901,26 @@ async function saveDiscount(){
 }
 
 // Import
+// §SELF-SERVE-UPLOAD — owner mints their OWN onboarding upload link (no specialist
+// needed); the EF also bridges prospect_schools.member_school_id to this school.
+async function openSelfUpload(btn){
+  var orig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Opening…'; }
+  try{
+    var r = await fetch(SURL+'/functions/v1/onboarding-docs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body: JSON.stringify({ action:'self_link' })
+    });
+    var d = await r.json().catch(function(){ return {}; });
+    if(!r.ok || !d.ok || !d.url){ throw new Error((d&&d.error)||'Could not open the upload page.'); }
+    window.open(d.url, '_blank');
+  }catch(e){
+    alert((e&&e.message)?e.message:'Could not open the upload page.');
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=orig; }
+  }
+}
 function openImportTool(){ document.getElementById('importFile').value='';document.getElementById('importPreviewSection').style.display='none';document.getElementById('importStep2').style.display='none';document.getElementById('importStepReview').style.display='none';document.getElementById('importStep1').style.display='block';document.getElementById('importMsg').textContent='';document.getElementById('importConflictInfo').textContent='';importCSVData=[];importHeaders=[];document.getElementById('importModal').classList.add('active'); }
 function closeImportTool(){ document.getElementById('importModal').classList.remove('active'); }
 function handleImportFile(event){
