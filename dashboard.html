@@ -7125,7 +7125,7 @@ async function bookSession_paymentLink(){
   try{
     var r = await fetch(SURL + '/functions/v1/create-pos-checkout', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
       body: JSON.stringify({
         school_id: SID,
         student_id: studentId,
@@ -10729,7 +10729,7 @@ async function checkoutCompleteLink(){
     } else {
       var r2 = await fetch(SURL + '/functions/v1/create-pos-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken()) },
         body: JSON.stringify(await coDscPayload({
           school_id: SID,
           student_id: _checkout.studentId,
@@ -13402,7 +13402,7 @@ async function checkoutPOS_paymentLink(){
   try{
     var r = await fetch(SURL + '/functions/v1/create-pos-checkout', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({
         school_id: SID,
         student_id: posSelectedStudentId || null,
