@@ -529,34 +529,25 @@ async function doSignup() {
     } else { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Start Free Trial'; return; }
   }
   
-  var baseSlug = school.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
-  var trialEnds = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
-
-  function buildObj(slug) {
-    return {
-      name: school,
-      email: email,
-      owner_id: userId,
-      plan: 'standard',
-      plan_price: 99,
-      plan_status: 'trialing',
-      is_active: true,
-      slug: slug,
-      subscription_tier_id: NMAO_TIER_ID,
-      trial_ends_at: trialEnds
-    };
-  }
-
-  var ins = await sc.from('schools').insert(buildObj(baseSlug));
-  if (ins.error) {
-    // Most likely a slug collision - retry once with a short unique suffix.
-    var altSlug = baseSlug + '-' + Math.random().toString(36).slice(2, 6);
-    ins = await sc.from('schools').insert(buildObj(altSlug));
-  }
-  if (ins.error) {
-    setMsg('Signup failed: ' + ins.error.message + ' You can retry with the same email to finish setup.', 'er');
-    btn.disabled = false; btn.textContent = 'Start Free Trial';
-    return;
+  // §SIGNUP-HARDENING — school creation runs server-side (register-school EF):
+  // owner_id from the verified session (not client-supplied), race-safe unique slug
+  // (DB-enforced, not a client random guess), tier/trial set server-side. Needs the
+  // new user's session; with email-confirmation ON there's no session yet, so we
+  // defer to the confirm-then-sign-in path below (the EF is idempotent on retry).
+  if (haveSession) {
+    var _sess = await sc.auth.getSession();
+    var _tok = (_sess.data && _sess.data.session) ? _sess.data.session.access_token : SKEY;
+    var reg = await fetch(SURL + '/functions/v1/register-school', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _tok },
+      body: JSON.stringify({ school_name: school, email: email })
+    });
+    var regData = await reg.json().catch(function () { return {}; });
+    if (!reg.ok || !regData.ok) {
+      setMsg('Signup failed: ' + ((regData && regData.error) || 'could not create your school') + ' You can retry with the same email to finish setup.', 'er');
+      btn.disabled = false; btn.textContent = 'Start Free Trial';
+      return;
+    }
   }
 
   btn.textContent = 'Setting up...';
