@@ -9757,6 +9757,13 @@ function mdRender(sm,m,progNames,classNames,pays){
   h+=head('Usage');
   h+=row('Allowance', usage);
   h+=head('Billing');
+  // §BILLING-METHOD — explicit classification (Autopay/Cash/Comp/External); writes student_memberships.billing_method.
+  var _bm = sm.billing_method || '';
+  function _bmOpt(v,l){ return '<option value="'+v+'"'+(_bm===v?' selected':'')+'>'+l+'</option>'; }
+  var _bmSel = '<select onchange="mdSetBillingMethod(this.value)" style="background:#141414;color:var(--white);border:1px solid var(--border);border-radius:6px;padding:0.25rem 0.4rem;font-size:0.78rem">'
+    + _bmOpt('','— Unclassified') + _bmOpt('autopay','Autopay (Stripe)') + _bmOpt('cash','Cash / check')
+    + _bmOpt('comp','Comp / free') + _bmOpt('external','External / prepaid') + '</select>';
+  h+='<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.3rem 0;font-size:0.82rem;align-items:center"><span style="color:var(--muted)">Billing method</span><span style="display:flex;align-items:center;gap:0.4rem">'+_bmSel+'<span id="mdBmMsg" style="font-size:0.7rem;color:var(--muted)"></span></span></div>';
   h+=row('Billing mode', billed);
   h+=row('Member since', since);
   h+=row('Next charge', next);
@@ -9773,6 +9780,20 @@ function mdRender(sm,m,progNames,classNames,pays){
   h+='<button class="btn-sm" onclick="mdCancel()" style="flex:1;min-width:120px;border-color:#A04040;color:#E07070"><i class="fa-solid fa-ban"></i> Cancel</button>';
   h+='</div>';
   return h;
+}
+async function mdSetBillingMethod(val){
+  if(!_mdRow || !_mdRow.id) return;
+  var v = val || null;
+  var msgEl=document.getElementById('mdBmMsg'); if(msgEl){ msgEl.textContent='Saving…'; msgEl.style.color='var(--muted)'; }
+  try{
+    var r = await sb.from('student_memberships').update({billing_method:v}).eq('id',_mdRow.id);
+    if(r.error) throw r.error;
+    _mdRow.billing_method = v;
+    if(msgEl){ msgEl.textContent='Saved'; msgEl.style.color='#5A9A6A'; setTimeout(function(){ if(msgEl) msgEl.textContent=''; },1500); }
+  }catch(e){
+    if(msgEl){ msgEl.textContent='Save failed'; msgEl.style.color='#E07070'; }
+    console.error('mdSetBillingMethod error:',e);
+  }
 }
 function mdCancel(){ closeMembershipDetail(); if(typeof openCancelMembership==='function') openCancelMembership(); }
 function mdChangePlan(){ closeMembershipDetail(); if(currentProfileStudent && typeof openCheckout==='function') openCheckout(currentProfileStudent.id,'membership'); }
