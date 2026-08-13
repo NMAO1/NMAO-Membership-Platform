@@ -3017,7 +3017,7 @@ async function executePurchasePack(packId){
 
     var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},
       body:JSON.stringify({
         school_id:SID,
         student_id:currentStudent.id,
@@ -3334,7 +3334,7 @@ async function checkoutShopCart(){
     var cancelUrl=baseUrl+'?shop_cancel=1';
     var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},
       body:JSON.stringify({
         school_id:SID,
         student_id:currentStudent.id,
