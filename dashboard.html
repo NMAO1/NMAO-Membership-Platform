@@ -2561,6 +2561,7 @@
           <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Enrollment <button class="help-hint-inline" onclick="openHelpPopover('students.sec_enrollment',this)" title="Help">?</button></div>
           <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
           <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
+          <div class="field"><label>Billing method</label><select id="stuBillingMethod"><option value="autopay">Autopay (card / Stripe)</option><option value="cash">Cash / check</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
           <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field" style="margin-bottom:0"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
         </div>
       </div>
@@ -7944,7 +7945,11 @@ var r;
     // §JUNCTION-ON-CREATE — new students get an active student_memberships row so they are
     // visible to kiosk caps, vitals, cancel, and renewals (mirrors the Comp Plan insert shape).
     if (!eid && r.data && r.data.id) {
-      await sb.from('student_memberships').insert({ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())) });
+      // §GUARDRAIL — record how this membership is collected; no membership goes active "silently unbilled".
+      var _bm=(document.getElementById('stuBillingMethod')&&document.getElementById('stuBillingMethod').value)||'autopay';
+      var _jrow={ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())), billing_method:_bm };
+      if(_bm==='autopay') _jrow.awaiting_card=true; // autopay with no card yet → flag it (internal only, no auto-send); staff sends a card link when ready
+      await sb.from('student_memberships').insert(_jrow);
     }
     setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!')),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
     // Family add: refresh the parent profile's Family tile so the new sibling shows immediately.
@@ -9644,7 +9649,7 @@ var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;
     var pr=await sb.from('payments').insert({school_id:SID,student_id:sid,amount:parseFloat(price)||0,type:'membership',status:'paid',description:'Cash - '+name,created_at:nowIso,paid_at:nowIso});
     if(pr.error){ document.getElementById('ccSaveBtn').disabled=false; setMsg('ccMsg',pr.error.message,'error'); return; }
     await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
-    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:nowIso,start_date:(startDate||today)});
+    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:nowIso,start_date:(startDate||today),billing_method:'cash'});
     setMsg('ccMsg','Custom membership created and recorded (cash).','success');
   }else{
     var payload={school_id:SID,student_id:sid,membership_id:mid};
@@ -9660,7 +9665,7 @@ var firstProg=(allPrograms||[]).find(function(p){return pids.indexOf(p.id)!==-1;
           var awIso=new Date().toISOString();
           var awStart=document.getElementById('ccStartDate')?(document.getElementById('ccStartDate').value||null):null;
           await sb.from('students').update({status:'active',membership_id:mid}).eq('id',sid);
-          await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:awIso,start_date:(awStart||awIso.split('T')[0]),first_charge_date:(firstCharge||null),awaiting_card:true});
+          await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pids[0],status:'active',started_at:awIso,start_date:(awStart||awIso.split('T')[0]),first_charge_date:(firstCharge||null),awaiting_card:true,billing_method:'autopay'});
           var autoSend=document.getElementById('ccAutoSendCard')?document.getElementById('ccAutoSendCard').checked:true;
           var sentMsg;
           if(autoSend){
@@ -10943,7 +10948,7 @@ async function checkoutActivateAwaitingCard(){
     var mp=await sb.from('membership_programs').select('program_id').eq('membership_id',mid).limit(1);
     if(mp.data&&mp.data.length) pid=mp.data[0].program_id;
     await sb.from('students').update({status:'active',membership_id:mid,program_id:pid}).eq('id',sid);
-    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pid,status:'active',started_at:nowIso,start_date:nowIso.split('T')[0],first_charge_date:firstCharge,awaiting_card:true});
+    await sb.from('student_memberships').upsert({school_id:SID,student_id:sid,membership_id:mid,program_id:pid,status:'active',started_at:nowIso,start_date:nowIso.split('T')[0],first_charge_date:firstCharge,awaiting_card:true,billing_method:'autopay'});
     var sentMsg;
     try{ await autoSendCardLink(sid); sentMsg='card link texted to the student'; }
     catch(e2){ sentMsg=(e2&&e2.message==='NO_PHONE')?'no phone on file \u2014 use the profile Send Card Link button':'could not auto-send \u2014 use the profile Send Card Link button'; }
