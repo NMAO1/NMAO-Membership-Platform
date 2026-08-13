@@ -3707,22 +3707,54 @@ function renderTrialGate(d){
       bar.innerHTML = 'Free trial: ' + label + ' \u00b7 $99/mo when it ends ' +
                       '<a href="' + url + '">Subscribe now</a>';
       document.body.appendChild(bar);
-    } else {
-      var ov = document.createElement('div');
-      ov.className = 'tg-overlay';
-      var card = document.createElement('div');
-      card.className = 'tg-card';
-      card.innerHTML =
-        '<h2>Your free trial has ended</h2>' +
-        '<p>Thanks for trying NMAO. Subscribe to keep your school running \u2014 $99/month, ' +
-        'cancel anytime. Your students and data are safe and waiting.</p>' +
-        '<a class="tg-sub" href="' + url + '">Subscribe \u2014 $99/mo</a>' +
-        '<button class="tg-later" type="button">Continue for now</button>';
-      ov.appendChild(card);
-      document.body.appendChild(ov);
-      card.querySelector('.tg-later').addEventListener('click', function(){ ov.remove(); });
     }
+    // Trial-expired hard block is handled by applyBillingGate() below (no dismiss escape).
   }catch(e){ console.error('trial gate:', e); }
+}
+
+// ═══════════ §BILLING-ENFORCE — HARD gate (replaces the dismissible soft gate) ═══════════
+// Exemptions (NEVER blocked): trial_ends_at==null (comp/founder, e.g. AOSD/taosd) and plan_status==='active'.
+// Hard block: trial_expired (trial ended, never subscribed) and cancelled. past_due = grace (soft banner).
+function billingStanding(d){
+  if(!d) return 'unknown';
+  if(d.trial_ends_at == null) return 'exempt';        // comp / founder school
+  if(d.plan_status === 'active') return 'active';
+  if(d.plan_status === 'cancelled') return 'cancelled';
+  if(d.plan_status === 'past_due') return 'past_due';
+  if(d.plan_status === 'trialing'){
+    var ends = new Date(d.trial_ends_at).getTime();
+    if(isFinite(ends) && ends < Date.now()) return 'trial_expired';
+    return 'trialing';
+  }
+  return 'unknown';
+}
+
+function applyBillingGate(d){
+  try{
+    var s = billingStanding(d);
+    if(s !== 'trial_expired' && s !== 'cancelled') return;   // only these hard-block
+    var qp = new URLSearchParams(window.location.search);
+    if(qp.get('subscribed') === '1') return;                 // just paid; let the webhook catch up
+    if(document.getElementById('billingGateOverlay')) return;
+    injectTrialGateStyles();
+    var url = trialSubscribeUrl(d);
+    var head = (s === 'cancelled') ? 'Your subscription has ended' : 'Your free trial has ended';
+    var ov = document.createElement('div');
+    ov.className = 'tg-overlay'; ov.id = 'billingGateOverlay';
+    var card = document.createElement('div'); card.className = 'tg-card';
+    card.innerHTML =
+      '<h2>' + head + '</h2>' +
+      '<p>Subscribe to keep your school running — $99/month, cancel anytime. ' +
+      'Your students, billing, and data are safe and waiting.</p>' +
+      '<a class="tg-sub" href="' + url + '">Subscribe — $99/mo</a>' +
+      '<button class="tg-later" type="button" id="billingGateLogout">Log out</button>';
+    ov.appendChild(card);
+    document.body.appendChild(ov);
+    document.getElementById('billingGateLogout').addEventListener('click', async function(){
+      try{ await sb.auth.signOut(); }catch(e){}
+      window.location.href = 'index.html';
+    });
+  }catch(e){ console.error('billing gate:', e); }
 }
 
 async function loadSchool() {
@@ -3732,6 +3764,7 @@ async function loadSchool() {
     var d = r.data;
     window.schoolData = d;
     renderTrialGate(d);
+    applyBillingGate(d);
     if (d.welcomed === false) {
       setTimeout(openWelcomeModal, 800);
     }
