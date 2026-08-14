@@ -10153,7 +10153,7 @@ function checkoutCatItems(cat){
   if (cat === 'membership'){
     arrM.forEach(function(m){
       if (m.active && !m.is_custom && m.class_limit_type !== 'class_pack'){
-        out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'membership', billing_type:m.billing_type });
+        out.push({ id:m.id, name:m.name, price:Number(m.price) || 0, kind:'membership', billing_type:m.billing_type, billing_length:m.billing_length, billing_unit:m.billing_unit });
       }
     });
   } else if (cat === 'classpack'){
@@ -10199,6 +10199,17 @@ function checkoutSetCat(cat){
   renderCheckoutStep1();
 }
 
+/* §PLAN-TERMS — human-readable billing term for a checkout item, so staff always
+   know whether they're signing a member up for a recurring plan or a one-time charge. */
+function checkoutTermLabel(it){
+  if (!it) return '';
+  if (it.kind === 'classpack' || it.kind === 'sessionpack' || it.kind === 'retail' || it.kind === 'custom') return 'One-time';
+  var t = it.billing_type, len = Number(it.billing_length) || 1;
+  if (t === 'monthly') return len > 1 ? ('Every ' + len + ' months · recurring') : 'Monthly · recurring';
+  if (t === 'weekly')  return len > 1 ? ('Every ' + len + ' weeks · recurring')  : 'Weekly · recurring';
+  if (t === 'yearly')  return len > 1 ? ('Every ' + len + ' years · recurring')  : 'Yearly · recurring';
+  return 'One-time'; /* trial / unmapped billing_type charge once */
+}
 function renderCheckoutItemArea(cat){
   if (cat === 'custom'){
     return '' +
@@ -10225,6 +10236,7 @@ function renderCheckoutItemArea(cat){
         'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
         '<div style="font-size:0.84rem;color:var(--white)">' + escapeCheckout(it.name) + '</div>' +
         '<div style="font-size:0.78rem;color:var(--gold);margin-top:0.2rem">$' + it.price.toFixed(2) + '</div>' +
+        '<div style="font-size:0.64rem;color:var(--muted);margin-top:0.15rem;text-transform:uppercase;letter-spacing:0.06em">' + escapeCheckout(checkoutTermLabel(it)) + '</div>' +
         (sub ? '<div style="font-size:0.66rem;color:var(--muted);margin-top:0.1rem">' + sub + '</div>' : '') +
       '</div>';
   });
