@@ -2632,9 +2632,26 @@
       <div id="familyCardSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Family Card <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:0.68rem">— the shared card all members bill to</span></div>
         <div id="familyCardBody" style="font-size:0.82rem;color:var(--muted)"></div>
+        <button class="btn-sm gold" style="font-size:0.72rem;margin-top:0.75rem" onclick="openFamilyCheckout(document.getElementById('familyEditId').value)"><i class="fa-solid fa-cart-shopping" style="margin-right:0.3rem"></i>Enroll members on plans (family checkout)</button>
       </div>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveFamily()">Save Family</button>
       <p class="form-msg" id="familyMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- §MODAL-FAMILY-CHECKOUT -->
+<div class="modal-overlay" id="familyCheckoutModal">
+  <div class="modal" style="width:640px;max-width:96vw">
+    <div class="modal-header"><span class="modal-title" id="famCoTitle">Family Checkout</span><button class="modal-close" onclick="closeFamilyCheckout()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="famCoFamilyId" value="" />
+      <div id="famCoCardStatus" style="font-size:0.82rem;margin-bottom:0.85rem;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:6px"></div>
+      <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem">Enroll members</div>
+      <div id="famCoLines"></div>
+      <div id="famCoTotal" style="font-size:0.85rem;color:var(--muted);margin:0.9rem 0"></div>
+      <button class="btn-gold-full" id="famCoChargeBtn" onclick="familyCheckoutCharge()" disabled>Charge Family Card</button>
+      <p class="form-msg" id="famCoMsg"></p>
     </div>
   </div>
 </div>
@@ -11718,6 +11735,60 @@ async function setFamilyCard(fid,custId){
   var r=await sb.from('families').update({stripe_connected_customer_id:custId}).eq('id',fid);
   if(r.error){ showToast('Could not set family card: '+r.error.message,'err'); return; }
   showToast('Family card set. New charges bill to it.','ok'); await loadFamilies(); renderFamilyCard(fid);
+}
+// §FAMILY-CHECKOUT — enroll multiple family members on memberships in one flow; each
+// bills the family's shared card (resolved by create-membership-subscription).
+function closeFamilyCheckout(){ document.getElementById('familyCheckoutModal').classList.remove('active'); }
+async function openFamilyCheckout(fid){
+  if(!fid) return;
+  document.getElementById('famCoFamilyId').value=fid;
+  var f=(allFamilies||[]).find(function(x){return x.id===fid;});
+  document.getElementById('famCoTitle').textContent='Family Checkout \u2014 '+(f?f.name:'Family');
+  var mEl=document.getElementById('famCoMsg'); mEl.textContent=''; mEl.className='form-msg';
+  document.getElementById('famCoLines').innerHTML='<div style="color:var(--muted);font-style:italic">Loading members\u2026</div>';
+  document.getElementById('famCoTotal').textContent='';
+  document.getElementById('familyCheckoutModal').classList.add('active');
+  var r=await sb.from('students').select('id,first_name,last_name,stripe_connected_customer_id').eq('family_id',fid).is('deleted_at',null).order('first_name');
+  var members=(r.data||[]);
+  var famCust=f?f.stripe_connected_customer_id:null; var cs=document.getElementById('famCoCardStatus');
+  if(famCust){ cs.innerHTML='<i class="fa-solid fa-credit-card" style="color:#5A9A6A;margin-right:0.4rem"></i>All members bill to the family card on file.'; }
+  else if(members.some(function(m){return m.stripe_connected_customer_id;})){ cs.innerHTML='<span style="color:#E0A05A"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>No family card set \u2014 each member bills their own card. Set a family card in the Family modal to bill them to one.</span>'; }
+  else{ cs.innerHTML='<span style="color:#E07070"><i class="fa-solid fa-circle-exclamation" style="margin-right:0.4rem"></i>No card on file for this family. Add one first (a member Charge Card on File or portal card link).</span>'; }
+  var opts='<option value="">\u2014 skip \u2014</option>';
+  (allMemberships||[]).forEach(function(m){ if(m.active && !m.is_custom && m.class_limit_type!=='class_pack'){ var per=(m.billing_type==='monthly'?'/mo':m.billing_type==='yearly'?'/yr':m.billing_type==='weekly'?'/wk':''); opts+='<option value="'+m.id+'">'+escapeCheckout(m.name)+' \u2014 $'+(Number(m.price)||0).toFixed(2)+per+'</option>'; } });
+  if(!members.length){ document.getElementById('famCoLines').innerHTML='<div style="color:var(--muted)">No members yet \u2014 add members to this family first.</div>'; familyCheckoutTotal(); return; }
+  document.getElementById('famCoLines').innerHTML=members.map(function(m){
+    return '<div style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0;border-bottom:1px solid var(--border)"><div style="flex:1;color:var(--white);font-size:0.9rem">'+escapeCheckout(m.first_name+' '+m.last_name)+'</div><select class="famco-sel" data-sid="'+m.id+'" data-name="'+escapeCheckout(m.first_name)+'" onchange="familyCheckoutTotal()" style="flex:1.5;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.4rem 0.6rem">'+opts+'</select></div>';
+  }).join('');
+  familyCheckoutTotal();
+}
+function famCoSelectedLines(){
+  var out=[],i; var sels=document.querySelectorAll('#famCoLines .famco-sel');
+  for(i=0;i<sels.length;i++){ var mid=sels[i].value; if(!mid) continue; var m=(allMemberships||[]).find(function(x){return x.id===mid;}); out.push({studentId:sels[i].getAttribute('data-sid'), memberName:sels[i].getAttribute('data-name')||'member', membershipId:mid, price:(m?Number(m.price)||0:0)}); }
+  return out;
+}
+function familyCheckoutTotal(){
+  var lines=famCoSelectedLines(); var t=0,i; for(i=0;i<lines.length;i++){ t+=lines[i].price; }
+  document.getElementById('famCoTotal').innerHTML=lines.length?('<b>'+lines.length+'</b> member'+(lines.length!==1?'s':'')+' \u00b7 total <b style="color:var(--gold)">$'+t.toFixed(2)+'</b> per cycle'):'<span style="color:var(--muted)">Pick a membership for each member you want to enroll.</span>';
+  document.getElementById('famCoChargeBtn').disabled=!lines.length;
+}
+async function familyCheckoutCharge(){
+  var fid=document.getElementById('famCoFamilyId').value; var lines=famCoSelectedLines();
+  if(!lines.length){ setMsg('famCoMsg','Pick a membership for at least one member.','error'); return; }
+  var btn=document.getElementById('famCoChargeBtn'); btn.disabled=true; var results=[],i;
+  for(i=0;i<lines.length;i++){
+    setMsg('famCoMsg','Enrolling '+lines[i].memberName+' ('+(i+1)+'/'+lines.length+')\u2026','');
+    try{
+      var tok=await authToken();
+      var resp=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({school_id:SID,student_id:lines[i].studentId,membership_id:lines[i].membershipId,idempotency_key:'famco_'+fid+'_'+lines[i].studentId+'_'+lines[i].membershipId})});
+      var d=await resp.json().catch(function(){return {};});
+      results.push({who:lines[i].memberName, ok:(resp.ok && d && !d.error), err:(d&&d.error)||(!resp.ok?'failed':'')});
+    }catch(e){ results.push({who:lines[i].memberName, ok:false, err:(e&&e.message)||'error'}); }
+  }
+  var okN=results.filter(function(x){return x.ok;}).length; var bad=results.filter(function(x){return !x.ok;});
+  if(!bad.length){ setMsg('famCoMsg','Done \u2014 '+okN+' member'+(okN!==1?'s':'')+' enrolled & charged to the family card.','success'); if(typeof loadStudents==='function') await loadStudents(); setTimeout(closeFamilyCheckout,2000); }
+  else{ setMsg('famCoMsg',okN+' succeeded, '+bad.length+' failed: '+bad.map(function(x){return x.who+' ('+x.err+')';}).join('; '),'error'); }
+  btn.disabled=false;
 }
 function openAddFamily(){ document.getElementById('addFamilyTitle').textContent='Add Family';document.getElementById('familyEditId').value='';document.getElementById('familyName').value='';document.getElementById('familyEmail').value='';document.getElementById('familyPhone').value='';document.getElementById('familyNotes').value='';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='none';document.getElementById('familyPortalSection').style.display='none';document.getElementById('familyCardSection').style.display='none';document.getElementById('addFamilyModal').classList.add('active'); }
 function openEditFamily(fid){ var f=allFamilies.find(function(x){return x.id===fid;}); if(!f) return; document.getElementById('addFamilyTitle').textContent='Edit Family';document.getElementById('familyEditId').value=f.id;document.getElementById('familyName').value=f.name||'';document.getElementById('familyEmail').value=f.email||'';document.getElementById('familyPhone').value=f.phone||'';document.getElementById('familyNotes').value=f.notes||'';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='block';renderFamilyLinkedStudents(fid);document.getElementById('familyPortalSection').style.display='block';document.getElementById('familyCardSection').style.display='block';renderFamilyPortalStatus(fid);renderFamilyCard(fid);document.getElementById('addFamilyModal').classList.add('active'); }
