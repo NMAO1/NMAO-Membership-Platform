@@ -8781,7 +8781,7 @@ async function confirmDeleteStudent() {
 
   // §DELETE-CLEANUP — cancel active memberships (and any Stripe subscription) before hiding the
   // student, so a deleted member is never left with live billing or an orphaned 'active' junction.
-  var smr = await sb.from('student_memberships').select('id, stripe_subscription_id').eq('student_id', s.id).eq('status', 'active');
+  var smr = await sb.from('student_memberships').select('id, stripe_subscription_id, membership_id').eq('student_id', s.id).eq('status', 'active');
   if (smr.error) { showToast('Could not read memberships: ' + smr.error.message, 'err'); return; }
   var smRows = smr.data || [];
   for (var di = 0; di < smRows.length; di++) {
@@ -8801,8 +8801,15 @@ async function confirmDeleteStudent() {
         return;
       }
     } else {
-      var dur = await sb.from('student_memberships').update({ status: 'cancelled', ended_at: new Date().toISOString() }).eq('id', drow.id);
-      if (dur.error) { showToast('Could not close membership: ' + dur.error.message, 'err'); return; }
+      // §CANCEL-RECONCILE — no linked sub id, but a Stripe sub may still exist. Route through
+      // cancel-subscription so any live Stripe sub is cancelled too, not just the DB record.
+      var dcr2 = await fetch(SURL + '/functions/v1/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
+        body: JSON.stringify({ school_id: SID, student_id: s.id, membership_id: drow.membership_id, when: 'now' })
+      });
+      var dcd2 = await dcr2.json();
+      if (!dcr2.ok || dcd2.error) { showToast('Could not cancel billing for ' + fullName + ' (' + (dcd2.error || 'error') + '). Student not deleted.', 'err'); return; }
     }
   }
 
@@ -11255,6 +11262,8 @@ async function openCancelMembership(){
      _cancelRows.push({
         smId: rows[i].id,
         subId: rows[i].stripe_subscription_id || null,
+        studentId: sid,
+        membershipId: rows[i].membership_id,
         name: checkoutMembershipName(rows[i].membership_id),
         status: rows[i].status,
         commitEndsAt: rows[i].commitment_ends_at || null,
@@ -11367,8 +11376,15 @@ async function cancelMembershipDo(i, when){
         successMsg = end ? (row.name + ' will end ' + end.toLocaleDateString() + '.') : (row.name + ' will end at the period close.');
       }
     } else {
-      var up = await sb.from('student_memberships').update({ status: 'cancelled', ended_at: new Date().toISOString() }).eq('id', row.smId);
-      if (up.error) throw new Error(up.error.message);
+      // §CANCEL-RECONCILE — no linked sub id in our DB, but a Stripe sub may still exist.
+      // Route through cancel-subscription so it finds & cancels any live Stripe sub too.
+      var r2 = await fetch(SURL + '/functions/v1/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
+        body: JSON.stringify({ school_id: SID, student_id: row.studentId, membership_id: row.membershipId, when: when })
+      });
+      var data2 = await r2.json();
+      if (!r2.ok || data2.error) throw new Error(data2.error || 'Cancel failed.');
       successMsg = row.name + ' ended.';
     }
     cancelRefresh();
