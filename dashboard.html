@@ -2615,12 +2615,23 @@
       </div>
       <div id="familyLinkedStudentsSection" style="display:none;margin-top:1rem">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin:0.5rem 0 0.75rem">Linked Students <button class="help-hint-inline" onclick="openHelpPopover('families.fam_students',this)" title="Help">?</button></div>
-        <div id="familyLinkedStudentsList" style="margin-bottom:0.75rem"></div>
+        <div id="familyLinkedStudentsList" style="margin-bottom:0.6rem"></div>
+        <button class="btn-sm gold" style="font-size:0.72rem;margin-bottom:0.7rem" onclick="familyAddNewMember()"><i class="fa-solid fa-user-plus" style="margin-right:0.3rem"></i>Add new member</button>
+        <div style="font-size:0.66rem;color:var(--muted);margin-bottom:0.4rem">— or link an existing student —</div>
         <div style="position:relative;margin-bottom:0.5rem">
           <input type="text" id="familyStudentSearch" placeholder="Search student to link..." oninput="searchFamilyStudent()" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.9rem 0.6rem 2.4rem;outline:none" />
           <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:0.8rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.82rem;pointer-events:none"></i>
         </div>
         <div id="familyStudentSearchResults" style="max-height:150px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);display:none"></div>
+      </div>
+      <div id="familyPortalSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Portal Access</div>
+        <div id="familyPortalStatus" style="font-size:0.82rem;color:var(--muted);margin-bottom:0.55rem"></div>
+        <button class="btn-sm" style="font-size:0.72rem" onclick="familyInviteFromModal()"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send portal invite</button>
+      </div>
+      <div id="familyCardSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Family Card <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:0.68rem">— the shared card all members bill to</span></div>
+        <div id="familyCardBody" style="font-size:0.82rem;color:var(--muted)"></div>
       </div>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveFamily()">Save Family</button>
       <p class="form-msg" id="familyMsg"></p>
@@ -7896,14 +7907,9 @@ async function openAddFamilyMember(){
     parent.family_id=famId;
     if(typeof loadStudents==='function') await loadStudents();
   }
-  // openAddStudent() clears the form (and _afmFamilyId) — set the family AFTER it.
-  openAddStudent();
-  _afmFamilyId=famId;
-  document.getElementById('addStudentTitle').textContent='Add Family Member';
-  document.getElementById('stuLast').value=parent.last_name||'';
-  if(parent.email) document.getElementById('stuEmail').value=parent.email;
-  if(parent.phone) document.getElementById('stuPhone').value=parent.phone;
-  setMsg('studentMsg','New member will join the '+((parent.last_name||'')+' family').trim()+' and share the family card on file.','');
+  // §UNIFIED — open the full family manager (same modal as the Families tab) for this family.
+  if(typeof loadFamilies==='function') await loadFamilies();
+  openEditFamily(famId);
 }
 function populateStudentProgramDropdown() {
   var sel = document.getElementById('stuProgram');
@@ -11672,8 +11678,49 @@ function renderFamilies(){
     return '<div class="panel" style="margin-bottom:1rem"><div class="panel-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem"><div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:1.05rem;color:var(--white);margin-bottom:0.35rem"><i class="fa-solid fa-people-roof" style="color:var(--gold);margin-right:0.5rem"></i>'+f.name+'</div><div style="font-size:0.85rem;color:var(--muted)">'+(f.email||'--')+(f.phone?' \u00B7 '+f.phone:'')+'</div>'+(students.length?'<div style="font-size:0.78rem;color:var(--muted2);margin-top:0.3rem">'+students.map(function(s){return s.first_name+' '+s.last_name;}).join(', ')+'</div>':'')+'</div><div style="flex-shrink:0;display:flex;align-items:center;gap:0.4rem">'+inviteBtn+'<button class="btn-sm gold" onclick="openEditFamily(\''+f.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" onclick="deleteFamily(\''+f.id+'\')" title="Delete family" style="color:#C07070;border-color:#C07070"><i class="fa-solid fa-trash"></i></button></div></div></div></div>';
   }).join('');
 }
-function openAddFamily(){ document.getElementById('addFamilyTitle').textContent='Add Family';document.getElementById('familyEditId').value='';document.getElementById('familyName').value='';document.getElementById('familyEmail').value='';document.getElementById('familyPhone').value='';document.getElementById('familyNotes').value='';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='none';document.getElementById('addFamilyModal').classList.add('active'); }
-function openEditFamily(fid){ var f=allFamilies.find(function(x){return x.id===fid;}); if(!f) return; document.getElementById('addFamilyTitle').textContent='Edit Family';document.getElementById('familyEditId').value=f.id;document.getElementById('familyName').value=f.name||'';document.getElementById('familyEmail').value=f.email||'';document.getElementById('familyPhone').value=f.phone||'';document.getElementById('familyNotes').value=f.notes||'';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='block';renderFamilyLinkedStudents(fid);document.getElementById('addFamilyModal').classList.add('active'); }
+// §FAMILY-UNIFIED — profile "+ Add family member" and the Families tab share one modal.
+function familyAddNewMember(){
+  var fid=document.getElementById('familyEditId').value; if(!fid) return;
+  var f=(allFamilies||[]).find(function(x){return x.id===fid;});
+  closeAddFamily(); openAddStudent(); _afmFamilyId=fid;
+  document.getElementById('addStudentTitle').textContent='Add Family Member';
+  if(f){ document.getElementById('stuLast').value=(f.name||'').replace(/\s*family\s*$/i,'').trim(); if(f.email) document.getElementById('stuEmail').value=f.email; if(f.phone) document.getElementById('stuPhone').value=f.phone; setMsg('studentMsg','New member will join '+f.name+' and share the family card.',''); }
+}
+function familyInviteFromModal(){
+  var fid=document.getElementById('familyEditId').value; if(!fid) return;
+  sendFamilyPortalInvite(fid,(document.getElementById('familyEmail').value||'').trim(),(document.getElementById('familyName').value||'').trim());
+}
+function renderFamilyPortalStatus(fid){
+  var el=document.getElementById('familyPortalStatus'); if(!el) return;
+  var f=(allFamilies||[]).find(function(x){return x.id===fid;});
+  var email=f&&f.email?f.email:'';
+  if(!email||email.indexOf('@')===-1){ el.innerHTML='<span style="color:#E0A05A">Add a Primary Email above so this family can access the portal.</span>'; return; }
+  if(f&&f.portal_invited_at){ el.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.35rem"></i>Invited \u2014 '+email+'. New members you add appear automatically in their portal.'; }
+  else{ el.innerHTML='<i class="fa-solid fa-circle" style="color:var(--muted);margin-right:0.35rem"></i>Not invited yet. Send the invite so '+email+' can log in.'; }
+}
+async function renderFamilyCard(fid){
+  var el=document.getElementById('familyCardBody'); if(!el) return;
+  el.innerHTML='<span style="color:var(--muted)">Loading\u2026</span>';
+  var f=(allFamilies||[]).find(function(x){return x.id===fid;});
+  var r=await sb.from('students').select('id,first_name,last_name,stripe_connected_customer_id').eq('family_id',fid).is('deleted_at',null);
+  var members=(r.data||[]); var withCard=members.filter(function(s){return !!s.stripe_connected_customer_id;});
+  var famCust=f?f.stripe_connected_customer_id:null; var html='';
+  if(famCust){ var owner=members.find(function(s){return s.stripe_connected_customer_id===famCust;}); html+='<div style="margin-bottom:0.5rem"><i class="fa-solid fa-credit-card" style="color:#5A9A6A;margin-right:0.35rem"></i>Shared card set'+(owner?(' \u2014 '+owner.first_name+' '+owner.last_name+"'s card"):'')+'. All members bill to it.</div>'; }
+  else{ html+='<div style="margin-bottom:0.5rem;color:var(--muted)">No shared card yet \u2014 each member would bill to their own card.</div>'; }
+  if(withCard.length){
+    html+='<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.3rem">Use a member\'s card as the family card:</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem">';
+    withCard.forEach(function(s){ var isCur=s.stripe_connected_customer_id===famCust; html+='<button class="btn-sm'+(isCur?' gold':'')+'" style="font-size:0.7rem" onclick="setFamilyCard(\''+fid+'\',\''+s.stripe_connected_customer_id+'\')">'+(isCur?'\u2713 ':'')+s.first_name+'</button>'; });
+    html+='</div>';
+  } else { html+='<div style="font-size:0.72rem;color:var(--muted)">No member has a saved card yet. Add one via a member\'s <b>Charge Card on File</b> or portal card link, then set it here.</div>'; }
+  el.innerHTML=html;
+}
+async function setFamilyCard(fid,custId){
+  var r=await sb.from('families').update({stripe_connected_customer_id:custId}).eq('id',fid);
+  if(r.error){ showToast('Could not set family card: '+r.error.message,'err'); return; }
+  showToast('Family card set. New charges bill to it.','ok'); await loadFamilies(); renderFamilyCard(fid);
+}
+function openAddFamily(){ document.getElementById('addFamilyTitle').textContent='Add Family';document.getElementById('familyEditId').value='';document.getElementById('familyName').value='';document.getElementById('familyEmail').value='';document.getElementById('familyPhone').value='';document.getElementById('familyNotes').value='';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='none';document.getElementById('familyPortalSection').style.display='none';document.getElementById('familyCardSection').style.display='none';document.getElementById('addFamilyModal').classList.add('active'); }
+function openEditFamily(fid){ var f=allFamilies.find(function(x){return x.id===fid;}); if(!f) return; document.getElementById('addFamilyTitle').textContent='Edit Family';document.getElementById('familyEditId').value=f.id;document.getElementById('familyName').value=f.name||'';document.getElementById('familyEmail').value=f.email||'';document.getElementById('familyPhone').value=f.phone||'';document.getElementById('familyNotes').value=f.notes||'';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='block';renderFamilyLinkedStudents(fid);document.getElementById('familyPortalSection').style.display='block';document.getElementById('familyCardSection').style.display='block';renderFamilyPortalStatus(fid);renderFamilyCard(fid);document.getElementById('addFamilyModal').classList.add('active'); }
 function renderFamilyLinkedStudents(fid){ var linked=allStudents.filter(function(s){return s.family_id===fid;}); var el=document.getElementById('familyLinkedStudentsList'); if(!linked.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No students linked yet.</div>';return;} el.innerHTML=linked.map(function(s){return '<div class="family-student-link"><div style="color:var(--white)">'+s.first_name+' '+s.last_name+'</div><button class="btn-sm" onclick="unlinkFamilyStudent(\''+s.id+'\')">Unlink</button></div>';}).join(''); }
 async function unlinkFamilyStudent(sid){ var r=await sb.from("students").update({family_id:null}).eq("id",sid); if(r.error){showToast("Could not unlink student: "+r.error.message,"err");return;} await loadStudents(); var fid=document.getElementById("familyEditId").value; if(fid) renderFamilyLinkedStudents(fid); }function searchFamilyStudent(){ var q=document.getElementById('familyStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('familyStudentSearchResults'); if(!q||q.length<2){el.style.display='none';return;} var fid=document.getElementById('familyEditId').value; var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)&&!s.family_id;}).slice(0,5); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No unlinked students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="linkFamilyStudent(\''+s.id+'\',\''+fid+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join(''); }
 async function linkFamilyStudent(sid,fid){ if(!fid) return; var r=await sb.from("students").update({family_id:fid}).eq("id",sid); if(r.error){showToast("Could not link student: "+r.error.message,"err");return;} await loadStudents(); renderFamilyLinkedStudents(fid); document.getElementById("familyStudentSearch").value=""; document.getElementById("familyStudentSearchResults").style.display="none"; }function closeAddFamily(){ document.getElementById('addFamilyModal').classList.remove('active'); }
@@ -11695,7 +11742,7 @@ async function saveFamily(){
     r=await sb.from("families").update(payload).eq("id",eid);
   }else{
     payload.school_id=SID;
-    r=await sb.from("families").insert(payload);
+    r=await sb.from("families").insert(payload).select("id").single();
   }
   if(r.error){
     setMsg("familyMsg",r.error.message,"error");
@@ -11704,34 +11751,23 @@ async function saveFamily(){
   setMsg("familyMsg",isNew?"Family added!":"Updated!","success");
   // Auto-send portal invite on new family creation only
   if(isNew&&payload.email){
-    await sendFamilyPortalInvite(payload.email,payload.name);
+    var _nfid=(r.data&&r.data.id)?r.data.id:eid; await sendFamilyPortalInvite(_nfid,payload.email,payload.name);
   }
   await loadFamilies();
   setTimeout(closeAddFamily,1000);
 }
-  async function sendFamilyPortalInvite(email,familyName){
-  if(!email||!email.includes("@")){
-    showToast("No email on file for "+familyName+" — cannot send invite","warn");
-    return false;
-  }
+  async function sendFamilyPortalInvite(familyId,email,familyName){
+  if(!email||email.indexOf("@")===-1){ showToast("No email on file for "+(familyName||"this family")+" — add a Primary Email first","warn"); return false; }
+  if(!familyId){ showToast("Save the family first, then send the invite.","warn"); return false; }
   try{
-    var r=await sb.auth.signInWithOtp({
-      email:email,
-      options:{
-      emailRedirectTo:APP_URL+"portal.html",
-        shouldCreateUser:true
-      }
-    });
-    if(r.error){
-      showToast("Could not send invite: "+r.error.message,"err");
-      return false;
-    }
+    var tok=await authToken();
+    var r=await fetch(SURL+"/functions/v1/send-portal-invite",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok,"apikey":SKEY},body:JSON.stringify({school_id:SID,recipient_type:"family",recipient_ids:[familyId],channel:"email"})});
+    var d=await r.json().catch(function(){return {};});
+    if(!r.ok||(d&&(d.error||d.success===false))){ showToast("Could not send invite: "+((d&&d.error)||"error"),"err"); return false; }
     showToast("Portal invite sent to "+email,"ok");
+    try{ await sb.from("families").update({portal_invited_at:new Date().toISOString()}).eq("id",familyId); await loadFamilies(); }catch(e){}
     return true;
-  }catch(e){
-    showToast("Could not send invite: "+e.message,"err");
-    return false;
-  }
+  }catch(e){ showToast("Could not send invite: "+(e&&e.message||e),"err"); return false; }
   }
     async function deleteFamily(fid){
   var f=allFamilies.find(function(x){return x.id===fid;});
