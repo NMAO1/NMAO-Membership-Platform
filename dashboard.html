@@ -13169,6 +13169,19 @@ function syncMemProrate(){
   if(!sp.length){setMsg('membershipMsg','Select at least one program.','error');return;}
   if(!price){setMsg('membershipMsg','Price required.','error');return;}
   if(document.getElementById('memType').value==='class_pack'&&!document.getElementById('memLimitCount').value){setMsg('membershipMsg','Number of classes required.','error');return;}
+  // §PLAN-GUARD — confirm billing configs that silently surprise: a priced plan whose
+  // billing type is NOT recurring bills ONCE (not monthly); a recurring plan at $0 never charges.
+  var _gbt=document.getElementById('memType').value;
+  var _gprice=parseFloat(price)||0;
+  var _grecurring=(_gbt==='monthly'||_gbt==='weekly'||_gbt==='yearly');
+  var _gpack=(document.getElementById('memLimitType').value==='class_pack'||_gbt==='class_pack');
+  var _gwarn='';
+  if(!_grecurring && !_gpack && _gprice>0){
+    _gwarn='Heads up: this plan bills ONCE, not monthly.\n\nIts billing type is "'+_gbt+'", so members are charged a single $'+_gprice.toFixed(2)+' and are NOT auto-charged each cycle. For recurring billing, set Billing Type to Monthly (or Weekly/Yearly).\n\nSave as a one-time charge anyway?';
+  } else if(_grecurring && _gprice===0){
+    _gwarn='This is a $0 recurring plan — members will be enrolled but never charged.\n\nSave a free recurring plan?';
+  }
+  if(_gwarn && !confirm(_gwarn)){ setMsg('membershipMsg','Save cancelled — adjust the billing type or price.',''); return; }
   setMsg('membershipMsg','Saving...','');
   var autopayDay=document.getElementById('memAutopayDay').value;
   if(autopayDay==='custom') autopayDay=document.getElementById('memCustomDay').value||'anniversary';
