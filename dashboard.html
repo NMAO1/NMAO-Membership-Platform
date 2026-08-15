@@ -2180,6 +2180,13 @@
           <div id="profilePaymentHistory" style="display:flex;flex-direction:column;gap:0.5rem"></div>
         </div>
       </div>
+      <!-- §DSAR-DANGER-ZONE — permanent GDPR/CCPA erasure. Deliberately at the bottom, separated
+           from the everyday soft-delete in the header, and behind a two-step confirm. -->
+      <div style="margin:0.25rem 1.5rem 1.5rem;padding:0.9rem 1rem;border:1px solid rgba(224,112,112,0.35);border-radius:4px;background:rgba(224,112,112,0.05)">
+        <div style="font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#E07070;margin-bottom:0.4rem">Danger zone</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.7rem">Permanently erase this student's record for a data-subject (GDPR/CCPA) request. This deletes their personal data and <b>cannot be undone</b>. Export their data first if needed.</div>
+        <button class="btn-sm" style="background:#7a2b2b;border-color:#A04040;color:#fff" onclick="eraseStudentDSAR()"><i class="fa-solid fa-user-slash"></i> Permanently erase (GDPR)</button>
+      </div>
     </div>
   </div>
 </div>
@@ -8824,6 +8831,25 @@ async function confirmDeleteStudent() {
   showToast(fullName + ' deleted', 'ok');
   closeStudentProfile();
   await loadStudents();
+}
+
+// §DSAR-ERASE — permanent GDPR/CCPA erasure (two-step confirm). Preview returns the name for an
+// irreversible-delete warning; only confirm:true actually erases (owner-gated dsar-erase EF).
+async function eraseStudentDSAR(){
+  if(!currentProfileStudent) return;
+  var studentId = currentProfileStudent.id;
+  var hdr = {'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())};
+  var pv;
+  try { pv = await (await fetch(SURL+'/functions/v1/dsar-erase',{method:'POST',headers:hdr,body:JSON.stringify({student_id:studentId})})).json(); }
+  catch(e){ showToast('Could not reach the erase service.','err'); return; }
+  if (!pv || !pv.needs_confirmation){ showToast((pv&&pv.error)||'Not permitted.','err'); return; }
+  var who = pv.student.name + (pv.student.email ? ('  <'+pv.student.email+'>') : '');
+  if (!window.confirm(pv.warning + '\n\n' + who + '\n\nThis permanently erases their record and CANNOT be undone. Continue?')) return;
+  var res;
+  try { res = await (await fetch(SURL+'/functions/v1/dsar-erase',{method:'POST',headers:hdr,body:JSON.stringify({student_id:studentId, confirm:true})})).json(); }
+  catch(e){ showToast('Erase request failed to send.','err'); return; }
+  if (res && res.ok){ showToast('Permanently erased.','ok'); closeStudentProfile(); await loadStudents(); }
+  else { showToast('Erase failed: '+((res&&res.error)||'unknown'),'err'); }
 }
 function openEditStudent(){
   if(!currentProfileStudent) return; var s=currentProfileStudent;
