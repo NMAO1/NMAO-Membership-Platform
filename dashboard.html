@@ -9387,13 +9387,14 @@ function impSectionHead(t){ return '<div style="font-size:0.74rem;letter-spacing
 
 function openImportReview(){
   document.getElementById('importConflictInfo').textContent='Analyzing\u2026';
-  buildImportPlan().then(function(p){
+  buildImportPlan().then(async function(p){
     var i;
     for(i=0;i<p.rows.length;i++){
       var r=p.rows[i];
       if(r.category==='conflict'){ r.resolution=(r.matchedBy==='name')?'merge':'merge_keep'; }
     }
     for(i=0;i<p.families.length;i++){ p.families[i].accepted=!!p.families[i].defaultOn; }
+    await loadImportCreateContext();
     renderImportReview();
     document.getElementById('importStep1').style.display='none';
     document.getElementById('importStepReview').style.display='block';
@@ -9405,6 +9406,72 @@ function backToImportStep1(){
   document.getElementById('importStep1').style.display='block';
 }
 
+/* ============================================================
+   §IMPORT-CREATE (Phase 1b) — review step to CREATE missing plans/belts (or map/skip).
+   ============================================================ */
+var importCreateCtx=null;
+function _impNorm(s){ return String(s||'').trim().toLowerCase(); }
+function importGuessBilling(name){ var n=String(name||'').toLowerCase(); if(/year|annual/.test(n))return 'yearly'; if(/pack|punch|drop-?in/.test(n))return 'class_pack'; return 'monthly'; }
+function importGuessPrice(name){ var m=String(name||'').match(/\$\s?(\d+(?:\.\d{1,2})?)/); return m?parseFloat(m[1]):0; }
+async function loadImportCreateContext(){
+  var ctx={mems:[],belts:[],systems:[],programs:[],plans:{},beltChoices:{},beltSystemId:null};
+  try{ var mr=await sb.from('memberships').select('id,name').eq('school_id',SID); ctx.mems=mr.data||[]; }catch(e){}
+  try{ var br=await sb.from('belt_levels').select('id,name,belt_system_id,sort_order').eq('school_id',SID); ctx.belts=br.data||[]; }catch(e){}
+  try{ var sr=await sb.from('belt_systems').select('id,name').eq('school_id',SID); ctx.systems=sr.data||[]; }catch(e){}
+  try{ var prg=await sb.from('programs').select('id,name').eq('school_id',SID); ctx.programs=prg.data||[]; }catch(e){}
+  var maxSort={}; ctx.belts.forEach(function(b){ var so=b.sort_order||0; if(!(b.belt_system_id in maxSort)||so>maxSort[b.belt_system_id]) maxSort[b.belt_system_id]=so; });
+  ctx.systems.forEach(function(s){ s.maxSort=maxSort[s.id]||0; });
+  ctx.beltSystemId=ctx.systems.length?ctx.systems[0].id:null;
+  var memByName={}; ctx.mems.forEach(function(m){ memByName[_impNorm(m.name)]=m.id; });
+  var beltByName={}; ctx.belts.forEach(function(b){ var k=_impNorm(b.name); if(!(k in beltByName)) beltByName[k]=b.id; });
+  var seenP={}, seenB={}, pi=0, bi=0, p=importPlan;
+  if(p){ p.rows.forEach(function(r){
+    var mnm=(r.c.membership||'').trim(); if(mnm){ var kn=_impNorm(mnm); if(!(kn in seenP)){ seenP[kn]=1; var ex=memByName[kn]; ctx.plans['p'+pi]={raw:mnm,norm:kn,existingId:ex||null,mode:ex?'matched':'create',price:importGuessPrice(mnm),billing:importGuessBilling(mnm)}; pi++; } }
+    var bnm=(r.c.belt||'').trim(); if(bnm){ var kb=_impNorm(bnm); if(!(kb in seenB)){ seenB[kb]=1; var exb=beltByName[kb]; ctx.beltChoices['b'+bi]={raw:bnm,norm:kb,existingId:exb||null,mode:exb?'matched':'create'}; bi++; } }
+  }); }
+  importCreateCtx=ctx;
+}
+function setImportPlanMode(k,val){ var c=importCreateCtx&&importCreateCtx.plans[k]; if(!c)return; if(val==='create'){c.mode='create';} else if(val==='skip'){c.mode='skip';} else if(val.indexOf('map:')===0){c.mode='map';c.existingId=val.slice(4);} var el=document.getElementById('planCreate-'+k); if(el) el.style.display=(c.mode==='create')?'inline-flex':'none'; }
+function setImportPlanField(k,f,v){ var c=importCreateCtx&&importCreateCtx.plans[k]; if(!c)return; if(f==='price'){c.price=parseFloat(v)||0;} else {c[f]=v;} }
+function setImportBeltMode(k,val){ var c=importCreateCtx&&importCreateCtx.beltChoices[k]; if(!c)return; if(val==='create'){c.mode='create';} else if(val==='skip'){c.mode='skip';} else if(val.indexOf('map:')===0){c.mode='map';c.existingId=val.slice(4);} }
+function setImportBeltSystem(v){ if(importCreateCtx) importCreateCtx.beltSystemId=v; }
+function renderImportPlanBeltReview(){
+  var ctx=importCreateCtx; if(!ctx) return '';
+  var pk=Object.keys(ctx.plans), bk=Object.keys(ctx.beltChoices);
+  if(!pk.length && !bk.length) return '';
+  var sel='background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:0.78rem;padding:0.3rem 0.5rem';
+  var inp='background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:0.78rem;padding:0.3rem 0.4rem';
+  var noProg=ctx.programs.length===0, noSys=ctx.systems.length===0;
+  var h=impSectionHead('Plans &amp; belts in your file');
+  h+='<p style="font-size:0.78rem;color:var(--muted);margin:0 0 0.6rem;line-height:1.5">Names that already exist are matched automatically. For anything new, choose to <strong style="color:var(--white)">create it</strong> (edit the details), <strong style="color:var(--white)">map</strong> it to something you already have, or <strong style="color:var(--white)">skip</strong> it.</p>';
+  h+='<div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:1rem">';
+  if(pk.length){
+    h+='<div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Plans</div>';
+    if(noProg){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No programs yet &mdash; create a program to enable auto-creating plans (you can still map or skip).</div>'; }
+    pk.forEach(function(k){ var c=ctx.plans[k];
+      if(c.mode==='matched'){ h+='<div style="font-size:0.82rem;color:var(--muted);padding:0.25rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A"></i> '+impEsc(c.raw)+' &rarr; matches an existing plan</div>'; return; }
+      h+='<div style="padding:0.45rem 0;border-top:1px solid var(--border)"><div style="font-size:0.85rem;color:var(--white);margin-bottom:0.3rem">'+impEsc(c.raw)+'</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">';
+      h+='<select onchange="setImportPlanMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noProg?' disabled':'')+'>Create new plan</option>';
+      ctx.mems.forEach(function(m){ h+='<option value="map:'+m.id+'"'+(c.mode==='map'&&c.existingId===m.id?' selected':'')+'>Map to: '+impEsc(m.name)+'</option>'; });
+      h+='<option value="skip"'+(c.mode==='skip'?' selected':'')+'>Skip</option></select>';
+      h+='<span id="planCreate-'+k+'" style="display:'+(c.mode==='create'?'inline-flex':'none')+';gap:0.4rem;align-items:center">$<input type="number" min="0" value="'+(c.price||0)+'" onchange="setImportPlanField(\''+k+'\',\'price\',this.value)" style="width:72px;'+inp+'" /><select onchange="setImportPlanField(\''+k+'\',\'billing\',this.value)" style="'+sel+'"><option value="monthly"'+(c.billing==='monthly'?' selected':'')+'>Monthly</option><option value="yearly"'+(c.billing==='yearly'?' selected':'')+'>Yearly</option><option value="class_pack"'+(c.billing==='class_pack'?' selected':'')+'>Class pack</option></select></span>';
+      h+='</div></div>';
+    });
+  }
+  if(bk.length){
+    h+='<div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.4rem">Belts</div>';
+    if(noSys){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No belt systems yet &mdash; create one to enable auto-creating belts.</div>'; }
+    else { h+='<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem">Add new belts to: <select onchange="setImportBeltSystem(this.value)" style="'+sel+'">'+ctx.systems.map(function(s){return '<option value="'+s.id+'"'+(s.id===ctx.beltSystemId?' selected':'')+'>'+impEsc(s.name)+'</option>';}).join('')+'</select></div>'; }
+    bk.forEach(function(k){ var c=ctx.beltChoices[k];
+      if(c.mode==='matched'){ h+='<div style="font-size:0.82rem;color:var(--muted);padding:0.25rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A"></i> '+impEsc(c.raw)+' &rarr; matches an existing belt</div>'; return; }
+      h+='<div style="padding:0.35rem 0;border-top:1px solid var(--border);display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"><span style="font-size:0.85rem;color:var(--white);min-width:110px">'+impEsc(c.raw)+'</span><select onchange="setImportBeltMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noSys?' disabled':'')+'>Create new belt</option>';
+      ctx.belts.forEach(function(b){ h+='<option value="map:'+b.id+'"'+(c.mode==='map'&&c.existingId===b.id?' selected':'')+'>Map to: '+impEsc(b.name)+'</option>'; });
+      h+='<option value="skip"'+(c.mode==='skip'?' selected':'')+'>Skip</option></select></div>';
+    });
+  }
+  h+='</div>';
+  return h;
+}
 function renderImportReview(){
   var p=importPlan; if(!p) return;
   var c=p.counts, i;
@@ -9444,6 +9511,8 @@ function renderImportReview(){
     h+=impSectionHead('Potential families ('+p.families.length+')');
     h+='<div style="margin-bottom:1rem">'+p.families.map(function(f,fi){ return renderFamilyCard(f,fi,p); }).join('')+'</div>';
   }
+
+  h+=renderImportPlanBeltReview();
 
   h+='<div style="display:flex;gap:0.75rem;margin-top:0.5rem;align-items:center;flex-wrap:wrap">';
   h+='<button class="btn-sm" onclick="backToImportStep1()"><i class="fa-solid fa-arrow-left"></i> Back</button>';
@@ -9576,12 +9645,35 @@ async function applyImportPlan(){
     if(familyId && ids.length){ await sb.from('students').update({family_id:familyId}).in('id',ids); }
   }
 
-  // §IMPORT-ASSIGN (Phase 1a) — match Membership + Belt by name to EXISTING plans/belts, assign,
-  // and classify billing (default 'external' so an imported member is NEVER auto-charged). Unmatched
-  // names are logged so the owner can create the plan/belt and re-run, or assign manually. (Phase 1b
-  // will auto-CREATE missing plans/belts with an editable review step.)
-  var memAssigned=0, beltAssigned=0, unmatchedMems={}, unmatchedBelts={};
+  // §IMPORT-CREATE (Phase 1b) — act on the review choices: CREATE new plans/belts, MAP others to
+  // existing, SKIP the rest. Builds resolved name->id maps used by the assignment pass below.
+  var _resolvedMem={}, _resolvedBelt={}, _createdPlans=0, _createdBelts=0;
   var _normNm=function(s){ return String(s||'').trim().toLowerCase(); };
+  if(importCreateCtx){
+    var _ctx=importCreateCtx, _bsort={};
+    for(var _pk in _ctx.plans){ if(!_ctx.plans.hasOwnProperty(_pk))continue; var _pc=_ctx.plans[_pk];
+      if((_pc.mode==='matched'||_pc.mode==='map')&&_pc.existingId){ _resolvedMem[_pc.norm]=_pc.existingId; }
+      else if(_pc.mode==='create'&&_ctx.programs.length){
+        try{ var _cr=await sb.rpc('save_membership_with_programs',{p_eid:null,p_school_id:SID,p_name:_pc.raw,p_description:'',p_billing_type:_pc.billing,p_billing_length:1,p_billing_unit:(_pc.billing==='yearly'?'years':'months'),p_price:parseFloat(_pc.price)||0,p_signup_fee:0,p_class_limit_type:'unlimited',p_class_limit_count:null,p_autopay_day:'signup',p_visibility:'public',p_featured:false,p_trial:false,p_auto_renew:true,p_autopay:true,p_class_reservation_eligible:false,p_active:true,p_rollover_enabled:false,p_cycle_length:null,p_cycle_unit:null,p_pack_expiry_days:null,p_public_join_enabled:false,p_public_headline:null,p_public_blurb:null,p_program_ids:[_ctx.programs[0].id]});
+          if(!_cr.error&&_cr.data){ _resolvedMem[_pc.norm]=_cr.data; _createdPlans++; log.push({row:0,msg:'Created plan: '+_pc.raw,status:'ok'}); } else if(_cr.error){ log.push({row:0,msg:'Could not create plan "'+_pc.raw+'": '+_cr.error.message,status:'warn'}); }
+        }catch(e){}
+      }
+    }
+    for(var _bk in _ctx.beltChoices){ if(!_ctx.beltChoices.hasOwnProperty(_bk))continue; var _bc=_ctx.beltChoices[_bk];
+      if((_bc.mode==='matched'||_bc.mode==='map')&&_bc.existingId){ _resolvedBelt[_bc.norm]=_bc.existingId; }
+      else if(_bc.mode==='create'&&_ctx.beltSystemId){
+        var _sid=_ctx.beltSystemId; if(!(_sid in _bsort)){ var _sy=_ctx.systems.filter(function(s){return s.id===_sid;})[0]; _bsort[_sid]=(_sy&&_sy.maxSort)||0; } _bsort[_sid]++;
+        try{ var _cb=await sb.from('belt_levels').insert({school_id:SID,belt_system_id:_sid,name:_bc.raw,sort_order:_bsort[_sid],color_hex:'#888888'}).select('id').single();
+          if(!_cb.error&&_cb.data){ _resolvedBelt[_bc.norm]=_cb.data.id; _createdBelts++; log.push({row:0,msg:'Created belt: '+_bc.raw,status:'ok'}); } else if(_cb.error){ log.push({row:0,msg:'Could not create belt "'+_bc.raw+'": '+_cb.error.message,status:'warn'}); }
+        }catch(e){}
+      }
+    }
+  }
+
+  // §IMPORT-ASSIGN (Phase 1a+1b) — assign Membership + Belt (existing matches + anything created/mapped
+  // in review) and classify billing (default 'external' so an import NEVER auto-charges). Names with no
+  // match and not created are logged.
+  var memAssigned=0, beltAssigned=0, unmatchedMems={}, unmatchedBelts={};
   var _validMethods={autopay:1,cash:1,comp:1,external:1};
   var _memMap={}, _beltMap={};
   try {
@@ -9590,6 +9682,8 @@ async function applyImportPlan(){
     var _bres=await sb.from('belt_levels').select('id,name').eq('school_id',SID);
     if(_bres.data){ for(var bb=0;bb<_bres.data.length;bb++){ var _bn=_normNm(_bres.data[bb].name); if(!(_bn in _beltMap)){ _beltMap[_bn]=_bres.data[bb].id; } } }
   } catch(e){}
+  for(var _rm in _resolvedMem){ if(_resolvedMem.hasOwnProperty(_rm)) _memMap[_rm]=_resolvedMem[_rm]; }
+  for(var _rb in _resolvedBelt){ if(_resolvedBelt.hasOwnProperty(_rb)) _beltMap[_rb]=_resolvedBelt[_rb]; }
   var _nowIso=new Date().toISOString(), _today=_nowIso.split('T')[0];
   for(var ai=0; ai<p.rows.length; ai++){
     var ar=p.rows[ai]; var sid2=resultId[ar.idx]; if(!sid2){ continue; }
@@ -9622,7 +9716,8 @@ async function applyImportPlan(){
     impStat('#5A9A6A',created,'Added')+impStat('#4C8CE2',merged,'Merged')+impStat('#9A6AD0',restored,'Restored')+
     impStat('#E07070',skipped,'Skipped')+(failed?impStat('#E07070',failed,'Failed'):'')+
     impStat('var(--gold)',famCreated+famLinked,'Families')+
-    impStat('#5A9A6A',memAssigned,'Memberships')+impStat('#C0A062',beltAssigned,'Belts');
+    impStat('#5A9A6A',memAssigned,'Memberships')+impStat('#C0A062',beltAssigned,'Belts')+
+    (_createdPlans?impStat('#4C8CE2',_createdPlans,'Plans made'):'')+(_createdBelts?impStat('#4C8CE2',_createdBelts,'Belts made'):'');
   document.getElementById('importLogList').innerHTML=log.map(function(e){return '<div class="import-log-entry '+e.status+'"><i class="fa-solid '+(e.status==='ok'?'fa-circle-check':(e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus'))+'"></i>'+(e.row?('Row '+e.row+': '):'')+e.msg+'</div>';}).join('');
   document.getElementById('importStepReview').style.display='none';
   document.getElementById('importStep2').style.display='block';
