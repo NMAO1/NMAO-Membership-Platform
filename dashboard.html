@@ -1427,6 +1427,12 @@
         <button class="panel-action" onclick="openPlanModal()"><i class="fa-solid fa-arrow-up-right-dots"></i> Manage Billing</button>
       </div></div>
 
+      <!-- §ACCREDITATION — optional; waives the $99/mo when granted -->
+      <div class="panel" id="accreditationPanel" style="margin-bottom:1.5rem;border-left:3px solid var(--gold)"><div class="panel-body" id="accreditationBody">
+        <div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Accreditation <span style="text-transform:none;letter-spacing:0;font-weight:normal">&middot; optional</span></div>
+        <div style="color:var(--muted);font-size:0.85rem">&hellip;</div>
+      </div></div>
+
       <!-- §SMS-USAGE -->
       <div class="panel" id="smsUsagePanel" style="margin-bottom:1.5rem;display:none"><div class="panel-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem">
@@ -4938,9 +4944,24 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
   if(page==='payments') { loadPaymentsLedger(); }
+  if(page==='billing')  { if(window.renderAccreditationCard) renderAccreditationCard(); }
 }
 
 // ── §PAYMENTS LEDGER + DISCOUNT REVIEW ──────────────────────────────────────
+async function renderAccreditationCard(){
+  var body=document.getElementById('accreditationBody'); if(!body) return;
+  var accredited=false;
+  try{ var r=await sb.from('schools').select('accredited').eq('id',SID).single(); if(r&&r.data) accredited=!!r.data.accredited; }catch(e){}
+  var head='<div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Accreditation <span style="text-transform:none;letter-spacing:0;font-weight:normal">&middot; optional</span></div>';
+  if(accredited){
+    body.innerHTML=head+'<div style="font-family:var(--font-display);font-size:1.35rem;color:#5A9A6A;margin-bottom:0.2rem"><i class="fa-solid fa-award" style="margin-right:0.4rem"></i>NMAO Accredited</div><div style="font-size:0.88rem;color:var(--muted);line-height:1.55">Your <strong style="color:var(--white)">$99/month platform fee is waived</strong> while you maintain the standards. Members can verify your NMAO-Accredited status.</div>';
+  } else {
+    body.innerHTML=head+
+      '<div style="font-family:var(--font-display);font-size:1.35rem;color:var(--gold);margin-bottom:0.3rem">Get accredited &mdash; waive your $99/mo</div>'+
+      '<div style="font-size:0.88rem;color:var(--muted);line-height:1.55;margin-bottom:1rem">Meet NMAO’s accreditation standards and your <strong style="color:var(--white)">$99/month platform fee is waived, permanently</strong> &mdash; plus you earn the NMAO-Accredited badge your families can verify. It’s completely optional; keep using the platform either way. The application is a guided upload you can finish over time.</div>'+
+      '<button class="panel-action" onclick="openSelfUpload(this)"><i class="fa-solid fa-award"></i> Start accreditation</button>';
+  }
+}
 async function loadPaymentsLedger(){
   var body=document.getElementById('paymentsTableBody'); if(!body) return;
   var onlyDisc=(document.getElementById('dscOnlyFilter')||{}).checked;
