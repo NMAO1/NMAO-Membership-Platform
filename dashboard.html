@@ -450,6 +450,22 @@
     .sidebar-logo-centered { padding: 1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; }
     .sidebar-logo-centered img { max-height: 72px; max-width: 180px; object-fit: contain; margin-bottom: 0.5rem; }
     .sidebar-logo-centered .sidebar-logo-text { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; letter-spacing: 0.16em; color: var(--gold); }
+
+    /* §MOBILE — iPhone-width breakpoint only (<=480px). iPad + desktop are unchanged. Turns the
+       fixed sidebar into an off-canvas drawer (hamburger) and gives the main content full width so
+       it stops being squished/overlapped on a phone. staff.html remains the primary phone tool. */
+    .mobile-hamburger { display: none; }
+    .mobile-scrim { display: none; }
+    @media (max-width: 480px) {
+      .sidebar { position: fixed !important; left: 0; top: 0; bottom: 0; width: 84vw !important; max-width: 320px; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 320; overflow-y: auto; }
+      body.sidebar-open .sidebar { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.65); }
+      .main { margin-left: 0 !important; }
+      .mobile-hamburger { display: inline-flex !important; align-items: center; justify-content: center; background: none; border: none; color: var(--gold); font-size: 1.25rem; padding: 0.35rem 0.55rem; cursor: pointer; flex-shrink: 0; }
+      body.sidebar-open .mobile-scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 310; }
+      .topbar { gap: 0.25rem; }
+      .global-search-wrap { margin: 0 0.5rem !important; }
+      .topbar-title { display: none !important; }
+    }
     .sidebar-logo-centered .sidebar-school    { font-size: 0.62rem; color: var(--muted2); margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
   </style>
 </head>
@@ -585,7 +601,9 @@
      §MAIN
 ═══════════════════════════════════════════════════════ -->
 <main class="main">
+  <div class="mobile-scrim" onclick="closeSidebar()"></div>
   <div class="topbar">
+    <button class="mobile-hamburger" onclick="toggleSidebar()" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
     <div style="position:relative">
       <div id="schoolBtn" onclick="toggleSchoolMenu()" style="font-family:'Libre Baskerville',serif;font-size:0.92rem;color:var(--gold);cursor:pointer;padding:0.5rem;letter-spacing:0.08em">
         <i class="fa-solid fa-chevron-down" style="font-size:0.7rem"></i> <span id="topSchoolName">NMAO</span>
@@ -931,11 +949,16 @@
     <!-- ═══════════════ §PAGE-MEMBERS ═══════════════ -->
     <div class="page" id="page-members">
       <div class="content-heading"><h2>Members</h2><button class="help-hint-inline" onclick="openHelpPopover('members',this)" title="What is this page?">?</button><div class="rule-h"></div>
-      <div style="display:flex;gap:0.5rem">
+      <div style="display:flex;gap:0.5rem;align-items:center">
           <button class="panel-action" onclick="openAddStudent()"><i class="fa-solid fa-user-plus"></i> Add Student</button>
-          <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openHistoryImport()"><i class="fa-solid fa-clock-rotate-left"></i> Import History</button>
-          <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openImportTool()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
-          <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="openSelfUpload(this)" title="Upload your source documents (roster, billing, waivers, branding) to onboarding"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Documents</button>
+          <div style="position:relative;display:inline-block">
+            <button class="panel-action" style="border-color:var(--border);color:var(--muted)" onclick="toggleImportMenu(event)"><i class="fa-solid fa-file-import"></i> Import <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;margin-left:0.15rem"></i></button>
+            <div class="quick-add-menu" id="importMenu" style="left:0;right:auto;min-width:270px">
+              <div class="quick-add-item" onclick="closeImportMenu();openImportTool()"><span class="quick-add-icon"><i class="fa-solid fa-users"></i></span><span>Members<span style="display:block;font-size:0.72rem;color:var(--muted)">Roster, plans &amp; belts (CSV)</span></span></div>
+              <div class="quick-add-item" onclick="closeImportMenu();openHistoryImport()"><span class="quick-add-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span>History<span style="display:block;font-size:0.72rem;color:var(--muted)">Attendance &amp; payments &middot; import members first</span></span></div>
+            </div>
+          </div>
+          <button class="help-hint-inline" onclick="openHelpPopover('members.import',this)" title="Help">?</button>
         </div>
       </div>
       <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center">
@@ -4897,6 +4920,7 @@ function classesForDate(dateStr){
 }
 
 function navigate(page,el){
+  closeSidebar();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
@@ -4981,6 +5005,7 @@ function toggleSchoolMenu(){ var m=document.getElementById('schoolMenu'); m.styl
 var HELP_CONTENT = {
 'profile.sec_guardians': { title: 'Guardians', purpose: 'The adults who can access this student in the member portal. A student can have several - both parents, a grandparent, a caregiver - each with their own login. Turning off portal access revokes a guardian without deleting the record or their history.' },
 'members.history_import': { title: 'Import history', purpose: 'Bring attendance and payment history from a previous platform (e.g. Zen Planner). Rows match to existing members by email. Imported attendance is recorded for reports and belt eligibility but does NOT deduct from current class packs - the old classes were already paid for elsewhere. Import members first, then their history.' },
+'members.import': { title: 'Import', purpose: 'Two ways to bring your data in. MEMBERS imports your roster from a CSV — and now also matches each member to their plan and belt (create your plans + belts first, then import). HISTORY brings in past attendance and payments from a previous platform; do this AFTER importing members. Prefer we set it up for you? Use "Send us your files" in the Getting Started checklist and our team will handle it.' },
 'members.export': { title: 'Export roster', purpose: 'Tick the columns you want, then download a CSV or print a PDF. It always exports the members your current search, program, tag, and status filters are showing - not the whole roster. Money and attendance columns are rolled up live from payments and check-ins. Your column choice is remembered.' },
 'profile.sec_contact': { title: 'Contact', purpose: 'Phone, email, and address on file for this member. Use Edit in the header to change them.' },
 'profile.sec_family': { title: 'Family', purpose: 'Other members sharing this family account. Only shows when the member belongs to a family.' },
@@ -5676,6 +5701,11 @@ window.addEventListener('resize', function(){ var p = document.getElementById('h
 
 function toggleQuickAdd()  { document.getElementById('quickAddMenu').classList.toggle('open'); }
 function closeQuickAdd()   { document.getElementById('quickAddMenu').classList.remove('open'); }
+function toggleImportMenu(e){ if(e&&e.stopPropagation){ e.stopPropagation(); } var m=document.getElementById('importMenu'); if(m){ m.classList.toggle('open'); } }
+function closeImportMenu(){ var m=document.getElementById('importMenu'); if(m){ m.classList.remove('open'); } }
+function toggleSidebar(){ document.body.classList.toggle('sidebar-open'); }
+function closeSidebar(){ document.body.classList.remove('sidebar-open'); }
+document.addEventListener('click',function(e){ var m=document.getElementById('importMenu'); if(m&&m.classList.contains('open')&&(!e.target.closest||!e.target.closest('#importMenu'))){ m.classList.remove('open'); } });
 document.addEventListener('click',function(e){
   if(!e.target.closest('#schoolBtn'))  document.getElementById('schoolMenu').style.display='none';
   if(!e.target.closest('.topbar-right')) document.getElementById('quickAddMenu').classList.remove('open');
@@ -5766,7 +5796,7 @@ async function buildSetupChecklist(){
     if(isLocked){ var rk=(s.requires&&s.requires.length)?s.requires[0]:null; var rl=rk?labelByKey[rk]:''; return '<div class="setup-step locked"><i class="fa-solid fa-lock" style="color:var(--muted);font-size:0.8rem;flex-shrink:0"></i><span>'+s.label+'<span class="setup-step-sub">Unlocks after: '+rl+'</span></span></div>'; }
     return '<div class="setup-step todo" onclick="navigate(\''+s.nav+'\',null)"><i class="fa-solid fa-circle" style="color:var(--muted);font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div>';
   }).join('');
-  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.74rem;color:var(--muted);margin-top:0.5rem">'+done+' of '+total+' completed</div>';
+  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.74rem;color:var(--muted);margin-top:0.5rem">'+done+' of '+total+' completed</div><div style="border-top:1px solid var(--border);margin-top:0.75rem;padding-top:0.65rem;font-size:0.8rem;color:var(--muted)">Prefer we set it up? <a onclick="openSelfUpload(this)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Send us your files</a> &mdash; roster, billing, waivers &amp; branding, and our team will help you get set up.</div>';
 }
 async function dismissSetupBanner(){
   document.getElementById('setupBanner').style.display='none';
