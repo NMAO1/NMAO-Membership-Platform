@@ -726,6 +726,15 @@
         <div id="setupStepsList"></div>
       </div>
       <div class="home-stats" id="homeStats"></div>
+
+      <!-- §TOURNAMENTS — optional bridge to the NMAO Tournament app (convenience, not a discount) -->
+      <div id="tournamentCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
+      <div class="modal-overlay" id="tournamentInviteModal">
+        <div class="modal" style="width:640px;max-width:96vw">
+          <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;color:var(--gold)"></i>Tournament invites</span><button class="modal-close" onclick="closeTournamentInvites()"><i class="fa-solid fa-xmark"></i></button></div>
+          <div style="padding:1.5rem;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch" id="tournamentInviteBody"></div>
+        </div>
+      </div>
       <div class="content-heading"><h2>Revenue</h2><button class="help-hint-inline" onclick="openHelpPopover('home.revenue',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:0.75rem">
         <div class="rev-card" onclick="openRevenueBreakdown('today')"><div class="rev-amount" id="revToday">$0</div><div class="rev-label">Today</div></div>
@@ -3677,6 +3686,7 @@ async function init() {
     }, 100);
     // Load all data
     await loadSchool();
+    renderTournamentCard();
     await loadKioskSettings();
     await loadClassFieldSettings();
     await loadTags();
@@ -5825,6 +5835,71 @@ async function dismissSetupBanner(){
   document.getElementById('setupBanner').style.display='none';
   try{await sb.from('schools').update({setup_dismissed:true}).eq('id',SID);}catch(e){try{localStorage.setItem('nmao_setup_dismissed','1');}catch(e2){}}
 }
+
+// §TOURNAMENTS — optional one-click bridge to the NMAO Tournament app. Enabling is FREE
+// (provisions active students as PENDING competitors); each guardian completes consent +
+// season + payment (normal rate) via an invite link; the school sets competitive rank.
+var _tournamentInvites=null;
+async function renderTournamentCard(){
+  var el=document.getElementById('tournamentCard'); if(!el||!SID) return;
+  var enabled=false;
+  try{ var sr=await sb.from('schools').select('tournament_school_id').eq('id',SID).single(); if(sr&&sr.data){ enabled=!!sr.data.tournament_school_id; } }catch(e){}
+  el.style.display='block';
+  if(!enabled){
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">'
+      +'<div style="flex:1;min-width:260px"><div style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.3rem"><i class="fa-solid fa-trophy" style="margin-right:0.5rem"></i>NMAO Tournaments</div>'
+      +'<div style="font-size:0.88rem;color:var(--muted);line-height:1.55">Get your students competing in the NMAO Tournament app in a couple of clicks, using your existing roster. <strong style="color:var(--white)">Enabling is free</strong> — each competitor’s season entry is paid separately at the normal rate, and you set each athlete’s competitive rank. Completely optional.</div></div>'
+      +'<button class="panel-action" onclick="enableTournaments()"><i class="fa-solid fa-bolt"></i> Enable Tournaments</button></div>'
+      +'<div id="tournamentMsg" style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem"></div>';
+  } else {
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">'
+      +'<div><div style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.2rem"><i class="fa-solid fa-trophy" style="margin-right:0.5rem"></i>NMAO Tournaments <span style="font-size:0.66rem;color:#5A9A6A;border:1px solid #5A9A6A;border-radius:4px;padding:0 0.4rem;margin-left:0.3rem;vertical-align:middle">ENABLED</span></div>'
+      +'<div style="font-size:0.85rem;color:var(--muted)">Your school is set up in the Tournament app. Send each guardian their invite to finish their child’s registration; set competitive rank in the Tournament School Portal.</div></div>'
+      +'<button class="panel-action" onclick="openTournamentInvites()"><i class="fa-solid fa-paper-plane"></i> Manage invites</button></div>'
+      +'<div id="tournamentMsg" style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem"></div>';
+  }
+}
+function _activeStudentCount(){ try{ return (allStudents||[]).filter(function(s){return s.status==='active'&&!s.deleted_at;}).length; }catch(e){ return 0; } }
+async function _callProvisionTournament(){
+  var r=await fetch(SURL+'/functions/v1/provision-tournament',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID})});
+  var d=await r.json().catch(function(){return {};});
+  return {ok:(r.ok&&d.ok),status:r.status,d:d};
+}
+async function enableTournaments(){
+  var n=_activeStudentCount();
+  if(!window.confirm('Enable NMAO Tournaments?\n\nThis provisions your '+n+' active students as PENDING competitors in the NMAO Tournament app. Enabling is FREE — nothing is charged now. Each guardian then completes their child’s consent, season and payment (normal rate) via an invite link, and you set each athlete’s competitive rank in the Tournament School Portal.')) return;
+  var msg=document.getElementById('tournamentMsg'); if(msg){ msg.style.color='var(--muted)'; msg.textContent='Enabling… provisioning your roster.'; }
+  try{
+    var res=await _callProvisionTournament();
+    if(!res.ok){ if(msg){ msg.style.color='#E07070'; msg.textContent='Could not enable: '+((res.d&&res.d.error)||('error '+res.status)); } return; }
+    _tournamentInvites=res.d.invites||[];
+    if(msg){ msg.style.color='#5A9A6A'; msg.textContent='Enabled! '+((res.d.seeded)||0)+' athletes provisioned'+((res.d.already)?(', '+res.d.already+' already set up'):'')+'.'; }
+    await renderTournamentCard();
+    openTournamentInvites();
+  }catch(e){ if(msg){ msg.style.color='#E07070'; msg.textContent='Network error enabling Tournaments.'; } }
+}
+async function openTournamentInvites(){
+  document.getElementById('tournamentInviteModal').classList.add('active');
+  var body=document.getElementById('tournamentInviteBody'); body.innerHTML='<div style="color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading invites…</div>';
+  if(!_tournamentInvites){ try{ var res=await _callProvisionTournament(); if(res.ok){ _tournamentInvites=res.d.invites||[]; } }catch(e){} }
+  renderTournamentInvites(_tournamentInvites||[]);
+}
+function renderTournamentInvites(invites){
+  var body=document.getElementById('tournamentInviteBody'); if(!body) return;
+  if(!invites.length){ body.innerHTML='<div style="color:var(--muted)">No invites yet. Once your school is provisioned, each active student appears here with a guardian invite link.</div>'; return; }
+  var h='<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.85rem">Send each guardian their invite — they complete consent, season and payment. You set competitive rank in the Tournament School Portal. Links are single-use and expire.</div>';
+  h+=invites.map(function(iv){
+    var name=iv.student_name||iv.external_member_student_id||'Student';
+    var url=iv.invite_url||'';
+    var jsurl=url.replace(/'/g,"\\'");
+    return '<div style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><span style="min-width:130px;font-size:0.88rem;color:var(--white)">'+impEsc(name)+'</span>'
+      +'<input readonly value="'+impEsc(url)+'" onclick="this.select()" style="flex:1;min-width:180px;background:var(--black);border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.74rem;padding:0.35rem 0.5rem" />'
+      +'<button class="btn-sm" onclick="copyTournamentLink(\''+jsurl+'\',this)"><i class="fa-solid fa-copy"></i> Copy</button></div>';
+  }).join('');
+  body.innerHTML=h;
+}
+function copyTournamentLink(t,btn){ try{ navigator.clipboard.writeText(t); if(btn){ var o=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-check"></i> Copied'; setTimeout(function(){btn.innerHTML=o;},1500); } }catch(e){} }
+function closeTournamentInvites(){ document.getElementById('tournamentInviteModal').classList.remove('active'); }
 
 // ─────────────────────────────── §CALENDAR ───────────────────────────────
 
