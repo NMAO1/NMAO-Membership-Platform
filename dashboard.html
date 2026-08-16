@@ -18206,5 +18206,31 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', showMobileNotice); } else { showMobileNotice(); }
 })();
 </script>
+  <script>
+  /* §A11Y-MODALS — make every .modal-overlay an accessible dialog (role/aria-modal), manage
+     focus in and out, trap Tab inside, and close on Escape — globally, no per-modal edits.
+     Additive: never changes existing open/close logic. Covers dynamically-injected modals too. */
+  (function(){
+    var lastFocus=null;
+    function focusables(root){ return Array.prototype.slice.call(root.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(el){ return el.offsetParent!==null; }); }
+    function activate(ov){ var d=ov.querySelector('.modal'); if(d){ d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true'); if(!d.hasAttribute('tabindex')) d.setAttribute('tabindex','-1'); } lastFocus=document.activeElement; var f=d?focusables(d):[]; setTimeout(function(){ var t=f[0]||d||ov; if(t&&t.focus){ try{ t.focus(); }catch(e){} } },30); }
+    function deactivate(){ if(lastFocus&&lastFocus.focus){ try{ lastFocus.focus(); }catch(e){} } lastFocus=null; }
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape'&&e.key!=='Tab') return;
+      var open=Array.prototype.slice.call(document.querySelectorAll('.modal-overlay.active')); if(!open.length) return;
+      var top=open[open.length-1];
+      if(e.key==='Escape'){ var cb=top.querySelector('.modal-close'); if(cb){ cb.click(); } else { top.classList.remove('active'); deactivate(); } return; }
+      var d=top.querySelector('.modal')||top, f=focusables(d); if(!f.length) return;
+      var first=f[0], last=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey&&document.activeElement===last){ e.preventDefault(); first.focus(); }
+    });
+    var obs=new MutationObserver(function(ms){ ms.forEach(function(m){ if(m.attributeName!=='class')return; var el=m.target; if(!el.classList||!el.classList.contains('modal-overlay'))return; if(el.classList.contains('active'))activate(el); else deactivate(); }); });
+    function watch(o){ obs.observe(o,{attributes:true,attributeFilter:['class']}); }
+    var bodyObs=new MutationObserver(function(ms){ ms.forEach(function(m){ Array.prototype.forEach.call(m.addedNodes||[],function(n){ if(n.nodeType!==1)return; if(n.classList&&n.classList.contains('modal-overlay'))watch(n); if(n.querySelectorAll)n.querySelectorAll('.modal-overlay').forEach(watch); }); }); });
+    function init(){ document.querySelectorAll('.modal-overlay').forEach(watch); bodyObs.observe(document.body,{childList:true,subtree:true}); }
+    if(document.readyState!=='loading')init(); else document.addEventListener('DOMContentLoaded',init);
+  })();
+  </script>
 </body>
 </html>
