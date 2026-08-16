@@ -9002,7 +9002,7 @@ function handleImportFile(event){
   reader.readAsText(file);
 }
 function getMappedField(fieldKey){ var sel=document.getElementById('import-map-'+fieldKey); return sel?sel.value:''; }
-var IMPORT_FIELDS=[{key:'first_name',label:'First Name',required:true},{key:'last_name',label:'Last Name',required:true},{key:'email',label:'Email',required:false},{key:'phone',label:'Phone',required:false},{key:'date_of_birth',label:'Date of Birth',required:false},{key:'status',label:'Status',required:false}];
+var IMPORT_FIELDS=[{key:'first_name',label:'First Name',required:true},{key:'last_name',label:'Last Name',required:true},{key:'email',label:'Email',required:false},{key:'phone',label:'Phone',required:false},{key:'date_of_birth',label:'Date of Birth',required:false},{key:'status',label:'Status',required:false},{key:'membership',label:'Membership / Plan',required:false},{key:'belt_rank',label:'Belt / Rank',required:false},{key:'billing_method',label:'Billing (autopay/cash/comp/external)',required:false}];
 function buildImportMapping(){
   var el=document.getElementById('importMappingRows');
   el.innerHTML=IMPORT_FIELDS.map(function(f){var opts='<option value="">-- Skip --</option>'+importHeaders.map(function(h){var selected=h.toLowerCase().replace(/\s+/g,'_').includes(f.key)||h.toLowerCase().includes(f.key.replace('_',' '))?'selected':'';return '<option value="'+h+'" '+selected+'>'+h+'</option>';}).join('');return '<div class="import-mapping-row"><div class="import-col-label">'+(f.required?'<span style="color:#E07070">*</span> ':'')+f.label+'</div><select id="import-map-'+f.key+'" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.85rem;padding:0.45rem 0.65rem;flex:1">'+opts+'</select></div>';}).join('');
@@ -9156,14 +9156,16 @@ function clusterImportFamilies(items){
 async function buildImportPlan(){
   var mFirst=getMappedField('first_name'), mLast=getMappedField('last_name'),
       mEmail=getMappedField('email'), mPhone=getMappedField('phone'),
-      mDob=getMappedField('date_of_birth'), mStatus=getMappedField('status');
+      mDob=getMappedField('date_of_birth'), mStatus=getMappedField('status'),
+      mMembership=getMappedField('membership'), mBelt=getMappedField('belt_rank'), mBilling=getMappedField('billing_method');
   var roster=await fetchImportRoster();
   var rosterById={}; for(var ri=0;ri<roster.length;ri++){ rosterById[roster[ri].id]=roster[ri]; }
   var rowsOut=[], items=[], counts={'new':0,merge:0,restore:0,conflict:0,skip:0};
   for(var i=0;i<importCSVData.length;i++){
     var row=importCSVData[i];
     var c={ first:mFirst?row[mFirst]:'', last:mLast?row[mLast]:'', email:mEmail?row[mEmail]:'',
-            phone:mPhone?row[mPhone]:'', dob:mDob?row[mDob]:'', status:mStatus?row[mStatus]:'' };
+            phone:mPhone?row[mPhone]:'', dob:mDob?row[mDob]:'', status:mStatus?row[mStatus]:'',
+            membership:mMembership?row[mMembership]:'', belt:mBelt?row[mBelt]:'', billing_method:mBilling?row[mBilling]:'' };
     if(!c.first||!c.last){ rowsOut.push({idx:i,category:'skip',reason:'missing name',c:c}); counts.skip++; continue; }
     var m=matchImportRow(c,roster);
     var matchedFamilyId=(m.matchedId&&rosterById[m.matchedId])?(rosterById[m.matchedId].family_id||null):null;
@@ -9542,12 +9544,53 @@ async function applyImportPlan(){
     if(familyId && ids.length){ await sb.from('students').update({family_id:familyId}).in('id',ids); }
   }
 
+  // §IMPORT-ASSIGN (Phase 1a) — match Membership + Belt by name to EXISTING plans/belts, assign,
+  // and classify billing (default 'external' so an imported member is NEVER auto-charged). Unmatched
+  // names are logged so the owner can create the plan/belt and re-run, or assign manually. (Phase 1b
+  // will auto-CREATE missing plans/belts with an editable review step.)
+  var memAssigned=0, beltAssigned=0, unmatchedMems={}, unmatchedBelts={};
+  var _normNm=function(s){ return String(s||'').trim().toLowerCase(); };
+  var _validMethods={autopay:1,cash:1,comp:1,external:1};
+  var _memMap={}, _beltMap={};
+  try {
+    var _mres=await sb.from('memberships').select('id,name').eq('school_id',SID);
+    if(_mres.data){ for(var mm=0;mm<_mres.data.length;mm++){ _memMap[_normNm(_mres.data[mm].name)]=_mres.data[mm].id; } }
+    var _bres=await sb.from('belt_levels').select('id,name').eq('school_id',SID);
+    if(_bres.data){ for(var bb=0;bb<_bres.data.length;bb++){ var _bn=_normNm(_bres.data[bb].name); if(!(_bn in _beltMap)){ _beltMap[_bn]=_bres.data[bb].id; } } }
+  } catch(e){}
+  var _nowIso=new Date().toISOString(), _today=_nowIso.split('T')[0];
+  for(var ai=0; ai<p.rows.length; ai++){
+    var ar=p.rows[ai]; var sid2=resultId[ar.idx]; if(!sid2){ continue; }
+    var _mn=(ar.c.membership||'').trim();
+    if(_mn){
+      var _mid=_memMap[_normNm(_mn)];
+      if(_mid){
+        var _method=_normNm(ar.c.billing_method); if(!(_method in _validMethods)){ _method='external'; }
+        var _exSm=await sb.from('student_memberships').select('id').eq('student_id',sid2).eq('membership_id',_mid).eq('status','active').limit(1);
+        if(!_exSm.data || !_exSm.data.length){
+          var _smIns=await sb.from('student_memberships').insert({school_id:SID, student_id:sid2, membership_id:_mid, status:'active', billing_method:_method, started_at:_nowIso, start_date:_today});
+          if(!_smIns.error){ memAssigned++; } else { log.push({row:ar.idx+1,msg:nm(ar)+' - membership assign failed: '+_smIns.error.message,status:'warn'}); }
+        }
+      } else { unmatchedMems[_mn]=(unmatchedMems[_mn]||0)+1; }
+    }
+    var _bnm=(ar.c.belt||'').trim();
+    if(_bnm){
+      var _bid=_beltMap[_normNm(_bnm)];
+      if(_bid){ var _bUp=await sb.from('students').update({current_belt_id:_bid, belt_awarded_date:_today}).eq('id',sid2); if(!_bUp.error){ beltAssigned++; } }
+      else { unmatchedBelts[_bnm]=(unmatchedBelts[_bnm]||0)+1; }
+    }
+  }
+  var _umNames=Object.keys(unmatchedMems), _ubNames=Object.keys(unmatchedBelts);
+  if(_umNames.length){ log.push({row:0,msg:'Plans not found — create them, then re-import or assign: '+_umNames.join(', '),status:'warn'}); }
+  if(_ubNames.length){ log.push({row:0,msg:'Belts not found — create in your belt system: '+_ubNames.join(', '),status:'warn'}); }
+
   await loadStudents(); if(typeof buildHomeStats==='function'){ buildHomeStats(); }
 
   document.getElementById('importSummaryStats').innerHTML=
     impStat('#5A9A6A',created,'Added')+impStat('#4C8CE2',merged,'Merged')+impStat('#9A6AD0',restored,'Restored')+
     impStat('#E07070',skipped,'Skipped')+(failed?impStat('#E07070',failed,'Failed'):'')+
-    impStat('var(--gold)',famCreated+famLinked,'Families');
+    impStat('var(--gold)',famCreated+famLinked,'Families')+
+    impStat('#5A9A6A',memAssigned,'Memberships')+impStat('#C0A062',beltAssigned,'Belts');
   document.getElementById('importLogList').innerHTML=log.map(function(e){return '<div class="import-log-entry '+e.status+'"><i class="fa-solid '+(e.status==='ok'?'fa-circle-check':(e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus'))+'"></i>'+(e.row?('Row '+e.row+': '):'')+e.msg+'</div>';}).join('');
   document.getElementById('importStepReview').style.display='none';
   document.getElementById('importStep2').style.display='block';
