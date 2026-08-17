@@ -515,7 +515,7 @@ async function doSignup() {
   var btn = document.getElementById('sSub');
   btn.disabled = true; btn.textContent = 'Creating account...'; setMsg('', '');
 
-  var auth = await sc.auth.signUp({ email: email, password: pass, options: { data: { full_name: name } } });
+  var auth = await sc.auth.signUp({ email: email, password: pass, options: { data: { full_name: name, school_name: school } } });   // §AUTO-CREATE: carry school_name so dashboard can create the school if email-confirm delayed the session
   var userId = (auth.data && auth.data.user) ? auth.data.user.id : null;
   var haveSession = !!(auth.data && auth.data.session);
   if (auth.error) {

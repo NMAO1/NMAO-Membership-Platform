@@ -3514,17 +3514,36 @@ async function initSessionGuard(){
     }
     SID = school.id;
   } else {
-    // Fallback path: instructor seat (legacy support for staff hitting dashboard.html)
-    // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
-    // keeps whatever casing was typed - .eq('email',...) misses "JSmith@x.com" entirely.
-    var instrCheck = await sb.from('instructors').select('id,school_id').eq('email_norm', String(user.email||'').trim().toLowerCase()).eq('active', true).single();
-    if(instrCheck.error || !instrCheck.data){
-      showSessionError(user, 'no-school');
-      return false;
+    // §AUTO-CREATE (O1) — a signup completed after an email-confirm bounce leaves an authed user with
+    // no school row (register-school only ran at signup if a session existed). If this user carries a
+    // pending school_name from signup metadata, create the school now (register-school is idempotent).
+    var pendingName = (user.user_metadata && user.user_metadata.school_name) ? String(user.user_metadata.school_name).trim() : '';
+    if(pendingName){
+      try{
+        var mk = await fetch(SURL + '/functions/v1/register-school', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+          body: JSON.stringify({ school_name: pendingName, email: user.email })
+        });
+        if(mk.ok){
+          var sr2 = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
+          if(!sr2.error && sr2.data && sr2.data.length){ school = sr2.data[0]; SID = school.id; }
+        }
+      }catch(e){ console.error('[session-guard] auto-create school failed:', e); }
     }
-    SID = instrCheck.data.school_id;
-    var s2 = await sb.from('schools').select('id,name,email,is_active').eq('id', SID).single();
-    if(s2.data) school = s2.data;
+    if(!school){
+      // Fallback path: instructor seat (legacy support for staff hitting dashboard.html)
+      // Match on email_norm: Supabase Auth lowercases user.email, but instructors.email
+      // keeps whatever casing was typed - .eq('email',...) misses "JSmith@x.com" entirely.
+      var instrCheck = await sb.from('instructors').select('id,school_id').eq('email_norm', String(user.email||'').trim().toLowerCase()).eq('active', true).single();
+      if(instrCheck.error || !instrCheck.data){
+        showSessionError(user, 'no-school');
+        return false;
+      }
+      SID = instrCheck.data.school_id;
+      var s2 = await sb.from('schools').select('id,name,email,is_active').eq('id', SID).single();
+      if(s2.data) school = s2.data;
+    }
   }
 
   ownerEmail = user.email;
@@ -5827,11 +5846,11 @@ async function updateRevenueGoalWidget(goal){
 
 // Setup checklist
 async function buildSetupChecklist(){
-  var stripeConnected=false, hasBrand=false;
+  var stripeConnected=false, stripeOnboarded=false, hasBrand=false;
   try{
-    var _scr=await sb.from('schools').select('stripe_connected,logo_url,color').eq('id',SID).single();
+    var _scr=await sb.from('schools').select('stripe_connected,stripe_onboarded,logo_url,color').eq('id',SID).single();
     if(_scr&&_scr.data){
-      stripeConnected=!!_scr.data.stripe_connected;
+      stripeConnected=!!_scr.data.stripe_connected; stripeOnboarded=!!_scr.data.stripe_onboarded;
       hasBrand=!!(_scr.data.logo_url||_scr.data.color);
     }
   }catch(e){}
@@ -5841,7 +5860,7 @@ async function buildSetupChecklist(){
     {key:'memberships',  label:'Set up memberships',             why:'How members pay to train with you.',                ctaLabel:'Add a membership',   cta:'openAddMembership()',  requires:['programs'],                check:function(){return allMemberships.length>0;},  nav:'memberships'},
     {key:'classes',      label:'Add your classes',               why:'Put your weekly schedule on the calendar.',         ctaLabel:'Add a class',        cta:'openAddClass()',       requires:['programs'],                check:function(){return allClasses.length>0;},      nav:'classes'},
     {key:'students',     label:'Add your students',              why:'Add them one at a time or import a CSV.',           ctaLabel:'Add a student',      cta:'openAddStudent()',     requires:['programs','memberships'],  check:function(){return allStudents.length>0;},     nav:'members'},
-    {key:'stripe',       label:'Connect Stripe to get paid',     why:'Connect Stripe so you can accept payments.',        ctaLabel:'Connect Stripe',     cta:'connectStripe()',      requires:[],                          check:function(){return stripeConnected;},          nav:'billing'},
+    {key:'stripe',       label:(stripeConnected&&!stripeOnboarded)?'Finish verifying with Stripe':'Connect Stripe to get paid', why:(stripeConnected&&!stripeOnboarded)?'You connected Stripe but must finish verification before you can accept payments.':'Connect Stripe so you can accept payments.', ctaLabel:(stripeConnected&&!stripeOnboarded)?'Finish verifying':'Connect Stripe', cta:(stripeConnected&&!stripeOnboarded)?"window.open('https://dashboard.stripe.com/','_blank')":'connectStripe()', requires:[], check:function(){return stripeOnboarded;}, nav:'billing'},   // §STRIPE-TRUTH: done = charge-able, not just OAuth-linked
     {key:'instructors',  label:'Invite your instructors',        why:'Give your staff their own login.',                  ctaLabel:'Add an instructor',  cta:'openAddInstructor()',  requires:[],                          check:function(){return allInstructors.length>0;},  nav:'instructors'},
     {key:'sessiontypes', label:'Add session types',              why:'For private lessons and session packs.',            ctaLabel:'Add a session type', cta:'openAddSessionType()', requires:[],                          check:function(){return allSessionTypes.length>0;}, nav:'sessions'},
     {key:'sessionpacks', label:'Configure a session pack',       why:'Sell prepaid blocks of sessions.',                  ctaLabel:'Add a session pack', cta:'openAddSessionPack()',   requires:['sessiontypes'],            check:function(){return allSessionPacks.length>0;}, nav:'sessions'},
@@ -15857,11 +15876,20 @@ function printExportTable(title, schoolName, subtitle, headHtml, bodyHtml){
 
 async function loadStripeConnectStatus(){
   try{
-    var r=await sb.from('schools').select('stripe_account_id,stripe_connected').eq('id',SID).single();
-    if(r.data&&r.data.stripe_connected){
-      document.getElementById('stripeConnectStatus').innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#5A9A6A"></div><div style="font-size:0.88rem;color:#7DBD7D">Stripe connected</div></div>';
-      document.getElementById('stripeConnectBtn').textContent='Manage Stripe';
+    var r=await sb.from('schools').select('stripe_account_id,stripe_connected,stripe_onboarded').eq('id',SID).single();
+    if(!r.data) return;
+    var onboarded=!!r.data.stripe_onboarded, connected=!!r.data.stripe_connected;
+    var statusEl=document.getElementById('stripeConnectStatus'), btn=document.getElementById('stripeConnectBtn');
+    if(onboarded){
+      // §STRIPE-TRUTH (O2) — green ONLY when the account can actually accept payments.
+      if(statusEl) statusEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#5A9A6A"></div><div style="font-size:0.88rem;color:#7DBD7D">Stripe connected — ready to accept payments</div></div>';
+      if(btn){ btn.textContent='Manage Stripe'; btn.onclick=function(){ window.open('https://dashboard.stripe.com/','_blank'); }; }   // §STRIPE-RECOVER (O3): open their Stripe, never the throwing re-connect
+    } else if(connected){
+      // Linked via OAuth but verification/KYC not finished — cannot charge yet.
+      if(statusEl) statusEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#E0A05A"></div><div style="font-size:0.88rem;color:#E0A05A">Almost there — finish verifying with Stripe to accept payments</div></div>';
+      if(btn){ btn.textContent='Finish verifying with Stripe'; btn.onclick=function(){ window.open('https://dashboard.stripe.com/','_blank'); }; }   // §STRIPE-RECOVER (O3): self-serve KYC completion
     }
+    // not connected → leave the default Connect button + connectStripe() onclick untouched.
   }catch(e){}
 }
 async function connectStripe(){
