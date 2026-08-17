@@ -587,7 +587,10 @@
     <div class="nav-item" id="nav-shareembed" onclick="navigate('shareembed',this)"><i class="fa-solid fa-share-nodes nav-icon"></i> Share &amp; Embed</div>
     <div class="nav-item" id="nav-settings" onclick="navigate('settings',this)"><i class="fa-solid fa-gear nav-icon"></i> Settings</div>
     <div class="nav-item" id="nav-billing"  onclick="navigate('billing',this)"><i class="fa-solid fa-file-invoice-dollar nav-icon"></i> Billing</div>
-<div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>  </div>
+<div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>
+    <div class="nav-section-label">Integrations</div>
+    <div class="nav-item" id="nav-integrations" onclick="navigate('integrations',this)"><i class="fa-solid fa-trophy nav-icon"></i> Tournament</div>
+  </div>
   <div class="sidebar-footer">
     <div class="user-info">
       <div class="user-avatar" id="userInitial">?</div>
@@ -727,14 +730,6 @@
       </div>
       <div class="home-stats" id="homeStats"></div>
 
-      <!-- §TOURNAMENTS — optional bridge to the NMAO Tournament app (convenience, not a discount) -->
-      <div id="tournamentCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
-      <div class="modal-overlay" id="tournamentInviteModal">
-        <div class="modal" style="width:640px;max-width:96vw">
-          <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;color:var(--gold)"></i>Tournament invites</span><button class="modal-close" onclick="closeTournamentInvites()"><i class="fa-solid fa-xmark"></i></button></div>
-          <div style="padding:1.5rem;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch" id="tournamentInviteBody"></div>
-        </div>
-      </div>
       <div class="content-heading"><h2>Revenue</h2><button class="help-hint-inline" onclick="openHelpPopover('home.revenue',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:0.75rem">
         <div class="rev-card" onclick="openRevenueBreakdown('today')"><div class="rev-amount" id="revToday">$0</div><div class="rev-label">Today</div></div>
@@ -1464,6 +1459,20 @@
         <button class="panel-action" id="stripeConnectBtn" onclick="connectStripe()" style="margin-top:1rem"><i class="fa-solid fa-link"></i> Connect Stripe Account</button>
         <p class="form-msg" id="stripeConnectMsg" style="margin-top:0.75rem"></p>
       </div></div>
+    </div>
+
+    <!-- ═══════════════ §PAGE-INTEGRATIONS ═══════════════ -->
+    <div class="page" id="page-integrations">
+      <div class="content-heading"><h2>Integrations</h2><div class="rule-h"></div></div>
+      <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Optional connections that extend what your school can do &mdash; your platform works exactly the same either way.</p>
+      <!-- §TOURNAMENTS — optional bridge to the NMAO Tournament app (convenience, not a discount) -->
+      <div id="tournamentCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
+      <div class="modal-overlay" id="tournamentInviteModal">
+        <div class="modal" style="width:640px;max-width:96vw">
+          <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;color:var(--gold)"></i>Tournament invites</span><button class="modal-close" onclick="closeTournamentInvites()"><i class="fa-solid fa-xmark"></i></button></div>
+          <div style="padding:1.5rem;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch" id="tournamentInviteBody"></div>
+        </div>
+      </div>
     </div>
 
   <div class="page" id="page-shareembed">
@@ -4942,7 +4951,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -4951,6 +4960,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
+  if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
   if(page==='payments') { loadPaymentsLedger(); }
@@ -5739,6 +5749,33 @@ function closeImportMenu(){ var m=document.getElementById('importMenu'); if(m){ 
 function toggleSidebar(){ document.body.classList.toggle('sidebar-open'); }
 function closeSidebar(){ document.body.classList.remove('sidebar-open'); }
 document.addEventListener('click',function(e){ var m=document.getElementById('importMenu'); if(m&&m.classList.contains('open')&&(!e.target.closest||!e.target.closest('#importMenu'))){ m.classList.remove('open'); } });
+
+// §A11Y-MODALS — accessibility for every .modal-overlay dialog, applied CENTRALLY (no per-modal
+// change, purely additive): role/aria on open, focus the first field, Escape closes, Tab trapped
+// inside, focus restored on close. Makes the app keyboard/screen-reader usable for procurement.
+(function(){
+  var lastFocus=null;
+  function inner(ov){ return ov.querySelector('.modal') || ov; }
+  function focusables(root){ return Array.prototype.slice.call(root.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(el){ return el.offsetParent!==null; }); }
+  function onOpen(ov){
+    var m=inner(ov);
+    m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
+    var t=m.querySelector('.modal-title'); if(t){ if(!t.id){ t.id='mtitle-'+Math.random().toString(36).slice(2,8); } m.setAttribute('aria-labelledby',t.id); }
+    lastFocus=document.activeElement;
+    var pref=m.querySelector('input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled])')||focusables(m)[0];
+    if(pref){ setTimeout(function(){ try{ pref.focus(); }catch(e){} }, 30); }
+  }
+  document.addEventListener('keydown',function(e){
+    var ov=document.querySelector('.modal-overlay.active'); if(!ov) return;
+    if(e.key==='Escape'){ var c=ov.querySelector('.modal-close'); if(c){ e.preventDefault(); c.click(); } return; }
+    if(e.key==='Tab'){ var fs=focusables(inner(ov)); if(!fs.length) return; var first=fs[0],last=fs[fs.length-1];
+      if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } }
+  });
+  var mo=new MutationObserver(function(muts){ for(var i=0;i<muts.length;i++){ var ov=muts[i].target; if(ov.classList && ov.classList.contains('modal-overlay')){ if(ov.classList.contains('active')){ onOpen(ov); } else if(lastFocus){ try{ lastFocus.focus(); }catch(e){} lastFocus=null; } } } });
+  function observeAll(){ var list=document.querySelectorAll('.modal-overlay'); for(var i=0;i<list.length;i++){ mo.observe(list[i],{attributes:true,attributeFilter:['class']}); } }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',observeAll); } else { observeAll(); }
+})();
 document.addEventListener('click',function(e){
   if(!e.target.closest('#schoolBtn'))  document.getElementById('schoolMenu').style.display='none';
   if(!e.target.closest('.topbar-right')) document.getElementById('quickAddMenu').classList.remove('open');
