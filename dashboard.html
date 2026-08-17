@@ -1908,9 +1908,7 @@
   <div class="modal" style="width:580px;max-width:95vw">
     <div class="modal-header"><span class="modal-title">Change Plan</span><button class="modal-close" onclick="closePlanModal()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
-      <div class="plan-card" id="planCard-starter" onclick="selectPlan('starter')"><div class="plan-name">Starter</div><div class="plan-price">$50<span>/month</span></div><div class="plan-limit">Up to 50 students</div><button class="plan-btn">Select Starter</button></div>
-      <div class="plan-card" id="planCard-professional" onclick="selectPlan('professional')"><div class="plan-name">Professional</div><div class="plan-price">$100<span>/month</span></div><div class="plan-limit">Up to 100 students</div><button class="plan-btn">Select Professional</button></div>
-      <div class="plan-card" id="planCard-elite" onclick="selectPlan('elite')"><div class="plan-name">Elite</div><div class="plan-price">$150<span>/month</span></div><div class="plan-limit">125+ students</div><button class="plan-btn">Select Elite</button></div>
+      <div style="font-size:0.9rem;color:var(--muted);line-height:1.55">NMAO is a single <strong style="color:var(--white)">$99/month</strong> plan — <strong style="color:var(--gold)">waived</strong> while your school is NMAO Accredited. Use <em>Manage Billing</em> to update your card or view invoices.</div>
       <p class="form-msg" id="planMsg"></p>
     </div>
   </div>
@@ -4309,16 +4307,22 @@ function renderPlanCancelledBanner(cancelled){
 }
 function updatePlanBadge(plan) {
   var sd = window.schoolData || {};
-  var price = sd.plan_price ? sd.plan_price : 99;
   var statusMap = {trialing:'Free Trial', active:'Active', past_due:'Past Due', cancelled:'Cancelled'};
   var status = statusMap[sd.plan_status] || 'Active';
   renderPlanCancelledBanner(sd.plan_status === 'cancelled');
-  var line = '$' + price + '/month \u00b7 ' + status;
-  if (sd.plan_status === 'trialing' && sd.trial_ends_at) {
+  // \u00a7PRICE-CANON \u2014 one plan, $99/mo (waived with accreditation). Never a stored per-school price.
+  var line;
+  if (sd.accredited) {
+    line = '$99/month \u00b7 waived with accreditation';                     // \u00a7WAIVER
+  } else if (sd.trial_ends_at == null) {
+    line = '$99/month \u00b7 complimentary';                                 // founder/comp exempt (no trial clock)
+  } else if (sd.plan_status === 'trialing' && sd.trial_ends_at) {
     var ends = new Date(sd.trial_ends_at);
-    line = '$' + price + '/month \u00b7 Free trial ends ' +
+    line = '$99/month \u00b7 Free trial ends ' +
            ends.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) +
            ' \u00b7 no platform fee until then';
+  } else {
+    line = '$99/month \u00b7 ' + status;
   }
   document.getElementById('billingPlanName').textContent = 'NMAO Platform';
   document.getElementById('billingPlanPrice').textContent = line;
