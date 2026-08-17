@@ -6473,7 +6473,7 @@ async function buildRetentionAlerts(){
     }
     if(!atRisk.length){document.getElementById('retentionAlertsSection').style.display='none';return;}
     document.getElementById('retentionAlertsSection').style.display='block';
-    document.getElementById('retentionAlertsList').innerHTML=atRisk.slice(0,10).map(function(item){var s=item.student;var label=item.daysAgo?item.daysAgo+' days ago':'Never attended';return '<div class="alert-card"><div><div class="alert-name">'+s.first_name+' '+s.last_name+'</div><div class="alert-meta">Last class: '+label+'</div></div><button class="btn-sm gold" onclick="openStudentProfile(\''+s.id+'\')">View Profile</button></div>';}).join('');
+    document.getElementById('retentionAlertsList').innerHTML=atRisk.slice(0,10).map(function(item){var s=item.student;var label=item.daysAgo?item.daysAgo+' days ago':'Never attended';return '<div class="alert-card"><div><div class="alert-name">'+escapeCheckout(s.first_name)+' '+escapeCheckout(s.last_name)+'</div><div class="alert-meta">Last class: '+label+'</div></div><button class="btn-sm gold" onclick="openStudentProfile(\''+s.id+'\')">View Profile</button></div>';}).join('');
   }catch(e){}
 }
 function buildBirthdays(){
@@ -6482,7 +6482,7 @@ function buildBirthdays(){
   upcoming.sort(function(a,b){return a.daysUntil-b.daysUntil;});
   var el=document.getElementById('birthdaysList');
   if(!upcoming.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No birthdays in the next 30 days.</div>';return;}
-  el.innerHTML=upcoming.map(function(item){var s=item.student;var label=item.daysUntil===0?'Today!':item.daysUntil===1?'Tomorrow':item.bday.toLocaleDateString('en-US',{month:'short',day:'numeric'});var isToday=item.daysUntil===0;return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #5A9A6A;margin-bottom:0.4rem"><div style="font-size:0.92rem;color:var(--white)"><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>'+s.first_name+' '+s.last_name+(isToday?' \uD83C\uDF82':'')+'</div><div style="font-size:0.78rem;color:'+(isToday?'#7DBD7D':'var(--muted)')+'">'+label+'</div></div>';}).join('');
+  el.innerHTML=upcoming.map(function(item){var s=item.student;var label=item.daysUntil===0?'Today!':item.daysUntil===1?'Tomorrow':item.bday.toLocaleDateString('en-US',{month:'short',day:'numeric'});var isToday=item.daysUntil===0;return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid #5A9A6A;margin-bottom:0.4rem"><div style="font-size:0.92rem;color:var(--white)"><i class="fa-solid fa-cake-candles" style="color:#5A9A6A;margin-right:0.5rem"></i>'+escapeCheckout(s.first_name)+' '+escapeCheckout(s.last_name)+(isToday?' \uD83C\uDF82':'')+'</div><div style="font-size:0.78rem;color:'+(isToday?'#7DBD7D':'var(--muted)')+'">'+label+'</div></div>';}).join('');
 }
 
 // Revenue
@@ -7306,12 +7306,13 @@ var saveResult = await saveSessionRow();
     return;
   }
 
+  var _bsBtn = document.getElementById('bookSessionBtnCardOnFile'); if(_bsBtn) _bsBtn.disabled = true;   // §NO-DOUBLE-CHARGE: block double-click
   setMsg('sessionMsg','Charging card on file...','');
   try{
     var r = await fetch(SURL + '/functions/v1/create-pos-charge', {
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
-      body: JSON.stringify({school_id: SID, student_id: studentId, line_items: [bookSessionLineItem()]}),
+      body: JSON.stringify({school_id: SID, student_id: studentId, line_items: [bookSessionLineItem()], idempotency_key: ('booksession-'+SID+'-'+studentId+'-'+JSON.stringify(bookSessionLineItem())).replace(/[^A-Za-z0-9_-]/g,'').slice(0,120)}),   // §NO-DOUBLE-CHARGE: server-side dedup
     });
     var data = await r.json();
     if(data.error){
@@ -7332,6 +7333,8 @@ var saveResult = await saveSessionRow();
     await showBookSessionSuccess('card');
   }catch(e){
     setMsg('sessionMsg','Session saved. Charge error: '+(e.message||'Network error'),'error');
+  }finally{
+    if(_bsBtn) _bsBtn.disabled = false;   // §NO-DOUBLE-CHARGE: restore for retry
   }
 }
 
@@ -8243,7 +8246,7 @@ async function openStudentProfile(sid) {
     document.getElementById('profileBeltBadge').style.display='none';
   }
   var nd = document.getElementById('profileNoteDisplay');
-  nd.innerHTML = s.notes ? '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+s.notes.replace(/\n/g,'<br>')+'</div>' : '<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
+  nd.innerHTML = s.notes ? '<div style="background:var(--surface);border:1px solid var(--border);padding:0.75rem;border-left:2px solid var(--gold)">'+escapeCheckout(s.notes).replace(/\n/g,'<br>')+'</div>' : '<div style="color:var(--muted);font-style:italic">No notes yet.</div>';
   await loadProfileAttendance(sid);
   await loadPromotionHistory(sid);
   await loadMessageHistory(sid);
@@ -9972,7 +9975,7 @@ async function ccOnProgramsChange(){
   else{
     var arr=(allClasses||[]).filter(function(c){return pids.indexOf(c.program_id)!==-1;});
     if(!arr.length){ cc.innerHTML='<div style="color:var(--muted);font-size:0.82rem;font-style:italic">No classes in the selected programs.</div>'; }
-    else{ cc.innerHTML=arr.map(function(c){var dn=c.name||c.title||'Untitled';return '<label class="check-item"><input type="checkbox" class="cc-class-check" value="'+c.id+'"/><span class="check-item-label">'+dn+(c.start_time?' <span style="color:var(--muted)">'+fmtTime(c.start_time)+'</span>':'')+'</span></label>';}).join(''); }
+    else{ cc.innerHTML=arr.map(function(c){var dn=escapeCheckout(c.name||c.title||'Untitled');return '<label class="check-item"><input type="checkbox" class="cc-class-check" value="'+c.id+'"/><span class="check-item-label">'+dn+(c.start_time?' <span style="color:var(--muted)">'+fmtTime(c.start_time)+'</span>':'')+'</span></label>';}).join(''); }
   }
   var beltField=document.getElementById('ccBeltField');
   var beltSel=document.getElementById('ccBelt');
@@ -12135,8 +12138,8 @@ async function familyCheckoutCharge(){
 }
 function openAddFamily(){ document.getElementById('addFamilyTitle').textContent='Add Family';document.getElementById('familyEditId').value='';document.getElementById('familyName').value='';document.getElementById('familyEmail').value='';document.getElementById('familyPhone').value='';document.getElementById('familyNotes').value='';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='none';document.getElementById('familyPortalSection').style.display='none';document.getElementById('familyCardSection').style.display='none';document.getElementById('addFamilyModal').classList.add('active'); }
 function openEditFamily(fid){ var f=allFamilies.find(function(x){return x.id===fid;}); if(!f) return; document.getElementById('addFamilyTitle').textContent='Edit Family';document.getElementById('familyEditId').value=f.id;document.getElementById('familyName').value=f.name||'';document.getElementById('familyEmail').value=f.email||'';document.getElementById('familyPhone').value=f.phone||'';document.getElementById('familyNotes').value=f.notes||'';document.getElementById('familyMsg').textContent='';document.getElementById('familyLinkedStudentsSection').style.display='block';renderFamilyLinkedStudents(fid);document.getElementById('familyPortalSection').style.display='block';document.getElementById('familyCardSection').style.display='block';renderFamilyPortalStatus(fid);renderFamilyCard(fid);document.getElementById('addFamilyModal').classList.add('active'); }
-function renderFamilyLinkedStudents(fid){ var linked=allStudents.filter(function(s){return s.family_id===fid;}); var el=document.getElementById('familyLinkedStudentsList'); if(!linked.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No students linked yet.</div>';return;} el.innerHTML=linked.map(function(s){return '<div class="family-student-link"><div style="color:var(--white)">'+s.first_name+' '+s.last_name+'</div><button class="btn-sm" onclick="unlinkFamilyStudent(\''+s.id+'\')">Unlink</button></div>';}).join(''); }
-async function unlinkFamilyStudent(sid){ var r=await sb.from("students").update({family_id:null}).eq("id",sid); if(r.error){showToast("Could not unlink student: "+r.error.message,"err");return;} await loadStudents(); var fid=document.getElementById("familyEditId").value; if(fid) renderFamilyLinkedStudents(fid); }function searchFamilyStudent(){ var q=document.getElementById('familyStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('familyStudentSearchResults'); if(!q||q.length<2){el.style.display='none';return;} var fid=document.getElementById('familyEditId').value; var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)&&!s.family_id;}).slice(0,5); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No unlinked students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="linkFamilyStudent(\''+s.id+'\',\''+fid+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join(''); }
+function renderFamilyLinkedStudents(fid){ var linked=allStudents.filter(function(s){return s.family_id===fid;}); var el=document.getElementById('familyLinkedStudentsList'); if(!linked.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.82rem">No students linked yet.</div>';return;} el.innerHTML=linked.map(function(s){return '<div class="family-student-link"><div style="color:var(--white)">'+escapeCheckout(s.first_name)+' '+escapeCheckout(s.last_name)+'</div><button class="btn-sm" onclick="unlinkFamilyStudent(\''+s.id+'\')">Unlink</button></div>';}).join(''); }
+async function unlinkFamilyStudent(sid){ var r=await sb.from("students").update({family_id:null}).eq("id",sid); if(r.error){showToast("Could not unlink student: "+r.error.message,"err");return;} await loadStudents(); var fid=document.getElementById("familyEditId").value; if(fid) renderFamilyLinkedStudents(fid); }function searchFamilyStudent(){ var q=document.getElementById('familyStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('familyStudentSearchResults'); if(!q||q.length<2){el.style.display='none';return;} var fid=document.getElementById('familyEditId').value; var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q)&&!s.family_id;}).slice(0,5); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No unlinked students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="linkFamilyStudent(\''+s.id+'\',\''+fid+'\')">'+escapeCheckout(s.first_name)+' '+escapeCheckout(s.last_name)+'</div>';}).join(''); }
 async function linkFamilyStudent(sid,fid){ if(!fid) return; var r=await sb.from("students").update({family_id:fid}).eq("id",sid); if(r.error){showToast("Could not link student: "+r.error.message,"err");return;} await loadStudents(); renderFamilyLinkedStudents(fid); document.getElementById("familyStudentSearch").value=""; document.getElementById("familyStudentSearchResults").style.display="none"; }function closeAddFamily(){ document.getElementById('addFamilyModal').classList.remove('active'); }
 async function saveFamily(){
   var eid=document.getElementById("familyEditId").value;
@@ -13646,7 +13649,7 @@ function updatePOSQty(pid,delta){ var item=posCart.find(function(c){return c.id=
   var el=document.getElementById('posCartList'); var total=posCart.reduce(function(sum,c){return sum+c.price*c.qty;},0);
   document.getElementById('posTotalAmount').textContent='$'+total.toFixed(2);
   if(!posCart.length){el.innerHTML='<div id="posCartEmpty" style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:2rem 0">Cart is empty</div>';}
-  else{el.innerHTML=posCart.map(function(c){return '<div class="pos-cart-row"><div class="pos-cart-name">'+c.name+(c.type==='pack'?'<span style="font-size:0.6rem;color:var(--gold);margin-left:0.4rem">PACK</span>':'')+'</div><div class="pos-cart-qty"><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',-1)">-</button><span style="font-size:0.85rem;color:var(--white);min-width:16px;text-align:center">'+c.qty+'</span><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',1)">+</button></div><div class="pos-cart-price">$'+(c.price*c.qty).toFixed(2)+'</div></div>';}).join('');}
+  else{el.innerHTML=posCart.map(function(c){return '<div class="pos-cart-row"><div class="pos-cart-name">'+escapeCheckout(c.name)+(c.type==='pack'?'<span style="font-size:0.6rem;color:var(--gold);margin-left:0.4rem">PACK</span>':'')+'</div><div class="pos-cart-qty"><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',-1)">-</button><span style="font-size:0.85rem;color:var(--white);min-width:16px;text-align:center">'+c.qty+'</span><button class="pos-qty-btn" onclick="updatePOSQty(\''+c.id+'\',1)">+</button></div><div class="pos-cart-price">$'+(c.price*c.qty).toFixed(2)+'</div></div>';}).join('');}
   updatePOSCheckoutButtons();
 }
 function searchPOSStudent(){ var q=document.getElementById('posStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('posStudentResults'); if(!q||q.length<2){el.style.display='none';return;} var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="selectPOSStudent(\''+s.id+'\',\''+s.first_name+' '+s.last_name+'\')">'+s.first_name+' '+s.last_name+'</div>';}).join(''); }
@@ -13812,6 +13815,7 @@ async function checkoutPOS_cardOnFile(){
   if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
   if(!posSelectedStudentId){setMsg('posMsg','Select a student first.','error');return;}
 
+  var _cofBtn = document.getElementById('posBtnCardOnFile'); if(_cofBtn) _cofBtn.disabled = true;   // §NO-DOUBLE-CHARGE: block double-click
   setMsg('posMsg','Charging card on file...','');
   try{
     var _sess = await sb.auth.getSession();
@@ -13825,6 +13829,7 @@ async function checkoutPOS_cardOnFile(){
         line_items: posCartLineItems(),
         credit_to_apply_cents: posCreditApplyCents,
         applied_by: _uid,
+        idempotency_key: 'poscharge-'+SID+'-'+(posSelectedStudentId||'guest')+'-'+posCreditApplyCents+'-'+posCart.map(function(_c){return _c.id+'x'+(_c.qty||1);}).join('|'),   // §NO-DOUBLE-CHARGE: server-side dedup
       }),
     });
     var data = await r.json();
@@ -13854,6 +13859,8 @@ async function checkoutPOS_cardOnFile(){
     setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();}, 2500);
   }catch(e){
     setMsg('posMsg', e.message || 'Network error', 'error');
+  }finally{
+    if(typeof updatePOSCheckoutButtons==='function') updatePOSCheckoutButtons(); else if(_cofBtn) _cofBtn.disabled = false;   // §NO-DOUBLE-CHARGE: restore correct button state
   }
 }
 
