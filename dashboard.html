@@ -3695,6 +3695,7 @@ async function init() {
     }, 100);
     // Load all data
     await loadSchool();
+    pollAfterSubscribe();
     renderTournamentCard();
     await loadKioskSettings();
     await loadClassFieldSettings();
@@ -3842,6 +3843,27 @@ function applyBillingGate(d){
   }catch(e){ console.error('billing gate:', e); }
 }
 
+// §POST-PAY-REFRESH — after checkout returns with ?subscribed=1, the Stripe webhook may not have
+// flipped plan_status to 'active' yet. Poll (6×4s, one-shot) so the UI updates on its own — no
+// manual reload — then clean the URL. Prevents the "I just paid but still see past_due" moment.
+var _postPayPolled=false;
+function pollAfterSubscribe(){
+  if(_postPayPolled) return;
+  try{ if(new URLSearchParams(location.search).get('subscribed')!=='1') return; }catch(e){ return; }
+  _postPayPolled=true;
+  var tries=0;
+  (function tick(){
+    tries++;
+    loadSchool().then(function(){
+      if(window.schoolData && window.schoolData.plan_status==='active'){
+        try{ if(window.showToast) showToast('Subscription active — thank you!','ok'); }catch(e){}
+        try{ var u=new URL(location.href); u.searchParams.delete('subscribed'); history.replaceState(null,'',u.pathname+u.search+u.hash); }catch(e){}
+        return;
+      }
+      if(tries<6){ setTimeout(tick,4000); }
+    }).catch(function(){ if(tries<6){ setTimeout(tick,4000); } });
+  })();
+}
 async function loadSchool() {
   try {
     var r = await sb.from('schools').select('*').eq('id',SID).single();
@@ -3961,7 +3983,7 @@ async function handleLogoUpload(event) {
   var file=event.target.files[0]; if(!file) return;
   var ext=file.name.split('.').pop(); var path=SID+'-logo.'+ext;
   var ur=await sb.storage.from('school-logos').upload(path,file,{upsert:true});
-  if (ur.error) { alert('Logo upload failed: '+ur.error.message); return; }
+  if (ur.error) { showToast('Logo upload failed: '+ur.error.message,'error'); return; }
   var pub=sb.storage.from('school-logos').getPublicUrl(path).data.publicUrl;
   await sb.from('schools').update({logo_url:pub}).eq('id',SID);
   showLogo(pub);
@@ -4538,7 +4560,7 @@ async function saveEmbed(){
 async function deleteEmbed(id){
   if(!confirm('Delete this embed? Any website using it will stop showing the schedule.')) return;
   var r=await sb.from('schedule_embeds').delete().eq('id',id);
-  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  if(r.error){ showToast('Could not delete: '+r.error.message,'error'); return; }
   loadScheduleEmbeds();
 }
 
@@ -4699,7 +4721,7 @@ async function saveMemEmbed(){
 async function deleteMemEmbed(id){
   if(!confirm('Delete this embed? Any website using it will stop showing your plans.')) return;
   var r=await sb.from('membership_embeds').delete().eq('id',id);
-  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  if(r.error){ showToast('Could not delete: '+r.error.message,'error'); return; }
   loadMembershipEmbeds();
 }
 
@@ -4908,7 +4930,7 @@ async function saveScheduleShift(){
 async function deleteScheduleShift(id){
   if(!confirm('Delete this schedule shift? Your normal schedule is unaffected.')) return;
   var r=await sb.from('schedule_shifts').delete().eq('id',id);
-  if(r.error){ alert('Could not delete: '+r.error.message); return; }
+  if(r.error){ showToast('Could not delete: '+r.error.message,'error'); return; }
   loadScheduleShifts();
 }
 
@@ -6370,7 +6392,7 @@ function openEditClass(cid){
 async function deleteClass(cid){
   if(!confirm('Delete this class? This cannot be undone.')) return;
   var r=await sb.from('classes').update({active:false,is_active:false}).eq('id',cid);
-  if(r.error){alert('Error: '+r.error.message);return;}
+  if(r.error){showToast('Error: '+r.error.message,'error');return;}
   await loadClasses(); buildTodaySchedule(); buildWeekGrid(); buildCalendar();
   if(calView==='month') buildMonthCalendar();
 }
@@ -6549,7 +6571,7 @@ async function chargeCancelFee(smId){
     var pl={school_id:SID,student_id:info.student_id,line_items:[{name:'Early-cancel fee - '+info.name,unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:_uid,idempotency_key:'cancelfeecollect-'+smId+'-'+cents};
     var r=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(pl)});
     var d=await r.json();
-    if(!r.ok||!d||d.error){ var em=(d&&d.error)?d.error:'Charge failed'; if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file for this member. Use Mark collected after collecting manually.'); } else { alert('Charge failed: '+em); } return; }
+    if(!r.ok||!d||d.error){ var em=(d&&d.error)?d.error:'Charge failed'; if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file for this member. Use Mark collected after collecting manually.'); } else { showToast('Charge failed: '+em,'error'); } return; }
     await sb.from('student_memberships').update({early_cancel_fee_collected_at:new Date().toISOString()}).eq('id',smId);
     await loadRevenue();
   }catch(e){ alert('Could not charge: '+((e&&e.message)||'error')); }
@@ -8510,7 +8532,7 @@ async function sendPortalMagicLink() {
     var r=await fetch(SURL+'/functions/v1/send-portal-invite',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok,'apikey':SKEY},body:JSON.stringify({school_id:SID,recipient_type:'student',recipient_ids:[stu.id],channel:channel})});
     var d=await r.json().catch(function(){return {};});
     if(r.ok && d.sent>0){ btn.innerHTML='<i class="fa-solid fa-check"></i> Sent!'; btn.style.color='#5A9A6A'; }
-    else { var why=(d.errors&&d.errors[0]&&d.errors[0].reason)||d.error||('status '+r.status); btn.innerHTML='<i class="fa-solid fa-xmark"></i> Failed'; btn.style.color='#E07070'; alert('Could not send the setup link: '+why); }
+    else { var why=(d.errors&&d.errors[0]&&d.errors[0].reason)||d.error||('status '+r.status); btn.innerHTML='<i class="fa-solid fa-xmark"></i> Failed'; btn.style.color='#E07070'; showToast('Could not send the setup link: '+why,'error'); }
   }catch(e){ btn.innerHTML='<i class="fa-solid fa-xmark"></i> Failed'; btn.style.color='#E07070'; alert('Error: '+((e&&e.message)||e)); }
   setTimeout(function(){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-link"></i> Portal Link';btn.style.color='';},3000);
 }
@@ -9038,7 +9060,7 @@ async function handlePhotoUpload(event){
   var file=event.target.files[0]; if(!file) return;
   var ext=file.name.split('.').pop(); var path=currentProfileStudent.id+'.'+ext;
   var ur=await sb.storage.from('student-photos').upload(path,file,{upsert:true});
-  if(ur.error){alert('Upload failed: '+ur.error.message);return;}
+  if(ur.error){showToast('Upload failed: '+ur.error.message,'error');return;}
   var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;
   await sb.from('students').update({photo_url:pub}).eq('id',currentProfileStudent.id);
   currentProfileStudent.photo_url=pub;
@@ -9054,7 +9076,7 @@ async function handleProductPhotoUpload(event){
   var key=eid?eid:'new-'+Date.now()+'-'+Math.floor(Math.random()*10000);
   var path=SID+'/'+key+'.'+ext;
   var ur=await sb.storage.from('product-images').upload(path,file,{upsert:true});
-  if(ur.error){alert('Product photo upload failed: '+ur.error.message);return;}
+  if(ur.error){showToast('Product photo upload failed: '+ur.error.message,'error');return;}
   var pub=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl+'?t='+Date.now();
   window._pendingProductImageUrl=pub;
   var preview=document.getElementById('productImagePreview');
@@ -11980,7 +12002,7 @@ function closeAddLead(){ document.getElementById('addLeadModal').classList.remov
 async function deleteLead(lid){
   if(!confirm('Delete this lead? It will be removed from your pipeline.')) return;
   var r=await sb.from('leads').update({deleted_at:new Date().toISOString()}).eq('id',lid);
-  if(r.error){alert('Could not delete lead: '+r.error.message);return;}
+  if(r.error){showToast('Could not delete lead: '+r.error.message,'error');return;}
   await loadLeads(); if(typeof buildHomeStats==='function'){buildHomeStats();}
 }
   async function saveLead(){
@@ -12676,7 +12698,7 @@ function renderPrograms(){
 var inUse=await sb.from('students').select('id',{count:'exact',head:true}).eq('program_id',pid).eq('school_id',SID).is('deleted_at', null);
   if(inUse.count>0){alert('Cannot delete — '+inUse.count+' student'+(inUse.count!==1?'s are':' is')+' assigned to this program. Reassign them first.');return;}
   var r=await sb.from('programs').update({active:false}).eq('id',pid);
-  if(r.error){alert('Error: '+r.error.message);return;}
+  if(r.error){showToast('Error: '+r.error.message,'error');return;}
   await loadPrograms();
 }
 
@@ -13381,7 +13403,7 @@ async function deleteMembership(mid){
   msg+='Continue?';
   if(!confirm(msg)) return;
   var r=await sb.from('memberships').update({active:false}).eq('id',mid);
-  if(r.error){alert('Error: '+r.error.message);return;}
+  if(r.error){showToast('Error: '+r.error.message,'error');return;}
   await loadMemberships();
 }
 
@@ -13610,7 +13632,7 @@ async function deleteProduct(pid){
   var nm=p?p.name:'this product';
   if(!confirm('Delete '+nm+'? It will be hidden from the catalog. Past sales records stay intact.')) return;
   var r=await sb.from('products').update({active:false}).eq('id',pid);
-  if(r.error){alert('Error: '+r.error.message);return;}
+  if(r.error){showToast('Error: '+r.error.message,'error');return;}
   await loadProducts();
 }
 
@@ -18186,7 +18208,7 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
         .eq('id', paymentId)
         .eq('school_id', SID);
       if (r.error) {
-        alert('Could not mark fulfilled: ' + r.error.message);
+        showToast('Could not mark fulfilled: ' + r.error.message,'error');
         return;
       }
       await window.loadFulfillmentQueue();
