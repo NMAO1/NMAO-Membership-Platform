@@ -122,7 +122,8 @@
       if (d.surface_color) r.style.setProperty('--surface', d.surface_color);
       if (d.font_color)    r.style.setProperty('--white', d.font_color);
       if (d.font_family)   r.style.setProperty('--font-display', "'" + d.font_family + "',serif");
-      document.title = (d.embed_name || d.school_name || 'Plans');
+      if (d.density === 'compact') document.body.style.fontSize = '0.92em';   // §EMBED-STYLE: per-embed compact density
+      document.title = (d.embed_headline || d.embed_name || d.school_name || 'Plans');
     }
 
     function planDetails(d){
@@ -201,9 +202,9 @@
         if (!isFramed()){
           var hdr = document.getElementById('pageHeader');
           var logo = document.getElementById('hdrLogo');
-          if (r.data[0].logo_url){ logo.src = r.data[0].logo_url; logo.style.display = ''; }
+          if (r.data[0].logo_url && r.data[0].show_logo !== false){ logo.src = r.data[0].logo_url; logo.style.display = ''; }   // §EMBED-STYLE: per-embed show/hide logo
           document.getElementById('hdrTitle').textContent =
-            r.data[0].embed_name || ((r.data[0].school_name || '') + ' Plans');
+            r.data[0].embed_headline || r.data[0].embed_name || ((r.data[0].school_name || '') + ' Plans');
           hdr.style.display = '';
         }
         hideState();

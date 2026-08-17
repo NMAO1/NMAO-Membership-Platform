@@ -1515,6 +1515,20 @@
           <div class="field"><label>Plans to show <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.mem_plans',this)" title="Help">?</button></label><div id="memEmbedPlansPicker"><div class="empty">Loading plans...</div></div></div>
           <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedRespectVis" /><div class="toggle-slider"></div></label><span class="check-item-label">Only show plans that are publicly visible <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.mem_vis',this)" title="Help">?</button></span></div>
           <div style="display:flex;align-items:center;gap:0.75rem;margin:0.65rem 0"><label class="toggle-switch"><input type="checkbox" id="memEmbedActive" checked /><div class="toggle-slider"></div></label><span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_active',this)" title="Help">?</button></span></div>
+          <div class="field"><label>Custom headline (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_headline',this)" title="Help">?</button></label><input type="text" id="memEmbedHeadline" placeholder="Leave blank to use your school name" /></div>
+          <div class="field"><label>Density <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_density',this)" title="Help">?</button></label><select id="memEmbedDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedShowLogo" checked /> <span class="check-item-label">Show school logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_logo',this)" title="Help">?</button></span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="memEmbedCustomStyle" onchange="var f=document.getElementById('memEmbedStyleFields');if(f)f.style.display=this.checked?'block':'none'" /> <span class="check-item-label">Custom colors for this embed <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_colors',this)" title="Help">?</button></span></label>
+          <div id="memEmbedStyleFields" style="display:none;border-left:2px solid var(--gold);padding-left:0.75rem;margin:0 0 0.5rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+              <div class="field"><label>Accent</label><input type="color" id="memEmbedAccent" value="#C9A84C" /></div>
+              <div class="field"><label>Background</label><input type="color" id="memEmbedBg" value="#0E0E0E" /></div>
+              <div class="field"><label>Surface / cards</label><input type="color" id="memEmbedSurface" value="#1A1A1A" /></div>
+              <div class="field"><label>Border</label><input type="color" id="memEmbedBorder" value="#333333" /></div>
+              <div class="field"><label>Text</label><input type="color" id="memEmbedFont" value="#F5F0E8" /></div>
+              <div class="field"><label>Font family</label><input type="text" id="memEmbedFontFamily" placeholder="e.g. Poppins" /></div>
+            </div>
+          </div>
           <p class="form-msg" id="memEmbedMsg"></p>
           <button class="btn-gold-full" onclick="saveMemEmbed()">Save Embed</button>
         </div>
@@ -1571,11 +1585,11 @@
           <div class="field"><label>Show <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_show',this)" title="Help">?</button></label><select id="embedFilterType" onchange="onEmbedFilterTypeChange()"><option value="all">All classes</option><option value="program">A program</option><option value="classes">Specific classes</option><option value="style">A style</option><option value="age">An age group</option><option value="level">A level</option><option value="instructor">An instructor</option></select></div>
           <div class="field" id="embedValuesField" style="display:none"><label id="embedValuesLabel">Selection</label><div id="embedValuesPicker"></div></div>
           <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedActive" checked /> <span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_active',this)" title="Help">?</button></span></label>
-          <div class="field"><label>Default view</label><select id="embedDefaultView"><option value="week">Week</option><option value="day">Day</option><option value="month">Month</option></select></div>
-          <div class="field"><label>Custom headline (optional)</label><input type="text" id="embedHeadline" placeholder="Leave blank to use your school name" /></div>
-          <div class="field"><label>Density</label><select id="embedDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedShowLogo" checked /> <span class="check-item-label">Show school logo</span></label>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedCustomStyle" onchange="var f=document.getElementById('embedStyleFields');if(f)f.style.display=this.checked?'block':'none'" /> <span class="check-item-label">Custom colors for this embed (else it matches your app)</span></label>
+          <div class="field"><label>Default view <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_defaultview',this)" title="Help">?</button></label><select id="embedDefaultView"><option value="week">Week</option><option value="day">Day</option><option value="month">Month</option></select></div>
+          <div class="field"><label>Custom headline (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_headline',this)" title="Help">?</button></label><input type="text" id="embedHeadline" placeholder="Leave blank to use your school name" /></div>
+          <div class="field"><label>Density <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_density',this)" title="Help">?</button></label><select id="embedDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedShowLogo" checked /> <span class="check-item-label">Show school logo <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_logo',this)" title="Help">?</button></span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedCustomStyle" onchange="var f=document.getElementById('embedStyleFields');if(f)f.style.display=this.checked?'block':'none'" /> <span class="check-item-label">Custom colors for this embed (else it matches your app) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_colors',this)" title="Help">?</button></span></label>
           <div id="embedStyleFields" style="display:none;border-left:2px solid var(--gold);padding-left:0.75rem;margin:0 0 0.5rem">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
               <div class="field"><label>Accent</label><input type="color" id="embedAccent" value="#C9A84C" /></div>
@@ -4696,7 +4710,7 @@ function renderMemEmbedsList(){
     var state=e.active?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.4rem">Active</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.4rem">Off</span>';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">';
     html+='<div><div style="font-weight:600">'+embEsc(e.name)+state+'</div>';
-    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embEsc(memEmbedPlanSummary(e))+'</div></div>';
+    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embEsc(memEmbedPlanSummary(e))+(e.view_count?' · '+e.view_count+(e.view_count===1?' view':' views'):'')+'</div></div>';
     html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
     html+='<button class="btn-sm gold" onclick="openMemEmbedCode(\''+e.id+'\')">Get code</button>';
     html+='<button class="btn-sm" onclick="copyMemEmbedLink(\''+e.id+'\')">Copy link</button>';
@@ -4761,6 +4775,18 @@ function openMemEmbedModal(id){
   document.getElementById('memEmbedActive').checked=e?!!e.active:true;
   setMsg('memEmbedMsg','','');
   renderMemEmbedPlansPicker(e?(e.membership_ids||[]):[]);
+  document.getElementById('memEmbedHeadline').value=(e&&e.headline)||'';
+  document.getElementById('memEmbedDensity').value=(e&&e.density)||'comfortable';
+  document.getElementById('memEmbedShowLogo').checked=e?(e.show_logo!==false):true;
+  var _ms=!!(e&&(e.accent_color||e.bg_color||e.surface_color||e.border_color||e.font_color||e.font_family));
+  document.getElementById('memEmbedCustomStyle').checked=_ms;
+  document.getElementById('memEmbedStyleFields').style.display=_ms?'block':'none';
+  document.getElementById('memEmbedAccent').value=(e&&e.accent_color)||'#C9A84C';
+  document.getElementById('memEmbedBg').value=(e&&e.bg_color)||'#0E0E0E';
+  document.getElementById('memEmbedSurface').value=(e&&e.surface_color)||'#1A1A1A';
+  document.getElementById('memEmbedBorder').value=(e&&e.border_color)||'#333333';
+  document.getElementById('memEmbedFont').value=(e&&e.font_color)||'#F5F0E8';
+  document.getElementById('memEmbedFontFamily').value=(e&&e.font_family)||'';
   document.getElementById('memEmbedModal').classList.add('active');
 }
 
@@ -4772,7 +4798,18 @@ async function saveMemEmbed(){
   var ids=collectMemEmbedPlans();
   if(!ids.length){ setMsg('memEmbedMsg','Please choose at least one plan to show.','error'); return; }
   var id=document.getElementById('memEmbedEditId').value;
-  var row={ school_id:SID, name:name, membership_ids:ids, respect_visibility:document.getElementById('memEmbedRespectVis').checked, active:document.getElementById('memEmbedActive').checked, updated_at:new Date().toISOString() };
+  var _mc=document.getElementById('memEmbedCustomStyle').checked;
+  var row={ school_id:SID, name:name, membership_ids:ids, respect_visibility:document.getElementById('memEmbedRespectVis').checked, active:document.getElementById('memEmbedActive').checked,
+    headline:(document.getElementById('memEmbedHeadline').value.trim()||null),
+    density:document.getElementById('memEmbedDensity').value,
+    show_logo:document.getElementById('memEmbedShowLogo').checked,
+    accent_color:_mc?document.getElementById('memEmbedAccent').value:null,
+    bg_color:_mc?document.getElementById('memEmbedBg').value:null,
+    surface_color:_mc?document.getElementById('memEmbedSurface').value:null,
+    border_color:_mc?document.getElementById('memEmbedBorder').value:null,
+    font_color:_mc?document.getElementById('memEmbedFont').value:null,
+    font_family:_mc?(document.getElementById('memEmbedFontFamily').value.trim()||null):null,
+    updated_at:new Date().toISOString() };
   var r=id?(await sb.from('membership_embeds').update(row).eq('id',id)):(await sb.from('membership_embeds').insert(row));
   if(r.error){ setMsg('memEmbedMsg',r.error.message,'error'); return; }
   closeMemEmbedModal(); loadMembershipEmbeds();
@@ -5176,6 +5213,11 @@ var HELP_CONTENT = {
   'shareembed.mem_plans': { title: 'Plans to show', purpose: 'Pick which membership plans appear in this embed and in what order. Leave out anything you do not want shown on your public site.' },
   'shareembed.mem_vis': { title: 'Only publicly visible plans', purpose: 'When on, the embed automatically hides any plan that is not marked public \u2014 so private or internal plans never show on your website even if selected.' },
   'shareembed.emb_code': { title: 'Embed code', purpose: 'Copy this snippet and paste it into any page on your website \u2014 it renders the live view right there. Copy link only gives a plain URL instead, for linking rather than embedding. The preview below shows exactly what visitors will see.' },
+  'shareembed.emb_defaultview': { title: 'Default view', purpose: 'Which calendar layout this schedule embed opens in \u2014 Week (a full week grid), Day (a single day), or Month (a monthly overview). Visitors can still switch; this just sets what they land on first.' },
+  'shareembed.emb_headline': { title: 'Custom headline', purpose: 'A short line of text shown at the top of the embed (like \u201cKids Class Schedule\u201d or \u201cChoose Your Plan\u201d). Leave it blank and the embed uses your school name automatically.' },
+  'shareembed.emb_density': { title: 'Density', purpose: 'How tightly packed the embed looks. Comfortable gives roomy spacing; Compact shrinks everything slightly to fit a small space like a website sidebar.' },
+  'shareembed.emb_logo': { title: 'Show school logo', purpose: 'Whether your logo shows at the top of the embed. Turn it off when the page you are pasting into already displays your logo, so it is not repeated.' },
+  'shareembed.emb_colors': { title: 'Custom colors', purpose: 'By default the embed matches your app\u2019s colors and font. Turn this on to give THIS embed its own accent, background, card, border, text color and font \u2014 so it blends into a website whose branding differs from your NMAO app. The schedule/plans shown always stay live; only the look changes. Views each embed receives are counted and shown next to it in the list.' },
 
   'schedule.shifts': { title: 'Schedule Shifts', purpose: 'A temporary change to your schedule for a set date range \u2014 holiday weeks, summer hours, a seasonal break \u2014 without editing your normal classes. When the dates pass, everything returns to normal on its own. Members can be reminded before it starts.' },
   'schedule.sh_name': { title: 'Name', purpose: 'A short label so you recognize this shift later, like "Summer Hours" or "Thanksgiving Week." Members don\'t see this name \u2014 it\'s just for you.' },
