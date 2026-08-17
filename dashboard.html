@@ -587,7 +587,7 @@
     <div class="nav-item" id="nav-shareembed" onclick="navigate('shareembed',this)"><i class="fa-solid fa-share-nodes nav-icon"></i> Share &amp; Embed</div>
     <div class="nav-item" id="nav-settings" onclick="navigate('settings',this)"><i class="fa-solid fa-gear nav-icon"></i> Settings</div>
     <div class="nav-item" id="nav-billing"  onclick="navigate('billing',this)"><i class="fa-solid fa-file-invoice-dollar nav-icon"></i> Billing</div>
-<div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>
+<div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:'')+'&k='+(window.schoolData&&window.schoolData.kiosk_token?window.schoolData.kiosk_token:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>
     <div class="nav-section-label">Integrations</div>
     <div class="nav-item" id="nav-integrations" onclick="navigate('integrations',this)"><i class="fa-solid fa-trophy nav-icon"></i> Tournament</div>
   </div>
@@ -13461,7 +13461,7 @@ window.previewMilestone = function(milestone){
   var anim = selEl ? selEl.dataset.anim : "confetti";
   var msgEl = document.getElementById("mmsg-" + milestone);
   var msg = msgEl ? msgEl.value.trim() : "";
-  var url = "kiosk.html?school=" + encodeURIComponent(slug)
+  var url = "kiosk.html?school=" + encodeURIComponent(slug) + "&k=" + encodeURIComponent((window.schoolData&&window.schoolData.kiosk_token)||"")
           + "&preview=1&milestone=" + milestone
           + "&anim=" + encodeURIComponent(anim)
           + "&msg=" + encodeURIComponent(msg);
