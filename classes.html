@@ -26,6 +26,7 @@
     .page-logo { font-family:var(--font-display); font-size:1.6rem; color:var(--gold);
       letter-spacing:0.22em; text-transform:uppercase; }
     .page-headline { font-size:0.82rem; color:var(--muted2); margin-top:0.4rem; letter-spacing:0.04em; }
+    body.embed-compact { font-size:0.9em; }   /* §EMBED-STYLE: per-embed 'compact' density */
     .container { width:100%; max-width:520px; }
     .error-box { background:rgba(192,112,112,0.12); border:1px solid var(--red); color:var(--red);
       padding:1rem; text-align:center; font-size:0.9rem; }
@@ -172,6 +173,7 @@
         var cfg = r.data[0];
         slug = cfg.slug || '';
         embedFilter = { type: cfg.filter_type || 'all', values: cfg.filter_values || [] };
+        window.__embedCfg = cfg;   // §EMBED-STYLE: per-embed colors + default_view + headline + logo/density
         if(cfg.embed_name){ document.title = cfg.embed_name; }
         return !!slug;
       } catch(e){ return false; }
@@ -217,7 +219,22 @@
       if(school.font_family)  document.documentElement.style.setProperty('--font-display', "'"+school.font_family+"',serif");
       document.getElementById('pageHeadline').textContent = school.public_booking_headline || '';
       showSpots = school.public_booking_show_spots !== false;
-      view = (school.public_booking_default_view==='day'||school.public_booking_default_view==='month') ? school.public_booking_default_view : 'week';
+      var _dv = school.public_booking_default_view;
+      // §EMBED-STYLE — a schedule embed can override the app theme, headline, logo, density and default view.
+      var _ec = window.__embedCfg;
+      if(_ec){
+        if(_ec.accent_color)  document.documentElement.style.setProperty('--gold', _ec.accent_color);
+        if(_ec.bg_color)      document.documentElement.style.setProperty('--black', _ec.bg_color);
+        if(_ec.border_color)  document.documentElement.style.setProperty('--border', _ec.border_color);
+        if(_ec.surface_color){ document.documentElement.style.setProperty('--surface', _ec.surface_color); document.documentElement.style.setProperty('--surf2', _ec.surface_color); }
+        if(_ec.font_color)    document.documentElement.style.setProperty('--white', _ec.font_color);
+        if(_ec.font_family)   document.documentElement.style.setProperty('--font-display', "'"+_ec.font_family+"',serif");
+        if(_ec.headline)      document.getElementById('pageHeadline').textContent = _ec.headline;
+        if(_ec.show_logo===false){ var _li=document.getElementById('schoolLogoImg'); if(_li) _li.style.display='none'; var _lt=document.getElementById('schoolLogoText'); if(_lt) _lt.style.display='none'; }
+        if(_ec.density==='compact') document.body.classList.add('embed-compact');
+        if(_ec.default_view)  _dv = _ec.default_view;
+      }
+      view = (_dv==='day'||_dv==='month') ? _dv : 'week';
       document.getElementById('mainUI').style.display='block';
       syncViewButtons();
       await loadSchedule();

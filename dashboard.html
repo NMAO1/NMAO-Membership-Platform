@@ -1571,6 +1571,21 @@
           <div class="field"><label>Show <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_show',this)" title="Help">?</button></label><select id="embedFilterType" onchange="onEmbedFilterTypeChange()"><option value="all">All classes</option><option value="program">A program</option><option value="classes">Specific classes</option><option value="style">A style</option><option value="age">An age group</option><option value="level">A level</option><option value="instructor">An instructor</option></select></div>
           <div class="field" id="embedValuesField" style="display:none"><label id="embedValuesLabel">Selection</label><div id="embedValuesPicker"></div></div>
           <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedActive" checked /> <span class="check-item-label">Active <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('shareembed.emb_active',this)" title="Help">?</button></span></label>
+          <div class="field"><label>Default view</label><select id="embedDefaultView"><option value="week">Week</option><option value="day">Day</option><option value="month">Month</option></select></div>
+          <div class="field"><label>Custom headline (optional)</label><input type="text" id="embedHeadline" placeholder="Leave blank to use your school name" /></div>
+          <div class="field"><label>Density</label><select id="embedDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedShowLogo" checked /> <span class="check-item-label">Show school logo</span></label>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0"><input type="checkbox" id="embedCustomStyle" onchange="var f=document.getElementById('embedStyleFields');if(f)f.style.display=this.checked?'block':'none'" /> <span class="check-item-label">Custom colors for this embed (else it matches your app)</span></label>
+          <div id="embedStyleFields" style="display:none;border-left:2px solid var(--gold);padding-left:0.75rem;margin:0 0 0.5rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+              <div class="field"><label>Accent</label><input type="color" id="embedAccent" value="#C9A84C" /></div>
+              <div class="field"><label>Background</label><input type="color" id="embedBg" value="#0E0E0E" /></div>
+              <div class="field"><label>Surface / cards</label><input type="color" id="embedSurface" value="#1A1A1A" /></div>
+              <div class="field"><label>Border</label><input type="color" id="embedBorder" value="#333333" /></div>
+              <div class="field"><label>Text</label><input type="color" id="embedFont" value="#F5F0E8" /></div>
+              <div class="field"><label>Font family</label><input type="text" id="embedFontFamily" placeholder="e.g. Poppins" /></div>
+            </div>
+          </div>
           <p class="form-msg" id="embedMsg"></p>
           <button class="btn-gold-full" onclick="saveEmbed()">Save Embed</button>
         </div>
@@ -4487,7 +4502,7 @@ function renderEmbedsList(){
     var state=e.active?'<span style="font-size:0.7rem;color:var(--gold);margin-left:0.4rem">Active</span>':'<span style="font-size:0.7rem;color:var(--muted);margin-left:0.4rem">Off</span>';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border)">';
     html+='<div><div style="font-weight:600">'+embEsc(e.name)+state+'</div>';
-    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embedFilterSummary(e)+'</div></div>';
+    html+='<div style="font-size:0.82rem;color:var(--muted);margin-top:0.15rem">'+embedFilterSummary(e)+(e.view_count?' · '+e.view_count+(e.view_count===1?' view':' views'):'')+'</div></div>';
     html+='<div style="display:flex;gap:0.4rem;flex-shrink:0">';
     html+='<button class="btn-sm gold" onclick="openEmbedCode(\''+e.id+'\')">Get code</button>';
     html+='<button class="btn-sm" onclick="copyEmbedLink(\''+e.id+'\')">Copy link</button>';
@@ -4558,6 +4573,19 @@ function openEmbedModal(id){
   document.getElementById('embedActive').checked=e?!!e.active:true;
   setMsg('embedMsg','','');
   renderEmbedValuePicker(e?e.filter_type:'all', e?(e.filter_values||[]):[]);
+  document.getElementById('embedDefaultView').value=(e&&e.default_view)||'week';
+  document.getElementById('embedHeadline').value=(e&&e.headline)||'';
+  document.getElementById('embedDensity').value=(e&&e.density)||'comfortable';
+  document.getElementById('embedShowLogo').checked=e?(e.show_logo!==false):true;
+  var _hasStyle=!!(e&&(e.accent_color||e.bg_color||e.surface_color||e.border_color||e.font_color||e.font_family));
+  document.getElementById('embedCustomStyle').checked=_hasStyle;
+  document.getElementById('embedStyleFields').style.display=_hasStyle?'block':'none';
+  document.getElementById('embedAccent').value=(e&&e.accent_color)||'#C9A84C';
+  document.getElementById('embedBg').value=(e&&e.bg_color)||'#0E0E0E';
+  document.getElementById('embedSurface').value=(e&&e.surface_color)||'#1A1A1A';
+  document.getElementById('embedBorder').value=(e&&e.border_color)||'#333333';
+  document.getElementById('embedFont').value=(e&&e.font_color)||'#F5F0E8';
+  document.getElementById('embedFontFamily').value=(e&&e.font_family)||'';
   document.getElementById('embedModal').classList.add('active');
 }
 
@@ -4570,7 +4598,20 @@ async function saveEmbed(){
   var values=collectEmbedValues(type);
   if(type!=='all'&&!values.length){ setMsg('embedMsg','Please choose what this embed shows.','error'); return; }
   var id=document.getElementById('embedEditId').value;
-  var row={ school_id:SID, name:name, filter_type:type, filter_values:values, active:document.getElementById('embedActive').checked, updated_at:new Date().toISOString() };
+  var custom=document.getElementById('embedCustomStyle').checked;
+  var row={ school_id:SID, name:name, filter_type:type, filter_values:values,
+    active:document.getElementById('embedActive').checked,
+    default_view:document.getElementById('embedDefaultView').value,
+    headline:(document.getElementById('embedHeadline').value.trim()||null),
+    density:document.getElementById('embedDensity').value,
+    show_logo:document.getElementById('embedShowLogo').checked,
+    accent_color:custom?document.getElementById('embedAccent').value:null,
+    bg_color:custom?document.getElementById('embedBg').value:null,
+    surface_color:custom?document.getElementById('embedSurface').value:null,
+    border_color:custom?document.getElementById('embedBorder').value:null,
+    font_color:custom?document.getElementById('embedFont').value:null,
+    font_family:custom?(document.getElementById('embedFontFamily').value.trim()||null):null,
+    updated_at:new Date().toISOString() };
   var r=id?(await sb.from('schedule_embeds').update(row).eq('id',id)):(await sb.from('schedule_embeds').insert(row));
   if(r.error){ setMsg('embedMsg',r.error.message,'error'); return; }
   closeEmbedModal(); loadScheduleEmbeds();
