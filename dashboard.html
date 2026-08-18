@@ -3552,10 +3552,11 @@ async function initSessionGuard(){
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
           body: JSON.stringify({ school_name: pendingName, email: user.email })
         });
-        if(mk.ok){
+        var mkBody = await mk.json().catch(function(){ return {}; });
+        if(mk.ok && !mkBody.error){   // §AUTO-CREATE: register-school returns HTTP 200 even on internal errors — check the body too
           var sr2 = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
           if(!sr2.error && sr2.data && sr2.data.length){ school = sr2.data[0]; SID = school.id; }
-        }
+        } else if(mkBody.error){ console.error('[session-guard] register-school reported:', mkBody.error); }
       }catch(e){ console.error('[session-guard] auto-create school failed:', e); }
     }
     if(!school){

@@ -576,6 +576,17 @@
       <label>Goals or Notes (optional)</label>
       <textarea id="bookNotes" placeholder="What would you like to focus on?"></textarea>
     </div>
+
+    <div class="consent-block">
+      <label class="consent-row">
+        <input type="checkbox" id="bookUsePack" class="consent-checkbox" />
+        <span class="consent-text">
+          <strong>Use my class pack, if I have one.</strong> If you're an existing member with a
+          prepaid session pack for this session type, we'll apply one credit and this booking is free.
+          If not, you'll simply pay the price shown. We confirm this against your account after you book.
+        </span>
+      </label>
+    </div>
         <p class="form-msg" id="s4Msg"></p>
         <button class="btn-primary" id="bookBtn" onclick="submitBooking()">
           <i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking
@@ -616,16 +627,12 @@
     // URL: book.html?slug=instructor-slug
     //   or book.html?instructor=UUID
     //
-    // Tables used:
-    //   instructors, instructor_booking_settings, instructor_availability,
-    //   instructor_availability_exceptions, session_types, sessions,
-    //   students, leads, schools
-    //
-    // Note: Requires Supabase RLS policies allowing anon SELECT on
-    //   instructors (where booking_link_enabled=true), session_types,
-    //   instructor_booking_settings, instructor_availability,
-    //   instructor_availability_exceptions, sessions (school_id match);
-    //   and anon INSERT on sessions and leads.
+    // Data access (all via SECURITY DEFINER RPCs — no raw anon table reads, no PII):
+    //   get_public_booking_page(slug|id) → instructor card + school branding + session types + availability
+    //   get_public_booking_slots(id, start, end) → blocked days + booked time slots for a date window
+    //   book_public_session(...) → resolves student server-side, auto-applies a saved pack when opted in,
+    //                              re-derives price, inserts the session, records consent / creates a lead
+    // No client-side student/credit lookup — that leaked member PII and allowed email enumeration.
     // ============================================================
 
     var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
@@ -636,13 +643,13 @@
     var instructor      = null;
     var bookingSettings = [];   // normalized booking setting objects
     var availability    = [];   // [{dow:0-6, start_time:'HH:MM', end_time:'HH:MM'}]
-    var calExceptions   = {};   // {'YYYY-MM-DD': {is_blocked, start_time, end_time}}
+    var calExceptions   = {};   // {'YYYY-MM-DD': {is_blocked:true}}  (full-day blocks)
+    var monthBookings   = {};   // {'YYYY-MM-DD': [{start_time, duration_minutes}]}  (cached per month)
 
     var selectedSetting = null; // selected normalized setting
-    var selectedPack = null;    // pack object if user chose to use credit
-    var eligiblePacks = [];     // packs matched against email entered at Phase A
-    var lookupStudent = null;   // student record found by email lookup (null = new user)
-    var lookupEmail = '';       // the email entered at Phase A
+    var selectedPack = null;    // retained for renderTypesList/selectType; always null now (credits applied server-side)
+    var eligiblePacks = [];     // retained for renderTypesList; always empty now (no client-side credit lookup)
+    var lookupEmail = '';       // the email entered at Phase A (carried to Step 4)
     var selectedDate    = null; // 'YYYY-MM-DD'
     var selectedTime    = null; // 'HH:MM:SS'
     var currentStep     = 1;
@@ -667,25 +674,23 @@
     // ── Load Page ────────────────────────────────────────────
     async function loadPage(slug, instrId) {
       try {
-        // 1. Load instructor
-        var q = sb.from('instructors').select('*').eq('booking_link_enabled', true);
-        q = slug ? q.eq('booking_slug', slug) : q.eq('id', instrId);
-        var iRes = await q.maybeSingle();
-
-        if (iRes.error || !iRes.data) {
+        // 1. Load the whole public booking page in one no-PII RPC call.
+        //    RLS hardening revoked anon SELECT on instructors/session_types/instructor_availability,
+        //    so the raw table reads were replaced by get_public_booking_page (SECURITY DEFINER,
+        //    returns instructor card + school branding + session types + weekly availability only).
+        var pgRes = await sb.rpc('get_public_booking_page', {
+          p_slug: slug || null,
+          p_instructor_id: slug ? null : (instrId || null)
+        });
+        if (pgRes.error || !pgRes.data || !pgRes.data.instructor) {
           showError('This booking link is no longer active or does not exist. Please contact the school directly.');
           return;
         }
-        instructor = iRes.data;
+        instructor = pgRes.data.instructor;
 
-        // 2. Load school branding
-        var sRes = await sb.from('schools')
-          .select('name, logo_url, color, bg_color, border_color, font_family')
-          .eq('id', instructor.school_id)
-          .maybeSingle();
-
-          if (sRes.data) {
-          var s = sRes.data;
+        // 2. Apply school branding
+        var s = pgRes.data.school;
+        if (s) {
           document.title = 'Book a Session — ' + s.name;
           document.getElementById('schoolLogoText').textContent = s.name;
           var consentSchoolEl = document.getElementById('consentSchoolName');
@@ -705,34 +710,19 @@
         renderInstructorCard();
         if(window.renderSocialFooter) renderSocialFooter(sb, instructor.school_id);
 
-        // 4. Load booking settings → fallback to school session types
-        var rawSettings = [];
-        try {
-          var bsRes = await sb.from('instructor_booking_settings')
-            .select('*, session_types(id, name, color, duration_minutes, price)')
-            .eq('instructor_id', instructor.id);
-          rawSettings = (bsRes.data || []).filter(function(b) { return b.session_types; });
-        } catch(e) {}
-
-        if (!rawSettings.length) {
-          var stRes = await sb.from('session_types')
-            .select('*')
-            .eq('school_id', instructor.school_id)
-            .eq('active', true)
-            .order('name');
-          rawSettings = (stRes.data || []).map(function(st) {
-            return {
-              id: st.id,
-              session_type_id: st.id,
-              duration_minutes: st.duration_minutes,
-              price: st.price,
-              buffer_minutes: 15,
-              max_advance_days: 60,
-              min_advance_hours: 24,
-              session_types: st
-            };
-          });
-        }
+        // 4. Session types (from the RPC) → normalized booking settings
+        var rawSettings = (pgRes.data.session_types || []).map(function(st) {
+          return {
+            id: st.id,
+            session_type_id: st.id,
+            duration_minutes: st.duration_minutes,
+            price: st.price,
+            buffer_minutes: 15,
+            max_advance_days: 60,
+            min_advance_hours: 24,
+            session_types: st
+          };
+        });
 
         if (!rawSettings.length) {
           showError('This instructor has no session types available for booking. Please contact the school directly.');
@@ -740,13 +730,8 @@
         }
         bookingSettings = rawSettings.map(normalizeBookingSetting);
 
-        // 5. Load weekly availability → fallback Mon–Fri 9–5
-        try {
-          var avRes = await sb.from('instructor_availability')
-            .select('*')
-            .eq('instructor_id', instructor.id);
-          availability = (avRes.data || []).map(normalizeAvail).filter(function(a) { return a.dow >= 0; });
-        } catch(e) {}
+        // 5. Weekly availability (from the RPC) → fallback Mon–Fri 9–5
+        availability = (pgRes.data.availability || []).map(normalizeAvail).filter(function(a) { return a.dow >= 0; });
 
         if (!availability.length) {
           availability = [1,2,3,4,5].map(function(d) {
@@ -863,80 +848,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
- // ── Step 1: Credit lookup by email ───────────────────────
-    async function lookupCreditsForEmail() {
-      var emailInput = document.getElementById('step1Email');
-      var statusEl   = document.getElementById('step1EmailStatus');
-      var email      = emailInput.value.trim().toLowerCase();
-
-      if (!email) {
-        eligiblePacks = [];
-        emailLookupStudentId = null;
-        if (selectedPack) { selectedPack = null; selectedSetting = null; }
-        statusEl.innerHTML = '';
-        renderTypesList();
-        return;
-      }
-      if (!validateEmail(email)) {
-        statusEl.innerHTML = '<span class="none">Invalid email format</span>';
-        eligiblePacks = [];
-        emailLookupStudentId = null;
-        if (selectedPack) { selectedPack = null; selectedSetting = null; }
-        renderTypesList();
-        return;
-      }
-
-      statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking...';
-
-      try {
-        var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email.toLowerCase()});
-
-        if (!stuRes.data || !stuRes.data.length) {
-          eligiblePacks = [];
-          emailLookupStudentId = null;
-          if (selectedPack) { selectedPack = null; selectedSetting = null; }
-          statusEl.innerHTML = '<span class="none">No account found at this school</span>';
-          renderTypesList();
-          return;
-        }
-
-        emailLookupStudentId = stuRes.data[0].id;
-        var sessionTypeIds = bookingSettings.map(function(b) { return b.session_type_id; });
-
-        var packRes = await sb.from('student_session_packs')
-          .select('id, student_id, session_type_id, name, sessions_remaining, sessions_total, expires_at')
-          .eq('student_id', emailLookupStudentId)
-          .eq('pack_kind', 'session')
-          .eq('status', 'active')
-          .gt('sessions_remaining', 0)
-          .in('session_type_id', sessionTypeIds)
-          .order('purchased_at', { ascending: true });
-
-        var nowIso = new Date().toISOString();
-        eligiblePacks = (packRes.data || []).filter(function(p) {
-          return !p.expires_at || p.expires_at > nowIso;
-        });
-
-        if (eligiblePacks.length > 0) {
-          statusEl.innerHTML = '<span class="ok"><i class="fa-solid fa-check"></i> Found ' + eligiblePacks.length + ' credit ' + (eligiblePacks.length === 1 ? 'pack' : 'packs') + ' you can use</span>';
-        } else {
-          statusEl.innerHTML = '<span class="none">No active credits found for this instructor</span>';
-        }
-
-        if (selectedPack && !eligiblePacks.find(function(p) { return p.id === selectedPack.id; })) {
-          selectedPack = null;
-          selectedSetting = null;
-        }
-        renderTypesList();
-      } catch(e) {
-        statusEl.innerHTML = '<span class="err">Lookup failed — try again</span>';
-        eligiblePacks = [];
-        emailLookupStudentId = null;
-        if (selectedPack) { selectedPack = null; selectedSetting = null; }
-        renderTypesList();
-      }
-    }
-
    // ── Step 1 Phase A: Email validation gates Continue button ───
     function updateStep1AContinue() {
       var email = document.getElementById('step1Email').value.trim();
@@ -951,84 +862,24 @@
         return;
       }
 
-      var btn = document.getElementById('s1aNext');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Looking up your account...';
       setMsg('s1aMsg', '', '');
 
-      try {
-        lookupEmail = email;
+      // No client-side account/credit lookup — that path leaked member PII and allowed email
+      // enumeration. The member is resolved server-side at submit, and a saved class pack is
+      // auto-applied there when they opt in. Just carry the email forward and prefill Step 4.
+      lookupEmail = email;
+      eligiblePacks = [];
+      selectedPack = null;
 
-        // Look up student
-        var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email});
+      document.getElementById('step1bTitle').textContent = 'What type of session?';
+      document.getElementById('step1bSub').textContent = 'Choose a session to book with ' + (instructor.first_name || 'this instructor') + '.';
 
-        lookupStudent = (stuRes.data && stuRes.data.length) ? stuRes.data[0] : null;
+      var e4 = document.getElementById('bookEmail');
+      if (e4) e4.value = email;
 
-        // Look up matching active packs (only for existing students)
-        if (lookupStudent) {
-          var sessionTypeIds = bookingSettings.map(function(b) { return b.session_type_id; });
-          var packRes = await sb.from('student_session_packs')
-            .select('id, student_id, session_type_id, name, sessions_remaining, sessions_total, expires_at')
-            .eq('student_id', lookupStudent.id)
-            .eq('pack_kind', 'session')
-            .eq('status', 'active')
-            .gt('sessions_remaining', 0)
-            .in('session_type_id', sessionTypeIds)
-            .order('purchased_at', { ascending: true });
-
-          var nowIso = new Date().toISOString();
-          eligiblePacks = (packRes.data || []).filter(function(p) {
-            return !p.expires_at || p.expires_at > nowIso;
-          });
-        } else {
-          eligiblePacks = [];
-        }
-
-        // Personalize Phase B header
-        var titleEl = document.getElementById('step1bTitle');
-        var subEl   = document.getElementById('step1bSub');
-        if (lookupStudent) {
-          titleEl.textContent = 'Welcome back, ' + (lookupStudent.first_name || 'member') + '!';
-          if (eligiblePacks.length > 0) {
-            subEl.textContent = 'You have credits available. Use a credit or pay for a session below.';
-          } else {
-            subEl.textContent = 'Choose a session to book with ' + (instructor.first_name || 'this instructor') + '.';
-          }
-        } else {
-          titleEl.textContent = 'What type of session?';
-          subEl.textContent = 'Choose a session to book with this instructor.';
-        }
-
-        // Pre-fill Step 4 fields from student record (or just email for new users)
-        var f4 = document.getElementById('bookFirst');
-        var l4 = document.getElementById('bookLast');
-        var e4 = document.getElementById('bookEmail');
-        var p4 = document.getElementById('bookPhone');
-        if (lookupStudent) {
-          if (f4) f4.value = lookupStudent.first_name || '';
-          if (l4) l4.value = lookupStudent.last_name  || '';
-          if (e4) e4.value = lookupStudent.email      || email;
-          if (p4) p4.value = lookupStudent.phone      || '';
-        } else {
-          if (e4) e4.value = email;
-        }
-
-        // Update consent text school name if not already populated
-        var consentSchoolEl = document.getElementById('consentSchoolName');
-        if (consentSchoolEl && consentSchoolEl.textContent === 'my school' && lookupStudent) {
-          // No-op — school name is set elsewhere in loadPage. This is just a safety check.
-        }
-
-        // Transition to Phase B
-        document.getElementById('step1PhaseA').style.display = 'none';
-        document.getElementById('step1PhaseB').style.display = 'block';
-        renderTypesList();
-
-      } catch (e) {
-        setMsg('s1aMsg', 'Could not look up your account. Please check your email and try again.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem"></i>';
-      }
+      document.getElementById('step1PhaseA').style.display = 'none';
+      document.getElementById('step1PhaseB').style.display = 'block';
+      renderTypesList();
     }
 
     // ── Back from Phase B to Phase A (re-enter email) ────────────
@@ -1124,17 +975,21 @@
       document.getElementById('calPrevBtn').disabled = (calOffset <= 0);
       document.getElementById('calNextBtn').disabled = (new Date(yr, mo + 1, 1) > maxDate);
 
-      // Load exceptions for this month
+      // Load blocked days + booked slots for this month via the no-PII RPC (raw anon table reads
+      // were removed by RLS hardening). Cache both so buildTimeSlots needs no extra round-trip.
       var monthStart = new Date(yr, mo, 1).toISOString().split('T')[0];
       var monthEnd   = new Date(yr, mo + 1, 0).toISOString().split('T')[0];
       calExceptions  = {};
+      monthBookings  = {};
       try {
-        var exRes = await sb.from('instructor_availability_exceptions')
-          .select('exception_date, is_blocked, start_time, end_time')
-          .eq('instructor_id', instructor.id)
-          .gte('exception_date', monthStart)
-          .lte('exception_date', monthEnd);
-        (exRes.data || []).forEach(function(ex) { calExceptions[ex.exception_date] = ex; });
+        var slRes = await sb.rpc('get_public_booking_slots', {
+          p_instructor_id: instructor.id, p_start: monthStart, p_end: monthEnd
+        });
+        var sl = slRes.data || {};
+        (sl.blocked_dates || []).forEach(function(d) { calExceptions[d] = { is_blocked: true }; });
+        (sl.booked || []).forEach(function(b) {
+          (monthBookings[b.session_date] = monthBookings[b.session_date] || []).push(b);
+        });
       } catch(e) {}
 
       // Build availability day-of-week set
@@ -1208,50 +1063,19 @@
       var dateObj = new Date(selectedDate + 'T00:00:00');
       var dow     = dateObj.getDay();
 
-      // Find availability for this day (check exception override first)
+      // Find availability for this day. Exceptions are full-day blocks (loaded in buildCalendar).
       var dayAvail = null;
       var ex = calExceptions[selectedDate];
-
-      if (ex) {
-        if (ex.is_blocked) {
-          document.getElementById('slotsContainer').innerHTML =
-            '<div class="no-slots">No availability on this day. Please go back and select a different date.</div>';
-          return;
-        }
-        // Exception may override times
-        if (ex.start_time && ex.end_time) {
-          dayAvail = { start_time: ex.start_time.substring(0,5), end_time: ex.end_time.substring(0,5) };
-        }
+      if (ex && ex.is_blocked) {
+        document.getElementById('slotsContainer').innerHTML =
+          '<div class="no-slots">No availability on this day. Please go back and select a different date.</div>';
+        return;
       }
 
-      if (!dayAvail) {
-        // Check if we have the exception loaded (might have navigated away and back)
-        // Re-query just for safety
-        try {
-          var exRes = await sb.from('instructor_availability_exceptions')
-            .select('is_blocked, start_time, end_time')
-            .eq('instructor_id', instructor.id)
-            .eq('exception_date', selectedDate)
-            .maybeSingle();
-          if (exRes.data) {
-            if (exRes.data.is_blocked) {
-              document.getElementById('slotsContainer').innerHTML =
-                '<div class="no-slots">No availability on this day. Please select a different date.</div>';
-              return;
-            }
-            if (exRes.data.start_time && exRes.data.end_time) {
-              dayAvail = { start_time: exRes.data.start_time.substring(0,5), end_time: exRes.data.end_time.substring(0,5) };
-            }
-          }
-        } catch(e) {}
-      }
-
-      if (!dayAvail) {
-        // Use standard weekly availability
-        availability.forEach(function(a) {
-          if (a.dow === dow) dayAvail = a;
-        });
-      }
+      // Standard weekly availability for this day-of-week
+      availability.forEach(function(a) {
+        if (a.dow === dow) dayAvail = a;
+      });
 
       if (!dayAvail) {
         document.getElementById('slotsContainer').innerHTML =
@@ -1259,18 +1083,8 @@
         return;
       }
 
-      // Load existing sessions on this date for conflict check
-      var dayBookings = [];
-      try {
-        var instrName = instructor.first_name + ' ' + instructor.last_name;
-        var sessRes = await sb.from('sessions')
-          .select('start_time, duration_minutes')
-          .eq('school_id', instructor.school_id)
-          .eq('instructor_name', instrName)
-          .eq('session_date', selectedDate)
-          .in('status', ['scheduled']);
-        dayBookings = sessRes.data || [];
-      } catch(e) {}
+      // Existing bookings for this date (cached from buildCalendar's RPC call) for conflict check
+      var dayBookings = monthBookings[selectedDate] || [];
 
       var duration = selectedSetting.duration_minutes;
       var buffer   = selectedSetting.buffer_minutes;
@@ -1449,36 +1263,17 @@
       setMsg('s4Msg', '', '');
 
  try {
-        // Resolve student id. Phase A may have already identified the student
-        // by email; if so, prefer that. Otherwise look up by Step 4 email.
-        var studentId = lookupStudent ? lookupStudent.id : null;
-        if (!studentId) {
-          try {
-            var stuRes = await sb.rpc('lookup_student_by_email', {p_school_id: instructor.school_id, p_email: email.toLowerCase()});
-            if (stuRes.data && stuRes.data.length) studentId = stuRes.data[0].id;
-          } catch(e) {}
-        }
+        // No client-side student/pack lookup (that path leaked PII + allowed email enumeration).
+        // book_public_session resolves the student by email server-side, and when the member opts in
+        // it auto-applies their oldest eligible saved class pack — validated entirely on the server.
+        var usePack = !!(document.getElementById('bookUsePack') && document.getElementById('bookUsePack').checked);
 
-        // Credit safety check: if user picked a pack credit, the resolved
-        // student must own that pack.
-        if (selectedPack && studentId !== selectedPack.student_id) {
-          setMsg('s4Msg', 'The email entered does not match the account associated with the selected credit. Please go back and re-enter your email, or pick a paid option.', 'error');
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
-          return;
-        }
+        // Record who booked in the notes — the session may be tied to a new lead, not a student.
+        var contactLine = 'Booking contact: ' + first + ' ' + last + ' <' + email.toLowerCase() + '>' + (phone ? ', ' + phone : '');
+        var sessionNotes = notes ? contactLine + '\n' + notes : contactLine;
 
-        var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
-        var sessionNotes = notes || null;
-
-        // If no existing student, embed contact info in notes
-        if (!studentId) {
-          var contactLine = 'Booking contact: ' + first + ' ' + last + ' <' + email + '>' + (phone ? ', ' + phone : '');
-          sessionNotes = notes ? contactLine + '\n' + notes : contactLine;
-        }
-
-        // Create session via the secure RPC (server re-derives price, validates the
-        // pack, resolves the student, sets status, and records consent).
+        // Create session via the secure RPC (server re-derives price, resolves the student,
+        // auto-applies an eligible pack when opted in, sets status, and records consent).
         var rpcRes = await sb.rpc('book_public_session', {
           p_instructor_id:   instructor.id,
           p_session_type_id: selectedSetting.session_type_id,
@@ -1489,8 +1284,9 @@
           p_last_name:       last,
           p_phone:           phone || null,
           p_notes:           sessionNotes,
-          p_pack_id:         selectedPack ? selectedPack.id : null,
-          p_sms_consent:     smsConsent
+          p_pack_id:         null,
+          p_sms_consent:     smsConsent,
+          p_use_pack:        usePack
         });
         if (rpcRes.error) throw new Error(rpcRes.error.message);
         var newSessionId = rpcRes.data;
