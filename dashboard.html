@@ -2673,7 +2673,7 @@
           <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Enrollment <button class="help-hint-inline" onclick="openHelpPopover('students.sec_enrollment',this)" title="Help">?</button></div>
           <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
           <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
-          <div class="field"><label>Billing method</label><select id="stuBillingMethod"><option value="autopay">Autopay (card / Stripe)</option><option value="cash">Cash / check</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
+          <div class="field"><label>Billing method</label><select id="stuBillingMethod"><option value="cash">Cash / check</option><option value="autopay">Autopay (activate with the toggle + a card)</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
           <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field" style="margin-bottom:0"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
         </div>
       </div>
@@ -6757,17 +6757,12 @@ async function soComp(type,ref){
 async function soCharge(type,ref,sid,cents,btn){
   if(!confirm('Charge the card on file $'+(cents/100).toFixed(2)+'?')) return;
   if(btn){ btn.disabled=true; btn.textContent='…'; }
-  try{
-    var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
-    var it=(window._schoolOwed||[]).filter(function(x){return x.ref===ref&&x.type===type;})[0];
-    var label=it?it.label:'Bill payment';
-    var idem=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('so_'+Date.now());
-    var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid,line_items:[{name:label,unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:uid,idempotency_key:idem})});
-    var jd={}; try{ jd=await resp.json(); }catch(e){}
-    if(!resp.ok||jd.error){ var em=(jd.error||'Charge failed'); if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file — use Mark paid or Comp.'); } else if(window.showToast){ showToast('Charge failed: '+em.replace(/^[A-Z_]+:\s*/,''),'error'); } if(btn){btn.disabled=false;btn.textContent='Charge';} return; }
-    await markOwedSettled(type,ref);
-    if(window.showToast) showToast('Charged $'+(((jd.gross_charged_cents!=null?jd.gross_charged_cents:cents))/100).toFixed(2),'ok');
-  }catch(e){ if(window.showToast) showToast('Charge error','error'); }
+  var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
+  var it=(window._schoolOwed||[]).filter(function(x){return x.ref===ref&&x.type===type;})[0];
+  var res=await chargeOwedItem(sid,type,ref,cents,(it?it.label:'Bill payment'),uid);
+  if(!res.ok){ var em=res.error||'Charge failed'; if(em.indexOf('NO_SAVED_CARD')===0){ alert('No card on file — use Mark paid or Comp.'); } else if(window.showToast){ showToast('Charge failed: '+em.replace(/^[A-Z_]+:\s*/,''),'error'); } if(btn){btn.disabled=false;btn.textContent='Charge';} return; }
+  if(res.warn){ alert('Charged $'+((res.cents||cents)/100).toFixed(2)+', but could not mark it paid. Click Charge again to finish — it will NOT charge again.'); }
+  else if(window.showToast){ showToast('Charged $'+((res.cents||cents)/100).toFixed(2),'ok'); }
   await loadSchoolOwed();
 }
 async function soChargeAll(){
@@ -6776,20 +6771,16 @@ async function soChargeAll(){
   var stus=Object.keys(byStu);
   if(!confirm('Charge saved cards for '+stus.length+' member'+(stus.length!==1?'s':'')+'? Members without a card on file are skipped.')) return;
   var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
-  var charged=0,nocard=0,failed=0;
-  for(var i=0;i<stus.length;i++){
-    var sid=stus[i]; var group=byStu[sid];
-    var line_items=group.map(function(it){ return {name:it.label,unit_amount:it.cents,quantity:1,product_id:null,item_type:'custom'}; });
-    var idem=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('soall_'+Date.now()+'_'+i);
-    try{
-      var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid,line_items:line_items,applied_by:uid,idempotency_key:idem})});
-      var jd={}; try{ jd=await resp.json(); }catch(e){}
-      if(!resp.ok||jd.error){ if((jd.error||'').indexOf('NO_SAVED_CARD')===0) nocard++; else failed++; continue; }
-      for(var g=0;g<group.length;g++){ await markOwedSettled(group[g].type,group[g].ref); }
-      charged++;
-    }catch(e){ failed++; }
+  var charged=0,nocard=0,failed=0,warned=0;
+  // Charge each owed item on its OWN deterministic key — safe against retries + cross-screen races.
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    var res=await chargeOwedItem(it.sid,it.type,it.ref,it.cents,it.label,uid);
+    if(res.ok){ charged++; if(res.warn) warned++; }
+    else if((res.error||'').indexOf('NO_SAVED_CARD')===0) nocard++;
+    else failed++;
   }
-  if(window.showToast) showToast('Charged '+charged+' member'+(charged!==1?'s':'')+(nocard?(', '+nocard+' no card'):'')+(failed?(', '+failed+' failed'):''), failed?'error':'ok');
+  if(window.showToast) showToast('Charged '+charged+' item'+(charged!==1?'s':'')+(nocard?(', '+nocard+' no card'):'')+(failed?(', '+failed+' failed'):'')+(warned?(', '+warned+' need re-click'):''), (failed||warned)?'error':'ok');
   await loadSchoolOwed();
 }
 
@@ -8433,7 +8424,7 @@ var r;
     // visible to kiosk caps, vitals, cancel, and renewals (mirrors the Comp Plan insert shape).
     if (!eid && r.data && r.data.id) {
       // §GUARDRAIL — record how this membership is collected; no membership goes active "silently unbilled".
-      var _bm=(document.getElementById('stuBillingMethod')&&document.getElementById('stuBillingMethod').value)||'autopay';
+      var _bm=(document.getElementById('stuBillingMethod')&&document.getElementById('stuBillingMethod').value)||'cash';
       var _jrow={ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())), billing_method:_bm };
       if(_bm==='autopay') _jrow.awaiting_card=true; // autopay with no card yet → flag it (internal only, no auto-send); staff sends a card link when ready
       await sb.from('student_memberships').insert(_jrow);
@@ -8604,6 +8595,31 @@ async function markOwedSettled(type, ref){
   if(type==='past_due') return sb.from('payments').update({status:'paid',paid_at:now}).eq('id',ref).eq('school_id',SID);
 }
 
+// §DOUBLE-CHARGE-FIX — a DETERMINISTIC Stripe idempotency key per owed row, so the SAME item can't be
+// charged twice across the belt-test screen, the Financial tab, and the school-wide rollup, and a
+// lost-response retry never double-charges. belt_test / cancel_fee keys MATCH those screens exactly.
+function owedIdemKey(type, ref, cents){
+  if(type==='belt_test') return 'belttest-'+ref+'-'+cents;
+  if(type==='cancel_fee') return 'cancelfeecollect-'+ref+'-'+cents;
+  if(type==='event') return 'owedevent-'+ref+'-'+cents;
+  if(type==='past_due') return 'owedpastdue-'+ref+'-'+cents;
+  return 'owed-'+type+'-'+ref+'-'+cents;
+}
+// Charge ONE owed item on the card on file (deterministic key), then settle its source row and CHECK
+// the write. {ok:true} success · {ok:false,error} charge failed · {ok:true,warn:true} charged-but-not-marked
+// (recoverable — the deterministic key means clicking again re-settles WITHOUT re-charging).
+async function chargeOwedItem(sid, type, ref, cents, label, uid){
+  try{
+    var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid,line_items:[{name:label||'Bill payment',unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:uid||null,idempotency_key:owedIdemKey(type,ref,cents)})});
+    var jd={}; try{ jd=await resp.json(); }catch(e){}
+    if(!resp.ok||jd.error) return {ok:false, error:(jd.error||'Charge failed')};
+    var settle=await markOwedSettled(type,ref);
+    var charged=(jd.gross_charged_cents!=null?jd.gross_charged_cents:cents);
+    if(settle&&settle.error) return {ok:true, warn:true, error:settle.error, cents:charged};
+    return {ok:true, cents:charged};
+  }catch(e){ return {ok:false, error:(e&&e.message)||'Charge error'}; }
+}
+
 async function finWaiveOne(type, ref){
   if(!confirm('Comp / waive this charge? It will be marked settled with no payment.')) return;
   var now=new Date().toISOString();
@@ -8645,21 +8661,20 @@ async function submitFinPay(){
   msg.textContent=''; msg.className='form-msg';
   try{
     if(method==='card'){
-      // Card charges are per-student (each student's own/family card), so group the picks by student.
-      var byStu={}; picks.forEach(function(it){ (byStu[it.student_id]=byStu[it.student_id]||[]).push(it); });
+      // Charge each selected item on its OWN deterministic key (safe against retries + cross-screen races).
       var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
-      for(var stu in byStu){
-        var group=byStu[stu];
-        var line_items=group.map(function(it){ return {name:it.label,unit_amount:it.cents,quantity:1,product_id:null,item_type:'custom'}; });
-        var idem=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('fin_'+Date.now()+'_'+Math.round(Math.random()*1e6));
-        var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:stu,line_items:line_items,credit_to_apply_cents:0,applied_by:uid,idempotency_key:idem})});
-        var jd={}; try{ jd=await resp.json(); }catch(e){}
-        if(!resp.ok||jd.error){ var em=(jd.error||'Charge failed').replace(/^[A-Z_]+:\s*/,''); throw new Error(em+((_finCtx.nameById[stu])?(' ('+_finCtx.nameById[stu]+')'):'')); }
-        for(var g=0;g<group.length;g++){ await markOwedSettled(group[g].type, group[g].ref); }
+      var warns=0;
+      for(var i=0;i<picks.length;i++){
+        var it=picks[i];
+        var res=await chargeOwedItem(it.student_id, it.type, it.ref, it.cents, it.label, uid);
+        if(!res.ok){ throw new Error((res.error||'Charge failed').replace(/^[A-Z_]+:\s*/,'')+((_finCtx.nameById[it.student_id])?(' ('+_finCtx.nameById[it.student_id]+')'):'')); }
+        if(res.warn) warns++;
       }
-      msg.textContent='Charged '+picks.length+' bill'+(picks.length!==1?'s':'')+'.'; msg.className='form-msg success';
+      msg.textContent='Charged '+picks.length+' bill'+(picks.length!==1?'s':'')+(warns?(' · '+warns+' need a re-click to finish'):'')+'.'; msg.className=warns?'form-msg error':'form-msg success';
     } else {
-      for(var i=0;i<picks.length;i++){ await markOwedSettled(picks[i].type, picks[i].ref); }
+      var failedMark=0;
+      for(var i=0;i<picks.length;i++){ var mr=await markOwedSettled(picks[i].type, picks[i].ref); if(mr&&mr.error) failedMark++; }
+      if(failedMark){ throw new Error('Could not mark '+failedMark+' item'+(failedMark!==1?'s':'')+' paid — try again.'); }
       msg.textContent='Marked '+picks.length+' bill'+(picks.length!==1?'s':'')+' paid (offline).'; msg.className='form-msg success';
     }
     if(window.showToast) showToast('Payment recorded.','ok');
