@@ -1458,6 +1458,7 @@
         <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Connect your Stripe account to accept membership payments and retail sales directly from your students.</p>
         <div id="stripeConnectStatus"></div>
         <button class="panel-action" id="stripeConnectBtn" onclick="connectStripe()" style="margin-top:1rem"><i class="fa-solid fa-link"></i> Connect Stripe Account</button>
+        <button class="panel-action" id="stripeRefreshBtn" onclick="refreshStripeStatus()" style="margin-top:1rem;margin-left:0.5rem;display:none;background:transparent;border:1px solid var(--gold);color:var(--gold)"><i class="fa-solid fa-rotate"></i> I've finished — refresh status</button>
         <p class="form-msg" id="stripeConnectMsg" style="margin-top:0.75rem"></p>
       </div></div>
     </div>
@@ -16559,18 +16560,46 @@ async function loadStripeConnectStatus(){
     var r=await sb.from('schools').select('stripe_account_id,stripe_connected,stripe_onboarded').eq('id',SID).single();
     if(!r.data) return;
     var onboarded=!!r.data.stripe_onboarded, connected=!!r.data.stripe_connected;
-    var statusEl=document.getElementById('stripeConnectStatus'), btn=document.getElementById('stripeConnectBtn');
+    var statusEl=document.getElementById('stripeConnectStatus'), btn=document.getElementById('stripeConnectBtn'), refBtn=document.getElementById('stripeRefreshBtn');
     if(onboarded){
       // §STRIPE-TRUTH (O2) — green ONLY when the account can actually accept payments.
       if(statusEl) statusEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#5A9A6A"></div><div style="font-size:0.88rem;color:#7DBD7D">Stripe connected — ready to accept payments</div></div>';
       if(btn){ btn.textContent='Manage Stripe'; btn.onclick=function(){ window.open('https://dashboard.stripe.com/','_blank'); }; }   // §STRIPE-RECOVER (O3): open their Stripe, never the throwing re-connect
+      if(refBtn) refBtn.style.display='none';
     } else if(connected){
       // Linked via OAuth but verification/KYC not finished — cannot charge yet.
-      if(statusEl) statusEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#E0A05A"></div><div style="font-size:0.88rem;color:#E0A05A">Almost there — finish verifying with Stripe to accept payments</div></div>';
+      if(statusEl) statusEl.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:#E0A05A"></div><div style="font-size:0.88rem;color:#E0A05A">Almost there — finish verifying with Stripe, then tap “refresh status”</div></div>';
       if(btn){ btn.textContent='Finish verifying with Stripe'; btn.onclick=function(){ window.open('https://dashboard.stripe.com/','_blank'); }; }   // §STRIPE-RECOVER (O3): self-serve KYC completion
+      // §STRIPE-REFRESH — the poll backstop the owner controls: pull status from Stripe so clearing
+      // amber never depends on the account.updated webhook arriving.
+      if(refBtn) refBtn.style.display='inline-flex';
+    } else {
+      // not connected → default Connect button + connectStripe(); nothing to refresh.
+      if(refBtn) refBtn.style.display='none';
     }
-    // not connected → leave the default Connect button + connectStripe() onclick untouched.
   }catch(e){}
+}
+// §STRIPE-REFRESH — owner-triggered poll backstop. Re-ask Stripe if the account is charge-ready now
+// and re-render both the billing status and the setup checklist, so a verified owner clears amber
+// immediately instead of waiting on the account.updated webhook.
+async function refreshStripeStatus(){
+  var refBtn=document.getElementById('stripeRefreshBtn');
+  setMsg('stripeConnectMsg','Checking with Stripe…','');
+  if(refBtn){ refBtn.disabled=true; }
+  try{
+    var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({action:'refresh',school_id:SID})
+    });
+    var data=await r.json();
+    if(data.error){ setMsg('stripeConnectMsg',data.error,'error'); return; }
+    await loadStripeConnectStatus();
+    if(typeof buildSetupChecklist==='function'){ try{ buildSetupChecklist(); }catch(e){} }
+    if(data.stripe_onboarded){ setMsg('stripeConnectMsg','You’re verified — ready to accept payments!','success'); }
+    else{ setMsg('stripeConnectMsg','Stripe still shows verification pending. Finish the remaining steps in your Stripe dashboard, then refresh again.',''); }
+  }catch(e){ setMsg('stripeConnectMsg',e.message||'Could not refresh Stripe status.','error'); }
+  finally{ if(refBtn){ refBtn.disabled=false; } }
 }
 async function connectStripe(){
   setMsg('stripeConnectMsg','Connecting...','');
@@ -16583,6 +16612,13 @@ async function connectStripe(){
     });
     var data=await r.json();
     if(data.url){window.location.href=data.url;}
+    else if(data.already_connected){
+      // §STRIPE-REFRESH — the account is already linked; don't re-run OAuth (that mints a 2nd account).
+      // Re-render status/checklist and point the owner at Refresh / their Stripe dashboard instead.
+      await loadStripeConnectStatus();
+      if(typeof buildSetupChecklist==='function'){ try{ buildSetupChecklist(); }catch(e){} }
+      setMsg('stripeConnectMsg', data.stripe_onboarded ? 'Stripe is already connected and ready to accept payments.' : 'Stripe is already connected — finish verifying in your Stripe dashboard, then tap “refresh status”.','');
+    }
     else{setMsg('stripeConnectMsg',data.error||'Failed to connect Stripe.','error');}
   }catch(e){setMsg('stripeConnectMsg',e.message,'error');}
 }
