@@ -5135,6 +5135,10 @@ function navigate(page,el){
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
+  // §CHECKLIST-REFRESH (A1) — re-evaluate the setup checklist every time the owner returns to the
+  // dashboard, so completing a gated step (belts→programs→memberships→…) advances the banner without
+  // needing a full page reload. buildSetupChecklist previously only ran at boot + after saveStudent.
+  if(page==='home')        { if(window.buildSetupChecklist) buildSetupChecklist(); }
 if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
@@ -6204,7 +6208,7 @@ function buildMonthCalendar(){
     if(tests.length)      dots+='<div class="month-dot test-dot"></div>';
     if(sessions.length)   dots+='<div class="month-dot session-dot"></div>';
     var countLabel=dayClasses.length?dayClasses.length+' class'+(dayClasses.length!==1?'es':''):'';
-    html+='<div class="month-day'+(isToday?' today':'')+(isCurrent?'':' other-month')+'" onclick="openDayView(\''+cellStr+'\',\''+dn+'\')">';
+    html+='<div class="month-day'+(isToday?' today':'')+(isCurrent?'':' other-month')+'" onclick="openDayView(\''+cellStr+'\',\'\')">';
     html+='<div class="month-day-num">'+cell.day+'</div>';
     if(dots)       html+='<div class="month-day-dots">'+dots+'</div>';
     if(countLabel) html+='<div class="month-day-count">'+countLabel+'</div>';
