@@ -1331,10 +1331,16 @@ sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id
     var stuRow=_pickByEmail(_emailRows(results[0]),user.email);
     var famRow=_pickByEmail(_emailRows(results[1]),user.email);
     var insRow=_pickByEmail(_emailRows(results[2]),user.email);
-    if(famRow){
-  SID=famRow.school_id;
+    // §PORTAL-WARDS — a parent is anyone with wards via EITHER model: the legacy families model
+    // (families.email == login) OR the guardians/guardian_students model. Resolve once here to decide
+    // routing; showFamilyPortal re-resolves for the live child list. This is what finally gives a
+    // guardian-only parent (no families row) the family portal instead of a solo one-child view.
+    var _wards=[];
+    try{ var _wr=await sb.rpc('get_portal_wards'); if(_wr&&!_wr.error) _wards=(_wr.data||[]); }catch(e){}
+    if(famRow||_wards.length){
+  SID = famRow ? famRow.school_id : (_wards.some(function(w){return w.school_id===SID;}) ? SID : _wards[0].school_id);
   await loadSchoolBranding();
-  currentFamily=famRow;
+  currentFamily=famRow||null;
   sessionStorage.setItem('nmao_user_type','family');
   await showFamilyPortal(famRow);
 }else if(stuRow){
@@ -3494,7 +3500,18 @@ async function showFamilyPortal(family){
   document.getElementById('portalScreen').style.display='block';
   document.getElementById('portalLoading').style.display='block';
   document.getElementById('portalContent').style.display='none';
-  var r=await sb.from('students').select('*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)').eq('school_id',SID).eq('family_id',family.id).is('deleted_at',null).order('first_name');
+  // §PORTAL-WARDS — resolve wards from BOTH parent models via the unified RPC, then load those
+  // students. Falls back to the legacy family_id fetch only if the RPC yields nothing but a families
+  // row exists (defensive — the RPC already covers the family model). Re-resolving here (not just at
+  // routing) keeps the child list live after a portal-side add-family.
+  var _sel='*, programs(name,color,belt_system,id,belt_system_id), memberships(name,billing_type,price,class_limit_type,billing_length,billing_unit,allow_member_self_cancel,allow_member_self_pause,pause_max_months,pause_max_per_year,pause_fee), student_memberships(id,status,stripe_subscription_id,ended_at,awaiting_card,commitment_ends_at,commit_fee_type,commit_fee_amount,pause_resumes_at)';
+  var _childIds=[];
+  try{ var _wr=await sb.rpc('get_portal_wards'); if(_wr&&!_wr.error){ _childIds=(_wr.data||[]).filter(function(w){return w.school_id===SID;}).map(function(w){return w.student_id;}); } }catch(e){}
+  var _q=sb.from('students').select(_sel).eq('school_id',SID).is('deleted_at',null);
+  if(_childIds.length){ _q=_q.in('id',_childIds); }
+  else if(family){ _q=_q.eq('family_id',family.id); }
+  else { _q=null; }
+  var r=_q?(await _q.order('first_name')):{data:[]};
   familyChildren=r.data||[];
   if(!familyChildren.length){
     document.getElementById('portalLoading').innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted);font-style:italic">No students found for this family account.<br>Please contact your school.</div>';
