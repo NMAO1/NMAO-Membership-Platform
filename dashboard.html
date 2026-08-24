@@ -2450,7 +2450,7 @@
         <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-circle-info" style="color:var(--gold)"></i>Class Details <button class="help-hint-inline" onclick="openHelpPopover('classes.sec_details',this)" title="Help">?</button></div>
         <div class="field"><label>Class Title <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_title',this)" title="Help">?</button></label><input type="text" id="classTitle" placeholder="e.g. Adult BJJ" /></div>
         <div class="field"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_desc',this)" title="Help">?</button></label><div id="classDescEditor"></div></div>
-        <div class="field" style="margin-bottom:0"><label>Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_program',this)" title="Help">?</button></label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- No Program --</option></select></div>
+        <div class="field" style="margin-bottom:0"><label>Program <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('classes.cl_program',this)" title="Help">?</button></label><select id="classProgram" style="background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.75rem 0.85rem;width:100%"><option value="">-- Select a program --</option></select></div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem">
@@ -6007,7 +6007,7 @@ async function buildSetupChecklist(){
     }
   }catch(e){}
   var steps=[
-    {key:'belts',        label:'Add your belt ranks',            why:'Your curriculum is built on these, so start here.', ctaLabel:'Add belt ranks',     cta:'openAddBeltSystem()',  requires:[],                          check:function(){return allBeltSystems.length>0;},  nav:'belts'},
+    {key:'belts',        label:'Add your belt ranks',            why:'Your curriculum is built on these, so start here.', ctaLabel:'Add belt ranks',     cta:'openAddBeltSystem()',  requires:[],                          check:function(){return allBeltSystems.some(function(bs){return (bs.belt_levels||[]).length>0;});},  nav:'belts'},
     {key:'programs',     label:'Create your programs',           why:'Programs are your curriculum tracks.',              ctaLabel:'Add a program',      cta:'openAddProgram()',     requires:['belts'],                   check:function(){return allPrograms.length>0;},     nav:'programs'},
     {key:'memberships',  label:'Set up memberships',             why:'How members pay to train with you.',                ctaLabel:'Add a membership',   cta:'openAddMembership()',  requires:['programs'],                check:function(){return allMemberships.length>0;},  nav:'memberships'},
     {key:'classes',      label:'Add your classes',               why:'Put your weekly schedule on the calendar.',         ctaLabel:'Add a class',        cta:'openAddClass()',       requires:['programs'],                check:function(){return allClasses.length>0;},      nav:'classes'},
@@ -6512,7 +6512,7 @@ function openAddClass(){
 }
 function populateClassProgramDropdown(){
   var sel=document.getElementById('classProgram'); if(!sel) return;
-  sel.innerHTML='<option value="">-- No Program --</option>';
+  sel.innerHTML='<option value="">-- Select a program --</option>';
   allPrograms.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
 }
 
@@ -8324,6 +8324,7 @@ function openAddStudent() {
   document.getElementById('stuStartDate').value = today;
   document.getElementById('stuStatus').value    = 'active';
   document.getElementById('studentMsg').textContent = '';
+  var _stuBM=document.getElementById('stuBillingMethod'); if(_stuBM) _stuBM.value='cash';  // reset billing to Cash default (no stale carryover from a prior open)
   document.getElementById('stuMembership').innerHTML = '<option value="">-- Select a Program first --</option>';
   populateStudentProgramDropdown();
   document.getElementById('addStudentModal').classList.add('active');
@@ -16672,7 +16673,7 @@ async function loadSmsUsageWidget(){
       .order('period_start',{ascending:false}).limit(1).maybeSingle();
     var usage = uR.data;
 
-    var bundle = usage ? usage.sms_bundle : (tier ? tier.included_sms : 0);
+    var bundle = (usage ? usage.sms_bundle : (tier ? tier.included_sms : 0)) || 0;  // guard: a tier with null included_sms must not throw on .toLocaleString()
     var count  = usage ? usage.sms_count  : 0;
     var pct    = bundle>0 ? (count/bundle)*100 : 0;
 
