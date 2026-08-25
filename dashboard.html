@@ -3104,7 +3104,7 @@
       <div id="importStepReview" style="display:none"></div>
       <div id="importStep2" style="display:none">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Import Summary</div>
-        <div id="importSummaryStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem"></div>
+        <div id="importSummaryStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:0.5rem;margin-bottom:1.25rem"></div>
         <div id="importLogList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);padding:0.75rem"></div>
         <button class="panel-action" style="margin-top:1rem" onclick="closeImportTool()"><i class="fa-solid fa-check"></i> Done</button>
       </div>
@@ -10592,7 +10592,7 @@ async function applyImportPlan(){
   document.getElementById('importStep2').style.display='block';
   importApplying=false;
 }
-function impStat(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);padding:1rem;text-align:center"><div style="font-family:var(--font-display);font-size:2rem;color:'+color+'">'+(n||0)+'</div><div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)">'+label+'</div></div>'; }
+function impStat(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);padding:0.55rem 0.5rem;text-align:center"><div style="font-family:var(--font-display);font-size:1.6rem;line-height:1.05;color:'+color+'">'+(n||0)+'</div><div style="font-size:0.82rem;letter-spacing:0.03em;text-transform:uppercase;color:var(--muted)">'+label+'</div></div>'; }
 /* ===== end §SMART-IMPORT REVIEW ===== */
 
 // Stripe charge flow (J.4.4)
