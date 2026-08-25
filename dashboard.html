@@ -572,7 +572,7 @@
     
     <div class="nav-section-label">Programs</div>
     <div class="nav-item" id="nav-programs"    onclick="navigate('programs',this)"><i class="fa-solid fa-layer-group nav-icon"></i> Programs</div>
-    <div class="nav-item" id="nav-belts"       onclick="navigate('belts',this)"><i class="fa-solid fa-ranking-star nav-icon"></i> Belt Progressions</div>
+    <div class="nav-item" id="nav-belts"       onclick="navigate('belts',this)"><i class="fa-solid fa-ranking-star nav-icon"></i> Belt Systems</div>
     <div class="nav-item" id="nav-belttests"   onclick="navigate('belttests',this)"><i class="fa-solid fa-trophy nav-icon"></i> Belt Tests</div>
     <div class="nav-item" id="nav-memberships" onclick="navigate('memberships',this)"><i class="fa-solid fa-id-card nav-icon"></i> Memberships</div>
 
@@ -932,7 +932,7 @@
 
     <!-- ═══════════════ §PAGE-BELTS ═══════════════ -->
     <div class="page" id="page-belts">
-      <div class="content-heading"><h2>Belt Progressions</h2><button class="help-hint-inline" onclick="openHelpPopover('belts',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltSystem()"><i class="fa-solid fa-plus"></i> New Belt System</button></div>
+      <div class="content-heading"><h2>Belt Systems</h2><button class="help-hint-inline" onclick="openHelpPopover('belts',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltSystem()"><i class="fa-solid fa-plus"></i> New Belt System</button></div>
       <div id="beltSystemsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem"></div>
     </div>
 
@@ -5138,7 +5138,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Progressions',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -5477,10 +5477,10 @@ var HELP_CONTENT = {
   'programs.pr_desc': { title: 'Description', purpose: 'Optional details about the program, shown where the program appears.' },
   'programs.pr_age': { title: 'Age Group', purpose: 'The age range this program is for, like Kids 7-12 or Adults 18+. Helps organize and filter your offerings.' },
   'programs.pr_belt': { title: 'Belt Progression', purpose: 'Whether this program uses belt ranks. Choose Belt Progression to track promotions, or No Belt Progression for programs without ranks, like fitness classes.' },
-  'programs.pr_beltsys': { title: 'Belt System', purpose: 'Which belt ladder this program uses, set up under Belt Progressions. Shown when the program has a belt progression.' },
+  'programs.pr_beltsys': { title: 'Belt System', purpose: 'Which belt ladder this program uses, set up under Belt Systems. Shown when the program has a belt progression.' },
   'programs.pr_color': { title: 'Program Color', purpose: 'A color used to tag this program across the calendar and reports. Pick anything; it is visual only.' },
   belts: {
-    title: 'Belt Progressions',
+    title: 'Belt Systems',
     purpose: 'The rank ladders for your programs. A belt system is an ordered set of belts students earn as they progress.',
     actions: [
       'Create a belt system, then add its belts in order with colors and promotion fees.',
