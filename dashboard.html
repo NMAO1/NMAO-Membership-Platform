@@ -10468,7 +10468,7 @@ async function applyImportPlan(){
     if(action==='insert'){
       var payload={school_id:SID, first_name:(r.c.first||'').trim(), last_name:(r.c.last||'').trim(),
         email:(r.c.email||'').trim()||null, phone:(r.c.phone||'').trim()||null,
-        date_of_birth:dob||null, status:(r.c.status||'').trim()||'active', source:'csv_import'};
+        date_of_birth:dob||null, status:normImportStatus(r.c.status), source:'csv_import'};
       var ins=await sb.from('students').insert(payload).select('id').single();
       if(ins.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+ins.error.message,status:'warn'}); }
       else { resultId[r.idx]=ins.data.id; created++; log.push({row:r.idx+1,msg:nm(r)+' - added',status:'ok'}); }
