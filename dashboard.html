@@ -3082,7 +3082,7 @@
 
 <!-- §MODAL-IMPORT -->
 <div class="modal-overlay" id="importModal">
-  <div class="modal" style="width:760px;max-width:97vw">
+  <div class="modal" style="width:1160px;max-width:96vw">
     <div class="modal-header"><span class="modal-title">Import Students from CSV</span><button class="modal-close" onclick="closeImportTool()"><i class="fa-solid fa-xmark"></i></button></div>
     <div style="padding:1.5rem;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
       <div id="importStep1">
@@ -10251,8 +10251,8 @@ async function hiRun(){
    ============================================================ */
 function impEsc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function impRowName(r){ return ((r.c.first||'')+' '+(r.c.last||'')).trim(); }
-function impChip(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid '+color+';padding:0.4rem 0.7rem;font-size:0.8rem"><span style="color:'+color+';font-weight:600">'+(n||0)+'</span> <span style="color:var(--muted)">'+label+'</span></div>'; }
-function impSectionHead(t){ return '<div style="font-size:0.74rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin:0.5rem 0 0.4rem">'+t+'</div>'; }
+function impChip(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid '+color+';padding:0.5rem 0.85rem;font-size:0.95rem"><span style="color:'+color+';font-weight:600">'+(n||0)+'</span> <span style="color:var(--muted)">'+label+'</span></div>'; }
+function impSectionHead(t){ return '<div style="font-size:0.88rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin:0.75rem 0 0.5rem">'+t+'</div>'; }
 
 function openImportReview(){
   document.getElementById('importConflictInfo').textContent='Analyzing\u2026';
@@ -10346,7 +10346,7 @@ function renderImportReview(){
   var c=p.counts, i;
   var rosterById={}; for(i=0;i<p.roster.length;i++){ rosterById[p.roster[i].id]=p.roster[i]; }
   var h='';
-  h+='<div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Review Import</div>';
+  h+='<div style="font-size:0.85rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.85rem">Review Import</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">';
   h+=impChip('#5A9A6A',c['new'],'new')+impChip('#4C8CE2',c.merge,'merge')+impChip('#9A6AD0',c.restore,'restore')+impChip('#E2A84C',c.conflict,'to review')+impChip('#E07070',c.skip,'skipped');
   h+='</div>';
