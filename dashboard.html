@@ -111,15 +111,15 @@
     .setup-banner { background: var(--surface); border: 1px solid rgba(201,168,76,0.25); border-left: 3px solid var(--gold); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
     .setup-progress-bar  { height: 3px; background: var(--border); border-radius: 2px; margin: 0.5rem 0; overflow: hidden; }
     .setup-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s; }
-    .setup-step { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.45rem 0; font-size: 0.95rem; cursor: pointer; line-height: 1.4; }
+    .setup-step { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0; font-size: 1.05rem; cursor: pointer; line-height: 1.4; }
 .setup-step.done { color: var(--muted); }
 .setup-step.todo { color: var(--white); }
 .setup-step.locked { color: var(--muted); cursor: default; opacity: 0.55; }
 .setup-step .setup-step-sub { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
 .setup-step.active { display: block; cursor: default; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.35); border-radius: 8px; padding: 0.7rem 0.85rem; margin: 0.45rem 0; color: var(--white); }
-.setup-step.active .setup-step-head { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 0.98rem; }
-.setup-step-why { font-size: 0.8rem; color: var(--muted); margin: 0.4rem 0 0.65rem; }
-.setup-step-cta { background: var(--gold); color: #0A0A0A; border: none; border-radius: 6px; padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
+.setup-step.active .setup-step-head { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.1rem; }
+.setup-step-why { font-size: 0.9rem; color: var(--muted); margin: 0.4rem 0 0.65rem; }
+.setup-step-cta { background: var(--gold); color: #0A0A0A; border: none; border-radius: 6px; padding: 0.5rem 0.95rem; font-size: 0.92rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
 .setup-step-cta:hover { opacity: 0.9; }
 
     /* §CSS-CALENDAR */
@@ -6035,7 +6035,7 @@ async function buildSetupChecklist(){
     if(isLocked){ var rk=(s.requires&&s.requires.length)?s.requires[0]:null; var rl=rk?labelByKey[rk]:''; return '<div class="setup-step locked"><i class="fa-solid fa-lock" style="color:var(--muted);font-size:0.8rem;flex-shrink:0"></i><span>'+s.label+'<span class="setup-step-sub">Unlocks after: '+rl+'</span></span></div>'; }
     return '<div class="setup-step todo" onclick="navigate(\''+s.nav+'\',null);'+s.cta+'"><i class="fa-solid fa-circle" style="color:var(--muted);font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div>';
   }).join('');
-  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.74rem;color:var(--muted);margin-top:0.5rem">'+done+' of '+total+' completed</div><div style="border-top:1px solid var(--border);margin-top:0.75rem;padding-top:0.65rem;font-size:0.8rem;color:var(--muted)">Prefer we set it up? <a onclick="openSelfUpload(this)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Send us your files</a> &mdash; roster, billing, waivers &amp; branding, and our team will help you get set up.</div>';
+  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem">'+done+' of '+total+' completed</div><div style="border:1px solid rgba(201,168,76,0.5);background:rgba(201,168,76,0.10);border-radius:12px;margin-top:1.1rem;padding:1.1rem 1.25rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.9rem"><div style="flex:1;min-width:250px"><div style="font-size:1.35rem;font-weight:700;color:var(--white);margin-bottom:0.35rem">🤝 Prefer we set it up for you?</div><div style="font-size:1rem;color:var(--muted);line-height:1.55">Send us your roster, billing, waivers &amp; branding — our team will get your school fully set up.</div></div><button onclick="openSelfUpload(this)" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:9px;padding:0.8rem 1.4rem;font-size:1.05rem;font-weight:700;cursor:pointer;white-space:nowrap">Send us your files &rarr;</button></div>';
 }
 async function dismissSetupBanner(){
   document.getElementById('setupBanner').style.display='none';
@@ -9946,6 +9946,18 @@ function normDob(v){
   var mdy=v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if(mdy){ var yy=mdy[3]; if(yy.length===2){ yy='20'+yy; } return yy+'-'+('0'+mdy[1]).slice(-2)+'-'+('0'+mdy[2]).slice(-2); }
   return v;
+}
+// §IMPORT-STATUS — normalize a CSV status to a value the students_status_check constraint accepts.
+// Case-folds ("Active" → active), maps common synonyms to the nearest allowed value, and falls back
+// to 'active' for anything unrecognized — so a stray capital or a term like "frozen" no longer fails
+// the whole row at insert. Allowed set mirrors the DB constraint.
+function normImportStatus(v){
+  var s=(v||'').trim().toLowerCase();
+  if(!s) return 'active';
+  var allowed=['active','alumni','lapsed','abandoned','inactive','trial','trialing','paused','pending','pending_payment'];
+  if(allowed.indexOf(s)!==-1) return s;
+  var syn={frozen:'paused',hold:'paused','on hold':'paused',suspended:'paused',cancelled:'inactive',canceled:'inactive',dropped:'inactive',former:'alumni',graduated:'alumni',grad:'alumni',expired:'lapsed',prospect:'pending',lead:'pending',prospective:'pending'};
+  return syn[s]||'active';
 }
 
 // Full roster — deliberately NO deleted_at filter, so soft-deleted students are matchable
