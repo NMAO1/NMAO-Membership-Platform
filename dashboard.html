@@ -10255,7 +10255,7 @@ async function hiRun(){
 function impEsc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function impRowName(r){ return ((r.c.first||'')+' '+(r.c.last||'')).trim(); }
 function impChip(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid '+color+';padding:0.5rem 0.85rem;font-size:0.95rem"><span style="color:'+color+';font-weight:600">'+(n||0)+'</span> <span style="color:var(--muted)">'+label+'</span></div>'; }
-function impSectionHead(t){ return '<div style="font-size:0.88rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin:0.75rem 0 0.5rem">'+t+'</div>'; }
+function impSectionHead(t){ return '<div style="font-size:1.05rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted2);margin:0.85rem 0 0.5rem">'+t+'</div>'; }
 
 function openImportReview(){
   document.getElementById('importConflictInfo').textContent='Analyzing\u2026';
@@ -10315,13 +10315,13 @@ function renderImportPlanBeltReview(){
   var inp='background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:0.78rem;padding:0.3rem 0.4rem';
   var noProg=ctx.programs.length===0, noSys=ctx.systems.length===0;
   var h=impSectionHead('Plans &amp; belts in your file');
-  h+='<p style="font-size:0.95rem;color:var(--muted);margin:0 0 0.7rem;line-height:1.55">Names that already exist are matched automatically. For anything new, choose to <strong style="color:var(--white)">create it</strong> (edit the details), <strong style="color:var(--white)">map</strong> it to something you already have, or <strong style="color:var(--white)">skip</strong> it.</p>';
+  h+='<p style="font-size:1.15rem;color:var(--muted);margin:0 0 0.85rem;line-height:1.55">Names that already exist are matched automatically. For anything new, choose to <strong style="color:var(--white)">create it</strong> (edit the details), <strong style="color:var(--white)">map</strong> it to something you already have, or <strong style="color:var(--white)">skip</strong> it.</p>';
   h+='<div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:1rem">';
   if(pk.length){
-    h+='<div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Plans</div>';
+    h+='<div style="font-size:1rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Plans</div>';
     if(noProg){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No programs yet &mdash; create a program to enable auto-creating plans (you can still map or skip).</div>'; }
     pk.forEach(function(k){ var c=ctx.plans[k];
-      if(c.mode==='matched'){ h+='<div style="font-size:0.98rem;color:var(--muted);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existingplan</div>'; return; }
+      if(c.mode==='matched'){ h+='<div style="font-size:1.15rem;color:var(--muted);padding:0.45rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existing plan</div>'; return; }
       h+='<div style="padding:0.45rem 0;border-top:1px solid var(--border)"><div style="font-size:0.85rem;color:var(--white);margin-bottom:0.3rem">'+impEsc(c.raw)+'</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">';
       h+='<select onchange="setImportPlanMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noProg?' disabled':'')+'>Create new plan</option>';
       ctx.mems.forEach(function(m){ h+='<option value="map:'+m.id+'"'+(c.mode==='map'&&c.existingId===m.id?' selected':'')+'>Map to: '+impEsc(m.name)+'</option>'; });
@@ -10331,11 +10331,11 @@ function renderImportPlanBeltReview(){
     });
   }
   if(bk.length){
-    h+='<div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.4rem">Belts</div>';
+    h+='<div style="font-size:1rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin:0.75rem 0 0.4rem">Belts</div>';
     if(noSys){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No belt systems yet &mdash; create one to enable auto-creating belts.</div>'; }
-    else { h+='<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem">Add new belts to: <select onchange="setImportBeltSystem(this.value)" style="'+sel+'">'+ctx.systems.map(function(s){return '<option value="'+s.id+'"'+(s.id===ctx.beltSystemId?' selected':'')+'>'+impEsc(s.name)+'</option>';}).join('')+'</select></div>'; }
+    else { h+='<div style="font-size:1.1rem;color:var(--muted);margin-bottom:0.5rem">Add new belts to: <select onchange="setImportBeltSystem(this.value)" style="'+sel+'">'+ctx.systems.map(function(s){return '<option value="'+s.id+'"'+(s.id===ctx.beltSystemId?' selected':'')+'>'+impEsc(s.name)+'</option>';}).join('')+'</select></div>'; }
     bk.forEach(function(k){ var c=ctx.beltChoices[k];
-      if(c.mode==='matched'){ h+='<div style="font-size:0.98rem;color:var(--muted);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existingbelt</div>'; return; }
+      if(c.mode==='matched'){ h+='<div style="font-size:1.15rem;color:var(--muted);padding:0.45rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existing belt</div>'; return; }
       h+='<div style="padding:0.35rem 0;border-top:1px solid var(--border);display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"><span style="font-size:0.85rem;color:var(--white);min-width:110px">'+impEsc(c.raw)+'</span><select onchange="setImportBeltMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noSys?' disabled':'')+'>Create new belt</option>';
       ctx.belts.forEach(function(b){ h+='<option value="map:'+b.id+'"'+(c.mode==='map'&&c.existingId===b.id?' selected':'')+'>Map to: '+impEsc(b.name)+'</option>'; });
       h+='<option value="skip"'+(c.mode==='skip'?' selected':'')+'>Skip</option></select></div>';
@@ -10358,7 +10358,7 @@ function renderImportReview(){
   if(news.length){
     h+=impSectionHead('New students \u2014 will be created ('+news.length+')');
     h+='<div style="max-height:150px;overflow-y:auto;border:1px solid var(--border);padding:0.5rem;margin-bottom:1rem">';
-    h+=news.map(function(r){return '<div style="font-size:0.82rem;color:var(--white);padding:0.18rem 0">'+impEsc(impRowName(r))+'</div>';}).join('');
+    h+=news.map(function(r){return '<div style="font-size:1.1rem;color:var(--white);padding:0.3rem 0">'+impEsc(impRowName(r))+'</div>';}).join('');
     h+='</div>';
   }
 
@@ -10368,7 +10368,7 @@ function renderImportReview(){
     h+='<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);padding:0.5rem;margin-bottom:1rem">';
     h+=merges.map(function(r){
       var badge=(r.category==='restore')?'<span style="color:#9A6AD0;font-size:0.66rem;border:1px solid #9A6AD0;border-radius:3px;padding:0 0.3rem;margin-left:0.4rem">RESTORE</span>':'';
-      return '<div style="font-size:0.82rem;color:var(--white);padding:0.22rem 0;display:flex;align-items:center;gap:0.5rem"><span>'+impEsc(impRowName(r))+'</span><span style="color:var(--muted);font-size:0.7rem">matched on '+impEsc(r.matchedBy)+'</span>'+badge+'</div>';
+      return '<div style="font-size:1.1rem;color:var(--white);padding:0.3rem 0;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap"><span>'+impEsc(impRowName(r))+'</span><span style="color:var(--muted);font-size:0.92rem">matched on '+impEsc(r.matchedBy)+'</span>'+badge+'</div>';
     }).join('');
     h+='</div>';
   }
@@ -10399,13 +10399,13 @@ function renderConflictCard(r, ex){
   var idx=r.idx, nameOnly=(r.matchedBy==='name');
   var exName=impEsc(((ex.first_name||'')+' '+(ex.last_name||'')).trim());
   var h='<div style="border:1px solid var(--border);border-left:3px solid #E2A84C;padding:0.6rem 0.75rem;margin-bottom:0.5rem">';
-  h+='<div style="font-size:1.05rem;color:var(--white);margin-bottom:0.4rem">'+impEsc(impRowName(r))+'</div>';
+  h+='<div style="font-size:1.2rem;color:var(--white);margin-bottom:0.45rem">'+impEsc(impRowName(r))+'</div>';
   if(nameOnly){
-    h+='<div style="font-size:0.92rem;color:var(--muted);margin-bottom:0.5rem">A student named <b style="color:var(--white)">'+exName+'</b> already exists. Same person?</div>';
+    h+='<div style="font-size:1.15rem;color:var(--muted);margin-bottom:0.55rem">A student named <b style="color:var(--white)">'+exName+'</b> already exists. Same person?</div>';
     h+=impRadio(idx,'merge','Same person \u2014 merge')+impRadio(idx,'new','Different \u2014 import as new')+impRadio(idx,'skip','Skip');
   }else{
-    h+='<div style="font-size:0.92rem;color:var(--muted);margin-bottom:0.45rem">Matched <b style="color:var(--white)">'+exName+'</b> on '+impEsc(r.matchedBy)+', but '+impEsc((r.conflictFields||[]).join(', '))+' differs:</div>';
-    h+='<div style="font-size:0.9rem;margin-bottom:0.5rem">';
+    h+='<div style="font-size:1.15rem;color:var(--muted);margin-bottom:0.5rem">Matched <b style="color:var(--white)">'+exName+'</b> on '+impEsc(r.matchedBy)+', but '+impEsc((r.conflictFields||[]).join(', '))+' differs:</div>';
+    h+='<div style="font-size:1.1rem;margin-bottom:0.55rem">';
     h+=impFieldDiff('email',ex.email,r.c.email,r.conflictFields);
     h+=impFieldDiff('phone',ex.phone,r.c.phone,r.conflictFields);
     h+=impFieldDiff('dob',ex.date_of_birth,r.c.dob,r.conflictFields);
@@ -10424,7 +10424,7 @@ function impFieldDiff(label,exV,csvV,fields){
 function impRadio(idx,val,label){
   var r=importPlan.rows[idx];
   var checked=(r&&r.resolution===val)?'checked':'';
-  return '<label style="display:inline-flex;align-items:center;gap:0.3rem;margin-right:0.9rem;font-size:0.78rem;color:var(--white);cursor:pointer"><input type="radio" name="imp-res-'+idx+'" '+checked+' onchange="setImportRes('+idx+',\''+val+'\')"> '+label+'</label>';
+  return '<label style="display:inline-flex;align-items:center;gap:0.4rem;margin-right:1.25rem;font-size:1.1rem;color:var(--white);cursor:pointer"><input type="radio" name="imp-res-'+idx+'" '+checked+' onchange="setImportRes('+idx+',\''+val+'\')"> '+label+'</label>';
 }
 function setImportRes(idx,val){ if(importPlan&&importPlan.rows[idx]){ importPlan.rows[idx].resolution=val; } }
 
