@@ -36,10 +36,10 @@
     table tbody td     { font-size: 0.88rem !important; }
     .stat-label  { font-size: 0.78rem !important; }
     .stat-value  { font-size: 1.7rem  !important; }
-    .field label { font-size: 0.72rem !important; }
-    .field input, .field select { font-size: 0.95rem !important; }
+    .field label { font-size: 0.92rem !important; letter-spacing: 0.02em; }
+    .field input, .field select { font-size: 1.05rem !important; }
     .field textarea {
-      font-size: 0.95rem !important; width: 100%; min-height: 120px;
+      font-size: 1.05rem !important; width: 100%; min-height: 120px;
       resize: vertical; background: var(--black); border: 1px solid var(--border);
       color: var(--white); font-family: var(--font-ui); padding: 0.75rem;
       line-height: 1.6; -webkit-overflow-scrolling: touch;
@@ -356,7 +356,7 @@
     .modal-overlay.active { display: flex; }
     .modal { background: var(--surface); border: 1px solid var(--border); width: min(92vw,560px); max-height: 88vh; overflow: hidden; position: relative; display: flex; flex-direction: column; }
     .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
-    .modal-title  { font-family: var(--font-display); font-size: 1rem; letter-spacing: 0.08em; color: var(--white); }
+    .modal-title  { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.06em; color: var(--white); }
     .modal-close  { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
     .modal-body   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
     .unsaved-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: none; align-items: center; justify-content: center; }
@@ -10315,13 +10315,13 @@ function renderImportPlanBeltReview(){
   var inp='background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:0.78rem;padding:0.3rem 0.4rem';
   var noProg=ctx.programs.length===0, noSys=ctx.systems.length===0;
   var h=impSectionHead('Plans &amp; belts in your file');
-  h+='<p style="font-size:0.78rem;color:var(--muted);margin:0 0 0.6rem;line-height:1.5">Names that already exist are matched automatically. For anything new, choose to <strong style="color:var(--white)">create it</strong> (edit the details), <strong style="color:var(--white)">map</strong> it to something you already have, or <strong style="color:var(--white)">skip</strong> it.</p>';
+  h+='<p style="font-size:0.95rem;color:var(--muted);margin:0 0 0.7rem;line-height:1.55">Names that already exist are matched automatically. For anything new, choose to <strong style="color:var(--white)">create it</strong> (edit the details), <strong style="color:var(--white)">map</strong> it to something you already have, or <strong style="color:var(--white)">skip</strong> it.</p>';
   h+='<div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:1rem">';
   if(pk.length){
     h+='<div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Plans</div>';
     if(noProg){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No programs yet &mdash; create a program to enable auto-creating plans (you can still map or skip).</div>'; }
     pk.forEach(function(k){ var c=ctx.plans[k];
-      if(c.mode==='matched'){ h+='<div style="font-size:0.82rem;color:var(--muted);padding:0.25rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A"></i> '+impEsc(c.raw)+' &rarr; matches an existing plan</div>'; return; }
+      if(c.mode==='matched'){ h+='<div style="font-size:0.98rem;color:var(--muted);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existingplan</div>'; return; }
       h+='<div style="padding:0.45rem 0;border-top:1px solid var(--border)"><div style="font-size:0.85rem;color:var(--white);margin-bottom:0.3rem">'+impEsc(c.raw)+'</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">';
       h+='<select onchange="setImportPlanMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noProg?' disabled':'')+'>Create new plan</option>';
       ctx.mems.forEach(function(m){ h+='<option value="map:'+m.id+'"'+(c.mode==='map'&&c.existingId===m.id?' selected':'')+'>Map to: '+impEsc(m.name)+'</option>'; });
@@ -10335,7 +10335,7 @@ function renderImportPlanBeltReview(){
     if(noSys){ h+='<div style="font-size:0.74rem;color:#E2A84C;margin-bottom:0.4rem">No belt systems yet &mdash; create one to enable auto-creating belts.</div>'; }
     else { h+='<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem">Add new belts to: <select onchange="setImportBeltSystem(this.value)" style="'+sel+'">'+ctx.systems.map(function(s){return '<option value="'+s.id+'"'+(s.id===ctx.beltSystemId?' selected':'')+'>'+impEsc(s.name)+'</option>';}).join('')+'</select></div>'; }
     bk.forEach(function(k){ var c=ctx.beltChoices[k];
-      if(c.mode==='matched'){ h+='<div style="font-size:0.82rem;color:var(--muted);padding:0.25rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A"></i> '+impEsc(c.raw)+' &rarr; matches an existing belt</div>'; return; }
+      if(c.mode==='matched'){ h+='<div style="font-size:0.98rem;color:var(--muted);padding:0.4rem 0"><i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.45rem"></i>'+impEsc(c.raw)+' &rarr; matches an existingbelt</div>'; return; }
       h+='<div style="padding:0.35rem 0;border-top:1px solid var(--border);display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"><span style="font-size:0.85rem;color:var(--white);min-width:110px">'+impEsc(c.raw)+'</span><select onchange="setImportBeltMode(\''+k+'\',this.value)" style="'+sel+'"><option value="create"'+(c.mode==='create'?' selected':'')+(noSys?' disabled':'')+'>Create new belt</option>';
       ctx.belts.forEach(function(b){ h+='<option value="map:'+b.id+'"'+(c.mode==='map'&&c.existingId===b.id?' selected':'')+'>Map to: '+impEsc(b.name)+'</option>'; });
       h+='<option value="skip"'+(c.mode==='skip'?' selected':'')+'>Skip</option></select></div>';
@@ -10399,13 +10399,13 @@ function renderConflictCard(r, ex){
   var idx=r.idx, nameOnly=(r.matchedBy==='name');
   var exName=impEsc(((ex.first_name||'')+' '+(ex.last_name||'')).trim());
   var h='<div style="border:1px solid var(--border);border-left:3px solid #E2A84C;padding:0.6rem 0.75rem;margin-bottom:0.5rem">';
-  h+='<div style="font-size:0.85rem;color:var(--white);margin-bottom:0.35rem">'+impEsc(impRowName(r))+'</div>';
+  h+='<div style="font-size:1.05rem;color:var(--white);margin-bottom:0.4rem">'+impEsc(impRowName(r))+'</div>';
   if(nameOnly){
-    h+='<div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.45rem">A student named <b style="color:var(--white)">'+exName+'</b> already exists. Same person?</div>';
+    h+='<div style="font-size:0.92rem;color:var(--muted);margin-bottom:0.5rem">A student named <b style="color:var(--white)">'+exName+'</b> already exists. Same person?</div>';
     h+=impRadio(idx,'merge','Same person \u2014 merge')+impRadio(idx,'new','Different \u2014 import as new')+impRadio(idx,'skip','Skip');
   }else{
-    h+='<div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.4rem">Matched <b style="color:var(--white)">'+exName+'</b> on '+impEsc(r.matchedBy)+', but '+impEsc((r.conflictFields||[]).join(', '))+' differs:</div>';
-    h+='<div style="font-size:0.74rem;margin-bottom:0.45rem">';
+    h+='<div style="font-size:0.92rem;color:var(--muted);margin-bottom:0.45rem">Matched <b style="color:var(--white)">'+exName+'</b> on '+impEsc(r.matchedBy)+', but '+impEsc((r.conflictFields||[]).join(', '))+' differs:</div>';
+    h+='<div style="font-size:0.9rem;margin-bottom:0.5rem">';
     h+=impFieldDiff('email',ex.email,r.c.email,r.conflictFields);
     h+=impFieldDiff('phone',ex.phone,r.c.phone,r.conflictFields);
     h+=impFieldDiff('dob',ex.date_of_birth,r.c.dob,r.conflictFields);
