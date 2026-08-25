@@ -5172,6 +5172,31 @@ async function renderAccreditationCard(){
       '<div style="font-size:0.88rem;color:var(--muted);line-height:1.55;margin-bottom:1rem">Meet NMAO’s accreditation standards and your <strong style="color:var(--white)">$99/month platform fee is waived as long as your accreditation is in good standing</strong> &mdash; plus you earn the NMAO-Accredited badge that shows your integrity in business and safety. It’s completely optional; keep using the platform either way. The application is a guided upload you can finish over time.</div>'+
       '<button class="panel-action" onclick="openSelfUpload(this)"><i class="fa-solid fa-award"></i> Start accreditation</button>';
   }
+  // §ONBOARDING-DOCS — surface the documents this school uploaded during onboarding (they live on the
+  // prospect pipeline; get-school-onboarding-docs resolves them owner-gated with signed download URLs).
+  body.innerHTML += '<div id="onboardingDocsSection" style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:0.9rem"></div>';
+  if(window.loadOnboardingDocs) loadOnboardingDocs();
+}
+async function loadOnboardingDocs(){
+  var el=document.getElementById('onboardingDocsSection'); if(!el) return;
+  el.innerHTML='<div style="font-size:0.85rem;color:var(--muted)"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading onboarding documents…</div>';
+  try{
+    var tok=await authToken();
+    var r=await fetch(SURL+'/functions/v1/get-school-onboarding-docs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok,'apikey':SKEY},body:JSON.stringify({school_id:SID})});
+    var d=await r.json().catch(function(){return{};});
+    var hd='<div style="font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem">Onboarding documents on file</div>';
+    if(!r.ok||!d.ok){ el.innerHTML=hd+'<div style="font-size:0.88rem;color:var(--muted)">Could not load documents right now.</div>'; return; }
+    if(!d.docs||!d.docs.length){ el.innerHTML=hd+'<div style="font-size:0.88rem;color:var(--muted);font-style:italic">No documents uploaded yet. Anything your school uploads during onboarding shows up here to review.</div>'; return; }
+    var rows=d.docs.map(function(doc){
+      var name=escapeCheckout(doc.original_name||doc.category||'Document');
+      var cat=escapeCheckout(String(doc.category||'').replace(/_/g,' '));
+      var kb=doc.size_bytes?(' · '+Math.max(1,Math.round(doc.size_bytes/1024))+' KB'):'';
+      var when=doc.uploaded_at?new Date(doc.uploaded_at).toLocaleDateString():'';
+      var link=doc.url?('<a href="'+doc.url+'" target="_blank" rel="noopener noreferrer" style="color:var(--gold);white-space:nowrap;font-size:0.9rem"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.3rem"></i>View</a>'):'<span style="color:var(--muted);font-size:0.85rem">unavailable</span>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.55rem 0;border-bottom:1px solid var(--border)"><div style="min-width:0"><div style="font-size:0.95rem;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</div><div style="font-size:0.8rem;color:var(--muted)">'+(cat?cat+' · ':'')+when+kb+'</div></div>'+link+'</div>';
+    }).join('');
+    el.innerHTML=hd+rows;
+  }catch(e){ el.innerHTML='<div style="font-size:0.85rem;color:var(--muted)">Could not load documents right now.</div>'; }
 }
 async function loadPaymentsLedger(){
   var body=document.getElementById('paymentsTableBody'); if(!body) return;
