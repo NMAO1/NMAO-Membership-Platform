@@ -398,7 +398,8 @@
     .test-status-complete { background: rgba(90,154,106,0.15); border: 1px solid rgba(90,154,106,0.4); color: #7DBD7D; }
     .import-mapping-row  { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; background: var(--black); border: 1px solid var(--border); margin-bottom: 0.4rem; }
     .import-col-label    { font-size: 0.78rem; color: var(--muted2); min-width: 130px; flex-shrink: 0; }
-    .import-log-entry    { font-size: 0.75rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+    .import-log-entry    { font-size: 0.92rem; padding: 0.5rem 0.2rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.55rem; line-height: 1.35; }
+    .import-log-entry.info { color: var(--muted2); }
     .import-log-entry.ok   { color: #7DBD7D; }
     .import-log-entry.warn { color: #E07070; }
     .import-log-entry.skip { color: var(--muted); }
@@ -3103,9 +3104,11 @@
       </div>
       <div id="importStepReview" style="display:none"></div>
       <div id="importStep2" style="display:none">
-        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Import Summary</div>
-        <div id="importSummaryStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:0.5rem;margin-bottom:1.25rem"></div>
-        <div id="importLogList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);padding:0.75rem"></div>
+        <div style="font-size:0.85rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Import Summary</div>
+        <div id="importSummaryStats" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"></div>
+        <div id="importSummaryExtras" style="font-size:0.88rem;color:var(--muted);margin-bottom:0.85rem"></div>
+        <div style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Tap a tile to see those names</div>
+        <div id="importLogList" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);padding:0.9rem"></div>
         <button class="panel-action" style="margin-top:1rem" onclick="closeImportTool()"><i class="fa-solid fa-check"></i> Done</button>
       </div>
     </div>
@@ -10450,7 +10453,7 @@ async function applyImportPlan(){
   var p=importPlan;
   var rosterById={}; for(var ri=0;ri<p.roster.length;ri++){ rosterById[p.roster[ri].id]=p.roster[ri]; }
   var created=0, merged=0, restored=0, skipped=0, failed=0;
-  var log=[], resultId={};
+  var log=[], resultId={}; importFailedRows=[];
   function nm(r){ return ((r.c.first||'')+' '+(r.c.last||'')).trim(); }
 
   for(var i=0;i<p.rows.length;i++){
@@ -10462,7 +10465,7 @@ async function applyImportPlan(){
       var res=r.resolution||'skip';
       action=(res==='new')?'insert':((res==='merge'||res==='merge_keep')?'fill':((res==='merge_csv')?'overwrite':'skip'));
     }
-    if(action==='skip'){ skipped++; log.push({row:r.idx+1,msg:nm(r)+' - skipped',status:'skip'}); continue; }
+    if(action==='skip'){ skipped++; log.push({row:r.idx+1,msg:nm(r)+' - skipped',status:'skip',cat:'skipped'}); continue; }
 
     var dob=normDob(r.c.dob);
     if(action==='insert'){
@@ -10470,8 +10473,8 @@ async function applyImportPlan(){
         email:(r.c.email||'').trim()||null, phone:(r.c.phone||'').trim()||null,
         date_of_birth:dob||null, status:normImportStatus(r.c.status), source:'csv_import'};
       var ins=await sb.from('students').insert(payload).select('id').single();
-      if(ins.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+ins.error.message,status:'warn'}); }
-      else { resultId[r.idx]=ins.data.id; created++; log.push({row:r.idx+1,msg:nm(r)+' - added',status:'ok'}); }
+      if(ins.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+ins.error.message,status:'warn',cat:'failed'}); importFailedRows.push(impFailRow(r,ins.error.message)); }
+      else { resultId[r.idx]=ins.data.id; created++; log.push({row:r.idx+1,msg:nm(r)+' - added',status:'ok',cat:'added'}); }
     } else {
       var ex=rosterById[r.matchedId]||{}, upd={};
       if((r.c.email||'').trim() && !ex.email){ upd.email=(r.c.email||'').trim(); }
@@ -10488,11 +10491,11 @@ async function applyImportPlan(){
       var hasKeys=false; for(var k in upd){ if(upd.hasOwnProperty(k)){ hasKeys=true; break; } }
       if(hasKeys){
         var up=await sb.from('students').update(upd).eq('id',r.matchedId);
-        if(up.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+up.error.message,status:'warn'}); continue; }
+        if(up.error){ failed++; log.push({row:r.idx+1,msg:nm(r)+' - '+up.error.message,status:'warn',cat:'failed'}); importFailedRows.push(impFailRow(r,up.error.message)); continue; }
       }
       resultId[r.idx]=r.matchedId;
-      if(action==='restore' || wasDeleted){ restored++; log.push({row:r.idx+1,msg:nm(r)+' - restored',status:'ok'}); }
-      else { merged++; log.push({row:r.idx+1,msg:nm(r)+' - merged',status:'ok'}); }
+      if(action==='restore' || wasDeleted){ restored++; log.push({row:r.idx+1,msg:nm(r)+' - restored',status:'ok',cat:'restored'}); }
+      else { merged++; log.push({row:r.idx+1,msg:nm(r)+' - merged',status:'ok',cat:'merged'}); }
     }
   }
 
@@ -10581,18 +10584,58 @@ async function applyImportPlan(){
 
   await loadStudents(); if(typeof buildHomeStats==='function'){ buildHomeStats(); }
 
-  document.getElementById('importSummaryStats').innerHTML=
-    impStat('#5A9A6A',created,'Added')+impStat('#4C8CE2',merged,'Merged')+impStat('#9A6AD0',restored,'Restored')+
-    impStat('#E07070',skipped,'Skipped')+(failed?impStat('#E07070',failed,'Failed'):'')+
-    impStat('var(--gold)',famCreated+famLinked,'Families')+
-    impStat('#5A9A6A',memAssigned,'Memberships')+impStat('#C0A062',beltAssigned,'Belts')+
-    (_createdPlans?impStat('#4C8CE2',_createdPlans,'Plans made'):'')+(_createdBelts?impStat('#4C8CE2',_createdBelts,'Belts made'):'');
-  document.getElementById('importLogList').innerHTML=log.map(function(e){return '<div class="import-log-entry '+e.status+'"><i class="fa-solid '+(e.status==='ok'?'fa-circle-check':(e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus'))+'"></i>'+(e.row?('Row '+e.row+': '):'')+e.msg+'</div>';}).join('');
+  showImportResult(
+    {all:(created+merged+restored+skipped+failed), added:created, merged:merged, restored:restored, skipped:skipped, failed:failed},
+    {families:(famCreated+famLinked), memberships:memAssigned, belts:beltAssigned, plansMade:_createdPlans, beltsMade:_createdBelts},
+    log
+  );
   document.getElementById('importStepReview').style.display='none';
   document.getElementById('importStep2').style.display='block';
   importApplying=false;
 }
 function impStat(color,n,label){ return '<div style="background:var(--surface);border:1px solid var(--border);padding:0.55rem 0.5rem;text-align:center"><div style="font-family:var(--font-display);font-size:1.6rem;line-height:1.05;color:'+color+'">'+(n||0)+'</div><div style="font-size:0.82rem;letter-spacing:0.03em;text-transform:uppercase;color:var(--muted)">'+label+'</div></div>'; }
+
+// §IMPORT-RESULT — compact single-row filter chips + a drill-down log + failed-row recovery.
+var importResultLog=[], importFailedRows=[], importActiveFilter='all', importResultCounts=null, importResultExtras=null;
+// Capture a failed row's mapped fields + reason so it can be exported and fixed for a clean re-import.
+function impFailRow(r,err){ return { row:(r.idx+1), first:(r.c.first||''), last:(r.c.last||''), email:(r.c.email||''), phone:(r.c.phone||''), dob:(r.c.dob||''), status:(r.c.status||''), membership:(r.c.membership||''), belt:(r.c.belt||''), billing:(r.c.billing_method||''), error:String(err||'') }; }
+function showImportResult(counts, extras, log){
+  importResultCounts=counts; importResultExtras=extras; importResultLog=log||[]; importActiveFilter='all';
+  var ex=[];
+  if(extras.memberships) ex.push(extras.memberships+' membership'+(extras.memberships!==1?'s':''));
+  if(extras.belts) ex.push(extras.belts+' belt'+(extras.belts!==1?'s':''));
+  if(extras.families) ex.push(extras.families+' famil'+(extras.families!==1?'ies':'y'));
+  if(extras.plansMade) ex.push(extras.plansMade+' plan'+(extras.plansMade!==1?'s':'')+' created');
+  if(extras.beltsMade) ex.push(extras.beltsMade+' belt'+(extras.beltsMade!==1?'s':'')+' created');
+  var exEl=document.getElementById('importSummaryExtras'); if(exEl){ exEl.innerHTML= ex.length?('Also assigned — '+ex.join(' · ')):''; }
+  filterImportLog('all');
+}
+function impFilterChip(cat,color,n,label){
+  var active=(importActiveFilter===cat);
+  return '<button type="button" onclick="filterImportLog(\''+cat+'\')" data-impchip="'+cat+'" style="background:'+(active?color:'transparent')+';color:'+(active?'#0A0A0A':color)+';border:1px solid '+color+';border-radius:7px;padding:0.4rem 0.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:0.45rem;font-family:var(--font-ui)"><span style="font-family:var(--font-display);font-size:1.25rem;line-height:1">'+(n||0)+'</span><span style="text-transform:uppercase;letter-spacing:0.05em;font-size:0.8rem">'+label+'</span></button>';
+}
+function filterImportLog(cat){
+  importActiveFilter=cat||'all';
+  var c=importResultCounts||{all:0,added:0,merged:0,restored:0,skipped:0,failed:0};
+  var chips=[['all','var(--gold)','All',c.all],['added','#5A9A6A','Added',c.added],['merged','#4C8CE2','Merged',c.merged],['restored','#9A6AD0','Restored',c.restored],['skipped','#8A8A8A','Skipped',c.skipped],['failed','#E07070','Failed',c.failed]];
+  var stEl=document.getElementById('importSummaryStats'); if(stEl){ stEl.innerHTML=chips.map(function(x){return impFilterChip(x[0],x[1],x[3],x[2]);}).join(''); }
+  var rows=(importResultLog||[]).filter(function(e){ return importActiveFilter==='all' ? true : (e.cat===importActiveFilter); });
+  var head='';
+  if(importActiveFilter==='failed' && importFailedRows.length){ head='<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;margin-bottom:0.6rem;flex-wrap:wrap"><span style="font-size:0.85rem;color:var(--muted)">Fix these rows in a spreadsheet and re-import — matches merge, so no duplicates.</span><button type="button" class="btn-sm" onclick="downloadFailedRows()"><i class="fa-solid fa-download" style="margin-right:0.3rem"></i>Download failed rows (CSV)</button></div>'; }
+  var body = rows.length ? rows.map(function(e){ var icon=(e.status==='ok'?'fa-circle-check':(e.status==='warn'?'fa-triangle-exclamation':'fa-circle-minus')); return '<div class="import-log-entry '+(e.cat==='info'?'info':e.status)+'"><i class="fa-solid '+icon+'" style="margin-top:0.15rem"></i><span>'+(e.row?('Row '+e.row+': '):'')+impEsc(e.msg)+'</span></div>'; }).join('') : '<div style="color:var(--muted);font-style:italic;padding:0.5rem 0;font-size:0.9rem">Nothing in this category.</div>';
+  var listEl=document.getElementById('importLogList'); if(listEl){ listEl.innerHTML=head+body; }
+}
+function downloadFailedRows(){
+  if(!importFailedRows.length){ showToast('No failed rows to download.','warn'); return; }
+  var cols=['First Name','Last Name','Email','Phone','Date of Birth','Status','Membership','Belt Rank','Billing Method','Import Error'];
+  var esc=function(v){ v=(v==null?'':String(v)); return /[",\n\r]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; };
+  var lines=[cols.join(',')];
+  importFailedRows.forEach(function(f){ lines.push([f.first,f.last,f.email,f.phone,f.dob,f.status,f.membership,f.belt,f.billing,f.error].map(esc).join(',')); });
+  var blob=new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='import-failed-rows.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1200);
+}
 /* ===== end §SMART-IMPORT REVIEW ===== */
 
 // Stripe charge flow (J.4.4)
