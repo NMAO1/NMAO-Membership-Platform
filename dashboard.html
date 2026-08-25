@@ -8438,6 +8438,7 @@ var r;
     setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!')),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
     // Family add: refresh the parent profile's Family tile so the new sibling shows immediately.
     else if(_famAdd && currentProfileStudent && currentProfileStudent.id) await buildProfileFamily(currentProfileStudent.id);
+    if(_famAdd) await ensureFamilyInvited(_famAdd);  // §FAMILY-PROPAGATE — provision the family portal login when someone joins a family
     buildSetupChecklist(); setTimeout(closeAddStudent,1200);
   }
 }
@@ -12919,6 +12920,20 @@ async function saveFamily(){
     return true;
   }catch(e){ showToast("Could not send invite: "+(e&&e.message||e),"err"); return false; }
   }
+// §FAMILY-PROPAGATE (Step 4) — when a member joins a family, make sure the family's portal login has
+// been provisioned, so the guardian gets one login that resolves to every ward without staff having to
+// remember a separate invite step. Guarded: sends at most ONCE per family (skips if already invited) and
+// only when a Primary Email is on file (else staff set it in the family modal first). Safe on every add.
+async function ensureFamilyInvited(familyId){
+  if(!familyId) return false;
+  try{
+    var fr=await sb.from('families').select('id,email,name,portal_invited_at').eq('id',familyId).maybeSingle();
+    var f=fr&&fr.data; if(!f) return false;
+    if(f.portal_invited_at) return false;                       // already has a login — new members auto-appear in it
+    if(!f.email || f.email.indexOf('@')===-1) return false;     // no parent email yet — staff sets it in the family modal
+    return await sendFamilyPortalInvite(f.id, f.email, f.name); // sends + stamps portal_invited_at
+  }catch(e){ return false; }
+}
     async function deleteFamily(fid){
   var f=allFamilies.find(function(x){return x.id===fid;});
   if(!f)return;
