@@ -3491,7 +3491,9 @@ async function submitAddFamily(){
   if(d.mode==='paid'&&d.checkout_url){ window.location.href=d.checkout_url; return; }
   msg.style.color='#5A9A6A'; msg.textContent='Added!';
   closeAddFamily();
-  if(currentFamily) showFamilyPortal(currentFamily);
+  // §PORTAL-WARDS — refresh the family view whenever we're in family mode (guardian parents have no
+  // legacy currentFamily row; showFamilyPortal re-resolves wards from get_portal_wards regardless).
+  if(isFamilyMode) showFamilyPortal(currentFamily);
 }
 
 async function showFamilyPortal(family){
