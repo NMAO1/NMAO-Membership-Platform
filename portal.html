@@ -3653,7 +3653,9 @@ function familyClassCardHTML(cls,dateStr,isToday){
   html+='<span class="family-class-type '+(isToday?'type-checkin':'type-reserve')+'">'+(isToday?'Check In':'Reserve')+'</span>';
   html+='</div>';
   html+='<div class="family-children-list">';
-  familyChildren.forEach(function(child){
+  // §SWITCHER-DRIVEN — show only the child chosen in the top switcher (one kid at a time, cleaner);
+  // switching child re-renders the schedule. Falls back to all children if no selection is set.
+  familyChildren.filter(function(c){return !selectedChildId||c.id===selectedChildId;}).forEach(function(child){
     if(cls.program_id&&(familyChildProgIds[child.id]||[]).indexOf(cls.program_id)===-1)return;
     var isSelected=currentSel&&currentSel.studentIds&&currentSel.studentIds.has(child.id);
     var isDone=familyChildDone(cls,dateStr,isToday,child);
@@ -3694,7 +3696,7 @@ function renderFamilySchedule(){
   var el=document.getElementById('scheduleList');
   var now=new Date();
   var html=famViewToggleHTML();
-  html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap each child to check in or reserve, then confirm.</p>';
+  html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Use the switcher above to pick a child, then tap classes to check in or reserve and confirm.</p>';
   var hasAny=false;
   for(var i=0;i<7;i++){
     var d=new Date(now);d.setDate(now.getDate()+i);
