@@ -3431,6 +3431,20 @@
   </div>
 </div>
 
+ <!-- §MODAL-REPLACE-CARD-INLINE — inline card entry for an existing member (Elements + SetupIntent, no hosted page / verify code) -->
+<div class="modal-overlay" id="replaceCardModal">
+  <div class="modal" style="width:min(92vw,420px)">
+    <div class="modal-header"><span class="modal-title">Update Card on File</span><button class="modal-close" onclick="closeReplaceCardInline()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="padding:1.25rem 1.5rem">
+      <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem;display:block">Card details</label>
+      <div id="replaceCardElement" style="background:var(--black);border:1px solid var(--border);padding:0.9rem 0.85rem"></div>
+      <button class="btn-gold-full" id="replaceCardSaveBtn" style="margin-top:1rem" onclick="confirmReplaceCardInline()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card</button>
+      <p class="form-msg" id="replaceCardMsg" style="margin-top:0.6rem;text-align:center"></p>
+      <p style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem">Saved securely by Stripe &mdash; no charge now. Card details never touch our servers.</p>
+    </div>
+  </div>
+</div>
+
  <!-- POS PAYMENT LINK -->
 <div class="modal-overlay" id="posPaymentLinkModal">
   <div class="modal" style="width:460px;max-width:95vw;padding:0">
@@ -7734,7 +7748,7 @@ async function loadProfileCardOnFile(sid){
     if(!data.has_card){
       el.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.6rem">No card on file</div>' +
         '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
-          '<button class="panel-action" style="font-size:0.72rem" onclick="replaceStudentCard(\'' + sid + '\')"><i class="fa-solid fa-credit-card"></i> Add Card</button>' +
+          '<button class="panel-action" style="font-size:0.72rem" onclick="openReplaceCardInline(\'' + sid + '\')"><i class="fa-solid fa-credit-card"></i> Add Card</button>' +
           '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
         '</div>';
       return;
@@ -7747,7 +7761,7 @@ async function loadProfileCardOnFile(sid){
       '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Exp ' + exp + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
-        '<button class="btn-sm" style="font-size:0.72rem" onclick="replaceStudentCard(\'' + sid + '\')"><i class="fa-solid fa-rotate"></i> Replace</button>' +
+        '<button class="btn-sm" style="font-size:0.72rem" onclick="openReplaceCardInline(\'' + sid + '\')"><i class="fa-solid fa-rotate"></i> Replace</button>' +
         '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
         '<button class="btn-sm" style="font-size:0.72rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\')"><i class="fa-solid fa-trash"></i> Remove</button>' +
       '</div>';
@@ -8040,6 +8054,63 @@ async function replaceStudentCard(sid){
     el.innerHTML = origHtml;
     alert('Network error: ' + (e.message || ''));
   }
+}
+
+// §REPLACE-CARD-INLINE — update an EXISTING member's card in-app (Elements + SetupIntent);
+// no hosted page / verification code. create-card-setup-intent saves the card (the student
+// already exists → full mode); apply-card-setup then makes it default + repoints active subs.
+// The hosted replaceStudentCard()/openSendUpdateCardLink() stay as untouched fallbacks.
+var _rcStripe=null,_rcElements=null,_rcCard=null,_rcCS=null,_rcSid=null;
+async function openReplaceCardInline(sid){
+  var m=document.getElementById('replaceCardMsg'); if(m){ m.textContent=''; m.className='form-msg'; }
+  var btn=document.getElementById('replaceCardSaveBtn'); if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card'; }
+  try{
+    await ensureStripeJs();
+    var r=await fetch(SURL+'/functions/v1/create-card-setup-intent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({school_id:SID,student_id:sid})
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.client_secret){ alert('Could not start card entry: '+((data&&data.error)||'unknown error')); return; }
+    _rcSid=sid; _rcCS=data.client_secret;
+    _rcStripe=Stripe(data.publishable_key,{stripeAccount:data.account_id});
+    _rcElements=_rcStripe.elements();
+    _rcCard=_rcElements.create('card',{style:{base:{color:'#F5F0E8',fontFamily:'Lato, sans-serif',fontSize:'15px','::placeholder':{color:'#7A7060'}},invalid:{color:'#E07070'}}});
+    var mount=document.getElementById('replaceCardElement'); if(mount) mount.innerHTML='';
+    _rcCard.mount('#replaceCardElement');
+    document.getElementById('replaceCardModal').classList.add('active');
+  }catch(e){ alert('Could not open card entry: '+(e.message||'')); }
+}
+function closeReplaceCardInline(){
+  document.getElementById('replaceCardModal').classList.remove('active');
+  if(_rcCard){ try{_rcCard.destroy();}catch(e){} }
+  _rcStripe=null; _rcElements=null; _rcCard=null; _rcCS=null; _rcSid=null;
+}
+async function confirmReplaceCardInline(){
+  if(!_rcStripe||!_rcCS) return;
+  var msg=document.getElementById('replaceCardMsg'); msg.textContent=''; msg.className='form-msg';
+  var btn=document.getElementById('replaceCardSaveBtn'); var _h=btn.innerHTML; btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Saving...';
+  try{
+    var res=await _rcStripe.confirmCardSetup(_rcCS,{payment_method:{card:_rcCard}});
+    if(res.error){ msg.textContent=res.error.message||'Card was declined.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+    if(!(res.setupIntent && res.setupIntent.status==='succeeded')){ msg.textContent='Card setup did not complete. Please try again.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+    var sid=_rcSid, pm=res.setupIntent.payment_method;
+    // Card is saved — now make it the default + repoint any active subscription to it.
+    try{
+      var fr=await fetch(SURL+'/functions/v1/apply-card-setup',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+        body:JSON.stringify({school_id:SID,student_id:sid,payment_method_id:pm})
+      });
+      var fd=await fr.json();
+      if(!fr.ok||fd.error){ msg.textContent='Card saved, but activating it failed ('+((fd&&fd.error)||'error')+'). The subscription may still bill the old card — retry, or use Send Link.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+      if(fd.failed>0){ msg.textContent='Card saved & set as default, but '+fd.failed+' subscription(s) may still bill the old card. Please contact support.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+    }catch(e2){ msg.textContent='Card saved, but activating it failed ('+(e2.message||'network')+'). Please retry.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
+    msg.textContent='Card updated.'; msg.className='form-msg success';
+    setTimeout(function(){ closeReplaceCardInline(); if(sid) loadProfileCardOnFile(sid); },700);
+  }catch(e){ msg.textContent=e.message||'Card save failed.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; }
 }
 
 async function removeStudentCard(sid){
@@ -11110,7 +11181,7 @@ async function mdSetBillingMethod(val){
 }
 function mdCancel(){ closeMembershipDetail(); if(typeof openCancelMembership==='function') openCancelMembership(); }
 function mdChangePlan(){ closeMembershipDetail(); if(currentProfileStudent && typeof openCheckout==='function') openCheckout(currentProfileStudent.id,'membership'); }
-function mdAddCard(){ closeMembershipDetail(); if(currentProfileStudent && typeof replaceStudentCard==='function') replaceStudentCard(currentProfileStudent.id); }
+function mdAddCard(){ closeMembershipDetail(); if(currentProfileStudent && typeof openReplaceCardInline==='function') openReplaceCardInline(currentProfileStudent.id); }
 
 function mdEdit(){
   var sm=_mdRow; if(!sm) return;
