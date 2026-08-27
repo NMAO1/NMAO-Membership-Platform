@@ -2679,7 +2679,8 @@
           <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Enrollment <button class="help-hint-inline" onclick="openHelpPopover('students.sec_enrollment',this)" title="Help">?</button></div>
           <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
           <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
-          <div class="field"><label>Billing method</label><select id="stuBillingMethod"><option value="cash">Cash / check</option><option value="autopay">Autopay (activate with the toggle + a card)</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
+          <div class="field"><label>Billing method</label><select id="stuBillingMethod" onchange="onStuBillingChange()"><option value="cash">Cash / check</option><option value="autopay">Autopay (add a card below, then flip the toggle)</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
+          <div class="field" id="stuCardField" style="display:none"><label>Card for autopay <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— saved securely, no charge now</span></label><div id="stuCardElement" style="padding:0.7rem 0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);min-height:1.4rem"></div><p id="stuCardMsg" style="font-size:0.72rem;color:var(--muted);margin:0.4rem 0 0">Optional — leave blank to add a card later from the member's profile.</p></div>
           <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field" style="margin-bottom:0"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
         </div>
       </div>
@@ -8360,11 +8361,12 @@ function openAddStudent() {
   document.getElementById('stuStatus').value    = 'active';
   document.getElementById('studentMsg').textContent = '';
   var _stuBM=document.getElementById('stuBillingMethod'); if(_stuBM) _stuBM.value='cash';  // reset billing to Cash default (no stale carryover from a prior open)
+  resetStuCard();   // §INLINE-CARD — clear any card field from a prior open (hidden until Autopay is picked)
   document.getElementById('stuMembership').innerHTML = '<option value="">-- Select a Program first --</option>';
   populateStudentProgramDropdown();
   document.getElementById('addStudentModal').classList.add('active');
 }
-function closeAddStudent() { _afmFamilyId=null; document.getElementById('addStudentModal').classList.remove('active'); }
+function closeAddStudent() { _afmFamilyId=null; resetStuCard(); document.getElementById('addStudentModal').classList.remove('active'); }
 // §FAMILY-ADD — add a sibling from a student's profile. Ensures the family exists
 // (auto-creating one + linking this student if they're solo, like Sarah Formont),
 // then opens the standard Add Student modal pre-linked to that family. The child is
@@ -8463,19 +8465,95 @@ var r;
   else {
     // §JUNCTION-ON-CREATE — new students get an active student_memberships row so they are
     // visible to kiosk caps, vitals, cancel, and renewals (mirrors the Comp Plan insert shape).
+    var _cardNote='';
     if (!eid && r.data && r.data.id) {
       // §GUARDRAIL — record how this membership is collected; no membership goes active "silently unbilled".
       var _bm=(document.getElementById('stuBillingMethod')&&document.getElementById('stuBillingMethod').value)||'cash';
       var _jrow={ school_id:SID, student_id:r.data.id, membership_id:mid, program_id:pid, status:'active', start_date:(document.getElementById('stuStartDate').value||localDateStr(new Date())), billing_method:_bm };
-      if(_bm==='autopay') _jrow.awaiting_card=true; // autopay with no card yet → flag it (internal only, no auto-send); staff sends a card link when ready
+      if(_bm==='autopay'){
+        // §INLINE-CARD — save a card keyed in the modal now (Elements + SetupIntent; no hosted
+        // page / verify code). Saved → card-on-file; blank/declined/not-connected → awaiting_card
+        // (exactly today's behavior — the card step can never block adding the member).
+        if(_stuStripe && _stuCard){
+          setMsg('studentMsg','Saving card...','');
+          var _cr=await saveStuCardForStudent(r.data.id);
+          if(!_cr.saved){ _jrow.awaiting_card=true; _cardNote=' — card not saved ('+(_cr.error||'skipped')+'); add it from their profile'; }
+        } else {
+          _jrow.awaiting_card=true; // no inline card (e.g. school hasn't connected Stripe) → today's flow
+        }
+      }
       await sb.from('student_memberships').insert(_jrow);
     }
-    setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!')),'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
+    setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!'))+_cardNote, _cardNote?'':'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
     // Family add: refresh the parent profile's Family tile so the new sibling shows immediately.
     else if(_famAdd && currentProfileStudent && currentProfileStudent.id) await buildProfileFamily(currentProfileStudent.id);
     if(_famAdd) await ensureFamilyInvited(_famAdd);  // §FAMILY-PROPAGATE — provision the family portal login when someone joins a family
     buildSetupChecklist(); setTimeout(closeAddStudent,1200);
   }
+}
+
+// §INLINE-CARD — collect a member's card right in the Add-Member modal (Stripe Elements +
+// SetupIntent), so autopay signups skip the hosted card page and its verification code.
+// Reuses the POS Stripe.js loader/pattern (ensureStripeJs). Every failure path falls back to
+// awaiting_card, so this can never block adding a member.
+var _stuStripe=null,_stuElements=null,_stuCard=null,_stuCardMounting=false;
+function onStuBillingChange(){
+  var sel=document.getElementById('stuBillingMethod');
+  var box=document.getElementById('stuCardField');
+  var editing=(document.getElementById('stuEditId')||{}).value;
+  if(!sel||!box) return;
+  if(sel.value==='autopay' && !editing){ box.style.display=''; mountStuCard(); }
+  else { box.style.display='none'; }
+}
+async function mountStuCard(){
+  if(_stuCard||_stuCardMounting) return;   // mount once per modal open
+  _stuCardMounting=true;
+  var box=document.getElementById('stuCardField');
+  var mount=document.getElementById('stuCardElement');
+  try{
+    await ensureStripeJs();
+    // "config" call — publishable key + connected account for THIS school (no student yet).
+    var r=await fetch(SURL+'/functions/v1/create-card-setup-intent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({school_id:SID})
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.publishable_key||!data.account_id){
+      if(box) box.style.display='none';   // school not connected / error → fall back to awaiting_card
+      _stuCardMounting=false; return;
+    }
+    _stuStripe=Stripe(data.publishable_key,{stripeAccount:data.account_id});
+    _stuElements=_stuStripe.elements();
+    _stuCard=_stuElements.create('card',{style:{base:{color:'#F5F0E8',fontFamily:'Lato, sans-serif',fontSize:'15px','::placeholder':{color:'#7A7060'}},invalid:{color:'#E07070'}}});
+    if(mount) mount.innerHTML='';
+    _stuCard.mount('#stuCardElement');
+  }catch(e){ if(box) box.style.display='none'; }   // any failure → silent fallback (no regression)
+  _stuCardMounting=false;
+}
+function resetStuCard(){
+  if(_stuCard){ try{_stuCard.destroy();}catch(e){} }
+  _stuStripe=null; _stuElements=null; _stuCard=null; _stuCardMounting=false;
+  var box=document.getElementById('stuCardField'); if(box) box.style.display='none';
+  var mount=document.getElementById('stuCardElement'); if(mount) mount.innerHTML='';
+}
+// Save the just-keyed card to the NEW student's connected customer. Returns
+// {saved, error}; a false save → caller keeps awaiting_card (today's behavior).
+async function saveStuCardForStudent(studentId){
+  if(!_stuStripe||!_stuCard) return {saved:false, error:null};
+  try{
+    var r=await fetch(SURL+'/functions/v1/create-card-setup-intent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body:JSON.stringify({school_id:SID,student_id:studentId})
+    });
+    var data=await r.json();
+    if(!r.ok||data.error||!data.client_secret) return {saved:false, error:(data&&data.error)||'could not start card setup'};
+    var res=await _stuStripe.confirmCardSetup(data.client_secret,{payment_method:{card:_stuCard}});
+    if(res.error) return {saved:false, error:res.error.message||'card declined'};
+    if(res.setupIntent && res.setupIntent.status==='succeeded') return {saved:true, error:null};
+    return {saved:false, error:'card setup did not complete'};
+  }catch(e){ return {saved:false, error:(e&&e.message)||'card setup failed'}; }
 }
 
 // Student Profile
