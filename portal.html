@@ -760,9 +760,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
           <div class="info-card" id="membershipCard"></div>
         </div>
        <div class="portal-section" id="startMembershipSection" style="display:none">
-          <div class="section-label"><i class="fa-solid fa-circle-check"></i> Activate Membership</div>
+          <div class="section-label" id="startMembershipLabel"><i class="fa-solid fa-circle-check"></i> Activate Membership</div>
           <div class="info-card">
-            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing. You'll enter your card on a secure Stripe page — your first payment is prorated to the next billing date, and future payments run automatically.</p>
+            <div id="startMembershipPlan" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:0.85rem"></div>
+            <p id="startMembershipDesc" style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing.</p>
             <button class="btn-gold" id="startMembershipBtn" onclick="startMembership()"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start my membership</button>
             <p class="form-msg" id="startMembershipMsg"></p>
           </div>
@@ -1791,7 +1792,24 @@ sessionsLoaded=false;bookLoaded=false;shopLoaded=false;
   var pn=(s.programs&&s.programs.name)?s.programs.name:'--';
   var pt=document.getElementById('heroProgram');pt.textContent=pn;pt.style.borderColor=pc;pt.style.color=pc;
   var mn=(s.memberships&&s.memberships.name)?s.memberships.name:'--';
-  var mp=s.memberships?'$'+parseFloat(s.memberships.price||0).toFixed(2)+(s.memberships.billing_type==='monthly'?'/month':s.memberships.billing_type==='yearly'?'/year':''):'--';
+  var mp=s.memberships?planPriceLabel(s.memberships):'--';
+  // §START-PROMPT — name the student + plan on the activation card so a parent starts THIS
+  // membership instead of hunting in "Add family member" (which caused a duplicate + error).
+  if(ssec && s.membership_id && !hasActiveSub){
+    var _fn=s.first_name||'';
+    var _fnE=(typeof afEsc==='function')?afEsc(_fn):_fn;
+    var _mnE=(typeof afEsc==='function')?afEsc(mn):mn;
+    var _possE=_fnE?(_fnE+'’s'):'your';
+    var _possT=_fn?(_fn+'’s'):'your';
+    var _bt=s.memberships?s.memberships.billing_type:null;
+    var _rec=(_bt==='monthly'||_bt==='yearly');
+    var _bl=parseInt(s.memberships&&s.memberships.billing_length,10)||1;
+    var _term=_rec?'future payments run automatically':('this is a one-time charge'+(_bl>1?(' covering a '+_bl+'-month term'):'')+' and does not auto-renew');
+    var _lbl=document.getElementById('startMembershipLabel'); if(_lbl) _lbl.innerHTML='<i class="fa-solid fa-circle-check"></i> Activate '+_possE+' Membership';
+    var _plEl=document.getElementById('startMembershipPlan'); if(_plEl) _plEl.innerHTML='<div style="font-size:0.9rem;color:var(--white);font-weight:600">'+_mnE+'</div><div style="font-size:0.85rem;color:var(--gold);margin-top:0.15rem">'+mp+'</div>';
+    var _dsEl=document.getElementById('startMembershipDesc'); if(_dsEl) _dsEl.textContent='Enter a card to start '+_possT+' membership — '+_term+'.';
+    var _btnEl=document.getElementById('startMembershipBtn'); if(_btnEl) _btnEl.innerHTML='<i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start '+_possE+' membership';
+  }
   var ml=s.memberships?(s.memberships.class_limit_type==='unlimited'?'Unlimited classes':s.memberships.class_limit_type):'--';
   document.getElementById('membershipCard').innerHTML='<div class="info-row"><div class="info-label"><i class="fa-solid fa-id-card" style="margin-right:0.3rem"></i>Plan</div><div class="info-value">'+mn+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-dollar-sign" style="margin-right:0.3rem"></i>Price</div><div class="info-value" style="color:var(--gold)">'+mp+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-check" style="margin-right:0.3rem"></i>Access</div><div class="info-value">'+ml+'</div></div><div class="info-row"><div class="info-label"><i class="fa-solid fa-calendar-plus" style="margin-right:0.3rem"></i>Member Since</div><div class="info-value">'+(s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'--')+'</div></div>';
 renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_member_card_updates)document.getElementById('cardUpdateSection').style.display='';
@@ -3458,6 +3476,20 @@ function clearShopBadge(){
 var afSelectedPlan=null;
 function afEsc(s){ return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function closeAddFamily(){ document.getElementById('addFamilyModal').style.display='none'; }
+// Canonical membership price/term label — mirrors the dashboard's smPriceLabel.
+// monthly → /mo (or "every N months" for multi-month cycles); yearly → /yr;
+// ANY other billing_type (trial / term / pack) is a ONE-TIME charge covering a
+// term → show the term length, NEVER a misleading "/month".
+function planPriceLabel(m){
+  if(!m) return '--';
+  var price=parseFloat(m.price||0);
+  var bl=parseInt(m.billing_length,10)||1;
+  var unit=(m.billing_unit||'months').replace(/s$/,'');
+  var base='$'+price.toFixed(2);
+  if(m.billing_type==='monthly') return base+((m.billing_unit==='months'&&bl>1)?(' every '+bl+' months'):'/mo');
+  if(m.billing_type==='yearly') return base+'/yr';
+  return base+(bl>1?(' · '+bl+'-'+unit+' term'):' · one-time');
+}
 async function openAddFamily(){
   ['afFirst','afLast','afDob','afEmail','afNotes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('afMsg').textContent=''; afSelectedPlan=null;
@@ -3467,7 +3499,7 @@ async function openAddFamily(){
   if(r.error||!r.data||!r.data.length){ plansEl.innerHTML='<div style="color:var(--muted);font-size:0.8rem">No self-signup plans are available right now. Please contact your school.</div>'; return; }
   plansEl.innerHTML=r.data.map(function(m){
     var price=parseFloat(m.price)||0, fee=parseFloat(m.signup_fee)||0;
-    var priceTxt=(price+fee)>0?('$'+price.toFixed(2)+(m.billing_unit?(' / '+m.billing_unit):'')+(fee>0?(' + $'+fee.toFixed(2)+' signup'):'')):'Free';
+    var priceTxt=(price+fee)>0?(planPriceLabel(m)+(fee>0?(' + $'+fee.toFixed(2)+' signup'):'')):'Free';
     return '<label class="af-plan" data-mid="'+m.id+'" onclick="afPickPlan(\''+m.id+'\',this)"><input type="radio" name="afplan"><span style="flex:1">'+afEsc(m.name)+'</span><span style="color:var(--gold);white-space:nowrap">'+priceTxt+'</span></label>';
   }).join('');
 }
