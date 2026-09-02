@@ -5579,6 +5579,8 @@ var HELP_CONTENT = {
     example: 'Example: Adult Unlimited, Karate and BJJ, 150 per month, unlimited classes.'
   },
   'memberships.sec_billing': { title: 'Billing', purpose: 'How this plan charges: the type, the interval, the price, and any signup fee.' },
+'memberships.waive': { title: 'Waive next bill', purpose: 'Skips ONE upcoming charge: the next bill is set to $0 in Stripe, then billing resumes at full price the very next cycle. Autopay stays on and the billing term does not extend — you are giving away one cycle, not adding free time to the end.', example: 'Example: a $150/mo member has a tight month, so you waive their next bill — they are charged $0 this cycle, then $150 again next month. Want EVERY bill free instead? Use Comp (free).' },
+'memberships.comp': { title: 'Comp (free)', purpose: 'Makes the plan free from now on: billing is paused so the member is never charged — until you click End comp. The subscription is kept and the billing term does not extend.', example: 'Example: you give a staff member a free membership — hit Comp (free) and their $150/mo bills stop entirely; click End comp anytime to resume. Just covering ONE month? Use Waive next bill instead.' },
 'memberships.sec_basics': { title: 'Plan basics', purpose: 'The plan name, description, and which programs it covers.' },
 'memberships.sec_commitment': { title: 'Commitment and cancellation', purpose: 'Optional term length, early-cancel fees, and whether members can cancel or pause themselves from the portal.' },
 'memberships.sec_display': { title: 'Display and public sign-up', purpose: 'Where this plan appears: visibility, featured placement, and public QR/link sign-up with an optional offer headline.' },
@@ -8897,19 +8899,14 @@ async function issueCredit(){
   if(!currentProfileStudent){msg.textContent='No student loaded.';msg.style.color='#E07070';return;}
   var btn=document.getElementById('issueCreditBtn');btn.disabled=true;
   var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
-  // §CREDIT-AUTOPAY — route through issue-account-credit so a credit for an autopay member is also
-  // pushed to Stripe (reduces the next invoice). No autopay sub → it's simply granted (POS-spendable).
-  try{
-    var r=await fetch(SURL+'/functions/v1/issue-account-credit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),reason:reason,applied_by:uid})});
-    var d={}; try{ d=await r.json(); }catch(e){}
-    btn.disabled=false;
-    if(!r.ok||d.error){ msg.textContent='Failed: '+((d.error||'error').replace(/^[A-Z_]+:\s*/,'')); msg.style.color='#E07070'; return; }
-    msg.textContent = d.applied_to_stripe ? 'Credit issued — applied to the next autopay bill.' : (d.note || 'Credit issued.');
-    msg.style.color='#70C070';
-    await loadStudentCredit(currentProfileStudent.id);
-    if(currentProfileStudent && currentProfileStudent.id){ try{ _billsCtx.loaded=false; await loadBillsSummary(currentProfileStudent.id); }catch(e){} }
-    setTimeout(toggleIssueCreditForm,1400);
-  }catch(e){ btn.disabled=false; msg.textContent='Failed: '+(e&&e.message?e.message:e); msg.style.color='#E07070'; }
+  // Credit lands in the Account Credit balance (visible + POS-spendable). For an autopay member it is
+  // applied automatically to their next invoice at charge time (stripe-webhook §CREDIT-AT-INVOICE).
+  var r=await sb.from('account_credits').insert({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),type:'adjustment',reason:reason,created_by:uid});
+  btn.disabled=false;
+  if(r.error){msg.textContent='Failed: '+r.error.message;msg.style.color='#E07070';return;}
+  msg.textContent='Credit issued.';msg.style.color='#70C070';
+  await loadStudentCredit(currentProfileStudent.id);
+  setTimeout(toggleIssueCreditForm,900);
 }
 
 function smTermLine(sm){
@@ -9011,10 +9008,11 @@ function renderCompControls(sm){
   var isComp = (sm.billing_method==='comp');
   var btn = function(fn,icon,label,title){ return '<button onclick="event.stopPropagation();'+fn+'(\''+sm.id+'\')" title="'+title+'" '+
     'style="display:inline-flex;align-items:center;gap:0.4rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;border-radius:999px;padding:0.32rem 0.8rem;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:var(--font-ui);transition:border-color 0.18s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><i class="fa-solid '+icon+'" style="color:var(--gold)"></i>'+label+'</button>'; };
+  var help = function(key){ return '<button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover(\''+key+'\',this)" title="What\'s the difference?">?</button>'; };
   var out='';
-  if(live) out+=btn('compNextBill','fa-forward-step','Waive next bill','Waive the next charge only — sets it to $0 in Stripe. Billing resumes the cycle after.');
-  if(isComp) out+=btn('endCompMembership','fa-rotate-left','End comp','End the comp and resume normal billing.');
-  else if(sm.stripe_subscription_id) out+=btn('compMembershipFree','fa-hand-holding-heart','Comp (free)','Make this plan free — pauses billing so the member is never charged. The term does not extend; un-comp anytime.');
+  if(live) out+=btn('compNextBill','fa-forward-step','Waive next bill','Waive the next charge only — sets it to $0 in Stripe. Billing resumes the cycle after.')+help('memberships.waive');
+  if(isComp) out+=btn('endCompMembership','fa-rotate-left','End comp','End the comp and resume normal billing.')+help('memberships.comp');
+  else if(sm.stripe_subscription_id) out+=btn('compMembershipFree','fa-hand-holding-heart','Comp (free)','Make this plan free — pauses billing so the member is never charged. The term does not extend; un-comp anytime.')+help('memberships.comp');
   return out;
 }
 async function compMembershipFree(smId){
