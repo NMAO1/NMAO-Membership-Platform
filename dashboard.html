@@ -2188,7 +2188,7 @@
                 <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">Account Credit <span id="profileCreditBalance" style="color:#F5F0E8;font-family:var(--font-display);font-size:0.95rem;margin-left:0.35rem">$0.00</span></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                   <button onclick="openChangeMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-right-left" style="color:var(--gold)"></i> Switch Plan</button>
-                  <button onclick="openAddMembershipToProfile()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-gift" style="color:var(--gold)"></i> Comp Plan</button>
+                  <button onclick="openAddMembershipToProfile()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-gift" style="color:var(--gold)"></i> Add Free Plan</button>
                   <button onclick="toggleIssueCreditForm()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"><i class="fa-solid fa-plus" style="color:var(--gold)"></i> Issue Credit</button>
                   <button onclick="openCancelMembership()" style="padding:0.8rem 0.6rem;background:var(--black);border:1px solid #5A2A2A;color:#E07070;font-family:var(--font-ui);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:border-color 0.18s" onmouseover="this.style.borderColor='#E07070'" onmouseout="this.style.borderColor='#5A2A2A'"><i class="fa-solid fa-ban"></i> Cancel Plan</button>
                 </div>
@@ -9010,9 +9010,9 @@ function renderCompControls(sm){
   var live = !!sm.stripe_subscription_id && (sm.autopay===true || sm.billing_method==='autopay');
   var isComp = (sm.billing_method==='comp');
   var btn = function(fn,icon,label,title){ return '<button onclick="event.stopPropagation();'+fn+'(\''+sm.id+'\')" title="'+title+'" '+
-    'style="display:inline-flex;align-items:center;gap:0.35rem;background:var(--black);border:1px solid var(--border);color:#7DAAD4;border-radius:999px;padding:0.3rem 0.7rem;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:var(--font-ui)" onmouseover="this.style.borderColor=\'#7DAAD4\'" onmouseout="this.style.borderColor=\'var(--border)\'"><i class="fa-solid '+icon+'"></i>'+label+'</button>'; };
+    'style="display:inline-flex;align-items:center;gap:0.4rem;background:var(--black);border:1px solid var(--border);color:#F5F0E8;border-radius:999px;padding:0.32rem 0.8rem;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:var(--font-ui);transition:border-color 0.18s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><i class="fa-solid '+icon+'" style="color:var(--gold)"></i>'+label+'</button>'; };
   var out='';
-  if(live) out+=btn('compNextBill','fa-gift','Waive next bill','Waive the next charge only — sets it to $0 in Stripe. Billing resumes the cycle after.');
+  if(live) out+=btn('compNextBill','fa-forward-step','Waive next bill','Waive the next charge only — sets it to $0 in Stripe. Billing resumes the cycle after.');
   if(isComp) out+=btn('endCompMembership','fa-rotate-left','End comp','End the comp and resume normal billing.');
   else if(sm.stripe_subscription_id) out+=btn('compMembershipFree','fa-hand-holding-heart','Comp (free)','Make this plan free — pauses billing so the member is never charged. The term does not extend; un-comp anytime.');
   return out;
@@ -9306,7 +9306,7 @@ async function openChangeMembership() {
 }
 async function openAddMembershipToProfile() {
   if (!currentProfileStudent) return;
-  document.getElementById('profileMembershipChangeTitle').textContent='Comp Plan';
+  document.getElementById('profileMembershipChangeTitle').textContent='Add Free Plan';
   document.getElementById('profileMembershipChangeBox').style.display='block';
   document.getElementById('changeMembershipMsg').textContent='';
   var sel=document.getElementById('profileMemSelect'); sel.innerHTML='<option value="">-- Select a Plan to Add --</option>';
@@ -9323,7 +9323,7 @@ async function saveChangeMembership() {
   setMsg('changeMembershipMsg','Saving...','');
   var mid=val; var pid=null; if(val.includes('|')){var parts=val.split('|');mid=parts[0];pid=parts[1];}
   var title=document.getElementById('profileMembershipChangeTitle').textContent;
-  if(title==='Comp Plan'){
+  if(title==='Add Free Plan'){
     var r=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'add',p_program_id:pid});
     if(r.error){setMsg('changeMembershipMsg',r.error.message,'error');}else{setMsg('changeMembershipMsg','Added!','success');await loadProfileMemberships(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMembershipChangeBox').style.display='none';},800);}
   }else{
