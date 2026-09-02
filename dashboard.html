@@ -8896,14 +8896,20 @@ async function issueCredit(){
   if(!reason){msg.textContent='Enter a reason (kept on the audit trail).';msg.style.color='#E07070';return;}
   if(!currentProfileStudent){msg.textContent='No student loaded.';msg.style.color='#E07070';return;}
   var btn=document.getElementById('issueCreditBtn');btn.disabled=true;
-  var sess=await sb.auth.getSession();
-  var uid=(sess&&sess.data&&sess.data.session)?sess.data.session.user.id:null;
-  var r=await sb.from('account_credits').insert({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),type:'adjustment',reason:reason,created_by:uid});
-  btn.disabled=false;
-  if(r.error){msg.textContent='Failed: '+r.error.message;msg.style.color='#E07070';return;}
-  msg.textContent='Credit issued.';msg.style.color='#70C070';
-  await loadStudentCredit(currentProfileStudent.id);
-  setTimeout(toggleIssueCreditForm,900);
+  var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
+  // §CREDIT-AUTOPAY — route through issue-account-credit so a credit for an autopay member is also
+  // pushed to Stripe (reduces the next invoice). No autopay sub → it's simply granted (POS-spendable).
+  try{
+    var r=await fetch(SURL+'/functions/v1/issue-account-credit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),reason:reason,applied_by:uid})});
+    var d={}; try{ d=await r.json(); }catch(e){}
+    btn.disabled=false;
+    if(!r.ok||d.error){ msg.textContent='Failed: '+((d.error||'error').replace(/^[A-Z_]+:\s*/,'')); msg.style.color='#E07070'; return; }
+    msg.textContent = d.applied_to_stripe ? 'Credit issued — applied to the next autopay bill.' : (d.note || 'Credit issued.');
+    msg.style.color='#70C070';
+    await loadStudentCredit(currentProfileStudent.id);
+    if(currentProfileStudent && currentProfileStudent.id){ try{ _billsCtx.loaded=false; await loadBillsSummary(currentProfileStudent.id); }catch(e){} }
+    setTimeout(toggleIssueCreditForm,1400);
+  }catch(e){ btn.disabled=false; msg.textContent='Failed: '+(e&&e.message?e.message:e); msg.style.color='#E07070'; }
 }
 
 function smTermLine(sm){
@@ -8949,7 +8955,7 @@ async function loadProfileMemberships(sid) {
       var price=m?smPriceLabel(m):'--';
       var cl=m?smClassLine(m):'';
       var since=sm.start_date?('Member since '+smDateLabel(sm.start_date)):'';
-      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+renderCompControls(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
@@ -8993,6 +8999,40 @@ async function toggleAutopay(smId, turnOn){
   } else {
     if(!confirm('Turn autopay OFF?\n\nThis PAUSES billing — the subscription is kept and can be resumed anytime. To fully cancel the plan, use Cancel Plan under More actions.')) return;
     await callEnsureSubscription({student_membership_id:smId, autopay:false}, 'Autopay off — billing paused.');
+  }
+}
+
+// §COMP — comp controls for a plan. Two shapes, both reconcile Stripe so the charge actually stops:
+//   "Waive next bill" = one-off (comp-next-invoice zeroes the next invoice; billing resumes next cycle).
+//   "Comp (free)"     = ongoing (ensure-subscription void-pauses the sub, labels it 'comp'; member is
+//                       never charged and the billing term does NOT extend). "End comp" resumes billing.
+function renderCompControls(sm){
+  var live = !!sm.stripe_subscription_id && (sm.autopay===true || sm.billing_method==='autopay');
+  var isComp = (sm.billing_method==='comp');
+  var btn = function(fn,icon,label,title){ return '<button onclick="event.stopPropagation();'+fn+'(\''+sm.id+'\')" title="'+title+'" '+
+    'style="display:inline-flex;align-items:center;gap:0.35rem;background:var(--black);border:1px solid var(--border);color:#7DAAD4;border-radius:999px;padding:0.3rem 0.7rem;font-size:0.68rem;font-weight:700;cursor:pointer;font-family:var(--font-ui)" onmouseover="this.style.borderColor=\'#7DAAD4\'" onmouseout="this.style.borderColor=\'var(--border)\'"><i class="fa-solid '+icon+'"></i>'+label+'</button>'; };
+  var out='';
+  if(live) out+=btn('compNextBill','fa-gift','Waive next bill','Waive the next charge only — sets it to $0 in Stripe. Billing resumes the cycle after.');
+  if(isComp) out+=btn('endCompMembership','fa-rotate-left','End comp','End the comp and resume normal billing.');
+  else if(sm.stripe_subscription_id) out+=btn('compMembershipFree','fa-hand-holding-heart','Comp (free)','Make this plan free — pauses billing so the member is never charged. The term does not extend; un-comp anytime.');
+  return out;
+}
+async function compMembershipFree(smId){
+  var sm=_profileMemsById[smId]; if(!sm) return;
+  if(!confirm('Comp this plan (make it free)?\n\nBilling is PAUSED so the member is never charged. The subscription is kept and the billing term does NOT extend — un-comp anytime to resume normal billing.')) return;
+  await callEnsureSubscription({student_membership_id:smId, autopay:false, off_billing_method:'comp'}, 'Plan comped — billing paused, member not charged.');
+}
+async function endCompMembership(smId){
+  var sm=_profileMemsById[smId]; if(!sm) return;
+  if(sm.stripe_subscription_id){
+    if(!confirm('End the comp and resume normal billing for this plan?')) return;
+    await callEnsureSubscription({student_membership_id:smId, autopay:true}, 'Comp ended — billing resumed.');
+  } else {
+    if(!confirm('End the comp for this plan? No subscription is on file, so this just sets billing back to Cash.')) return;
+    try{ await sb.from('student_memberships').update({billing_method:'cash'}).eq('id',smId);
+      if(window.showToast) showToast('Comp ended.','ok');
+      if(currentProfileStudent && currentProfileStudent.id) await loadProfileMemberships(currentProfileStudent.id);
+    }catch(e){ alert('Failed: '+(e&&e.message?e.message:e)); }
   }
 }
 
