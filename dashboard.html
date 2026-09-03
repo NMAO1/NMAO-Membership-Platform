@@ -8974,13 +8974,29 @@ var _profileHasCard = null;   // null = unknown; set true/false when the card ti
 var _autopayCtx = null;
 
 function renderAutopayToggle(sm){
-  var on = (sm.autopay===true || sm.billing_method==='autopay');
-  var bg = on ? '#2E7D46' : '#B23A3A';           // loud green / red so state reads at a glance
-  var lbl = on ? 'AUTOPAY ON' : 'AUTOPAY OFF';
-  var icon = on ? 'fa-bolt' : 'fa-bolt-slash';
-  return '<button onclick="event.stopPropagation();toggleAutopay(\''+sm.id+'\','+(!on)+')" '+
+  // §TOGGLE-STATE — reflect ACTUAL billing state, not just intent. Green ON only when a live Stripe
+  // subscription is actively billing. A row flagged autopay/awaiting_card with NO subscription is enrollment
+  // limbo (needs card), NOT enrolled — never show it green. A comped sub is paused, not billing.
+  var hasSub = !!sm.stripe_subscription_id;
+  var isComp = (sm.billing_method==='comp');
+  var live = hasSub && !isComp;                                       // truly billing
+  var intended = (sm.autopay===true || sm.billing_method==='autopay' || sm.awaiting_card===true);
+  var bg, lbl, icon, tip;
+  if(live){
+    bg='#2E7D46'; lbl='AUTOPAY ON'; icon='fa-bolt'; tip='Click to turn autopay OFF — pause billing';
+  } else if(hasSub && isComp){
+    bg='#3A6EA5'; lbl='COMPED · PAUSED'; icon='fa-hand-holding-heart'; tip='Comped — billing paused, member not charged. Click to resume normal billing.';
+  } else if(intended){
+    bg='#B9822E'; lbl='NEEDS CARD'; icon='fa-triangle-exclamation'; tip='Autopay intended but no active subscription — add a card and enroll to start billing.';
+  } else if(sm.billing_method==='external'){
+    bg='#4A4A4A'; lbl='PREPAID'; icon='fa-money-check-dollar'; tip='Paid in full / external — not on autopay.';
+  } else {
+    bg='#B23A3A'; lbl='AUTOPAY OFF'; icon='fa-bolt-slash'; tip='Click to turn autopay ON — start billing';
+  }
+  var turnOn = !live;                                                 // enrolled → click pauses; else → click starts/resumes
+  return '<button onclick="event.stopPropagation();toggleAutopay(\''+sm.id+'\','+turnOn+')" '+
     'style="display:inline-flex;align-items:center;gap:0.4rem;background:'+bg+';color:#fff;border:1px solid rgba(255,255,255,0.18);border-radius:999px;padding:0.32rem 0.8rem;font-size:0.68rem;font-weight:800;letter-spacing:0.05em;cursor:pointer;font-family:var(--font-ui)" '+
-    'title="Click to turn autopay '+(on?'OFF — pause billing':'ON — start billing')+'"><i class="fa-solid '+icon+'"></i>'+lbl+'</button>'+
+    'title="'+tip+'"><i class="fa-solid '+icon+'"></i>'+lbl+'</button>'+
     '<button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover(\'profile.autopay\',this)" title="What is autopay?">?</button>';
 }
 
@@ -9129,7 +9145,7 @@ async function chargeForPlan(smid){
     if(balanceCents<0) balanceCents=0;
     var priceCents=Math.round((m.price||0)*100);
     var isRecurring = !!INTERVAL_MAP[m.billing_type] && m.class_limit_type!=='class_pack';
-    _chargePlan={ name:(m.name||'Plan'), membershipId:planId, plan:m, isRecurring:isRecurring, priceCents:priceCents, balanceCents:balanceCents, passFees:passFees, applyCents:Math.min(balanceCents,priceCents), idemKey:'cp_'+Date.now()+'_'+Math.round(Math.random()*100000) };
+    _chargePlan={ smId:smid, name:(m.name||'Plan'), membershipId:planId, plan:m, isRecurring:isRecurring, priceCents:priceCents, balanceCents:balanceCents, passFees:passFees, applyCents:Math.min(balanceCents,priceCents), idemKey:'cp_'+Date.now()+'_'+Math.round(Math.random()*100000) };
     document.getElementById('chargePlanName').textContent=_chargePlan.name+(isRecurring?(' (auto-renews '+smFreqWord(m)+')'):' (one-time)');
     document.getElementById('chargePlanPrice').textContent=isRecurring?smPriceLabel(m):('$'+(priceCents/100).toFixed(2));
     var crow=document.getElementById('chargePlanCreditRow');
@@ -9218,6 +9234,10 @@ async function confirmChargePlan(){
       msg.textContent='Subscription started. First charge $'+(firstCharge/100).toFixed(2)+(appliedC>0?(' ($'+(appliedC/100).toFixed(2)+' credit applied)'):'')+'.';
     } else {
       msg.textContent='Charged $'+((data.gross_charged_cents||0)/100).toFixed(2)+' to card'+(appliedC>0?(' ($'+(appliedC/100).toFixed(2)+' credit applied)'):'')+'.';
+      // §ONE-TIME RECONCILE — a paid-in-full non-recurring plan has no live subscription, so clear any
+      // autopay-setup residue (awaiting_card / billing_method='autopay') that leaves it in card-limbo with a
+      // misleading green toggle. 'external' = paid-in-full / prepaid term.
+      if(_chargePlan.smId){ try{ await sb.from('student_memberships').update({awaiting_card:false, autopay:false, billing_method:'external'}).eq('id',_chargePlan.smId); }catch(e){} }
     }
     msg.style.color='#70C070';
     await loadStudentCredit(currentProfileStudent.id);
