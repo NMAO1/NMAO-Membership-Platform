@@ -11207,6 +11207,21 @@ async function mdSetBillingMethod(val){
     return;
   }
   if(msgEl){ msgEl.textContent='Saving…'; msgEl.style.color='var(--muted)'; }
+  // §BM-RECONCILE — when a LIVE Stripe subscription exists, changing the billing method must reach
+  // Stripe, not just relabel the DB (else Stripe keeps charging after staff believe they moved the
+  // member off autopay). Route through ensure-subscription: non-autopay → void-pause + label; autopay
+  // → resume. With no live sub there's nothing to reconcile, so just persist the label.
+  if(_mdRow.stripe_subscription_id){
+    var ap = (v==='autopay');
+    var ok = await callEnsureSubscription(
+      ap ? {student_membership_id:_mdRow.id, autopay:true}
+         : {student_membership_id:_mdRow.id, autopay:false, off_billing_method:v},
+      ap ? 'Autopay resumed — billing on.' : ('Billing set to '+v+' — Stripe subscription paused.'),
+      function(err){ if(msgEl){ msgEl.textContent=err; msgEl.style.color='#E07070'; } });
+    if(ok){ _mdRow.billing_method=(ap?'autopay':v); _mdRow.autopay=ap;
+      if(msgEl){ msgEl.textContent='Saved'; msgEl.style.color='#5A9A6A'; setTimeout(function(){ if(msgEl) msgEl.textContent=''; },1500); } }
+    return;
+  }
   try{
     var r = await sb.from('student_memberships').update({billing_method:v}).eq('id',_mdRow.id);
     if(r.error) throw r.error;
