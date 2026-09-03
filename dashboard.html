@@ -3597,6 +3597,14 @@ function localDateStr(d){
   var day = d.getDate(); day = day<10 ? '0'+day : ''+day;
   return y+'-'+m+'-'+day;
 }
+// §TZ — "today"/weekday must be the SCHOOL's local day, not the operator's browser/UTC day, or the
+// header + today's-schedule + calendar highlight the wrong day near local midnight (or off-site staff).
+// SCHOOL_TZ is set from schools.timezone in initSessionGuard (NULL → Eastern default).
+var SCHOOL_TZ='America/New_York';
+function tzToday(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:SCHOOL_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return localDateStr(new Date()); } }
+function tzDow(){ try{ return {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[new Intl.DateTimeFormat('en-US',{timeZone:SCHOOL_TZ,weekday:'short'}).format(new Date())]; }catch(e){ return new Date().getDay(); } }
+function tzHour(){ try{ return parseInt(new Intl.DateTimeFormat('en-US',{timeZone:SCHOOL_TZ,hour:'2-digit',hour12:false}).format(new Date()),10)%24; }catch(e){ return new Date().getHours(); } }
+function ymdAdd(y,n){ var p=y.split('-'); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCDate(d.getUTCDate()+n); return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2); }
 
 async function initSessionGuard(){
   var ur = await sb.auth.getUser();
@@ -3608,7 +3616,7 @@ async function initSessionGuard(){
 
   // §SESSION-GUARD — single source of truth for auth + SID
   // Primary path: school owner
-  var sr = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
+  var sr = await sb.from('schools').select('id,name,email,is_active,timezone').eq('owner_id', user.id).limit(1);
   var school = null;
 
   if(!sr.error && sr.data && sr.data.length){
@@ -3632,7 +3640,7 @@ async function initSessionGuard(){
         });
         var mkBody = await mk.json().catch(function(){ return {}; });
         if(mk.ok && !mkBody.error){   // §AUTO-CREATE: register-school returns HTTP 200 even on internal errors — check the body too
-          var sr2 = await sb.from('schools').select('id,name,email,is_active').eq('owner_id', user.id).limit(1);
+          var sr2 = await sb.from('schools').select('id,name,email,is_active,timezone').eq('owner_id', user.id).limit(1);
           if(!sr2.error && sr2.data && sr2.data.length){ school = sr2.data[0]; SID = school.id; }
         } else if(mkBody.error){ console.error('[session-guard] register-school reported:', mkBody.error); }
       }catch(e){ console.error('[session-guard] auto-create school failed:', e); }
@@ -3647,11 +3655,12 @@ async function initSessionGuard(){
         return false;
       }
       SID = instrCheck.data.school_id;
-      var s2 = await sb.from('schools').select('id,name,email,is_active').eq('id', SID).single();
+      var s2 = await sb.from('schools').select('id,name,email,is_active,timezone').eq('id', SID).single();
       if(s2.data) school = s2.data;
     }
   }
 
+  if(school && school.timezone) SCHOOL_TZ = school.timezone;   // school-local tz for header + schedule/calendar
   ownerEmail = user.email;
   window.CURRENT_USER = user;
   window.CURRENT_SCHOOL = school;
@@ -3800,12 +3809,13 @@ async function init() {
     document.getElementById('userName').textContent    = name;
     document.getElementById('userInitial').textContent = name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();
     var now = new Date();
-    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    var hour = now.getHours();
+    // render the SCHOOL's local day, not the operator's browser day
+    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:SCHOOL_TZ});
+    document.getElementById('todayFull').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:SCHOOL_TZ});
+    var hour = tzHour();
     var greeting = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
     document.getElementById('homeGreeting').textContent = greeting + ', ' + name.split(' ')[0];
-    document.getElementById('homeDateSub').textContent  = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    document.getElementById('homeDateSub').textContent  = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:SCHOOL_TZ});
     try { var sv=localStorage.getItem('nmao_cal_view'); if(sv) calView=sv; } catch(e) {}
     // Init Quill editors
     setTimeout(function() {
@@ -6218,7 +6228,7 @@ function buildCalendar(){
   var now=new Date(); var start=new Date(now); start.setDate(now.getDate()-now.getDay()+(calWeekOffset*7));
   var end=new Date(start); end.setDate(start.getDate()+6);
   document.getElementById('weekRangeLabel').textContent=start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' - '+end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  var todayStr=localDateStr(now);
+  var todayStr=tzToday();
   for(var i=0;i<7;i++){
     var d=new Date(start); d.setDate(start.getDate()+i);
     var dayEl=document.getElementById('calDay'+i); var dStr=localDateStr(d);
@@ -6238,7 +6248,7 @@ function buildMonthCalendar(){
   document.getElementById('monthLabel').textContent=MONTHS[target.getMonth()]+' '+target.getFullYear();
   var firstDay=target.getDay(); var daysInMonth=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();
   var prevDays=new Date(target.getFullYear(),target.getMonth(),0).getDate();
-  var todayStr=localDateStr(now); var cells=[];
+  var todayStr=tzToday(); var cells=[];
   for(var i=firstDay-1;i>=0;i--){cells.push({day:prevDays-i,month:'prev'});}
   for(var d=1;d<=daysInMonth;d++){cells.push({day:d,month:'current'});}
   var remaining=42-cells.length; for(var n=1;n<=remaining;n++){cells.push({day:n,month:'next'});}
@@ -6507,7 +6517,7 @@ function closeClassRoster(){
 }
 // ─────────────────────────────── §SCHEDULE ───────────────────────────────
 
-function getTodayClasses(){ return classesForDate(localDateStr(new Date())); }
+function getTodayClasses(){ return classesForDate(tzToday()); }
 
 function buildTodaySchedule(){
   var tc=getTodayClasses();
@@ -6522,12 +6532,13 @@ function classCardHTML(c){
   return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+enroll+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
 }
 function buildWeekGrid(){
-  var now=new Date(); var cur=now.getDay(); var ws=new Date(now); ws.setDate(now.getDate()-cur); var html='';
+  var todayY=tzToday(); var cur=tzDow(); var html='';   // week anchored to the SCHOOL's local today
   for(var i=0;i<7;i++){
-    var d=new Date(ws); d.setDate(ws.getDate()+i);
-    var dc=classesForDate(localDateStr(d));
+    var dY=ymdAdd(todayY,i-cur);                          // date whose weekday === i (todayY's weekday is cur)
+    var d=new Date(dY+'T12:00:00');                        // local-noon Date, safe for getDate()
+    var dc=classesForDate(dY);
     html+='<div class="week-day '+(i===cur?'today':'')+'"><div class="week-day-header"><div class="week-day-name">'+DAY_SHORT[i]+'</div><div class="week-day-num">'+d.getDate()+'</div></div>';
-    html+=dc.map(function(c){return '<div class="week-class-pill" onclick="openClassRosterFromCal(\''+c.id+'\',\''+localDateStr(d)+'\')" style="display:flex;align-items:center;gap:0.25rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';}).join('');
+    html+=dc.map(function(c){return '<div class="week-class-pill" onclick="openClassRosterFromCal(\''+c.id+'\',\''+dY+'\')" style="display:flex;align-items:center;gap:0.25rem;overflow:hidden"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+fmtTime(c.start_time)+' '+(c.name||c.title||'')+'</span>'+enrollBadgeHTML(c.id,c.capacity,'pill')+'</div>';}).join('');
     html+='</div>';
   }
   document.getElementById('weekGrid').innerHTML=html;
@@ -6616,7 +6627,7 @@ function populateInstructorDropdown(){
 
 // Attendance — single roster modal for all entry points
 function openAttendance(classId,ct){
-  var today=localDateStr(new Date());
+  var today=tzToday();
   openClassRosterFromCal(classId,today);
 }
 

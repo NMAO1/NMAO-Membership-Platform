@@ -1042,6 +1042,14 @@ var ANIM_EMOJIS={confetti:'üéä',belt:'ü•ã',stars:'‚≠ê',fire:'�
 var DEFAULT_MESSAGES={10:'You showed up. You did the work. The journey has begun.',25:'25 classes down. You are no longer a beginner.',50:'Halfway to 100. The mat is starting to feel like home.',100:'100 classes. That is not a hobby - that is a lifestyle.',200:'200 classes. Your dedication is extraordinary.',300:'300 classes. You have built something most people only dream about.',400:'400 classes. This is mastery in the making.',500:'500 classes. Half a thousand. A true warrior.',600:'600 classes. Your commitment inspires everyone around you.',700:'700 classes. Legends are built one class at a time.',800:'800 classes. The dojo is part of who you are.',900:'900 classes. The summit is in sight.',1000:'1,000 classes. You have achieved something extraordinary. This mat is yours.'};
 var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 var DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+// §TZ — "today"/weekday must be the SCHOOL's local day, not the viewer's browser/UTC day, or the
+// schedule renders the wrong day's classes near local midnight (or for a member out of the school's tz).
+var SCHOOL_TZ='America/New_York';   // set from schools.timezone in loadSchoolBranding (NULL → Eastern default)
+function tzToday(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:SCHOOL_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); } }
+function tzDow(){ try{ return {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[new Intl.DateTimeFormat('en-US',{timeZone:SCHOOL_TZ,weekday:'short'}).format(new Date())]; }catch(e){ return new Date().getDay(); } }
+function tzNowMins(){ try{ var pr=new Intl.DateTimeFormat('en-US',{timeZone:SCHOOL_TZ,hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()); var h=0,m=0; pr.forEach(function(x){ if(x.type==='hour')h=parseInt(x.value,10)%24; if(x.type==='minute')m=parseInt(x.value,10); }); return h*60+m; }catch(e){ var n=new Date(); return n.getHours()*60+n.getMinutes(); } }
+function ymdAdd(y,n){ var p=y.split('-'); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCDate(d.getUTCDate()+n); return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2); }
+function ymdDow(y){ var p=y.split('-'); return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay(); }
 
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 //  ¬ßJS: STATE
@@ -1285,11 +1293,12 @@ async function loadSchoolBranding(pre){
     if(pre){
       d=pre;
     }else{
-      var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages,allow_member_card_updates').eq('id',SID).single();
+      var r=await sb.from('schools').select('name,color,bg_color,border_color,surface_color,font_color,font_family,logo_url,milestone_messages,allow_member_card_updates,timezone').eq('id',SID).single();
       if(!r.data)return;
       d=r.data;
     }
     schoolData=d;
+    if(d.timezone) SCHOOL_TZ=d.timezone;   // school-local tz for all schedule/day-of-week math
     if(d.color)document.documentElement.style.setProperty('--gold',d.color);
     if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
     if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
@@ -1855,10 +1864,8 @@ async function buildSchedule(s){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
   try{
-    var now=new Date();
-    var todayStr=now.toISOString().split('T')[0];
-    var weekEnd=new Date(now); weekEnd.setDate(now.getDate()+6);
-    var weekEndStr=weekEnd.toISOString().split('T')[0];
+    var todayStr=tzToday();                 // school-local today, not viewer/UTC
+    var weekEndStr=ymdAdd(todayStr,6);
 
     // Programs this student can access
     var studentProgIds=[];
@@ -1895,7 +1902,7 @@ async function buildSchedule(s){
       if(r.error) throw new Error(r.error.message);
       var allFetched=r.data||[];
       var classes=allFetched.filter(function(c){ return !c.program_id || studentProgIds.indexOf(c.program_id)!==-1; });
-      var todayIdx=now.getDay();
+      var todayIdx=tzDow();
       classes.forEach(function(c){
         if(!c.days_of_week) return;
         c.days_of_week.forEach(function(day){
@@ -1992,12 +1999,10 @@ function renderScheduleView(){
 
 function renderScheduleDay(){
   var el=document.getElementById('scheduleList'); if(!el)return;
-  var now=new Date();
   var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
-  var viewDate=new Date(now); viewDate.setDate(now.getDate()+scheduleViewDay);
-  var viewDateStr=viewDate.toISOString().split('T')[0];
-  var label=scheduleViewDay===0?'Today':scheduleViewDay===1?'Tomorrow':DAY_NAMES[viewDate.getDay()];
-  var dateLabel=viewDate.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  var viewDateStr=ymdAdd(tzToday(),scheduleViewDay);   // school-local today + offset
+  var label=scheduleViewDay===0?'Today':scheduleViewDay===1?'Tomorrow':DAY_NAMES[ymdDow(viewDateStr)];
+  var dateLabel=new Date(viewDateStr+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric'});
   var currentIdx=diffs.indexOf(scheduleViewDay);
   var hasPrev=currentIdx>0; var hasNext=currentIdx<diffs.length-1;
   var html=schedViewToggleHTML();
@@ -2008,8 +2013,8 @@ function renderScheduleDay(){
   html+='</div>';
   html+='<div class="sched-day-dots">';
   diffs.forEach(function(diff){
-    var dotDate=new Date(now); dotDate.setDate(now.getDate()+diff);
-    html+='<div class="sched-day-dot'+(diff===scheduleViewDay?' active':' has-class')+'" onclick="scheduleViewDay='+diff+';renderScheduleDay()" title="'+DAY_NAMES[dotDate.getDay()]+'"></div>';
+    var dotStr=ymdAdd(tzToday(),diff);
+    html+='<div class="sched-day-dot'+(diff===scheduleViewDay?' active':' has-class')+'" onclick="scheduleViewDay='+diff+';renderScheduleDay()" title="'+DAY_NAMES[ymdDow(dotStr)]+'"></div>';
   });
   html+='</div>';
   var dayClasses=(scheduleByDay[scheduleViewDay]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
@@ -2025,7 +2030,6 @@ function renderScheduleDay(){
 // Week view — the same cards, grouped under a header per day, whole week at a glance.
 function renderScheduleWeek(){
   var el=document.getElementById('scheduleList'); if(!el)return;
-  var now=new Date();
   var diffs=Object.keys(scheduleByDay).map(Number).sort(function(a,b){return a-b;});
   var html=schedViewToggleHTML();
   html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap RSVP to reserve your spot.</p>';
@@ -2034,10 +2038,9 @@ function renderScheduleWeek(){
     var dayClasses=(scheduleByDay[diff]||[]).slice().sort(function(a,b){return a.start_time>b.start_time?1:-1;});
     if(!dayClasses.length) return;
     hasAny=true;
-    var d=new Date(now); d.setDate(now.getDate()+diff);
-    var dStr=d.toISOString().split('T')[0];
-    var lbl=diff===0?'Today':diff===1?'Tomorrow':DAY_NAMES[d.getDay()];
-    var sub=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var dStr=ymdAdd(tzToday(),diff);
+    var lbl=diff===0?'Today':diff===1?'Tomorrow':DAY_NAMES[ymdDow(dStr)];
+    var sub=new Date(dStr+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
     html+='<div class="day-header"><i class="fa-solid fa-calendar-day" style="margin-right:0.4rem"></i>'+lbl+' &mdash; '+sub+'</div>';
     dayClasses.forEach(function(c){ html+=renderClassCardHTML(c,dStr); });
   });
@@ -2113,9 +2116,8 @@ async function processAutoCheckIn(){
   if(isFamilyMode) return;
   if(!currentStudent) return;
   try{
-    var now=new Date();
-    var todayStr=now.toISOString().split('T')[0];
-    var nowMins=now.getHours()*60+now.getMinutes();
+    var todayStr=tzToday();              // school-local day + minutes (class times are stored school-local)
+    var nowMins=tzNowMins();
 
     // Get today's enrolled classes for this student
     var cr=await sb.from('class_enrollments')
@@ -2499,7 +2501,7 @@ function _evFmtDate(d){ if(!d) return ""; var dt=new Date(d+"T00:00:00"); return
 async function buildEvents(student){
   var el=document.getElementById("eventsList"); if(!el) return;
   try{
-    var today=new Date().toISOString().split("T")[0];
+    var today=tzToday();
     var res=await sb.from("events").select("*").eq("school_id",SID).eq("public_signup_enabled",true).order("event_date",{ascending:true});
     if(res.error) throw new Error(res.error.message);
     _evState.events=(res.data||[]).filter(function(ev){ return !ev.event_date || ev.event_date>=today; });
@@ -2652,7 +2654,7 @@ function switchPortalTab(tab){
 // ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function buildSessions(s){
   var upEl=document.getElementById('sessionsUpcomingList');
-  var today=new Date().toISOString().split('T')[0];
+  var today=tzToday();
 
   try{
     var r=await sb.from('sessions')
@@ -3584,9 +3586,8 @@ async function switchChild(){
   async function buildFamilySchedule(){
   var el=document.getElementById('scheduleList');
   el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading schedule...</div>';
-  var today=new Date().toISOString().split('T')[0];
-  var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+6);
-  var weekEndStr=weekEnd.toISOString().split('T')[0];
+  var today=tzToday();                    // school-local today, not viewer/UTC
+  var weekEndStr=ymdAdd(today,6);
   // Shift-aware schedule via the member RPC; fall back to base recurrence if unavailable.
   familyByDate={};
   familyAllClasses=[];
@@ -3726,15 +3727,14 @@ function setFamilyViewMode(mode){
 function renderFamilySchedule(){
   if(familyViewMode==='grid'){ renderFamilyGrid(); return; }
   var el=document.getElementById('scheduleList');
-  var now=new Date();
   var html=famViewToggleHTML();
   html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Use the switcher above to pick a child, then tap classes to check in or reserve and confirm.</p>';
   var hasAny=false;
   for(var i=0;i<7;i++){
-    var d=new Date(now);d.setDate(now.getDate()+i);
-    var dateStr=d.toISOString().split('T')[0];
-    var dayName=DAYS[d.getDay()];var isToday=i===0;
-    var dayLabel=i===0?'Today \u2014 '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'}):d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    var dateStr=ymdAdd(tzToday(),i);       // school-local today + i
+    var dayName=DAYS[ymdDow(dateStr)];var isToday=i===0;
+    var dayLabel=new Date(dateStr+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    if(i===0) dayLabel='Today \u2014 '+dayLabel;
     var dayClasses=familyDayClasses(dateStr,dayName);
     if(!dayClasses.length)continue;
     hasAny=true;
@@ -3749,15 +3749,14 @@ function renderFamilySchedule(){
 // Week grid — the whole week at a glance; tap a class to pick who is going.
 function renderFamilyGrid(){
   var el=document.getElementById('scheduleList');
-  var now=new Date();
   var html=famViewToggleHTML();
   html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Tap a class to choose who is going.</p>';
   html+='<div class="fam-grid-wrap"><div class="fam-grid">';
   var hasAny=false;
   for(var i=0;i<7;i++){
-    var d=new Date(now);d.setDate(now.getDate()+i);
-    var dateStr=d.toISOString().split('T')[0];
-    var dayName=DAYS[d.getDay()];var isToday=i===0;
+    var dateStr=ymdAdd(tzToday(),i);       // school-local today + i
+    var d=new Date(dateStr+'T00:00:00');
+    var dayName=DAYS[ymdDow(dateStr)];var isToday=i===0;
     var dayClasses=familyDayClasses(dateStr,dayName);
     html+='<div class="fam-grid-col">';
     html+='<div class="fam-grid-head'+(isToday?' today':'')+'">'+(isToday?'Today':d.toLocaleDateString('en-US',{weekday:'short'}))+'<br>'+d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+'</div>';
@@ -3800,7 +3799,7 @@ function openFamilyGridClass(classId,dateStr,isToday){
 function refreshFamilyGridChip(classId,dateStr){
   var chip=document.getElementById('fchip-'+classId+'-'+dateStr); if(!chip) return;
   var cls=familyFindClass(classId,dateStr); if(!cls) return;
-  var isToday=dateStr===new Date().toISOString().split('T')[0];
+  var isToday=dateStr===tzToday();
   var counts=familyClassCounts(cls,dateStr,isToday);
   if(counts.done+counts.pending>0) chip.classList.add('has'); else chip.classList.remove('has');
   var cEl=chip.querySelector('.fam-chip-count');
@@ -3886,17 +3885,17 @@ async function showInstructorPortal(instructor){
   hideAllScreens();
   document.getElementById('instructorPortalScreen').style.display='block';
   var instrName=instructor.first_name?(instructor.first_name+' '+(instructor.last_name||'')).trim():(instructor.name||'Instructor');
-  var now=new Date();var hour=now.getHours();
+  var hour=Math.floor(tzNowMins()/60);   // school-local hour + date
   var greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   document.getElementById('instrGreeting').textContent=greeting+', '+instrName;
-  document.getElementById('instrSubtitle').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('instrSubtitle').textContent=new Date(tzToday()+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   await buildInstructorTodayClasses();
 }
 
 async function buildInstructorTodayClasses(){
   var el=document.getElementById('instrTodayClasses');
-  var today=DAYS[new Date().getDay()];
-  var todayStr=new Date().toISOString().split('T')[0];
+  var todayStr=tzToday();
+  var today=DAYS[ymdDow(todayStr)];
   // Shift-aware: today's schedule via the member RPC; fall back to base recurrence if unavailable.
   var classes=[];
   var usedRpc=false;

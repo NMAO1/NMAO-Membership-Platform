@@ -657,6 +657,10 @@
 
     var MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var DAYS_STR = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    // §TZ — "today" must be the SCHOOL's local day, not the viewer's/UTC day, or the calendar marks
+    // today as past (and the wrong day as today) near local midnight. Set from schools.timezone in loadPage.
+    var SCHOOL_TZ = 'America/New_York';   // NULL in DB → Eastern default
+    function tzToday(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:SCHOOL_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); } }
     var STEP_NAMES = { 1:'Session Type', 2:'Date', 3:'Time', 4:'Your Info' };
 
     // ── Init ─────────────────────────────────────────────────
@@ -687,6 +691,9 @@
           return;
         }
         instructor = pgRes.data.instructor;
+        // School-local timezone for calendar "today" (anon can read active schools). NULL → Eastern.
+        try { var _tzr = await sb.from('schools').select('timezone').eq('id', instructor.school_id).maybeSingle();
+              if (_tzr.data && _tzr.data.timezone) SCHOOL_TZ = _tzr.data.timezone; } catch(_e) {}
 
         // 2. Apply school branding
         var s = pgRes.data.school;
@@ -999,7 +1006,7 @@
       var minHours    = selectedSetting ? selectedSetting.min_advance_hours : 24;
       var daysInMonth = new Date(yr, mo + 1, 0).getDate();
       var firstDow    = new Date(yr, mo, 1).getDay();
-      var todayStr    = now.toISOString().split('T')[0];
+      var todayStr    = tzToday();   // school-local today, not viewer/UTC
       var html        = '';
 
       // Empty leading cells
