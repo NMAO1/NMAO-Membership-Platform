@@ -9618,7 +9618,7 @@ async function loadBillsSection(sid){
 }
 
 function billStatusBadge(s){
-  var map={paid:['PAID','#5A9A6A'],failed:['ERR','#E07070'],cancelled:['VOID','#888888'],pending:['PENDING','#C9A84C'],refunded:['REFUND','#7DAAD4']};
+  var map={paid:['PAID','#5A9A6A'],failed:['ERR','#E07070'],cancelled:['VOID','#888888'],pending:['PENDING','#C9A84C'],refunded:['REFUND','#7DAAD4'],partial_refund:['PART REFUND','#7DAAD4'],disputed:['DISPUTED','#E07070']};
   var v=map[s]||[(''+(s||'—')).toUpperCase(),'#888888'];
   return '<span style="display:inline-block;font-size:0.6rem;font-weight:700;letter-spacing:0.04em;color:'+v[1]+';border:1px solid '+v[1]+'66;border-radius:999px;padding:0.12rem 0.5rem">'+v[0]+'</span>';
 }
@@ -9627,7 +9627,7 @@ async function renderBillsList(ids, nameById, isFamily){
   var el=document.getElementById('billsList'); if(!el) return;
   el.innerHTML='<div style="color:var(--muted);font-size:0.82rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading bills…</div>';
   try{
-    var r=await sb.from('payments').select('id,student_id,type,description,amount,status,due_date,created_at,invoice_number').in('student_id',ids).eq('school_id',SID).order('created_at',{ascending:false}).limit(200);
+    var r=await sb.from('payments').select('id,student_id,type,description,amount,status,due_date,created_at,invoice_number,stripe_payment_intent_id,amount_refunded_cents').in('student_id',ids).eq('school_id',SID).order('created_at',{ascending:false}).limit(200);
     var data=r.data||[];
     if(!data.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">No bills on record.</div>'; return; }
     var typeLabels={membership:'Membership',retail_sale:'Retail',session:'Session',session_pack:'Session Pack',belt_test:'Belt Test',fee:'Fee',other:'Other'};
@@ -9637,11 +9637,18 @@ async function renderBillsList(ids, nameById, isFamily){
       var d=(''+(p.due_date||p.created_at||'')).substring(0,10);
       var person=isFamily?('<div style="font-size:0.78rem;color:var(--white)">'+(nameById[p.student_id]||'—')+'</div>'):'';
       var desc=(typeLabels[p.type]||p.type||'Bill')+(p.description?('<span style="color:var(--muted);font-size:0.7rem"> · '+p.description+'</span>'):'');
+      // Refundable = a real Stripe charge (has a payment_intent) that is paid/partially-refunded with a
+      // remaining balance. Excludes comps / credits / offline rows (no payment_intent). The EF re-checks
+      // exact amounts against Stripe; this just decides whether to offer the action.
+      var refundedDollars=(p.amount_refunded_cents||0)/100;
+      var remainDollars=parseFloat(p.amount||0)-refundedDollars;
+      var refundable=(p.status==='paid'||p.status==='partial_refund') && !!p.stripe_payment_intent_id && remainDollars>0.009;
+      var refundLink=refundable?('<div style="margin-top:0.2rem"><a onclick="event.stopPropagation();refundBill(\''+p.id+'\','+remainDollars.toFixed(2)+')" style="color:#E0A0A0;cursor:pointer;text-decoration:underline;font-size:0.62rem" title="Refund this charge in Stripe">Refund</a></div>'):'';
       return '<div style="display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.55rem 0.5rem;align-items:center;border-bottom:1px solid var(--border)">'+person+
         '<div style="font-size:0.8rem;color:var(--white)">'+desc+'</div>'+
         '<div style="font-size:0.74rem;color:var(--muted)">'+(d?smDateLabel(d):'—')+'</div>'+
         '<div style="font-size:0.82rem;color:var(--gold);text-align:right">$'+parseFloat(p.amount||0).toFixed(2)+'</div>'+
-        '<div style="text-align:center">'+billStatusBadge(p.status)+'</div></div>';
+        '<div style="text-align:center">'+billStatusBadge(p.status)+refundLink+'</div></div>';
     }).join('');
   }catch(e){ el.innerHTML='<div style="color:var(--muted);font-size:0.82rem">Bills unavailable.</div>'; }
 }
@@ -9657,6 +9664,35 @@ async function compNextBill(smId){
     if(window.showToast) showToast(d.comped_cents>0?('Next bill comped — $'+(d.comped_cents/100).toFixed(2)+' waived in Stripe.'):(d.note||'Next bill is already $0.'),'ok');
     if(currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id);
   }catch(e){ alert('Comp failed: '+(e&&e.message?e.message:e)); }
+}
+
+// §REFUND — refund a paid Stripe charge for one bill (full or partial). Returns the money via Stripe (and
+// NMAO's application fee to the school); the refund-payment EF enforces exact amounts / double-refund
+// guards against Stripe. maxDollars is the remaining refundable balance (hint only).
+async function refundBill(paymentId, maxDollars){
+  var maxTxt=(maxDollars!=null && isFinite(maxDollars))?(' (up to $'+Number(maxDollars).toFixed(2)+')'):'';
+  var amtStr=prompt('Refund amount in dollars'+maxTxt+'.\n\nLeave blank to refund the full remaining amount.','');
+  if(amtStr===null) return;
+  var amount_cents=null; amtStr=(''+amtStr).trim();
+  if(amtStr!==''){
+    var a=parseFloat(amtStr.replace(/[$,]/g,''));
+    if(!isFinite(a)||a<=0){ alert('Enter a valid amount greater than $0, or leave it blank for a full refund.'); return; }
+    amount_cents=Math.round(a*100);
+  }
+  var reason=prompt('Reason for this refund (saved on the payment record):','');
+  if(reason===null) return;
+  var summary=(amount_cents!=null)?('$'+(amount_cents/100).toFixed(2)):'the full remaining amount';
+  if(!confirm('Refund '+summary+' to the member?\n\nThis returns the money through Stripe and cannot be undone.')) return;
+  try{
+    var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
+    var body={school_id:SID, payment_id:paymentId, applied_by:uid, reason:reason||''};
+    if(amount_cents!=null) body.amount_cents=amount_cents;
+    var r=await fetch(SURL+'/functions/v1/refund-payment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(body)});
+    var d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok||d.error){ alert('Could not refund: '+((d.error||'error').replace(/^[A-Z_]+:\s*/,''))); return; }
+    if(window.showToast) showToast('Refunded $'+((d.amount_cents||0)/100).toFixed(2)+(d.fully?' — payment fully refunded.':' — partial refund applied.'),'ok');
+    if(currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id);
+  }catch(e){ alert('Refund failed: '+(e&&e.message?e.message:e)); }
 }
 
 async function renderBillsUpcoming(ids, nameById, isFamily){
