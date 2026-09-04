@@ -7844,12 +7844,21 @@ async function loadProfileCardOnFile(sid){
         '</div>';
       return;
     }
-    var brand = (data.brand || 'card').toUpperCase();
-    var last4 = data.last4 || '????';
-    var exp = data.exp_month && data.exp_year ? (String(data.exp_month).padStart(2,'0') + '/' + String(data.exp_year).slice(-2)) : '--';
+    // Link PMs have no brand/last4 \u2014 show the Link email + a link glyph instead of an empty card.
+    var _cardInner;
+    if (data.type === 'link'){
+      var _le = data.link_email ? (' \u2014 ' + data.link_email) : '';
+      _cardInner = '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-bolt" style="color:var(--gold);margin-right:0.4rem"></i>Link' + _le + '</div>' +
+        '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Saved via Stripe Link</div>';
+    } else {
+      var brand = (data.brand || 'card').toUpperCase();
+      var last4 = data.last4 || '????';
+      var exp = data.exp_month && data.exp_year ? (String(data.exp_month).padStart(2,'0') + '/' + String(data.exp_year).slice(-2)) : '--';
+      _cardInner = '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' \u2022\u2022\u2022\u2022' + last4 + '</div>' +
+        '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Exp ' + exp + '</div>';
+    }
     el.innerHTML = '<div style="background:var(--black);border:1px solid var(--border);padding:0.65rem 0.85rem;margin-bottom:0.6rem">' +
-      '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' \u2022\u2022\u2022\u2022' + last4 + '</div>' +
-      '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Exp ' + exp + '</div>' +
+      _cardInner +
       '</div>' +
       '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
         '<button class="btn-sm" style="font-size:0.72rem" onclick="openReplaceCardInline(\'' + sid + '\')"><i class="fa-solid fa-rotate"></i> Replace</button>' +
@@ -12263,11 +12272,18 @@ function checkoutRenderCardTile(){
     }
     return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'No card on file. Use Send Link to collect one, or Cash.');
   }
-  var brand = (card.brand || 'card').toUpperCase();
-  var last4 = card.last4 || '????';
-  var exp = (card.exp_month && card.exp_year) ? (' \u00b7 Exp ' + String(card.exp_month).padStart(2,'0') + '/' + String(card.exp_year).slice(-2)) : '';
-  var desc = brand + ' \u2022\u2022\u2022\u2022' + last4 + exp + ' \u2014 charges immediately.';
-  return checkoutMethodTile('card_on_file', 'Card on file', 'fa-solid fa-credit-card', desc, _checkout.method === 'card_on_file');
+  var desc, tileIcon = 'fa-solid fa-credit-card';
+  if (card.type === 'link'){
+    // Link PMs are chargeable off-session just like a card \u2014 describe them honestly.
+    desc = 'Link' + (card.link_email ? (' \u2014 ' + card.link_email) : '') + ' \u2014 charges immediately.';
+    tileIcon = 'fa-solid fa-bolt';
+  } else {
+    var brand = (card.brand || 'card').toUpperCase();
+    var last4 = card.last4 || '????';
+    var exp = (card.exp_month && card.exp_year) ? (' \u00b7 Exp ' + String(card.exp_month).padStart(2,'0') + '/' + String(card.exp_year).slice(-2)) : '';
+    desc = brand + ' \u2022\u2022\u2022\u2022' + last4 + exp + ' \u2014 charges immediately.';
+  }
+  return checkoutMethodTile('card_on_file', 'Card on file', tileIcon, desc, _checkout.method === 'card_on_file');
 }
 
 function checkoutMethodTile(method, title, icon, desc, selected){
