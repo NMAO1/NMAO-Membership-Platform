@@ -9843,7 +9843,9 @@ function cdMethodInfo(row){
   var byType = {}; tenders.forEach(function(t){ byType[t.tender_type] = (byType[t.tender_type]||0) + (t.amount_cents||0); });
   var desc = (row.description||'').toLowerCase();
   var method;
-  if(row.stripe_payment_intent_id) method = 'Card (Stripe)';
+  // A subscription invoice charge (invoice id, PI not yet captured on the row) is still a real card
+  // charge in Stripe — don't mislabel it "Recorded manually".
+  if(row.stripe_payment_intent_id || row.stripe_invoice_id) method = 'Card (Stripe)';
   else if(byType.cash) method = 'Cash';
   else if(byType.credit && !byType.card && !byType.cash) method = 'Account credit';
   else if(/offline|cash/.test(desc)) method = 'Offline / cash';
@@ -9921,11 +9923,15 @@ function renderChargeDetail(row, ctx){
   var mi = cdMethodInfo(row);
   var link = cdStripeLink(row);
   var hasPI = !!row.stripe_payment_intent_id;
+  // A subscription/invoice charge is refundable even when only the invoice id was captured (no top-level
+  // PI on the row) — refund-payment hops invoice -> payment_intent -> charge against Stripe. So the
+  // "has a Stripe charge to refund" signal is PI OR invoice, not PI alone.
+  var hasStripeRef = hasPI || !!row.stripe_invoice_id;
   var remaining = totalCharged - refunded;
-  var refundable = (row.status==='paid' || row.status==='partial_refund') && hasPI && remaining > 0.009;
+  var refundable = (row.status==='paid' || row.status==='partial_refund') && hasStripeRef && remaining > 0.009;
 
   // ── Zone 1: header ──
-  var offlinePill = (row.status==='paid' && !hasPI) ? ' <span style="display:inline-block;font-size:0.58rem;font-weight:700;letter-spacing:0.05em;color:#B9A25A;border:1px solid #B9A25A66;border-radius:999px;padding:0.12rem 0.5rem;margin-left:0.3rem">OFFLINE</span>' : '';
+  var offlinePill = (row.status==='paid' && !hasStripeRef) ? ' <span style="display:inline-block;font-size:0.58rem;font-weight:700;letter-spacing:0.05em;color:#B9A25A;border:1px solid #B9A25A66;border-radius:999px;padding:0.12rem 0.5rem;margin-left:0.3rem">OFFLINE</span>' : '';
   var header =
     '<div style="text-align:center;padding:0.25rem 0 0.4rem">' +
       '<div style="font-family:var(--font-display);font-size:2.3rem;color:var(--gold);line-height:1">' + cdMoney(totalCharged) + '</div>' +
@@ -9945,7 +9951,7 @@ function renderChargeDetail(row, ctx){
   // Platform fee + net settle inside Stripe and aren't reliably stored per-row — surface what we have, and
   // point to Stripe for the exact split rather than printing a mystery total.
   if(row.net_amount != null) moneyRows += '<div class="cd-row"><span class="k">Net to school</span><span class="v">' + cdMoney(row.net_amount) + '</span></div>';
-  var moneyFootnote = (hasPI && row.net_amount == null)
+  var moneyFootnote = (hasStripeRef && row.net_amount == null)
     ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.55rem;font-style:italic">Platform fee &amp; net-to-school settle in Stripe' + (link ? ' — <a href="'+link+'" target="_blank" rel="noopener" style="color:var(--gold)">view exact split</a>' : '') + '.</div>'
     : '';
   var moneyZone = '<div class="cd-zone"><div class="cd-zone-label">Money</div>' + moneyRows + moneyFootnote + '</div>';
@@ -9964,7 +9970,7 @@ function renderChargeDetail(row, ctx){
   // ── Zone 4: actions ──
   var refundReason = '';
   if(!refundable){
-    if(!hasPI) refundReason = 'Recorded manually — no Stripe charge to refund.';
+    if(!hasStripeRef) refundReason = 'Recorded manually — no Stripe charge to refund.';
     else if(row.status==='refunded') refundReason = 'Already fully refunded.';
     else if(row.status==='failed') refundReason = 'This charge did not succeed.';
     else if(row.status==='disputed') refundReason = 'Under dispute — resolve in Stripe.';
