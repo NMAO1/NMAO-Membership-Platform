@@ -363,6 +363,28 @@
     .modal-title  { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.06em; color: var(--white); }
     .modal-close  { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
     .modal-body   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    /* §CHARGE-DRAWER — one shared transaction-detail drawer opened from every charge list (Revenue + member Bills). Right-side slide-in. */
+    .detail-drawer-overlay { align-items: stretch; justify-content: flex-end; }
+    .detail-drawer { background: var(--surface); border-left: 1px solid var(--gold); width: min(94vw, 468px); height: 100vh; max-height: 100vh; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
+    .detail-drawer-overlay.active .detail-drawer { animation: chargeDrawerIn 0.22s cubic-bezier(0.22,0.61,0.36,1); }
+    @keyframes chargeDrawerIn { from { transform: translateX(28px); opacity: 0.4; } to { transform: translateX(0); opacity: 1; } }
+    .cd-zone { border: 1px solid var(--border); background: var(--black); padding: 0.9rem 1rem; }
+    .cd-zone-label { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+    .cd-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.3rem 0; font-size: 0.82rem; }
+    .cd-row .k { color: var(--muted); }
+    .cd-row .v { color: var(--white); text-align: right; }
+    .cd-row.total { border-top: 1px solid var(--border); margin-top: 0.25rem; padding-top: 0.55rem; }
+    .cd-row.total .k { color: var(--white); font-weight: 600; }
+    .cd-row.total .v { color: var(--gold); font-weight: 600; }
+    .cd-act-btn { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-ui); font-size: 0.74rem; letter-spacing: 0.06em; padding: 0.55rem 0.9rem; background: var(--surface); border: 1px solid var(--border); color: var(--white); cursor: pointer; transition: border-color 0.15s; }
+    .cd-act-btn:hover { border-color: var(--gold); }
+    .cd-act-btn.gold { background: var(--gold); color: #0A0A0A; border-color: var(--gold); font-weight: 600; }
+    .cd-act-btn.danger { color: #E0A0A0; border-color: rgba(224,112,112,0.4); }
+    .cd-act-btn.danger:hover { border-color: #E07070; }
+    .cd-act-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .cd-tl-item { position: relative; padding: 0 0 0.85rem 1.2rem; border-left: 1px solid var(--border); }
+    .cd-tl-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+    .cd-tl-dot { position: absolute; left: -4px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
     .unsaved-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: none; align-items: center; justify-content: center; }
     .unsaved-dialog.active { display: flex; }
     .unsaved-box   { background: var(--surface); border: 1px solid var(--gold); padding: 2rem; max-width: 380px; width: 90%; text-align: center; }
@@ -2737,7 +2759,7 @@
 
 <!-- §MODAL-FAMILY -->
 <div class="modal-overlay" id="addFamilyModal">
-  <div class="modal" style="width:600px;max-width:96vw">
+  <div class="modal" style="width:820px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addFamilyTitle">Add Family</span><button class="help-hint-inline" onclick="openHelpPopover('families.fam_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addFamilyModal',closeAddFamily)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="familyEditId" value="" />
@@ -2759,12 +2781,12 @@
         <div id="familyStudentSearchResults" style="max-height:150px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);display:none"></div>
       </div>
       <div id="familyPortalSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
-        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Portal Access</div>
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Portal Access <button class="help-hint-inline" onclick="openHelpPopover('families.portal_access',this)" title="Help">?</button></div>
         <div id="familyPortalStatus" style="font-size:0.82rem;color:var(--muted);margin-bottom:0.55rem"></div>
         <button class="btn-sm" style="font-size:0.72rem" onclick="familyInviteFromModal()"><i class="fa-solid fa-paper-plane" style="margin-right:0.3rem"></i>Send portal invite</button>
       </div>
       <div id="familyCardSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
-        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Family Card <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:0.68rem">— the shared card all members bill to</span></div>
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Family Card <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:0.68rem">— the shared card all members bill to</span> <button class="help-hint-inline" onclick="openHelpPopover('families.family_card',this)" title="Help">?</button></div>
         <div id="familyCardBody" style="font-size:0.82rem;color:var(--muted)"></div>
         <button class="btn-sm gold" style="font-size:0.72rem;margin-top:0.75rem" onclick="openFamilyCheckout(document.getElementById('familyEditId').value)"><i class="fa-solid fa-cart-shopping" style="margin-right:0.3rem"></i>Enroll members on plans (family checkout)</button>
       </div>
@@ -3176,6 +3198,17 @@
       </div>
       <div id="revBreakdownList"></div>
     </div>
+  </div>
+</div>
+
+<!-- §CHARGE-DRAWER — shared transaction-detail drawer (opened from Revenue breakdown + member Bills). Single source of truth: openChargeDetail(paymentId, ctx). -->
+<div class="modal-overlay detail-drawer-overlay" id="chargeDetailDrawer" onclick="if(event.target===this)closeChargeDetail()">
+  <div class="detail-drawer">
+    <div class="modal-header">
+      <span class="modal-title">Transaction</span>
+      <button class="modal-close" onclick="closeChargeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="chargeDetailBody"></div>
   </div>
 </div>
 
@@ -5679,6 +5712,9 @@ var HELP_CONTENT = {
     example: 'Example: Lopez Family, parent email and phone, with two children linked.'
   },
   'families.fam_students': { title: 'Linked Students', purpose: 'The students who belong to this family. Search and add each child or member so they are grouped under one household.' },
+  'families.portal_access': { title: 'Portal Access', purpose: 'Invite the family’s parent to their own login, where they see every member of the household in one place — schedules, memberships, and bills. Anyone you add to the family shows up there automatically.', example: 'Example: invite Mom once and she sees both kids’ class schedules and the family’s payments from her phone — you don’t invite each child separately.' },
+  'families.family_card': { title: 'Family Card', purpose: 'The one saved card the whole family bills to. Pick any member’s card as the family card and every member’s plan charges to it — you only enter a card once for the household.', example: 'Example: set Dad’s Visa as the family card, and both kids’ monthly tuition come off that same card — you don’t add a card to each child.' },
+  'families.family_checkout': { title: 'Family Checkout', purpose: 'Enroll several family members onto plans and charge them all in ONE payment on the family card — instead of opening each member and charging them one at a time.', example: 'Example: three cousins each start the $150/mo plan — pick all three, charge once, and $450 comes off the family card in a single transaction.' },
   'families.fam_name': { title: 'Family Name', purpose: 'The household name, like Lopez Family. Used to group and find members.' },
   'families.fam_email': { title: 'Primary Email', purpose: 'The main contact email for the household, usually a parent. Used for family communications.' },
   'families.fam_phone': { title: 'Phone', purpose: 'The household phone for calls and texts.' },
@@ -6940,7 +6976,7 @@ async function openRevenueBreakdown(period){
     var byType={};data.forEach(function(p){var t=p.type||'other';if(!byType[t])byType[t]=0;byType[t]+=netCashAmount(p);});
     window._revBreakdownData=data; window._memberDrillBuilt=false; window._sessDrillBuilt=false; window._packDrillBuilt=false; window._retailDrillBuilt=false; Object.keys(byType).sort().forEach(function(t){ if(t==='session_pack'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="togglePackDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="packDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="packDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='session'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleSessionDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="sessDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="sessDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='membership'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleMemberDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="memberDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="memberDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } if(t==='retail_sale'){ html+='<div class="rev-breakdown-item" style="cursor:pointer" onclick="toggleRetailDrill()"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-chevron-right" id="retailDrillChev" style="font-size:0.7rem;color:var(--gold);margin-right:0.45rem;transition:transform 0.2s"></i>'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div><div id="retailDrill" style="display:none;padding:0.1rem 0 0.4rem 0.9rem"></div>'; return; } html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)">'+(typeLabels[t]||t)+'</div><div style="font-size:0.88rem;color:var(--gold)">$'+byType[t].toFixed(2)+'</div></div>';});
     html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Transactions</div>';
-    data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+escapeCheckout(name)+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
+    data.slice(0,20).forEach(function(p){var s=p.students;var name=s?s.first_name+' '+s.last_name:'Walk-in';var cash=netCashAmount(p);var credC=0;var tt=(p.payment_tenders||[]);for(var k=0;k<tt.length;k++){if(tt[k].tender_type==='credit')credC+=(tt[k].amount_cents||0);}var creditNote=credC>0?(' <span style="font-size:0.68rem;color:var(--muted)">(+$'+(credC/100).toFixed(2)+' credit)</span>'):'';html+='<div onclick="openChargeDetail(\''+p.id+'\',\'revenue\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+escapeCheckout(name)+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(typeLabels[p.type]||p.type||'Payment')+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+creditNote+'</div></div>';});
   }
   document.getElementById('revBreakdownList').innerHTML=html;
 }
@@ -6970,7 +7006,7 @@ function buildRetailDrill(){
     var items=''; var li=p.line_items;
     if(li && li.length){ var parts=[]; for(var i=0;i<li.length;i++){ var it=li[i]||{}; parts.push((it.quantity||1)+'\u00d7 '+(it.name||'Item')); } items=parts.join(', '); }
     else { items=p.description||'Retail'; }
-    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+items+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
+    html+='<div onclick="openChargeDetail(\''+p.id+'\',\'revenue\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+items+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
   });
   el.innerHTML=html;
 }
@@ -7011,7 +7047,7 @@ async function buildPackDrill(){
     if(!sp && list.length) sp=list[0];
     var balLabel='\u2014';
     if(sp){ var pk=sp.session_packs||{}; var rem=(sp.sessions_remaining!=null)?sp.sessions_remaining:'?'; var tot=(pk.quantity!=null)?pk.quantity:'?'; balLabel=rem+' of '+tot+' left'; }
-    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+packName+' \u00b7 '+balLabel+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
+    html+='<div onclick="openChargeDetail(\''+p.id+'\',\'revenue\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+packName+' \u00b7 '+balLabel+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
   });
   el.innerHTML=html;
 }
@@ -7040,7 +7076,7 @@ function buildSessionDrill(){
     var detail=''; var li=p.line_items;
     if(li && li.length){ var parts=[]; for(var i=0;i<li.length;i++){ var it=li[i]||{}; parts.push(it.name||'Session'); } detail=parts.join(', '); }
     else { detail=p.description||'Session'; }
-    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+detail+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
+    html+='<div onclick="openChargeDetail(\''+p.id+'\',\'revenue\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div style="flex:1;min-width:0;padding-right:0.5rem"><div style="color:var(--white)">'+buyer+'</div><div style="font-size:0.68rem;color:var(--muted)">'+detail+'</div></div><div style="color:var(--gold);flex-shrink:0">$'+cash.toFixed(2)+'</div></div>';
   });
   el.innerHTML=html;
 }
@@ -7094,7 +7130,7 @@ async function buildMemberDrill(){
         renewLabel = next ? ('Renews '+next.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})) : 'Recurring';
       }
     }
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.68rem;color:var(--muted)">'+plan+' \u00b7 '+renewLabel+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+'</div></div>';
+    html+='<div onclick="openChargeDetail(\''+p.id+'\',\'revenue\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.78rem"><div><div style="color:var(--white)">'+name+'</div><div style="font-size:0.68rem;color:var(--muted)">'+plan+' \u00b7 '+renewLabel+'</div></div><div style="color:var(--gold)">$'+cash.toFixed(2)+'</div></div>';
   });
   el.innerHTML=html;
 }
@@ -9767,6 +9803,260 @@ async function refundBill(paymentId, maxDollars){
     if(currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id);
   }catch(e){ alert('Refund failed: '+(e&&e.message?e.message:e)); }
 }
+
+// ═══════════════════════ §CHARGE-DETAIL DRAWER ═══════════════════════
+// ONE shared transaction-detail component. Every charge list in the dashboard (school-wide Revenue
+// breakdown + each member's Bills tile + family/guardian rows) opens THIS drawer via
+// openChargeDetail(paymentId, ctx). No list duplicates the fetch or the render — single source of truth.
+// ctx ('revenue' | 'bills') only decides which list to refresh after a refund/receipt action.
+var _chargeCtx = { row: null, ctx: null };
+var CD_TYPE_LABELS = { membership:'Membership', retail_sale:'Retail', session:'Session', session_pack:'Session Pack', belt_test:'Belt Test', gift_card:'Gift Card', fee:'Fee', other:'Payment' };
+
+function cdMoney(n){ return '$' + (Number(n)||0).toFixed(2); }
+function cdWhen(t){
+  if(!t) return '';
+  try{ var d=new Date(t); if(isNaN(d.getTime())) return ''; return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+  catch(e){ return ''; }
+}
+
+// The one loader — widened select shared by both doorways. Resolves the acting staff name and parses the
+// stored refund note so the drawer can attribute events without any new table.
+async function loadChargeDetail(paymentId){
+  var r = await sb.from('payments')
+    .select('*, students(first_name,last_name), payment_tenders(tender_type,amount_cents,stripe_payment_intent_id)')
+    .eq('id', paymentId).eq('school_id', SID).single();
+  var row = r.data; if(!row) return null;
+  if(row.fulfilled_by){
+    try{
+      var ir = await sb.from('instructors').select('first_name,last_name').eq('school_id',SID).eq('auth_user_id',row.fulfilled_by).maybeSingle();
+      if(ir && ir.data) row._fulfilledByName = ((ir.data.first_name||'')+' '+(ir.data.last_name||'')).trim();
+      else if(window.schoolData && window.schoolData.owner_id===row.fulfilled_by) row._fulfilledByName = (window.schoolData.name||'Owner');
+    }catch(e){}
+  }
+  if(row.notes && /Refunded/i.test(row.notes)){
+    var seg = (''+row.notes).split('·').filter(function(s){ return /Refunded/i.test(s); }).pop();
+    if(seg){ var mm=seg.match(/—\s*(.+)$/); row._refundNote = mm ? mm[1].trim() : seg.trim(); }
+  }
+  return row;
+}
+
+// Method + source provenance, inferred honestly from tenders / Stripe ids / description (no per-charge card
+// brand is stored — exact card lives only in Stripe, reachable via the deep link).
+function cdMethodInfo(row){
+  var tenders = row.payment_tenders || [];
+  var byType = {}; tenders.forEach(function(t){ byType[t.tender_type] = (byType[t.tender_type]||0) + (t.amount_cents||0); });
+  var desc = (row.description||'').toLowerCase();
+  var method;
+  if(row.stripe_payment_intent_id) method = 'Card (Stripe)';
+  else if(byType.cash) method = 'Cash';
+  else if(byType.credit && !byType.card && !byType.cash) method = 'Account credit';
+  else if(/offline|cash/.test(desc)) method = 'Offline / cash';
+  else if(row.status==='paid') method = 'Recorded manually';
+  else method = '—';
+  var source;
+  if(row.stripe_invoice_id && row.type==='membership') source = 'Autopay renewal (subscription)';
+  else if(row.line_items && row.line_items.length) source = 'Point of sale';
+  else if(/offline|cash/.test(desc)) source = 'Manual entry (offline)';
+  else if(row.stripe_payment_intent_id) source = 'Manual charge';
+  else source = 'Manual entry';
+  return { method: method, source: source, creditCents: byType.credit||0 };
+}
+
+function cdStripeLink(row){
+  var acct = (window.schoolData && window.schoolData.stripe_account_id) || '';
+  var base = 'https://dashboard.stripe.com/' + (acct ? acct + '/' : '');
+  if(row.stripe_payment_intent_id) return base + 'payments/' + row.stripe_payment_intent_id;
+  if(row.stripe_invoice_id) return base + 'invoices/' + row.stripe_invoice_id;
+  return null;
+}
+
+function cdTimeline(row){
+  var items = [];
+  var created = row.created_at;
+  if(row.stripe_invoice_id || row.invoice_number){ items.push({ t: created, label:'Invoice generated', sub: row.invoice_number ? ('#'+row.invoice_number) : '' }); }
+  if(row.status==='failed'){ items.push({ t: created, label:'Payment attempted — failed', sub:'' }); }
+  else if(row.status!=='pending' && row.status!=='cancelled'){
+    items.push({ t: row.paid_at || created, label: row.stripe_payment_intent_id ? 'Payment captured' : 'Payment recorded', sub: row._fulfilledByName ? ('by '+escapeCheckout(row._fulfilledByName)) : '' });
+  } else if(row.status==='pending'){ items.push({ t: created, label:'Invoice created — awaiting payment', sub:'' }); }
+  else if(row.status==='cancelled'){ items.push({ t: created, label:'Voided', sub:'' }); }
+  if((row.amount_refunded_cents||0) > 0 || row.refunded_at){
+    items.push({ t: row.refunded_at, label: (row.status==='refunded' ? 'Refunded in full' : 'Partially refunded'), sub: cdMoney((row.amount_refunded_cents||0)/100) + (row._refundNote ? (' — '+escapeCheckout(row._refundNote)) : '') });
+  }
+  if(row.status==='disputed'){ items.push({ t: null, label:'Dispute opened', sub:'Review & respond in Stripe' }); }
+  if(!items.length) return '<div style="color:var(--muted);font-size:0.78rem">No events recorded.</div>';
+  return items.map(function(it){
+    var w = cdWhen(it.t);
+    return '<div class="cd-tl-item"><span class="cd-tl-dot"></span>' +
+      '<div style="font-size:0.8rem;color:var(--white)">' + it.label + '</div>' +
+      (w ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem">' + w + '</div>' : '') +
+      (it.sub ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">' + it.sub + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+async function openChargeDetail(paymentId, ctx){
+  if(!paymentId) return;
+  _chargeCtx = { row: null, ctx: ctx || null };
+  var overlay = document.getElementById('chargeDetailDrawer');
+  var body = document.getElementById('chargeDetailBody');
+  if(body) body.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Loading transaction…</div>';
+  if(overlay) overlay.classList.add('active');
+  var row = null;
+  try{ row = await loadChargeDetail(paymentId); }catch(e){}
+  if(!row){ if(body) body.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0">This transaction could not be loaded.</div>'; return; }
+  _chargeCtx.row = row;
+  renderChargeDetail(row, _chargeCtx.ctx);
+}
+
+function closeChargeDetail(){ var o=document.getElementById('chargeDetailDrawer'); if(o) o.classList.remove('active'); _chargeCtx={ row:null, ctx:null }; }
+
+function renderChargeDetail(row, ctx){
+  var body = document.getElementById('chargeDetailBody'); if(!body) return;
+  var s = row.students;
+  var memberName = s ? ((s.first_name||'')+' '+(s.last_name||'')).trim() : 'Walk-in';
+  if(!memberName) memberName = 'Walk-in';
+  var typeLabel = CD_TYPE_LABELS[row.type] || row.type || 'Payment';
+  var base = parseFloat(row.amount||0);
+  var feeCents = Math.max(0, Math.round(Number(row.fee_passed_cents)||0));
+  var fee = feeCents/100;
+  var totalCharged = base + fee;
+  var refundedCents = Math.max(0, Math.round(Number(row.amount_refunded_cents)||0));
+  var refunded = refundedCents/100;
+  var mi = cdMethodInfo(row);
+  var link = cdStripeLink(row);
+  var hasPI = !!row.stripe_payment_intent_id;
+  var remaining = totalCharged - refunded;
+  var refundable = (row.status==='paid' || row.status==='partial_refund') && hasPI && remaining > 0.009;
+
+  // ── Zone 1: header ──
+  var offlinePill = (row.status==='paid' && !hasPI) ? ' <span style="display:inline-block;font-size:0.58rem;font-weight:700;letter-spacing:0.05em;color:#B9A25A;border:1px solid #B9A25A66;border-radius:999px;padding:0.12rem 0.5rem;margin-left:0.3rem">OFFLINE</span>' : '';
+  var header =
+    '<div style="text-align:center;padding:0.25rem 0 0.4rem">' +
+      '<div style="font-family:var(--font-display);font-size:2.3rem;color:var(--gold);line-height:1">' + cdMoney(totalCharged) + '</div>' +
+      '<div style="margin-top:0.55rem">' + billStatusBadge(row.status) + offlinePill + '</div>' +
+      '<div style="font-size:0.98rem;color:var(--white);margin-top:0.65rem">' + escapeCheckout(memberName) + '</div>' +
+      '<div style="font-size:0.78rem;color:var(--muted);margin-top:0.15rem">' + typeLabel + (row.description ? (' · ' + escapeCheckout(row.description)) : '') + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.4rem">' + (cdWhen(row.paid_at || row.created_at) || '—') + '</div>' +
+    '</div>';
+
+  // ── Zone 2: money breakdown (no invented numbers) ──
+  var moneyRows = '';
+  moneyRows += '<div class="cd-row"><span class="k">Base amount</span><span class="v">' + cdMoney(base) + '</span></div>';
+  if(fee > 0.0001) moneyRows += '<div class="cd-row"><span class="k">Card processing fee</span><span class="v">' + cdMoney(fee) + '</span></div>';
+  moneyRows += '<div class="cd-row total"><span class="k">Total charged</span><span class="v">' + cdMoney(totalCharged) + '</span></div>';
+  if(mi.creditCents > 0) moneyRows += '<div class="cd-row"><span class="k">Paid with account credit</span><span class="v">' + cdMoney(mi.creditCents/100) + '</span></div>';
+  if(refunded > 0.0001) moneyRows += '<div class="cd-row"><span class="k" style="color:#E0A0A0">Refunded</span><span class="v" style="color:#E0A0A0">−' + cdMoney(refunded).slice(1) + '</span></div>';
+  // Platform fee + net settle inside Stripe and aren't reliably stored per-row — surface what we have, and
+  // point to Stripe for the exact split rather than printing a mystery total.
+  if(row.net_amount != null) moneyRows += '<div class="cd-row"><span class="k">Net to school</span><span class="v">' + cdMoney(row.net_amount) + '</span></div>';
+  var moneyFootnote = (hasPI && row.net_amount == null)
+    ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.55rem;font-style:italic">Platform fee &amp; net-to-school settle in Stripe' + (link ? ' — <a href="'+link+'" target="_blank" rel="noopener" style="color:var(--gold)">view exact split</a>' : '') + '.</div>'
+    : '';
+  var moneyZone = '<div class="cd-zone"><div class="cd-zone-label">Money</div>' + moneyRows + moneyFootnote + '</div>';
+
+  // ── Zone 3: payment + provenance ──
+  var provRows = '';
+  provRows += '<div class="cd-row"><span class="k">Method</span><span class="v">' + mi.method + '</span></div>';
+  provRows += '<div class="cd-row"><span class="k">Source</span><span class="v">' + mi.source + '</span></div>';
+  if(row.type==='membership') provRows += '<div class="cd-row"><span class="k">Membership</span><span class="v">' + (row.description ? escapeCheckout(row.description) : '—') + (row.stripe_invoice_id ? ' <span style="color:var(--muted)">· subscription</span>' : '') + '</span></div>';
+  if(hasPI) provRows += '<div class="cd-row"><span class="k">Stripe charge</span><span class="v" style="font-size:0.72rem;font-family:monospace">' + escapeCheckout(row.stripe_payment_intent_id) + '</span></div>';
+  else if(row.stripe_invoice_id) provRows += '<div class="cd-row"><span class="k">Stripe invoice</span><span class="v" style="font-size:0.72rem;font-family:monospace">' + escapeCheckout(row.stripe_invoice_id) + '</span></div>';
+  else provRows += '<div class="cd-row"><span class="k">Stripe</span><span class="v" style="color:var(--muted)">No linked Stripe charge</span></div>';
+  if(link) provRows += '<div style="margin-top:0.5rem"><a href="' + link + '" target="_blank" rel="noopener" style="font-size:0.74rem;color:var(--gold);text-decoration:none"><i class="fa-brands fa-stripe-s" style="margin-right:0.35rem"></i>View in Stripe <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.6rem;margin-left:0.2rem"></i></a></div>';
+  var provZone = '<div class="cd-zone"><div class="cd-zone-label">Payment</div>' + provRows + '</div>';
+
+  // ── Zone 4: actions ──
+  var refundReason = '';
+  if(!refundable){
+    if(!hasPI) refundReason = 'Recorded manually — no Stripe charge to refund.';
+    else if(row.status==='refunded') refundReason = 'Already fully refunded.';
+    else if(row.status==='failed') refundReason = 'This charge did not succeed.';
+    else if(row.status==='disputed') refundReason = 'Under dispute — resolve in Stripe.';
+    else if(remaining <= 0.009) refundReason = 'Nothing left to refund.';
+    else refundReason = 'Not refundable.';
+  }
+  var refundBtn = refundable
+    ? '<button class="cd-act-btn danger" id="cdRefundToggle" onclick="cdToggleRefundForm()"><i class="fa-solid fa-rotate-left"></i>Refund</button>'
+    : '<button class="cd-act-btn danger" disabled title="' + refundReason.replace(/"/g,'&quot;') + '"><i class="fa-solid fa-rotate-left"></i>Refund</button>';
+  var receiptBtn = (row.student_id && (row.status==='paid' || row.status==='partial_refund'))
+    ? '<button class="cd-act-btn" id="cdReceiptBtn" onclick="cdResendReceipt()"><i class="fa-solid fa-envelope"></i>Resend receipt</button>'
+    : '';
+  var stripeBtn = link
+    ? '<a class="cd-act-btn" href="' + link + '" target="_blank" rel="noopener"><i class="fa-brands fa-stripe-s"></i>View in Stripe</a>'
+    : '';
+  var refundForm =
+    '<div id="cdRefundForm" style="display:none;margin-top:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border)">' +
+      '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.5rem">Refundable balance: ' + cdMoney(remaining) + '. Leave amount blank for a full refund.</div>' +
+      '<input id="cdRefundAmt" type="text" inputmode="decimal" placeholder="Amount (blank = full)" style="width:100%;box-sizing:border-box;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.55rem 0.7rem;font-size:0.82rem;margin-bottom:0.5rem" />' +
+      '<input id="cdRefundReason" type="text" placeholder="Reason (saved on the record)" style="width:100%;box-sizing:border-box;background:var(--black);border:1px solid var(--border);color:var(--white);padding:0.55rem 0.7rem;font-size:0.82rem;margin-bottom:0.65rem" />' +
+      '<div style="display:flex;gap:0.5rem">' +
+        '<button class="cd-act-btn gold" id="cdRefundSubmit" onclick="cdSubmitRefund()">Confirm refund</button>' +
+        '<button class="cd-act-btn" onclick="cdToggleRefundForm()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  var notRefundableNote = (!refundable && refundReason) ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem;font-style:italic">' + refundReason + '</div>' : '';
+  var actionsZone = '<div class="cd-zone"><div class="cd-zone-label">Actions</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem">' + refundBtn + receiptBtn + stripeBtn + '</div>' +
+    refundForm + notRefundableNote + '</div>';
+
+  // ── Zone 5: timeline ──
+  var timelineZone = '<div class="cd-zone"><div class="cd-zone-label">Timeline</div>' + cdTimeline(row) + '</div>';
+
+  body.innerHTML = header + moneyZone + provZone + actionsZone + timelineZone;
+}
+
+function cdToggleRefundForm(){
+  var f = document.getElementById('cdRefundForm'); if(!f) return;
+  f.style.display = (f.style.display==='none' || !f.style.display) ? 'block' : 'none';
+  if(f.style.display==='block'){ var a=document.getElementById('cdRefundAmt'); if(a) a.focus(); }
+}
+
+// Refund + receipt reuse the in-flight refund-payment (v3) / send-payment-receipt EFs. The EF is the source
+// of truth for amounts; this UI only hints. After either action, refresh the drawer AND whichever list it
+// was opened from (plus the revenue tiles), so both doorways stay consistent.
+async function cdSubmitRefund(){
+  var row = _chargeCtx.row; if(!row) return;
+  var amtEl = document.getElementById('cdRefundAmt'); var reasonEl = document.getElementById('cdRefundReason');
+  var amtStr = (amtEl ? amtEl.value : '').trim(); var amount_cents = null;
+  if(amtStr!==''){ var a = parseFloat(amtStr.replace(/[$,]/g,'')); if(!isFinite(a) || a<=0){ alert('Enter a valid amount greater than $0, or leave it blank for a full refund.'); return; } amount_cents = Math.round(a*100); }
+  var reason = reasonEl ? reasonEl.value : '';
+  var summary = (amount_cents!=null) ? cdMoney(amount_cents/100) : 'the full remaining amount';
+  if(!confirm('Refund ' + summary + ' to the member?\n\nThis returns the money through Stripe and cannot be undone.')) return;
+  var btn = document.getElementById('cdRefundSubmit'); if(btn){ btn.disabled=true; btn.textContent='Refunding…'; }
+  try{
+    var uid=null; try{ var ss=await sb.auth.getUser(); uid=(ss&&ss.data&&ss.data.user)?ss.data.user.id:null; }catch(e){}
+    var reqBody = { school_id: SID, payment_id: row.id, applied_by: uid, reason: reason||'' };
+    if(amount_cents!=null) reqBody.amount_cents = amount_cents;
+    var r = await fetch(SURL+'/functions/v1/refund-payment', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())}, body: JSON.stringify(reqBody) });
+    var d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok || d.error){ alert('Could not refund: ' + ((d.error||'error').replace(/^[A-Z_]+:\s*/,''))); if(btn){ btn.disabled=false; btn.textContent='Confirm refund'; } return; }
+    if(window.showToast) showToast('Refunded ' + cdMoney((d.amount_cents||0)/100) + (d.fully ? ' — fully refunded.' : ' — partial refund applied.'));
+    await cdRefreshAfterAction();
+  }catch(e){ alert('Refund failed: ' + (e&&e.message?e.message:e)); if(btn){ btn.disabled=false; btn.textContent='Confirm refund'; } }
+}
+
+async function cdResendReceipt(){
+  var row = _chargeCtx.row; if(!row) return;
+  if(!row.student_id){ alert('No member is linked to this charge, so there is no one to send a receipt to.'); return; }
+  var btn = document.getElementById('cdReceiptBtn'); if(btn){ btn.disabled=true; }
+  try{
+    var reqBody = { payment_id: row.id, student_id: row.student_id, school_id: SID, amount: parseFloat(row.amount||0), type: row.type||'other', description: row.description||'', fee_passed_cents: row.fee_passed_cents||0 };
+    var r = await fetch(SURL+'/functions/v1/send-payment-receipt', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())}, body: JSON.stringify(reqBody) });
+    var d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok || d.error){ alert('Could not send receipt: ' + (d.error||'error')); }
+    else { var bits=[]; if(d.sms_sent) bits.push('text'); if(d.email_sent) bits.push('email'); if(window.showToast) showToast(bits.length ? ('Receipt sent by ' + bits.join(' & ') + '.') : 'Member has no phone or email on file — nothing sent.'); }
+  }catch(e){ alert('Receipt failed: ' + (e&&e.message?e.message:e)); }
+  if(btn){ btn.disabled=false; }
+}
+
+async function cdRefreshAfterAction(){
+  var row = _chargeCtx.row; var ctx = _chargeCtx.ctx;
+  if(row){ try{ await openChargeDetail(row.id, ctx); }catch(e){} }
+  try{ if(ctx==='bills' && currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id); }catch(e){}
+  try{ if(typeof loadRevenue==='function') await loadRevenue(); }catch(e){}
+  try{ var rm=document.getElementById('revenueBreakdownModal'); if(rm && rm.classList.contains('active') && typeof currentRevPeriod!=='undefined' && currentRevPeriod){ await openRevenueBreakdown(currentRevPeriod); } }catch(e){}
+}
+// ═════════════════════ end §CHARGE-DETAIL DRAWER ═════════════════════
 
 async function renderBillsUpcoming(ids, nameById, isFamily){
   var el=document.getElementById('billsUpcomingWrap'); if(!el) return;
