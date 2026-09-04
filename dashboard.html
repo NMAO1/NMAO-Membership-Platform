@@ -9941,7 +9941,7 @@ function renderChargeDetail(row, ctx){
   if(fee > 0.0001) moneyRows += '<div class="cd-row"><span class="k">Card processing fee</span><span class="v">' + cdMoney(fee) + '</span></div>';
   moneyRows += '<div class="cd-row total"><span class="k">Total charged</span><span class="v">' + cdMoney(totalCharged) + '</span></div>';
   if(mi.creditCents > 0) moneyRows += '<div class="cd-row"><span class="k">Paid with account credit</span><span class="v">' + cdMoney(mi.creditCents/100) + '</span></div>';
-  if(refunded > 0.0001) moneyRows += '<div class="cd-row"><span class="k" style="color:#E0A0A0">Refunded</span><span class="v" style="color:#E0A0A0">−' + cdMoney(refunded).slice(1) + '</span></div>';
+  if(refunded > 0.0001) moneyRows += '<div class="cd-row"><span class="k" style="color:#E0A0A0">Refunded</span><span class="v" style="color:#E0A0A0">−' + cdMoney(refunded) + '</span></div>';
   // Platform fee + net settle inside Stripe and aren't reliably stored per-row — surface what we have, and
   // point to Stripe for the exact split rather than printing a mystery total.
   if(row.net_amount != null) moneyRows += '<div class="cd-row"><span class="k">Net to school</span><span class="v">' + cdMoney(row.net_amount) + '</span></div>';
