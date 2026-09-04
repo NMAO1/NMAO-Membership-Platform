@@ -364,10 +364,10 @@
     .modal-close  { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
     .modal-body   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
     /* §CHARGE-DRAWER — one shared transaction-detail drawer opened from every charge list (Revenue + member Bills). Right-side slide-in. */
-    .detail-drawer-overlay { align-items: stretch; justify-content: flex-end; }
-    .detail-drawer { background: var(--surface); border-left: 1px solid var(--gold); width: min(94vw, 468px); height: 100vh; max-height: 100vh; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
+    .detail-drawer-overlay { align-items: center; justify-content: center; }
+    .detail-drawer { background: var(--surface); border: 1px solid var(--gold); width: min(94vw, 560px); height: auto; max-height: 88vh; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 22px 60px rgba(0,0,0,0.6); }
     .detail-drawer-overlay.active .detail-drawer { animation: chargeDrawerIn 0.22s cubic-bezier(0.22,0.61,0.36,1); }
-    @keyframes chargeDrawerIn { from { transform: translateX(28px); opacity: 0.4; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes chargeDrawerIn { from { transform: translateY(14px) scale(0.99); opacity: 0.4; } to { transform: none; opacity: 1; } }
     .cd-zone { border: 1px solid var(--border); background: var(--black); padding: 0.9rem 1rem; }
     .cd-zone-label { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
     .cd-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.3rem 0; font-size: 0.82rem; }
