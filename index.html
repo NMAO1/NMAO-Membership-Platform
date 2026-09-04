@@ -537,10 +537,15 @@ async function doSignup() {
   if (haveSession) {
     var _sess = await sc.auth.getSession();
     var _tok = (_sess.data && _sess.data.session) ? _sess.data.session.access_token : SKEY;
+    // §AMBASSADOR — carry the referral slug (?p=<slug>) into register-school so it
+    // records schools.referral_slug. Stored to localStorage so it survives an
+    // email-confirm bounce (dashboard.html re-sends it on the deferred create).
+    var refP = '';
+    try { refP = (new URLSearchParams(location.search).get('p') || '').trim().toLowerCase(); if (refP) { localStorage.setItem('nmao_ref_p', refP); } else { refP = localStorage.getItem('nmao_ref_p') || ''; } } catch (_e) {}
     var reg = await fetch(SURL + '/functions/v1/register-school', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _tok },
-      body: JSON.stringify({ school_name: school, email: email })
+      body: JSON.stringify({ school_name: school, email: email, p: refP || undefined })
     });
     var regData = await reg.json().catch(function () { return {}; });
     if (!reg.ok || !regData.ok) {

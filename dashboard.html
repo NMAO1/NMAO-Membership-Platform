@@ -3649,10 +3649,11 @@ async function initSessionGuard(){
     var pendingName = (user.user_metadata && user.user_metadata.school_name) ? String(user.user_metadata.school_name).trim() : '';
     if(pendingName){
       try{
+        var _refP=''; try { _refP = localStorage.getItem('nmao_ref_p') || ''; } catch(_e){}  // §AMBASSADOR — referral slug survived the email-confirm bounce
         var mk = await fetch(SURL + '/functions/v1/register-school', {
           method:'POST',
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
-          body: JSON.stringify({ school_name: pendingName, email: user.email })
+          body: JSON.stringify({ school_name: pendingName, email: user.email, p: _refP || undefined })
         });
         var mkBody = await mk.json().catch(function(){ return {}; });
         if(mk.ok && !mkBody.error){   // §AUTO-CREATE: register-school returns HTTP 200 even on internal errors — check the body too
