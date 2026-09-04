@@ -3689,10 +3689,13 @@ async function initSessionGuard(){
           body: JSON.stringify({ school_name: pendingName, email: user.email, p: _refP || undefined })
         });
         var mkBody = await mk.json().catch(function(){ return {}; });
-        if(mk.ok && !mkBody.error){   // §AUTO-CREATE: register-school returns HTTP 200 even on internal errors — check the body too
+        // §AUTO-CREATE — mirror the signup path's success test (index.html: !reg.ok || !regData.ok).
+        // register-school signals success ONLY with {ok:true}; a genuine DB failure is a 5xx, but an
+        // absent/false ok must also count as failure so we never treat a non-created school as created.
+        if(mk.ok && mkBody.ok){
           var sr2 = await sb.from('schools').select('id,name,email,is_active,timezone,timezone_confirmed').eq('owner_id', user.id).limit(1);
           if(!sr2.error && sr2.data && sr2.data.length){ school = sr2.data[0]; SID = school.id; }
-        } else if(mkBody.error){ console.error('[session-guard] register-school reported:', mkBody.error); }
+        } else { console.error('[session-guard] register-school did not create a school:', (mkBody && mkBody.error) || ('HTTP '+mk.status)); }
       }catch(e){ console.error('[session-guard] auto-create school failed:', e); }
     }
     if(!school){
@@ -3720,23 +3723,73 @@ async function initSessionGuard(){
   return true;
 }
 function showSessionError(user, reason, school){
+  var _esc = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   var email = user && user.email ? user.email : 'unknown';
-  var title, body;
+  // §BLOCKER-1 — a paying owner whose deferred school-create failed/skipped lands here. If they
+  // still carry a pending school_name from signup metadata, this is RECOVERABLE: offer to re-run
+  // register-school (idempotent) instead of a dead-end sign-out screen with misleading copy.
+  var pendingName = (user && user.user_metadata && user.user_metadata.school_name) ? String(user.user_metadata.school_name).trim() : '';
+  window.__pendingSchoolName = pendingName;
+  window.__pendingUserEmail = (user && user.email) || '';
+  var title, body, primaryBtn = '', canRetry = false;
+  var supportLink = '<p style="color:#6f665a;font-size:0.8rem;line-height:1.6;margin-top:1.5rem">Still stuck? Email <a href="mailto:support@nmao.us?subject='+encodeURIComponent('School setup help — '+email)+'" style="color:var(--gold);text-decoration:none">support@nmao.us</a> and we\'ll finish it for you.</p>';
+
   if(reason === 'inactive'){
     title = 'School Account Inactive';
     body = 'Your school <strong style="color:var(--gold)">'+(school?school.name:'')+'</strong> is currently marked inactive. Contact NMAO support to reactivate.';
+  } else if(pendingName){
+    canRetry = true;
+    title = 'Finish setting up your school';
+    body = 'Your account <strong style="color:var(--gold)">'+email+'</strong> is ready, but <strong style="color:var(--gold)">'+_esc(pendingName)+'</strong> didn\'t finish being created — this can happen if the last step was interrupted. Click below to finish now; nothing was lost and you won\'t be charged.';
+    primaryBtn = '<button id="retryCreateBtn" onclick="retryCreateSchool()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:#C9A84C;color:#080808;border:none;cursor:pointer;font-weight:700">Create My School</button>';
   } else {
     title = 'Account Not Linked to a School';
-    body = 'You are signed in as <strong style="color:var(--gold)">'+email+'</strong>, but this account is not the owner of any school in our system. This usually means you are logged into a test or secondary account. Sign out and sign back in with your owner account.';
+    body = 'You are signed in as <strong style="color:var(--gold)">'+email+'</strong>, but this account is not the owner of any school yet. If you just signed up, sign out and sign back in to finish setup. If you own a school, sign in with the email you used to create it.';
   }
+
+  var msgLine = '<div id="guardMsg" style="min-height:1.2rem;margin-bottom:1rem;font-size:0.85rem;color:#9A8F80"></div>';
+  var signoutBtn = '<button onclick="guardSignOut()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:'+(canRetry?'transparent':'#C9A84C')+';color:'+(canRetry?'#9A8F80':'#080808')+';border:'+(canRetry?'1px solid #2a2a2a':'none')+';cursor:pointer;font-weight:700;margin-left:'+(canRetry?'0.6rem':'0')+'">Sign Out</button>';
   var html = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#080808;font-family:Lato,sans-serif;padding:2rem">';
   html += '<div style="max-width:540px;border:1px solid #2a2a2a;background:#141414;padding:2.5rem;text-align:center">';
-  html += '<div style="font-size:2.2rem;color:#E07070;margin-bottom:1.25rem">⚠</div>';
+  html += '<div style="font-size:2.2rem;color:'+(canRetry?'#C9A84C':'#E07070')+';margin-bottom:1.25rem">'+(canRetry?'✓':'⚠')+'</div>';
   html += '<h1 style="font-family:\'Libre Baskerville\',serif;font-size:1.45rem;color:#F5F0E8;margin-bottom:1rem;font-weight:700">'+title+'</h1>';
   html += '<p style="color:#9A8F80;font-size:0.92rem;line-height:1.65;margin-bottom:2rem">'+body+'</p>';
-  html += '<button onclick="guardSignOut()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:#C9A84C;color:#080808;border:none;cursor:pointer;font-weight:700">Sign Out</button>';
+  html += msgLine;
+  html += '<div>'+primaryBtn+signoutBtn+'</div>';
+  html += supportLink;
   html += '</div></div>';
   document.body.innerHTML = html;
+}
+
+// §BLOCKER-1 — re-run the deferred register-school create from signup metadata (idempotent).
+async function retryCreateSchool(){
+  var _esc = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var btn = document.getElementById('retryCreateBtn');
+  var msg = document.getElementById('guardMsg');
+  var name = window.__pendingSchoolName || '';
+  if(!name){ if(msg){ msg.textContent = 'No pending school name found — please sign out and sign in again.'; } return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Creating…'; }
+  if(msg){ msg.style.color = '#9A8F80'; msg.textContent = 'Setting up your school…'; }
+  try{
+    var _refP = ''; try { _refP = localStorage.getItem('nmao_ref_p') || ''; } catch(_e){}
+    var mk = await fetch(SURL + '/functions/v1/register-school', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
+      body: JSON.stringify({ school_name: name, email: window.__pendingUserEmail || undefined, p: _refP || undefined })
+    });
+    var body = await mk.json().catch(function(){ return {}; });
+    if(mk.ok && body.ok){
+      if(msg){ msg.style.color = '#7BB369'; msg.textContent = 'Done! Loading your dashboard…'; }
+      window.location.reload();
+      return;
+    }
+    var err = (body && body.error) || ('HTTP ' + mk.status);
+    if(msg){ msg.style.color = '#E07070'; msg.innerHTML = 'We couldn\'t finish setup ('+_esc(String(err))+'). Try once more, or email <a href="mailto:support@nmao.us" style="color:var(--gold);text-decoration:none">support@nmao.us</a>.'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Try Again'; }
+  }catch(e){
+    if(msg){ msg.style.color = '#E07070'; msg.innerHTML = 'Network error — please try again, or email <a href="mailto:support@nmao.us" style="color:var(--gold);text-decoration:none">support@nmao.us</a>.'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Try Again'; }
+  }
 }
 
 function guardSignOut(){
@@ -9096,9 +9149,25 @@ async function profileCardAvailable(){
   }catch(e){ return false; }
 }
 
+// §CHARGE-READY (MED-b) — starting/resuming autopay charges the member, which fails at Stripe
+// unless the SCHOOL is charge-ready (Connect account exists AND stripe_onboarded, i.e.
+// charges_enabled && details_submitted). Check first so the owner gets an actionable message
+// instead of a raw Stripe rejection from ensure-subscription.
+async function schoolChargeReady(){
+  try{
+    var r=await sb.from('schools').select('stripe_account_id,stripe_onboarded').eq('id',SID).single();
+    if(r.error||!r.data) return { ready:true };  // don't block on a transient read error; the EF still guards
+    if(!r.data.stripe_account_id) return { ready:false, msg:'Connect your school to Stripe before turning on autopay.\n\nGo to Settings → Billing → Connect Stripe. Once you can accept payments, come back and flip autopay on.' };
+    if(!r.data.stripe_onboarded) return { ready:false, msg:'Finish your Stripe verification before turning on autopay.\n\nStripe still needs a few details before this school can accept payments. Open Settings → Billing, finish Stripe onboarding, then tap “refresh status” and try again.' };
+    return { ready:true };
+  }catch(e){ return { ready:true }; }
+}
+
 async function toggleAutopay(smId, turnOn){
   var sm=_profileMemsById[smId]; if(!sm) return;
   if(turnOn){
+    var _cr=await schoolChargeReady();
+    if(!_cr.ready){ alert(_cr.msg); return; }
     if(sm.stripe_subscription_id){
       if(!confirm('Turn autopay ON and resume billing for this plan?')) return;
       await callEnsureSubscription({student_membership_id:smId, autopay:true}, 'Autopay on — billing resumed.');
@@ -17383,10 +17452,15 @@ async function handleStripeOAuthReturn(){
   if(!code&&!oauthError)return;
   window.history.replaceState({},'',window.location.pathname);
   if(oauthError){
+    // §MED-a — the OAuth redirect lands on Home, where #stripeConnectMsg (a Billing-panel element)
+    // is not visible. Use the global toast so the outcome is always seen, and keep setMsg for when
+    // the user happens to be on the Billing tab.
     setMsg('stripeConnectMsg','Stripe connection failed: '+(oauthErrorDesc||oauthError),'error');
+    if(window.showToast) showToast('Stripe connection failed: '+(oauthErrorDesc||oauthError));
     return;
   }
   setMsg('stripeConnectMsg','Completing Stripe connection...','');
+  if(window.showToast) showToast('Completing Stripe connection…');
   try{
     var r=await fetch(SURL+'/functions/v1/stripe-connect-onboard',{
       method:'POST',
@@ -17396,12 +17470,17 @@ async function handleStripeOAuthReturn(){
     var data=await r.json();
     if(data.error){
       setMsg('stripeConnectMsg','Stripe connection failed: '+data.error,'error');
+      if(window.showToast) showToast('Stripe connection failed: '+data.error);
       return;
     }
     setMsg('stripeConnectMsg','Stripe connected successfully!','success');
     await loadStripeConnectStatus();
+    // Reflect charge-readiness in the toast: onboarded → ready; else a verification step remains.
+    var _ready = !!(data.stripe_onboarded);
+    if(window.showToast) showToast(_ready ? 'Stripe connected — you can accept payments now.' : 'Stripe connected — finish verifying in Stripe, then tap “refresh status” on the Billing tab.');
   }catch(e){
     setMsg('stripeConnectMsg','Stripe connection error: '+(e.message||e),'error');
+    if(window.showToast) showToast('Stripe connection error: '+(e.message||e));
   }
 }
 

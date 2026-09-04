@@ -76,7 +76,11 @@ function b64urlDecode(s: string): Uint8Array {
 function b64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-async function verifyToken(token: string): Promise<{ pid: string; e?: number } | null> {
+// Payload.s === "u" marks an UPLOAD-ONLY token (minted by get-onboarding-booking
+// from a booking_id, which is not a real secret — it leaks in reschedule/return
+// URLs). Such tokens may upload but must not READ the prospect's data. Tokens with
+// no scope field are full (delivered to the verified owner email or the specialist).
+async function verifyToken(token: string): Promise<{ pid: string; e?: number; s?: string } | null> {
   if (!token || token.indexOf(".") < 0) return null;
   const parts = token.split(".");
   if (parts.length !== 2) return null;
@@ -109,12 +113,51 @@ Deno.serve(async (req) => {
     const pid = claim.pid;
 
     const { data: prospect, error: pErr } = await svc.from("prospect_schools")
-      .select("id, school_name, owner_name, accreditation_intake").eq("id", pid).single();
+      .select("id, school_name, owner_name, accreditation_intake, assigned_specialist_id").eq("id", pid).single();
     if (pErr || !prospect) return json({ ok: false, error: "We could not find this school." }, 404);
 
+    // §AUTO-ASSIGN — the moment a school engages with onboarding (opens the wizard or uploads a doc),
+    // make sure its prospect is OWNED by a specialist, so the documents land in a review queue instead
+    // of nowhere (specialist.html scopes to assigned_specialist_id). Assign the least-loaded ACTIVE
+    // specialist; guarded so it only ever assigns once, and non-fatal so it never blocks an upload.
+    if (!(prospect as any).assigned_specialist_id) {
+      try {
+        const { data: specs } = await svc.from("onboarding_specialists").select("id").eq("active", true);
+        if (specs && specs.length) {
+          let best = specs[0].id, bestCount = Infinity;
+          for (const s of specs) {
+            const { count } = await svc.from("prospect_schools")
+              .select("id", { count: "exact", head: true }).eq("assigned_specialist_id", s.id);
+            if ((count || 0) < bestCount) { bestCount = count || 0; best = s.id; }
+          }
+          await svc.from("prospect_schools")
+            .update({ assigned_specialist_id: best, updated_at: new Date().toISOString() })
+            .eq("id", pid).is("assigned_specialist_id", null);
+        }
+      } catch (_e) { /* non-fatal */ }
+    }
+
     const action = String(body.action || "init");
+    const uploadOnly = claim.s === "u";   // scope: booking-derived token uploads, does not read
 
     if (action === "init") {
+      // §SCOPE (HIGH) — an upload-only token was minted from a booking_id, which
+      // leaks in reschedule/return URLs, so it must not expose the prospect's data.
+      // Return the minimum an upload session needs: the school name only (already
+      // public on the booking the visitor is confirming). Withhold owner_name, the
+      // prior document list, and saved intake answers — those reads are reserved for
+      // the full token emailed to the verified owner (prep/recap) or minted by the
+      // specialist. Uploads themselves still work on either token.
+      if (uploadOnly) {
+        return json({
+          ok: true,
+          scope: "upload",
+          school_name: prospect.school_name || "",
+          owner_name: "",
+          documents: [],
+          fields: {},
+        });
+      }
       const { data: docs } = await svc.from("prospect_documents")
         .select("id, category, original_name, status, uploaded_at")
         .eq("prospect_id", pid).order("uploaded_at", { ascending: false });
@@ -161,6 +204,8 @@ Deno.serve(async (req) => {
         note: String(body.note || "").slice(0, 1000) || null,
       }).select("id, category, original_name, status, uploaded_at").single();
       if (iErr) return json({ ok: false, error: "Could not save the file record." }, 200);
+      // §UNIFY-ACCRED — an uploaded accreditation file also fills its checklist item. Non-fatal.
+      try { await svc.rpc("sync_accreditation_checklist", { p_prospect_id: pid }); } catch (_e) {}
       return json({ ok: true, document: doc });
     }
 
@@ -187,6 +232,9 @@ Deno.serve(async (req) => {
 
       const { error: uErr } = await svc.from("prospect_schools").update(patch).eq("id", pid);
       if (uErr) return json({ ok: false, error: "Could not save your answers." }, 200);
+      // §UNIFY-ACCRED — auto-fill the specialist's review checklist from what the school just submitted
+      // (answers → matching requirements marked 'received'; never downgrades a verified item). Non-fatal.
+      try { await svc.rpc("sync_accreditation_checklist", { p_prospect_id: pid }); } catch (_e) {}
       return json({ ok: true });
     }
 
