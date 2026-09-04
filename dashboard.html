@@ -2788,7 +2788,7 @@
       <div id="familyCardSection" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:0.55rem">Family Card <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:0.68rem">— the shared card all members bill to</span> <button class="help-hint-inline" onclick="openHelpPopover('families.family_card',this)" title="Help">?</button></div>
         <div id="familyCardBody" style="font-size:0.82rem;color:var(--muted)"></div>
-        <button class="btn-sm gold" style="font-size:0.72rem;margin-top:0.75rem" onclick="openFamilyCheckout(document.getElementById('familyEditId').value)"><i class="fa-solid fa-cart-shopping" style="margin-right:0.3rem"></i>Enroll members on plans (family checkout)</button>
+        <button class="btn-sm gold" style="font-size:0.72rem;margin-top:0.75rem" onclick="openFamilyCheckout(document.getElementById('familyEditId').value)"><i class="fa-solid fa-cart-shopping" style="margin-right:0.3rem"></i>Enroll members on plans (family checkout)</button> <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('families.family_checkout',this)" title="Help">?</button>
       </div>
       <button class="btn-gold-full" style="margin-top:1rem" onclick="saveFamily()">Save Family</button>
       <p class="form-msg" id="familyMsg"></p>
@@ -8863,7 +8863,7 @@ async function loadFinPaidHistory(ids, nameById, isFamily){
     el.innerHTML=data.map(function(p){
       var d=(''+(p.created_at||'')).substring(0,10);
       var person=isFamily?('<span style="color:var(--white)">'+(nameById[p.student_id]||'')+' · </span>'):'';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.5rem;border-bottom:1px solid var(--border)"><div style="font-size:0.82rem;color:var(--muted)">'+person+(lbl[p.type]||p.type||'Payment')+(p.description?(' · '+p.description):'')+' · '+(d?smDateLabel(d):'')+'</div><div style="font-size:0.84rem;color:#5A9A6A">$'+parseFloat(p.amount||0).toFixed(2)+'</div></div>';
+      return '<div onclick="openChargeDetail(\''+p.id+'\',\'bills\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.5rem;border-bottom:1px solid var(--border)"><div style="font-size:0.82rem;color:var(--muted)">'+person+(lbl[p.type]||p.type||'Payment')+(p.description?(' · '+p.description):'')+' · '+(d?smDateLabel(d):'')+'</div><div style="font-size:0.84rem;color:#5A9A6A">$'+parseFloat(p.amount||0).toFixed(2)+'</div></div>';
     }).join('');
   }catch(e){ el.innerHTML='<div style="color:var(--muted);font-size:0.82rem">History unavailable.</div>'; }
 }
@@ -9746,18 +9746,14 @@ async function renderBillsList(ids, nameById, isFamily){
       var d=(''+(p.due_date||p.created_at||'')).substring(0,10);
       var person=isFamily?('<div style="font-size:0.78rem;color:var(--white)">'+(nameById[p.student_id]||'—')+'</div>'):'';
       var desc=(typeLabels[p.type]||p.type||'Bill')+(p.description?('<span style="color:var(--muted);font-size:0.7rem"> · '+p.description+'</span>'):'');
-      // Refundable = a real Stripe charge (has a payment_intent) that is paid/partially-refunded with a
-      // remaining balance. Excludes comps / credits / offline rows (no payment_intent). The EF re-checks
-      // exact amounts against Stripe; this just decides whether to offer the action.
-      var refundedDollars=(p.amount_refunded_cents||0)/100;
-      var remainDollars=parseFloat(p.amount||0)-refundedDollars;
-      var refundable=(p.status==='paid'||p.status==='partial_refund') && !!p.stripe_payment_intent_id && remainDollars>0.009;
-      var refundLink=refundable?('<div style="margin-top:0.2rem"><a onclick="event.stopPropagation();refundBill(\''+p.id+'\','+remainDollars.toFixed(2)+')" style="color:#E0A0A0;cursor:pointer;text-decoration:underline;font-size:0.62rem" title="Refund this charge in Stripe">Refund</a></div>'):'';
-      return '<div style="display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.55rem 0.5rem;align-items:center;border-bottom:1px solid var(--border)">'+person+
+      // Whole row opens the ONE shared transaction drawer (openChargeDetail). Refund / Resend receipt /
+      // View in Stripe now all live INSIDE that drawer, so this member list and the school-wide Revenue
+      // list behave identically. (Old inline Refund prompt removed — superseded by the drawer.)
+      return '<div onclick="openChargeDetail(\''+p.id+'\',\'bills\')" style="cursor:pointer;display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.55rem 0.5rem;align-items:center;border-bottom:1px solid var(--border)">'+person+
         '<div style="font-size:0.8rem;color:var(--white)">'+desc+'</div>'+
         '<div style="font-size:0.74rem;color:var(--muted)">'+(d?smDateLabel(d):'—')+'</div>'+
         '<div style="font-size:0.82rem;color:var(--gold);text-align:right">$'+parseFloat(p.amount||0).toFixed(2)+'</div>'+
-        '<div style="text-align:center">'+billStatusBadge(p.status)+refundLink+'</div></div>';
+        '<div style="text-align:center">'+billStatusBadge(p.status)+'</div></div>';
     }).join('');
   }catch(e){ el.innerHTML='<div style="color:var(--muted);font-size:0.82rem">Bills unavailable.</div>'; }
 }
