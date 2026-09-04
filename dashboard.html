@@ -2716,7 +2716,7 @@
         <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
           <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-id-card" style="color:var(--gold)"></i>Enrollment <button class="help-hint-inline" onclick="openHelpPopover('students.sec_enrollment',this)" title="Help">?</button></div>
           <div class="field"><label>Program</label><select id="stuProgram" onchange="filterMembershipsForProgram()"><option value="">-- Select a Program --</option></select></div>
-          <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select></div>
+          <div class="field"><label>Membership Plan</label><select id="stuMembership"><option value="">-- Select a Program first --</option></select><button type="button" class="btn-sm" style="font-size:0.72rem;margin-top:0.45rem" onclick="saveMemberThenCraftCustom()"><i class="fa-solid fa-plus" style="margin-right:0.3rem"></i>Craft a custom plan</button><p style="font-size:0.68rem;color:var(--muted);margin:0.35rem 0 0">No plan fits? This saves the member and opens the custom-plan builder for them.</p></div>
           <div class="field"><label>Billing method</label><select id="stuBillingMethod" onchange="onStuBillingChange()"><option value="cash">Cash / check</option><option value="autopay">Autopay (add a card below, then flip the toggle)</option><option value="comp">Comp / free</option><option value="external">External / prepaid</option></select></div>
           <div class="field" id="stuCardField" style="display:none"><label>Card for autopay <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— saved securely, no charge now</span></label><div id="stuCardElement" style="padding:0.7rem 0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);min-height:1.4rem"></div><p id="stuCardMsg" style="font-size:0.72rem;color:var(--muted);margin:0.4rem 0 0">Optional — leave blank to add a card later from the member's profile.</p></div>
           <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Start Date</label><input type="date" id="stuStartDate" /></div><div class="field" style="margin-bottom:0"><label>Status</label><select id="stuStatus"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select></div></div>
@@ -8714,6 +8714,42 @@ var r;
     if(_famAdd) await ensureFamilyInvited(_famAdd);  // §FAMILY-PROPAGATE — provision the family portal login when someone joins a family
     buildSetupChecklist(); setTimeout(closeAddStudent,1200);
   }
+}
+
+// §CRAFT-ON-ADD — a school may want a CUSTOM plan for a new member that doesn't exist yet, but
+// saveStudent requires an existing membership (the §GUARDRAIL against silently-unbilled members).
+// This saves the member plan-less first, then hands off to the existing Craft-Custom-Membership flow,
+// which builds the plan AND enrolls + bills the now-real member on it. Reuses openCraftCustomMembership.
+async function saveMemberThenCraftCustom(){
+  var first=document.getElementById('stuFirst').value.trim();
+  var last =document.getElementById('stuLast').value.trim();
+  var pid  =document.getElementById('stuProgram').value;
+  if(!first||!last){ setMsg('studentMsg','First and last name required.','error'); return; }
+  if(!pid){ setMsg('studentMsg','Pick a program first — the custom plan is built for it.','error'); return; }
+  if(document.getElementById('stuEditId').value){ setMsg('studentMsg','Use Craft Custom Membership from the member’s profile.','error'); return; }
+  setMsg('studentMsg','Saving member, then opening the custom-plan builder…','');
+  var _fam=_afmFamilyId;
+  var payload={
+    first_name:first, last_name:last,
+    email:document.getElementById('stuEmail').value.trim().toLowerCase(),
+    phone:document.getElementById('stuPhone').value.trim(),
+    date_of_birth:document.getElementById('stuDOB').value||null,
+    program_id:pid, plan_type:'membership',
+    status:document.getElementById('stuStatus').value,
+    start_date:document.getElementById('stuStartDate').value||localDateStr(new Date()),
+    notes:document.getElementById('stuNotes').value.trim()||null,
+    school_id:SID, source:(_fam?'family_add':'manual')
+  };
+  if(_fam) payload.family_id=_fam;
+  var _belt=await getFirstBeltForProgram(pid); if(_belt) payload.current_belt_id=_belt;
+  var r=await sb.from('students').insert(payload).select('*').single();
+  if(r.error){ setMsg('studentMsg',r.error.message,'error'); return; }
+  await loadStudents();
+  if(_fam){ try{ await ensureFamilyInvited(_fam); }catch(e){} }
+  _afmFamilyId=null;
+  closeAddStudent();
+  currentProfileStudent=r.data;            // the craft flow enrolls + bills this now-real member
+  openCraftCustomMembership();
 }
 
 // §INLINE-CARD — collect a member's card right in the Add-Member modal (Stripe Elements +
