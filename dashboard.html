@@ -3492,7 +3492,7 @@
         <select id="addCardGuardian" style="width:100%;margin-bottom:0.6rem"><option value="">&mdash; Not specified &mdash;</option></select>
         <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.35rem;display:block">Nickname <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
         <input id="addCardNickname" type="text" placeholder="e.g. Mom&#39;s Amex" style="width:100%;margin-bottom:0.7rem"/>
-        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--white);cursor:pointer"><input type="checkbox" id="addCardMakeDefault"/> Use this as the tuition / autopay card</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--white);cursor:pointer"><input type="checkbox" id="addCardMakeDefault"/> Use this as the primary / autopay card</label>
       </div>
       <button class="btn-gold-full" id="replaceCardSaveBtn" style="margin-top:1rem" onclick="confirmReplaceCardInline()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card</button>
       <p class="form-msg" id="replaceCardMsg" style="margin-top:0.6rem;text-align:center"></p>
@@ -7898,11 +7898,11 @@ function _cardRow(sid, c){
                             : ((c.label && !(c.wallet_type === 'link')) ? c.label : '');
   var sub = [who, exp].filter(Boolean).join(' · ');
   var badges = '';
-  if(c.is_default) badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(201,168,76,0.18);color:var(--gold);padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Tuition</span>';
+  if(c.is_default) badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(201,168,76,0.18);color:var(--gold);padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Primary</span>';
   if(c.expired)    badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(224,112,112,0.18);color:#E07070;padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Expired</span>';
   var pm = c.payment_method_id;
   var actions = '';
-  if(!c.is_default) actions += '<button class="btn-sm" style="font-size:0.68rem" onclick="setDefaultCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-star"></i> Make tuition card</button>';
+  if(!c.is_default) actions += '<button class="btn-sm" style="font-size:0.68rem" onclick="setDefaultCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-star"></i> Make primary card</button>';
   actions += '<button class="btn-sm" style="font-size:0.68rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-trash"></i> Remove</button>';
   return '<div style="background:var(--black);border:1px solid ' + (c.is_default ? 'rgba(201,168,76,0.5)' : 'var(--border)') + ';padding:0.6rem 0.8rem;margin-bottom:0.5rem">' +
     '<div style="font-size:0.85rem;color:var(--white)">' + _cardFace(c) + badges + '</div>' +
@@ -7943,9 +7943,9 @@ async function loadProfileCardOnFile(sid){
   }
 }
 async function setDefaultCard(sid, pmId){
-  if(!confirm('Make this the tuition / autopay card? Active memberships will bill this card from now on.')) return;
+  if(!confirm('Make this the primary / autopay card? Active memberships will bill this card from now on.')) return;
   var el = document.getElementById('profileCardOnFile');
-  if(el) el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Updating tuition card...';
+  if(el) el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Updating primary card...';
   try{
     var r = await fetch(SURL + '/functions/v1/apply-card-setup', {
       method: 'POST',
@@ -7953,8 +7953,8 @@ async function setDefaultCard(sid, pmId){
       body: JSON.stringify({school_id: SID, student_id: sid, payment_method_id: pmId, make_default: true}),
     });
     var d = await r.json();
-    if(!r.ok || d.error){ await loadProfileCardOnFile(sid); alert('Could not set the tuition card: ' + ((d && d.error) || 'error')); return; }
-    if(d.failed > 0){ alert('Set as tuition card, but ' + d.failed + ' subscription(s) may still bill the old card. Please contact support.'); }
+    if(!r.ok || d.error){ await loadProfileCardOnFile(sid); alert('Could not set the primary card: ' + ((d && d.error) || 'error')); return; }
+    if(d.failed > 0){ alert('Set as primary card, but ' + d.failed + ' subscription(s) may still bill the old card. Please contact support.'); }
     await loadProfileCardOnFile(sid);
   }catch(e){ await loadProfileCardOnFile(sid); alert('Network error: ' + (e.message || '')); }
 }
@@ -12515,7 +12515,7 @@ function _checkoutCardLabel(c){
     ? ('Link' + (c.link_email ? (' — ' + c.link_email) : ''))
     : ((c.brand || 'card').toUpperCase() + ' ••••' + (c.last4 || '????'));
   var who = c.guardian_name || ((c.label && c.wallet_type !== 'link') ? c.label : '');
-  return (who ? who + ' · ' : '') + face + (c.is_default ? ' (tuition)' : '') + (c.expired ? ' — EXPIRED' : '');
+  return (who ? who + ' · ' : '') + face + (c.is_default ? ' (primary)' : '') + (c.expired ? ' — EXPIRED' : '');
 }
 // Add a card mid-checkout, then refresh the picker.
 function checkoutAddCardInline(){
