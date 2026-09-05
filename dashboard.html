@@ -9057,7 +9057,16 @@ async function chargeOwedItem(sid, type, ref, cents, label, uid){
     var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid,line_items:[{name:label||'Bill payment',unit_amount:cents,quantity:1,product_id:null,item_type:'custom'}],applied_by:uid||null,idempotency_key:owedIdemKey(type,ref,cents)})});
     var jd={}; try{ jd=await resp.json(); }catch(e){}
     if(!resp.ok||jd.error) return {ok:false, error:(jd.error||'Charge failed')};
-    var settle=await markOwedSettled(type,ref);
+    // §NO-DOUBLE-COUNT — for past_due the owed row IS itself a payments row, and the create-pos-charge
+    // above just created the REAL paid row (with the Stripe charge id). Marking the original 'paid' too
+    // would double-count revenue (the Charles Mohr incident), so instead supersede the original bill.
+    // Other types (belt_test/event/cancel_fee) settle a flag on a different table — no duplicate row.
+    var settle;
+    if(type==='past_due'){
+      settle=await sb.from('payments').update({status:'cancelled', notes:'superseded by card charge '+((jd&&(jd.charge_id||jd.payment_intent_id))||'')+' on '+new Date().toISOString().slice(0,10)}).eq('id',ref).eq('school_id',SID);
+    } else {
+      settle=await markOwedSettled(type,ref);
+    }
     var charged=(jd.gross_charged_cents!=null?jd.gross_charged_cents:cents);
     if(settle&&settle.error) return {ok:true, warn:true, error:settle.error, cents:charged};
     return {ok:true, cents:charged};
