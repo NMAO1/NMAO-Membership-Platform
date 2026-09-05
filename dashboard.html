@@ -5274,6 +5274,7 @@ function classesForDate(dateStr){
 }
 
 function navigate(page,el){
+  window.__currentPage = page;
   closeSidebar();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
@@ -6084,7 +6085,10 @@ function openHelpPopover(page, btn){
     '</div>' +
     '<div style="font-size:0.82rem;color:var(--white);line-height:1.5;margin-bottom:' + ((howto || ex) ? '0.85rem' : '0.4rem') + '">' + c.purpose + '</div>' +
     howto + ex +
-    '<div style="text-align:right;margin-top:0.65rem"><a onclick="disableHelpHints()" style="font-size:0.7rem;color:var(--muted);cursor:pointer;text-decoration:underline">Turn off hints</a></div>';
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:0.75rem;padding-top:0.6rem;border-top:1px solid var(--border)">' +
+      '<a onclick="closeHelpPopover();openHelpCenter(\'' + helpKeyToNav(page) + '\')" style="font-size:0.76rem;color:var(--gold);cursor:pointer;font-weight:600">Full guide &rarr;</a>' +
+      '<a onclick="disableHelpHints()" style="font-size:0.7rem;color:var(--muted);cursor:pointer;text-decoration:underline">Turn off hints</a>' +
+    '</div>';
   pop.style.display = 'block';
   positionHelpPopover();
 }
@@ -20013,7 +20017,16 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     </div>
   </div>
   <script>
-    function openHelpCenter(){ var f=document.getElementById('helpCenterFrame'); if(!f.getAttribute('src')) f.setAttribute('src','help-center.html'); document.getElementById('helpCenterOverlay').style.display='block'; document.body.style.overflow='hidden'; }
+    function openHelpCenter(pageArg){
+      var page = pageArg || window.__currentPage || 'home';
+      var slug = (window.schoolData && window.schoolData.slug) ? window.schoolData.slug : '';
+      var base = 'help-center.html' + (slug ? ('?s=' + encodeURIComponent(slug)) : '');
+      var f = document.getElementById('helpCenterFrame');
+      if(!f.getAttribute('src')){ f.setAttribute('src', base + '#page=' + encodeURIComponent(page)); }
+      else { try{ f.contentWindow.location.hash = 'page=' + page; }catch(e){ f.setAttribute('src', base + '#page=' + encodeURIComponent(page)); } }
+      document.getElementById('helpCenterOverlay').style.display='block'; document.body.style.overflow='hidden';
+    }
+    function helpKeyToNav(key){ var p=(key||'').split('.')[0]; var m={profile:'members',custom:'members',students:'members',comm:'communications'}; return m[p]||p; }
     function closeHelpCenter(){ document.getElementById('helpCenterOverlay').style.display='none'; document.body.style.overflow=''; }
     document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var o=document.getElementById('helpCenterOverlay'); if(o&&o.style.display==='block') closeHelpCenter(); } });
   </script>
