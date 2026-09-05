@@ -3483,10 +3483,17 @@
  <!-- §MODAL-REPLACE-CARD-INLINE — inline card entry for an existing member (Elements + SetupIntent, no hosted page / verify code) -->
 <div class="modal-overlay" id="replaceCardModal">
   <div class="modal" style="width:min(92vw,420px)">
-    <div class="modal-header"><span class="modal-title">Update Card on File</span><button class="modal-close" onclick="closeReplaceCardInline()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="addCardTitle">Update Card on File</span><button class="modal-close" onclick="closeReplaceCardInline()"><i class="fa-solid fa-xmark"></i></button></div>
     <div style="padding:1.25rem 1.5rem">
       <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem;display:block">Card details</label>
       <div id="replaceCardElement" style="background:var(--black);border:1px solid var(--border);padding:0.9rem 0.85rem"></div>
+      <div id="addCardAttribution" style="margin-top:0.9rem;display:none">
+        <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.35rem;display:block">Whose card? <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
+        <select id="addCardGuardian" style="width:100%;margin-bottom:0.6rem"><option value="">&mdash; Not specified &mdash;</option></select>
+        <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.35rem;display:block">Nickname <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
+        <input id="addCardNickname" type="text" placeholder="e.g. Mom&#39;s Amex" style="width:100%;margin-bottom:0.7rem"/>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--white);cursor:pointer"><input type="checkbox" id="addCardMakeDefault"/> Use this as the tuition / autopay card</label>
+      </div>
       <button class="btn-gold-full" id="replaceCardSaveBtn" style="margin-top:1rem" onclick="confirmReplaceCardInline()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card</button>
       <p class="form-msg" id="replaceCardMsg" style="margin-top:0.6rem;text-align:center"></p>
       <p style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem">Saved securely by Stripe &mdash; no charge now. Card details never touch our servers.</p>
@@ -7873,54 +7880,83 @@ async function loadProfilePacks(sid){
 
 // §JS:CARD-ON-FILE (Phase K.1) — Card on File section in student profile + Send Update Card Link modal
 
+// §CARDS-ON-FILE — multi-card panel. Lists every card on the member/family customer
+// (list-payment-methods reconciles Stripe -> mirror), each attributed to a guardian/nickname,
+// with the tuition/autopay card flagged. Add card, Make tuition card, Remove per card.
+var _profileCards = [];
+function _cardFace(c){
+  if(c.wallet_type === 'link' || c.brand === 'link'){
+    return '<i class="fa-solid fa-bolt" style="color:var(--gold);margin-right:0.4rem"></i>Link' + (c.link_email ? (' — ' + c.link_email) : '');
+  }
+  var brand = (c.brand || 'card').toUpperCase();
+  var last4 = c.last4 || '????';
+  return '<i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' ••••' + last4;
+}
+function _cardRow(sid, c){
+  var exp = (c.exp_month && c.exp_year) ? ('Exp ' + String(c.exp_month).padStart(2,'0') + '/' + String(c.exp_year).slice(-2)) : '';
+  var who = c.guardian_name ? (c.guardian_name + (c.guardian_relationship ? (' (' + c.guardian_relationship + ')') : ''))
+                            : ((c.label && !(c.wallet_type === 'link')) ? c.label : '');
+  var sub = [who, exp].filter(Boolean).join(' · ');
+  var badges = '';
+  if(c.is_default) badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(201,168,76,0.18);color:var(--gold);padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Tuition</span>';
+  if(c.expired)    badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(224,112,112,0.18);color:#E07070;padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Expired</span>';
+  var pm = c.payment_method_id;
+  var actions = '';
+  if(!c.is_default) actions += '<button class="btn-sm" style="font-size:0.68rem" onclick="setDefaultCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-star"></i> Make tuition card</button>';
+  actions += '<button class="btn-sm" style="font-size:0.68rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-trash"></i> Remove</button>';
+  return '<div style="background:var(--black);border:1px solid ' + (c.is_default ? 'rgba(201,168,76,0.5)' : 'var(--border)') + ';padding:0.6rem 0.8rem;margin-bottom:0.5rem">' +
+    '<div style="font-size:0.85rem;color:var(--white)">' + _cardFace(c) + badges + '</div>' +
+    (sub ? ('<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">' + sub + '</div>') : '') +
+    '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.5rem">' + actions + '</div>' +
+  '</div>';
+}
 async function loadProfileCardOnFile(sid){
   var el = document.getElementById('profileCardOnFile');
   if(!el) return;
   el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading...';
+  var addBtns = '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.55rem">' +
+      '<button class="panel-action" style="font-size:0.72rem" onclick="openAddCardInline(\'' + sid + '\',{makeDefault:false})"><i class="fa-solid fa-plus"></i> Add card</button>' +
+      '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send link</button>' +
+    '</div>';
   try{
-    var r = await fetch(SURL + '/functions/v1/get-student-card', {
+    var r = await fetch(SURL + '/functions/v1/list-payment-methods', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
       body: JSON.stringify({school_id: SID, student_id: sid}),
     });
     var data = await r.json();
-    _profileHasCard = !data.error && !!data.has_card;   // §AUTOPAY — card-gate uses this
     if(data.error){
+      _profileHasCard = false;
       el.innerHTML = '<div style="color:var(--muted);font-size:0.78rem">' + data.error + '</div>';
       return;
     }
-    if(!data.has_card){
-      el.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.6rem">No card on file</div>' +
-        '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
-          '<button class="panel-action" style="font-size:0.72rem" onclick="openReplaceCardInline(\'' + sid + '\')"><i class="fa-solid fa-credit-card"></i> Add Card</button>' +
-          '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
-        '</div>';
+    var cards = data.cards || [];
+    _profileCards = cards;
+    _profileHasCard = cards.length > 0;   // AUTOPAY card-gate uses this
+    if(!cards.length){
+      el.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.2rem">No cards on file</div>' + addBtns;
       return;
     }
-    // Link PMs have no brand/last4 \u2014 show the Link email + a link glyph instead of an empty card.
-    var _cardInner;
-    if (data.type === 'link'){
-      var _le = data.link_email ? (' \u2014 ' + data.link_email) : '';
-      _cardInner = '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-bolt" style="color:var(--gold);margin-right:0.4rem"></i>Link' + _le + '</div>' +
-        '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Saved via Stripe Link</div>';
-    } else {
-      var brand = (data.brand || 'card').toUpperCase();
-      var last4 = data.last4 || '????';
-      var exp = data.exp_month && data.exp_year ? (String(data.exp_month).padStart(2,'0') + '/' + String(data.exp_year).slice(-2)) : '--';
-      _cardInner = '<div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' \u2022\u2022\u2022\u2022' + last4 + '</div>' +
-        '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">Exp ' + exp + '</div>';
-    }
-    el.innerHTML = '<div style="background:var(--black);border:1px solid var(--border);padding:0.65rem 0.85rem;margin-bottom:0.6rem">' +
-      _cardInner +
-      '</div>' +
-      '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
-        '<button class="btn-sm" style="font-size:0.72rem" onclick="openReplaceCardInline(\'' + sid + '\')"><i class="fa-solid fa-rotate"></i> Replace</button>' +
-        '<button class="btn-sm" style="font-size:0.72rem" onclick="openSendUpdateCardLink(\'' + sid + '\')"><i class="fa-solid fa-message"></i> Send Link</button>' +
-        '<button class="btn-sm" style="font-size:0.72rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\')"><i class="fa-solid fa-trash"></i> Remove</button>' +
-      '</div>';
+    el.innerHTML = cards.map(function(c){ return _cardRow(sid, c); }).join('') + addBtns;
   }catch(e){
     el.innerHTML = '<div style="color:#E07070;font-size:0.78rem">Could not load card info.</div>';
   }
+}
+async function setDefaultCard(sid, pmId){
+  if(!confirm('Make this the tuition / autopay card? Active memberships will bill this card from now on.')) return;
+  var el = document.getElementById('profileCardOnFile');
+  if(el) el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Updating tuition card...';
+  try{
+    var r = await fetch(SURL + '/functions/v1/apply-card-setup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
+      body: JSON.stringify({school_id: SID, student_id: sid, payment_method_id: pmId, make_default: true}),
+    });
+    var d = await r.json();
+    if(!r.ok || d.error){ await loadProfileCardOnFile(sid); alert('Could not set the tuition card: ' + ((d && d.error) || 'error')); return; }
+    if(d.failed > 0){ alert('Set as tuition card, but ' + d.failed + ' subscription(s) may still bill the old card. Please contact support.'); }
+    await loadProfileCardOnFile(sid);
+  }catch(e){ await loadProfileCardOnFile(sid); alert('Network error: ' + (e.message || '')); }
 }
 
 // §PROFILE-FAMILY
@@ -8214,9 +8250,30 @@ async function replaceStudentCard(sid){
 // already exists → full mode); apply-card-setup then makes it default + repoints active subs.
 // The hosted replaceStudentCard()/openSendUpdateCardLink() stay as untouched fallbacks.
 var _rcStripe=null,_rcElements=null,_rcCard=null,_rcCS=null,_rcSid=null;
-async function openReplaceCardInline(sid){
+var _afterCardSave=null; // optional callback run after a card is saved (e.g. refresh the POS picker)
+// "Replace card" = add a card AND make it the tuition/autopay default (legacy behavior).
+async function openReplaceCardInline(sid){ return openAddCardInline(sid,{makeDefault:true,title:'Update Card on File'}); }
+// General add-card: opts.makeDefault seeds the "tuition card" toggle; staff pick a guardian + nickname.
+async function openAddCardInline(sid, opts){
+  opts = opts || {};
   var m=document.getElementById('replaceCardMsg'); if(m){ m.textContent=''; m.className='form-msg'; }
   var btn=document.getElementById('replaceCardSaveBtn'); if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card'; }
+  var ttl=document.getElementById('addCardTitle'); if(ttl) ttl.textContent = opts.title || 'Add Card';
+  var attr=document.getElementById('addCardAttribution'); if(attr) attr.style.display='block';
+  var mkd=document.getElementById('addCardMakeDefault'); if(mkd) mkd.checked = !!opts.makeDefault;
+  var nick=document.getElementById('addCardNickname'); if(nick) nick.value='';
+  var gsel=document.getElementById('addCardGuardian');
+  if(gsel){
+    gsel.innerHTML='<option value="">&mdash; Not specified &mdash;</option>';
+    try{
+      var gr=await sb.rpc('get_guardians_for_student',{p_student_id:sid});
+      (gr.data||[]).forEach(function(g){
+        var nm=[g.first_name,g.last_name].filter(Boolean).join(' '); if(!nm) return;
+        var opt=document.createElement('option'); opt.value=g.guardian_id;
+        opt.textContent=nm+(g.relationship?(' ('+g.relationship+')'):''); gsel.appendChild(opt);
+      });
+    }catch(e){}
+  }
   try{
     await ensureStripeJs();
     var r=await fetch(SURL+'/functions/v1/create-card-setup-intent',{
@@ -8255,39 +8312,40 @@ async function confirmReplaceCardInline(){
       var fr=await fetch(SURL+'/functions/v1/apply-card-setup',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},
-        body:JSON.stringify({school_id:SID,student_id:sid,payment_method_id:pm})
+        body:JSON.stringify({school_id:SID,student_id:sid,payment_method_id:pm,guardian_id:((document.getElementById('addCardGuardian')||{}).value)||null,nickname:((document.getElementById('addCardNickname')||{}).value)||null,make_default:!!((document.getElementById('addCardMakeDefault')||{}).checked)})
       });
       var fd=await fr.json();
       if(!fr.ok||fd.error){ msg.textContent='Card saved, but activating it failed ('+((fd&&fd.error)||'error')+'). The subscription may still bill the old card — retry, or use Send Link.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
       if(fd.failed>0){ msg.textContent='Card saved & set as default, but '+fd.failed+' subscription(s) may still bill the old card. Please contact support.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
     }catch(e2){ msg.textContent='Card saved, but activating it failed ('+(e2.message||'network')+'). Please retry.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; return; }
     msg.textContent='Card updated.'; msg.className='form-msg success';
-    setTimeout(function(){ closeReplaceCardInline(); if(sid) loadProfileCardOnFile(sid); },700);
+    setTimeout(function(){ closeReplaceCardInline(); if(sid) loadProfileCardOnFile(sid); if(typeof _afterCardSave==='function'){ try{_afterCardSave();}catch(e){} _afterCardSave=null; } },700);
   }catch(e){ msg.textContent=e.message||'Card save failed.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h; }
 }
 
-async function removeStudentCard(sid){
-  if(!confirm('Remove the card on file? Future card-on-file charges will fail until a new card is added. Recurring memberships will not be affected until their next billing cycle.')) return;
+async function removeStudentCard(sid, pmId){
+  if(!confirm('Remove this card? Future charges to it will fail. Recurring memberships are unaffected until their next billing cycle.')) return;
   var el = document.getElementById('profileCardOnFile');
   el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Removing card...';
   try{
     var r = await fetch(SURL + '/functions/v1/remove-student-card', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': SC_BEARER},
-      body: JSON.stringify({school_id: SID, student_id: sid}),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken())},
+      body: JSON.stringify({school_id: SID, student_id: sid, payment_method_id: pmId || null}),
     });
     var data = await r.json();
     if(data.error){
-      el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">' + data.error + '</div>' +
-        '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
+      // e.g. TUITION_CARD_IN_USE — reload the list, then surface the guidance.
+      await loadProfileCardOnFile(sid);
+      alert(data.error);
       return;
     }
     await loadProfileCardOnFile(sid);
     await buildProfileVitals(sid);
     await buildProfileFamily(sid);
   }catch(e){
-    el.innerHTML = '<div style="color:#E07070;font-size:0.78rem;margin-bottom:0.5rem">Network error removing card.</div>' +
-      '<button class="btn-sm" style="font-size:0.72rem" onclick="loadProfileCardOnFile(\'' + sid + '\')"><i class="fa-solid fa-arrows-rotate"></i> Retry</button>';
+    await loadProfileCardOnFile(sid);
+    alert('Network error removing card.');
   }
 }
 
@@ -12428,21 +12486,41 @@ function checkoutSelectMethod(method){
 function checkoutLoadCard(){
   _checkout.cardLoaded = false;
   var sid = _checkout.studentId;
-  fetch(SURL + '/functions/v1/get-student-card', {
+  fetch(SURL + '/functions/v1/list-payment-methods', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': SC_BEARER },
     body: JSON.stringify({ school_id: SID, student_id: sid })
   }).then(function(r){ return r.json(); }).then(function(data){
     _checkout.cardLoaded = true;
-    _checkout.card = (data && !data.error) ? data : { has_card: false };
+    var cards = (data && !data.error && data.cards) ? data.cards : [];
+    _checkout.cards = cards;
+    var def = cards.filter(function(c){ return c.is_default; })[0] || cards[0] || null;
+    _checkout.chosenPmId = def ? def.payment_method_id : null;
+    // compat single-card shape the method tile reads (has_card / brand / last4 / type / link_email)
+    _checkout.card = def ? { has_card:true, type:(def.wallet_type==='link'?'link':'card'), brand:def.brand, last4:def.last4, link_email:def.link_email } : { has_card:false };
     var list = document.getElementById('checkoutMethodList');
     if (list && _checkout.step === 2) list.innerHTML = renderCheckoutMethodTiles();
   }).catch(function(){
     _checkout.cardLoaded = true;
+    _checkout.cards = [];
+    _checkout.chosenPmId = null;
     _checkout.card = { has_card: false };
     var list = document.getElementById('checkoutMethodList');
     if (list && _checkout.step === 2) list.innerHTML = renderCheckoutMethodTiles();
   });
+}
+// Label for the POS card picker: "Jane Lemley (Mom) · VISA ••••4242 (tuition)".
+function _checkoutCardLabel(c){
+  var face = (c.wallet_type === 'link' || c.brand === 'link')
+    ? ('Link' + (c.link_email ? (' — ' + c.link_email) : ''))
+    : ((c.brand || 'card').toUpperCase() + ' ••••' + (c.last4 || '????'));
+  var who = c.guardian_name || ((c.label && c.wallet_type !== 'link') ? c.label : '');
+  return (who ? who + ' · ' : '') + face + (c.is_default ? ' (tuition)' : '') + (c.expired ? ' — EXPIRED' : '');
+}
+// Add a card mid-checkout, then refresh the picker.
+function checkoutAddCardInline(){
+  _afterCardSave = function(){ checkoutLoadCard(); if(_checkout.step === 3){ renderCheckoutStep3(); } };
+  openAddCardInline(_checkout.studentId, { makeDefault:false, title:'Add a card' });
 }
 
   /* ============================================================
@@ -12476,6 +12554,26 @@ function renderCheckoutStep3(){
   html += '<div style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">Paying with ' +
     '<span style="color:var(--white)">' + (CHECKOUT_METHOD_LABELS[_checkout.method] || '\u2014') + '</span> \u00b7 ' +
     escapeCheckout(checkoutStudentLabel()) + '</div>';
+
+  // §POS-CARD-PICKER — for a one-time (retail/pack/custom) card-on-file charge, staff pick WHICH card
+  // to charge (default = the family tuition card) and can add a card inline. Memberships always bill
+  // the tuition card, so no picker there.
+  if (_checkout.method === 'card_on_file' && checkoutCartClass() === 'pos') {
+    var _pcards = _checkout.cards || [];
+    html += '<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">' +
+      '<label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Charge which card</label>';
+    if (_pcards.length) {
+      html += '<select id="checkoutCardPick" onchange="_checkout.chosenPmId=this.value" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem;width:100%">';
+      for (var _pci=0; _pci<_pcards.length; _pci++){ var _pcc=_pcards[_pci];
+        html += '<option value="' + _pcc.payment_method_id + '"' + ((_pcc.payment_method_id === _checkout.chosenPmId) ? ' selected' : '') + '>' + escapeCheckout(_checkoutCardLabel(_pcc)) + '</option>';
+      }
+      html += '</select>';
+    } else {
+      html += '<div style="font-size:0.8rem;color:var(--muted)">No cards on file yet.</div>';
+    }
+    html += '<button class="btn-sm" style="font-size:0.72rem;margin-top:0.5rem" onclick="checkoutAddCardInline()"><i class="fa-solid fa-plus"></i> Add a card</button>' +
+    '</div>';
+  }
 
   // §DEFERRED-BILLING — for a card-on-file recurring membership, optionally start billing on a future
   // date (e.g. migrating a member who already paid elsewhere this cycle). Blank = charge today.
@@ -12871,6 +12969,7 @@ async function checkoutCompleteCard(force){
     } else if (cls === 'pos'){
       endpoint = 'create-pos-charge';
       payload = { school_id: SID, student_id: _checkout.studentId, line_items: checkoutPosLineItems() };
+      if (_checkout.chosenPmId) payload.payment_method_id = _checkout.chosenPmId;
     } else {
       /* defensive: card-on-file should never be selectable for classpack/empty */
       checkoutCardError('Card on file is not available for this item \u2014 use Send Link or Cash.');
