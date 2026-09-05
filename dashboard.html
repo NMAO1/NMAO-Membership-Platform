@@ -2093,7 +2093,7 @@
 
 <!-- §MODAL-STUDENT (profile) -->
 <div class="modal-overlay" id="studentProfileModal">
-  <div class="modal" style="width:1180px;max-width:96vw;max-height:92vh;padding:0">
+  <div class="modal" style="width:1372px;max-width:96vw;max-height:92vh;padding:0">
     <input type="file" id="photoUploadInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;flex-direction:column;gap:0.7rem;position:relative">
       <button onclick="closeStudentProfile()" style="position:absolute;top:0.8rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -2103,16 +2103,15 @@
         <div id="profileName" style="font-family:var(--font-display);font-size:1.35rem;color:var(--white);white-space:nowrap">Loading...</div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span id="profileStatusBadge" class="chip chip-active">active</span><span id="profileProgramBadge" class="class-tag">--</span><span id="profileBeltBadge" style="display:none;font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span></div>
         <div id="profileTagsRow" style="display:flex;flex-wrap:wrap;gap:0.2rem"></div>
+        <button class="btn-sm" style="margin-left:auto;border-color:#A04040;color:#E07070" onclick="confirmDeleteStudent()"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
       <!-- actions row -->
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
         <button class="btn-sm gold" onclick="openProfileCheckout()"><i class="fa-solid fa-cash-register"></i> New charge / sell</button>
         <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()"><i class="fa-solid fa-ranking-star"></i> Promote</button>
-        <button class="btn-sm" id="reviewReqBtn" onclick="requestReviewManual()" title="Send a Google review request now"><i class="fa-solid fa-star"></i> Request review</button>
         <button class="btn-sm gold" onclick="openEditStudent()"><i class="fa-solid fa-pen"></i> Edit</button>
         <button class="btn-sm" id="sendMagicLinkBtn" onclick="sendPortalMagicLink()"><i class="fa-solid fa-link"></i> Portal Link</button>
         <select class="btn-sm" id="profileStatusSelect" onchange="setStudentStatus(this.value)" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--white)"><option value="active">Active</option><option value="trial">Trial</option><option value="paused">Paused</option><option value="alumni">Alumni</option></select>
-        <button class="btn-sm" style="border-color:#A04040;color:#E07070" onclick="confirmDeleteStudent()"><i class="fa-solid fa-trash"></i> Delete</button>
       </div>
     </div>
     <div style="display:block;max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch"><div id="profileVitals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)"></div><div id="profileAlerts" style="display:none;flex-wrap:wrap;gap:0.5rem;padding:0.75rem 1.5rem;border-bottom:1px solid var(--border)"></div>
