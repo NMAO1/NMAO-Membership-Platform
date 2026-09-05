@@ -651,6 +651,7 @@
       <div id="globalSearchResults" style="display:none;position:absolute;top:calc(100% + 0.4rem);left:0;right:0;background:var(--surface);border:1px solid var(--border);max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
     </div>
     <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <button id="helpCenterBtn" onclick="openHelpCenter()" title="Open the Help Center" aria-label="Open the Help Center" style="flex-shrink:0;margin:0 0.55rem;width:1.6rem;height:1.6rem;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--gold);font-weight:700;font-size:0.88rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center">?</button>
     <div id="helpPopover" style="display:none;position:fixed;z-index:10000;background:var(--surface);border:1px solid var(--gold);box-shadow:0 8px 28px rgba(0,0,0,0.55);padding:1rem 1.1rem;max-width:92vw"></div>
     <div class="topbar-right">
       <span class="topbar-date" id="todayDate"></span>
@@ -19997,6 +19998,24 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     function init(){ document.querySelectorAll('.modal-overlay').forEach(watch); bodyObs.observe(document.body,{childList:true,subtree:true}); }
     if(document.readyState!=='loading')init(); else document.addEventListener('DOMContentLoaded',init);
   })();
+  </script>
+
+  <!-- Help Center (in-app modal, loads help-center.html lazily) -->
+  <div id="helpCenterOverlay" onclick="if(event.target===this)closeHelpCenter()" style="display:none;position:fixed;inset:0;background:rgba(6,10,18,0.74);z-index:100000;padding:2.5vh 2vw">
+    <div style="max-width:1200px;height:95vh;margin:0 auto;background:var(--black);border:1px solid var(--gold);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1.1rem;border-bottom:1px solid var(--border);flex-shrink:0">
+        <i class="fa-solid fa-circle-question" style="color:var(--gold)"></i>
+        <span style="font-family:var(--font-display);font-size:1rem;color:var(--white);letter-spacing:0.02em">Help Center</span>
+        <a href="help-center.html" target="_blank" rel="noopener" style="margin-left:0.4rem;font-size:0.72rem;color:var(--muted);text-decoration:none" title="Open in a new tab"><i class="fa-solid fa-up-right-from-square"></i></a>
+        <button onclick="closeHelpCenter()" aria-label="Close" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:1.35rem;line-height:1;cursor:pointer;padding:0.2rem 0.55rem">&times;</button>
+      </div>
+      <iframe id="helpCenterFrame" title="Help Center" style="border:none;width:100%;flex:1;background:var(--black)"></iframe>
+    </div>
+  </div>
+  <script>
+    function openHelpCenter(){ var f=document.getElementById('helpCenterFrame'); if(!f.getAttribute('src')) f.setAttribute('src','help-center.html'); document.getElementById('helpCenterOverlay').style.display='block'; document.body.style.overflow='hidden'; }
+    function closeHelpCenter(){ document.getElementById('helpCenterOverlay').style.display='none'; document.body.style.overflow=''; }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var o=document.getElementById('helpCenterOverlay'); if(o&&o.style.display==='block') closeHelpCenter(); } });
   </script>
 </body>
 </html>
