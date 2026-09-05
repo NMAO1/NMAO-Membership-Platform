@@ -2095,16 +2095,18 @@
 <div class="modal-overlay" id="studentProfileModal">
   <div class="modal" style="width:1180px;max-width:96vw;max-height:92vh;padding:0">
     <input type="file" id="photoUploadInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
-    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
-      <button onclick="closeStudentProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-      <div style="position:relative;flex-shrink:0"><div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:72px;height:72px;border-radius:50%;background:var(--gold-bg,rgba(201,168,76,0.08));border:3px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div></div>
-      <div style="flex:1">
-        <div id="profileName" style="font-family:var(--font-display);font-size:1.4rem;color:var(--white);margin-bottom:0.4rem">Loading...</div>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.35rem"><span id="profileStatusBadge" class="chip chip-active">active</span><span id="profileProgramBadge" class="class-tag">--</span><span id="profileBeltBadge" style="display:none;font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span></div>
-        <div id="profileTagsRow" style="display:flex;flex-wrap:wrap;gap:0.2rem;margin-top:0.2rem"></div>
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;flex-direction:column;gap:0.7rem;position:relative">
+      <button onclick="closeStudentProfile()" style="position:absolute;top:0.8rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      <!-- identity row: avatar + name + status chips, all horizontal -->
+      <div style="display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap;padding-right:2rem">
+        <div style="position:relative;flex-shrink:0"><div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:52px;height:52px;border-radius:50%;background:var(--gold-bg,rgba(201,168,76,0.08));border:2px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.1rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div></div>
+        <div id="profileName" style="font-family:var(--font-display);font-size:1.35rem;color:var(--white);white-space:nowrap">Loading...</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span id="profileStatusBadge" class="chip chip-active">active</span><span id="profileProgramBadge" class="class-tag">--</span><span id="profileBeltBadge" style="display:none;font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span></div>
+        <div id="profileTagsRow" style="display:flex;flex-wrap:wrap;gap:0.2rem"></div>
       </div>
-      <div style="display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn-sm gold" onclick="openProfileCheckout()"><i class="fa-solid fa-cash-register"></i> New charge / sell</button>
+      <!-- actions row -->
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn-sm gold" onclick="openProfileCheckout()"><i class="fa-solid fa-cash-register"></i> New charge / sell</button>
         <button class="btn-sm gold" id="promoteBtn" style="display:none" onclick="openPromoteModal()"><i class="fa-solid fa-ranking-star"></i> Promote</button>
         <button class="btn-sm" id="reviewReqBtn" onclick="requestReviewManual()" title="Send a Google review request now"><i class="fa-solid fa-star"></i> Request review</button>
         <button class="btn-sm gold" onclick="openEditStudent()"><i class="fa-solid fa-pen"></i> Edit</button>
