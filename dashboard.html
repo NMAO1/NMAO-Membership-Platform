@@ -7890,13 +7890,18 @@ async function loadProfilePacks(sid){
 // (list-payment-methods reconciles Stripe -> mirror), each attributed to a guardian/nickname,
 // with the tuition/autopay card flagged. Add card, Make tuition card, Remove per card.
 var _profileCards = [];
+function _walletName(w){ return w === 'link' ? 'Link' : w === 'apple_pay' ? 'Apple Pay' : w === 'google_pay' ? 'Google Pay' : null; }
 function _cardFace(c){
-  if(c.wallet_type === 'link' || c.brand === 'link'){
-    return '<i class="fa-solid fa-bolt" style="color:var(--gold);margin-right:0.4rem"></i>Link' + (c.link_email ? (' — ' + c.link_email) : '');
+  // A real card (has last4) always shows its brand + last4 — even when it was saved through a wallet
+  // (Link / Apple Pay / Google Pay); the wallet is a small annotation, not a replacement for the card.
+  if(c.last4){
+    var brand = (c.brand || 'card').toUpperCase();
+    var w = _walletName(c.wallet_type);
+    return '<i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' ••••' + c.last4 +
+      (w ? ' <span style="color:var(--muted);font-size:0.72rem">· via ' + w + '</span>' : '');
   }
-  var brand = (c.brand || 'card').toUpperCase();
-  var last4 = c.last4 || '????';
-  return '<i class="fa-solid fa-credit-card" style="color:var(--gold);margin-right:0.4rem"></i>' + brand + ' ••••' + last4;
+  // Pure Link account (no underlying card details) — show Link + its email.
+  return '<i class="fa-solid fa-bolt" style="color:var(--gold);margin-right:0.4rem"></i>Link' + (c.link_email ? (' — ' + c.link_email) : '');
 }
 function _cardRow(sid, c){
   var exp = (c.exp_month && c.exp_year) ? ('Exp ' + String(c.exp_month).padStart(2,'0') + '/' + String(c.exp_year).slice(-2)) : '';
@@ -12557,10 +12562,11 @@ function checkoutLoadCard(){
 }
 // Label for the POS card picker: "Jane Lemley (Mom) · VISA ••••4242 (tuition)".
 function _checkoutCardLabel(c){
-  var face = (c.wallet_type === 'link' || c.brand === 'link')
-    ? ('Link' + (c.link_email ? (' — ' + c.link_email) : ''))
-    : ((c.brand || 'card').toUpperCase() + ' ••••' + (c.last4 || '????'));
-  var who = c.guardian_name || ((c.label && c.wallet_type !== 'link') ? c.label : '');
+  var wl = (c.wallet_type === 'link' ? 'Link' : c.wallet_type === 'apple_pay' ? 'Apple Pay' : c.wallet_type === 'google_pay' ? 'Google Pay' : null);
+  var face = c.last4
+    ? ((c.brand || 'card').toUpperCase() + ' ••••' + c.last4 + (wl ? ' (via ' + wl + ')' : ''))
+    : ('Link' + (c.link_email ? (' — ' + c.link_email) : ''));
+  var who = c.guardian_name || ((c.label && c.last4) ? c.label : '');
   return (who ? who + ' · ' : '') + face + (c.is_default ? ' (primary)' : '') + (c.expired ? ' — EXPIRED' : '');
 }
 // Add a card mid-checkout, then refresh the picker.
