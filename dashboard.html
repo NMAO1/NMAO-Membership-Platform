@@ -3484,21 +3484,21 @@
 
  <!-- §MODAL-REPLACE-CARD-INLINE — inline card entry for an existing member (Elements + SetupIntent, no hosted page / verify code) -->
 <div class="modal-overlay" id="replaceCardModal">
-  <div class="modal" style="width:min(92vw,420px)">
-    <div class="modal-header"><span class="modal-title" id="addCardTitle">Update Card on File</span><button class="modal-close" onclick="closeReplaceCardInline()"><i class="fa-solid fa-xmark"></i></button></div>
-    <div style="padding:1.25rem 1.5rem">
-      <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem;display:block">Card details</label>
-      <div id="replaceCardElement" style="background:var(--black);border:1px solid var(--border);padding:0.9rem 0.85rem"></div>
-      <div id="addCardAttribution" style="margin-top:0.9rem;display:none">
-        <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.35rem;display:block">Whose card? <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
-        <select id="addCardGuardian" style="width:100%;margin-bottom:0.6rem"><option value="">&mdash; Not specified &mdash;</option></select>
-        <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.35rem;display:block">Nickname <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
-        <input id="addCardNickname" type="text" placeholder="e.g. Mom&#39;s Amex" style="width:100%;margin-bottom:0.7rem"/>
-        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--white);cursor:pointer"><input type="checkbox" id="addCardMakeDefault"/> Use this as the primary / autopay card</label>
+  <div class="modal" style="width:min(94vw,560px)">
+    <div class="modal-header"><span class="modal-title" id="addCardTitle" style="font-size:1.5rem">Update Card on File</span><button class="modal-close" onclick="closeReplaceCardInline()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="padding:1.6rem 1.9rem">
+      <label style="font-size:0.74rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.5rem;display:block">Card details</label>
+      <div id="replaceCardElement" style="background:var(--black);border:1px solid var(--border);padding:1.1rem 1rem"></div>
+      <div id="addCardAttribution" style="margin-top:1.1rem;display:none">
+        <label style="font-size:0.74rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem;display:block">Whose card? <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
+        <select id="addCardGuardian" style="width:100%;margin-bottom:0.8rem;font-size:1rem;padding:0.65rem 0.75rem"><option value="">&mdash; Not specified &mdash;</option></select>
+        <label style="font-size:0.74rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem;display:block">Nickname <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
+        <input id="addCardNickname" type="text" placeholder="e.g. Mom&#39;s Amex" style="width:100%;margin-bottom:0.9rem;font-size:1rem;padding:0.65rem 0.75rem"/>
+        <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.95rem;color:var(--white);cursor:pointer"><input type="checkbox" id="addCardMakeDefault" style="width:1.1rem;height:1.1rem"/> Use this as the primary / autopay card</label>
       </div>
-      <button class="btn-gold-full" id="replaceCardSaveBtn" style="margin-top:1rem" onclick="confirmReplaceCardInline()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card</button>
-      <p class="form-msg" id="replaceCardMsg" style="margin-top:0.6rem;text-align:center"></p>
-      <p style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem">Saved securely by Stripe &mdash; no charge now. Card details never touch our servers.</p>
+      <button class="btn-gold-full" id="replaceCardSaveBtn" style="margin-top:1.3rem;font-size:1.05rem;padding:0.85rem" onclick="confirmReplaceCardInline()"><i class="fa-solid fa-lock" style="margin-right:0.5rem"></i>Save Card</button>
+      <p class="form-msg" id="replaceCardMsg" style="margin-top:0.75rem;text-align:center;font-size:0.95rem"></p>
+      <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-top:0.6rem">Saved securely by Stripe &mdash; no charge now. Card details never touch our servers.</p>
     </div>
   </div>
 </div>
@@ -8297,7 +8297,7 @@ async function openAddCardInline(sid, opts){
     _rcSid=sid; _rcCS=data.client_secret;
     _rcStripe=Stripe(data.publishable_key,{stripeAccount:data.account_id});
     _rcElements=_rcStripe.elements();
-    _rcCard=_rcElements.create('card',{style:{base:{color:'#F5F0E8',fontFamily:'Lato, sans-serif',fontSize:'15px','::placeholder':{color:'#7A7060'}},invalid:{color:'#E07070'}}});
+    _rcCard=_rcElements.create('card',{style:{base:{color:'#F5F0E8',fontFamily:'Lato, sans-serif',fontSize:'16px','::placeholder':{color:'#7A7060'}},invalid:{color:'#E07070'}}});
     var mount=document.getElementById('replaceCardElement'); if(mount) mount.innerHTML='';
     _rcCard.mount('#replaceCardElement');
     document.getElementById('replaceCardModal').classList.add('active');
