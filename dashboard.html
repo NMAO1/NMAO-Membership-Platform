@@ -2268,7 +2268,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem"><div style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Make a Payment</div><button onclick="closeMakePaymentPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
               <div style="font-size:0.64rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Payment Amount</div>
               <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpAmt" value="current" checked onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Amount due now <span id="mpCurrentAmt" style="color:var(--gold)"></span></span></label>
-              <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpAmt" value="all" onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Due + next charge <span id="mpAllAmt" style="color:var(--gold)"></span></span></label>
+              <label id="mpAllRow" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpAmt" value="all" onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Due + next charge <span id="mpAllAmt" style="color:var(--gold)"></span></span></label>
               <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.55rem;cursor:pointer;flex-wrap:wrap"><input type="radio" name="mpAmt" value="other" onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Other</span><span style="color:var(--muted)">$</span><input type="number" id="mpOtherInput" step="0.01" min="0" placeholder="0.00" oninput="var o=document.querySelector('input[name=mpAmt][value=other]');if(o)o.checked=true;mpAmtChange()" style="width:90px;background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.3rem 0.5rem;font-family:var(--font-ui)"></label>
               <div style="font-size:0.64rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin:0.65rem 0 0.5rem">Payment Method</div>
               <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpMethod" value="card" checked><span id="mpCardLabel" style="font-size:0.82rem;color:var(--white)">Card on file</span></label>
@@ -9144,11 +9144,12 @@ async function loadStudentCredit(sid){
     if(el){el.textContent='$'+(cents/100).toFixed(2);el.style.color=cents>0?'var(--gold)':'#F5F0E8';}
   }catch(e){var el=document.getElementById('profileCreditBalance');if(el)el.textContent='--';}
 }
+var _issueCreditKey=null;   // §CREDIT-DEDUPE — one key per form-open; a network retry reuses it (upsert no-ops), a genuine second credit gets a fresh one.
 function toggleIssueCreditForm(){
   var f=document.getElementById('issueCreditForm');if(!f)return;
   var showing=f.style.display!=='none';
   f.style.display=showing?'none':'block';
-  if(!showing){document.getElementById('issueCreditAmount').value='';document.getElementById('issueCreditReason').value='';var m=document.getElementById('issueCreditMsg');if(m)m.textContent='';}
+  if(!showing){document.getElementById('issueCreditAmount').value='';document.getElementById('issueCreditReason').value='';var m=document.getElementById('issueCreditMsg');if(m)m.textContent='';_issueCreditKey=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('ic_'+Date.now()+'_'+Math.round(Math.random()*1e9));}
 }
 async function issueCredit(){
   var msg=document.getElementById('issueCreditMsg');msg.textContent='';msg.style.color='';
@@ -9161,7 +9162,10 @@ async function issueCredit(){
   var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
   // Credit lands in the Account Credit balance (visible + POS-spendable). For an autopay member it is
   // applied automatically to their next invoice at charge time (stripe-webhook §CREDIT-AT-INVOICE).
-  var r=await sb.from('account_credits').insert({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),type:'adjustment',reason:reason,created_by:uid});
+  // §CREDIT-DEDUPE — upsert on the per-open dedupe_key so a network retry (or accidental resubmit that
+  // actually reached the DB) can't double-credit; a fresh form-open gets a new key.
+  if(!_issueCreditKey) _issueCreditKey=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('ic_'+Date.now()+'_'+Math.round(Math.random()*1e9));
+  var r=await sb.from('account_credits').upsert({school_id:SID,student_id:currentProfileStudent.id,amount_cents:Math.round(amt*100),type:'adjustment',reason:reason,created_by:uid,dedupe_key:_issueCreditKey},{onConflict:'dedupe_key',ignoreDuplicates:true});
   btn.disabled=false;
   if(r.error){msg.textContent='Failed: '+r.error.message;msg.style.color='#E07070';return;}
   msg.textContent='Credit issued.';msg.style.color='#70C070';
@@ -9875,19 +9879,21 @@ async function sendStudentMessage(){
 // §BILLS-PAYMENTS — collapsible bills & payments ledger + Make a Payment (its own profile section).
 // NMAO stores real payments (paid/failed/cancelled) + the membership schedule; there is no stored
 // future-bill ledger, so "upcoming" = the real next charge only (Stripe-accurate where linked).
-var _billsCtx = { sid:null, familyIds:[], nameById:{}, pastDueCents:0, upcomingCents:0, loaded:false };
+var _billsCtx = { sid:null, familyIds:[], nameById:{}, pastDueCents:0, upcomingCents:0, chargeableUpcomingCents:0, failedIds:[], loaded:false };
 
 // Loaded when the profile opens. The tile is always shown (like Guardians/Billing), so it renders
 // the summary + upcoming + full bills list immediately.
 async function loadBillsTile(sid){
-  _billsCtx = { sid:sid, familyIds:[sid], nameById:{}, pastDueCents:0, upcomingCents:0, loaded:false };
+  _billsCtx = { sid:sid, familyIds:[sid], nameById:{}, pastDueCents:0, upcomingCents:0, chargeableUpcomingCents:0, failedIds:[], loaded:false };
   var mp=document.getElementById('makePaymentPanel'); if(mp) mp.style.display='none';
   var sumEl=document.getElementById('billsSummary'); if(sumEl) sumEl.innerHTML='';
   try{
-    var pd=await sb.from('payments').select('amount,status,created_at').eq('student_id',sid).eq('school_id',SID).order('created_at',{ascending:false}).limit(60);
+    var pd=await sb.from('payments').select('id,amount,status,created_at').eq('student_id',sid).eq('school_id',SID).order('created_at',{ascending:false}).limit(60);
     var rows=pd.data||[]; var lastPaid=rows.find(function(r){return r.status==='paid';});
-    var failedCents=0; rows.forEach(function(r){ if(r.status==='failed') failedCents+=Math.round((r.amount||0)*100); });
-    _billsCtx.pastDueCents=failedCents;
+    // §PASTDUE-CLOSE — remember which failed rows make up "past due" so collecting it (submitMakePayment)
+    // can void exactly those rows; otherwise they keep re-counting as past due and stay chargeable again.
+    var failedCents=0, failedIds=[]; rows.forEach(function(r){ if(r.status==='failed'){ failedCents+=Math.round((r.amount||0)*100); failedIds.push(r.id); } });
+    _billsCtx.pastDueCents=failedCents; _billsCtx.failedIds=failedIds;
     if(sumEl){ var bits=[];
       if(failedCents>0) bits.push('<span style="color:#E07070">Past due $'+(failedCents/100).toFixed(2)+'</span>');
       if(lastPaid) bits.push('Last payment '+smDateLabel((lastPaid.created_at||'').substring(0,10)));
@@ -10250,6 +10256,11 @@ async function cdRefreshAfterAction(){
 async function renderBillsUpcoming(ids, nameById, isFamily){
   var el=document.getElementById('billsUpcomingWrap'); if(!el) return;
   _billsCtx.upcomingCents=0;
+  // §MP-SCOPE — chargeableUpcomingCents is the ONLY upcoming total the Make-a-Payment panel may add on
+  // top of past-due. It is scoped to the loaded student (submitMakePayment charges only _billsCtx.sid,
+  // never the whole family) AND excludes autopay/live-Stripe-sub rows: those auto-bill on their own, so
+  // POS-charging their "next" invoice now would double-charge (the Stripe invoice is not cancelled).
+  _billsCtx.chargeableUpcomingCents=0;
   el.innerHTML='<div style="color:var(--muted);font-size:0.8rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Checking upcoming…</div>';
   try{
     var r=await sb.from('student_memberships').select('id,student_id,status,price,autopay,billing_method,stripe_subscription_id,cycle_end_date,first_charge_date,start_date,is_class_pack, memberships(name,billing_type,class_limit_type)').in('student_id',ids).eq('school_id',SID).in('status',['active','trialing','past_due']);
@@ -10271,6 +10282,9 @@ async function renderBillsUpcoming(ids, nameById, isFamily){
       else { var d=sm.cycle_end_date||sm.first_charge_date||sm.start_date; amt=sm.price!=null?parseFloat(sm.price):null; dstr=d?smDateLabel(d):'—'; tag='scheduled'; }
       if(amt!=null) totalCents+=Math.round(amt*100);
       var ap=(sm.billing_method==='autopay'||sm.autopay===true);
+      // Only manual/scheduled bills for the LOADED student are safe to collect via the panel. A row that
+      // is autopay (ap) or already has a live Stripe next invoice (su) auto-charges itself → excluded.
+      if(amt!=null && sm.student_id===_billsCtx.sid && !ap && !su) _billsCtx.chargeableUpcomingCents+=Math.round(amt*100);
       var apBadge='<span style="font-size:0.56rem;font-weight:700;color:'+(ap?'#5A9A6A':'#888888')+';border:1px solid '+(ap?'#5A9A6A':'#888888')+'66;border-radius:999px;padding:0.08rem 0.42rem">'+(ap?'ON':'OFF')+'</span>';
       var person=isFamily?('<span style="color:var(--white)">'+(nameById[sm.student_id]||'')+' · </span>'):'';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.5rem;border-bottom:1px solid var(--border)"><div><div style="font-size:0.82rem;color:var(--white)">'+person+(m?m.name:'Membership')+' <span style="font-size:0.56rem;color:#7DAAD4;border:1px solid #7DAAD466;border-radius:999px;padding:0.06rem 0.38rem;margin-left:0.3rem">'+tag+'</span></div><div style="font-size:0.7rem;color:var(--muted)">Next charge · '+dstr+' · Autopay '+apBadge+(su?' · <a onclick="event.stopPropagation();compNextBill(\''+sm.id+'\')" style="color:#7DAAD4;cursor:pointer;text-decoration:underline" title="Waive the next charge — sets it to $0 in Stripe">comp this bill</a>':'')+'</div></div><div style="font-size:0.85rem;color:var(--gold)">'+(amt!=null?('$'+amt.toFixed(2)):'—')+'</div></div>';
@@ -10286,10 +10300,19 @@ async function renderBillsUpcoming(ids, nameById, isFamily){
 var _mp = { currentCents:0, allCents:0 };
 function openMakePaymentPanel(){
   var p=document.getElementById('makePaymentPanel'); if(!p) return;
-  var due=_billsCtx.pastDueCents||0, up=_billsCtx.upcomingCents||0;
+  // up = only the SAFE, loaded-student, non-autopay upcoming (see §MP-SCOPE). Autopay members' next
+  // charge is excluded so "Due + next" can't double-charge a subscription that auto-bills anyway.
+  var due=_billsCtx.pastDueCents||0, up=_billsCtx.chargeableUpcomingCents||0;
   _mp.currentCents=due; _mp.allCents=due+up;
   document.getElementById('mpCurrentAmt').textContent='$'+(due/100).toFixed(2);
   document.getElementById('mpAllAmt').textContent='$'+((due+up)/100).toFixed(2);
+  // Hide "Due + next charge" entirely when there is no safe upcoming to add (e.g. autopay members):
+  // charging their next Stripe invoice here would bill it twice.
+  var allRow=document.getElementById('mpAllRow');
+  if(allRow){
+    if(up>0){ allRow.style.display='flex'; }
+    else { allRow.style.display='none'; var allInp=allRow.querySelector('input[name=mpAmt]'); if(allInp) allInp.checked=false; }
+  }
   var cardEl=document.getElementById('profileCardOnFile');
   var cardLabel=document.getElementById('mpCardLabel');
   if(cardLabel) cardLabel.textContent = (cardEl && /\d{4}/.test(cardEl.textContent||'')) ? ('Card on file — '+cardEl.textContent.trim()) : 'Card on file';
@@ -10336,6 +10359,14 @@ async function submitMakePayment(){
       }
       msg.textContent='Charged $'+(((jd.gross_charged_cents!=null?jd.gross_charged_cents:cents))/100).toFixed(2)+(jd.last4?(' to card ····'+jd.last4):'')+'.'; msg.className='form-msg success';
     }
+    // §PASTDUE-CLOSE — the payment succeeded. If it covered the full past-due balance, void exactly the
+    // failed rows that made it up so "Past due" clears instead of re-counting / being chargeable again.
+    // Only when fully covered (cents >= the past-due snapshot); a partial "Other" amount can't attribute.
+    try{
+      if(_mp.currentCents>0 && cents>=_mp.currentCents && (_billsCtx.failedIds||[]).length){
+        await sb.from('payments').update({ status:'cancelled', notes:'Collected via Make a Payment' }).in('id',_billsCtx.failedIds).eq('student_id',_billsCtx.sid).eq('school_id',SID).eq('status','failed');
+      }
+    }catch(e){}
     await loadBillsTile(_billsCtx.sid);
     if(window.showToast) showToast('Payment recorded.','ok');
     setTimeout(closeMakePaymentPanel, 1800);
@@ -13744,8 +13775,10 @@ async function setFamilyCard(fid,custId){
 // §FAMILY-CHECKOUT — enroll multiple family members on memberships in one flow; each
 // bills the family's shared card (resolved by create-membership-subscription).
 function closeFamilyCheckout(){ document.getElementById('familyCheckoutModal').classList.remove('active'); }
+var _famCoPassFees=false;   // §FAMCO-GROSS — mirror the same pass-through surcharge create-membership-subscription applies
 async function openFamilyCheckout(fid){
   if(!fid) return;
+  try{ var _sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); _famCoPassFees=!!(_sc.data&&_sc.data.pass_fees_to_students); }catch(e){ _famCoPassFees=false; }
   document.getElementById('famCoFamilyId').value=fid;
   var f=(allFamilies||[]).find(function(x){return x.id===fid;});
   document.getElementById('famCoTitle').textContent='Family Checkout \u2014 '+(f?f.name:'Family');
@@ -13772,20 +13805,30 @@ function famCoSelectedLines(){
   for(i=0;i<sels.length;i++){ var mid=sels[i].value; if(!mid) continue; var m=(allMemberships||[]).find(function(x){return x.id===mid;}); out.push({studentId:sels[i].getAttribute('data-sid'), memberName:sels[i].getAttribute('data-name')||'member', membershipId:mid, price:(m?Number(m.price)||0:0)}); }
   return out;
 }
+// \u00a7FAMCO-GROSS \u2014 when the school passes card fees to students, the actual per-cycle card charge is the
+// grossed-up amount (mirrors computePassThroughSurcharge in create-membership-subscription). Show the
+// real charge, not the bare plan price, so the total never understates what the family's card is billed.
+function famCoGrossCents(priceDollars){
+  var base=Math.round((Number(priceDollars)||0)*100);
+  if(!_famCoPassFees||base<=0) return base;
+  return Math.round((base+30)/(1-0.039));
+}
 function familyCheckoutTotal(){
-  var lines=famCoSelectedLines(); var t=0,i; for(i=0;i<lines.length;i++){ t+=lines[i].price; }
-  document.getElementById('famCoTotal').innerHTML=lines.length?('<b>'+lines.length+'</b> member'+(lines.length!==1?'s':'')+' \u00b7 total <b style="color:var(--gold)">$'+t.toFixed(2)+'</b> per cycle'):'<span style="color:var(--muted)">Pick a membership for each member you want to enroll.</span>';
+  var lines=famCoSelectedLines(); var t=0,i; for(i=0;i<lines.length;i++){ t+=famCoGrossCents(lines[i].price); }
+  var feeNote=_famCoPassFees?' <span style="color:var(--muted);font-size:0.72rem">(includes card fees)</span>':'';
+  document.getElementById('famCoTotal').innerHTML=lines.length?('<b>'+lines.length+'</b> member'+(lines.length!==1?'s':'')+' \u00b7 total <b style="color:var(--gold)">$'+(t/100).toFixed(2)+'</b> per cycle'+feeNote):'<span style="color:var(--muted)">Pick a membership for each member you want to enroll.</span>';
   document.getElementById('famCoChargeBtn').disabled=!lines.length;
 }
 async function familyCheckoutCharge(){
   var fid=document.getElementById('famCoFamilyId').value; var lines=famCoSelectedLines();
   if(!lines.length){ setMsg('famCoMsg','Pick a membership for at least one member.','error'); return; }
   var btn=document.getElementById('famCoChargeBtn'); btn.disabled=true; var results=[],i;
+  var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
   for(i=0;i<lines.length;i++){
     setMsg('famCoMsg','Enrolling '+lines[i].memberName+' ('+(i+1)+'/'+lines.length+')\u2026','');
     try{
       var tok=await authToken();
-      var resp=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({school_id:SID,student_id:lines[i].studentId,membership_id:lines[i].membershipId,idempotency_key:'famco_'+fid+'_'+lines[i].studentId+'_'+lines[i].membershipId})});
+      var resp=await fetch(SURL+'/functions/v1/create-membership-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({school_id:SID,student_id:lines[i].studentId,membership_id:lines[i].membershipId,applied_by:uid,idempotency_key:'famco_'+fid+'_'+lines[i].studentId+'_'+lines[i].membershipId})});
       var d=await resp.json().catch(function(){return {};});
       results.push({who:lines[i].memberName, ok:(resp.ok && d && !d.error), err:(d&&d.error)||(!resp.ok?'failed':'')});
     }catch(e){ results.push({who:lines[i].memberName, ok:false, err:(e&&e.message)||'error'}); }
