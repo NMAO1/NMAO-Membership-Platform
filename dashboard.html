@@ -3455,6 +3455,10 @@
           </div>
           <div id="posCreditCardLine" style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem"></div>
         </div>
+        <div id="posCardPickWrap" style="display:none;margin-top:0.6rem">
+          <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Charge which card</label>
+          <select id="posCardPick" onchange="posChosenPmId=this.value" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.6rem"></select>
+        </div>
         <button id="posBtnCardOnFile" class="btn-gold-full" style="margin-top:0.75rem;opacity:0.5;cursor:not-allowed" onclick="checkoutPOS_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Charge Card on File</button>
         <button id="posBtnNewCard" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_newCard()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Charge New Card</button>
         <button id="posBtnPaymentLink" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-mobile-screen-button" style="margin-right:0.5rem"></i>Send Payment Link</button>
@@ -3891,6 +3895,7 @@ var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
 var automationSettings      = {}, selectedAlertType = 'announcement', currentPlan = 'professional';
 var quillEditors            = {};
 var posCart                 = [], posSelectedStudentId = null, posSelectedStudentName = null;
+var posCards                = [], posChosenPmId = null;  // §POS-CARD-PICKER — register multi-card support
 var currentReportType       = null, currentReportDef = null, reportData = [];
 var selectedBadgeStyle      = '';
 var classFieldSettings      = [];
@@ -15338,7 +15343,7 @@ async function deleteProduct(pid){
 }
 
 // POS
-function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
+function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';})();document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
 function closePOS(){ document.getElementById('posModal').classList.remove('active'); }
 function buildPOSQuickItems(){
   var quickItems=allProducts.filter(function(p){return p.quick_list&&p.active;});
@@ -15375,8 +15380,28 @@ function updatePOSQty(pid,delta){ var item=posCart.find(function(c){return c.id=
   updatePOSCheckoutButtons();
 }
 function searchPOSStudent(){ var q=document.getElementById('posStudentSearch').value.toLowerCase().trim(); var el=document.getElementById('posStudentResults'); if(!q||q.length<2){el.style.display='none';return;} var filtered=allStudents.filter(function(s){return(s.first_name+' '+s.last_name).toLowerCase().includes(q);}).slice(0,6); el.style.display='block'; if(!filtered.length){el.innerHTML='<div style="padding:0.5rem 0.75rem;font-size:0.82rem;color:var(--muted);font-style:italic">No students found.</div>';return;} el.innerHTML=filtered.map(function(s){return '<div style="padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--white)" onclick="selectPOSStudent(\''+s.id+'\')">'+escapeCheckout(s.first_name+' '+s.last_name)+'</div>';}).join(''); }
-function selectPOSStudent(sid){ var _s=allStudents.find(function(x){return x.id===sid;}); var name=_s?(_s.first_name+' '+_s.last_name):''; posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+escapeCheckout(name); updatePOSCheckoutButtons(); loadPosCredit(); }
-function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
+function selectPOSStudent(sid){ var _s=allStudents.find(function(x){return x.id===sid;}); var name=_s?(_s.first_name+' '+_s.last_name):''; posSelectedStudentId=sid; posSelectedStudentName=name; document.getElementById('posStudentSearch').value=name; document.getElementById('posStudentResults').style.display='none'; var sel=document.getElementById('posSelectedStudent'); sel.style.display='block'; sel.innerHTML='<i class="fa-solid fa-circle-check" style="color:#5A9A6A;margin-right:0.4rem"></i>'+escapeCheckout(name); updatePOSCheckoutButtons(); loadPosCredit(); posLoadCards(sid); }
+// §POS-CARD-PICKER — load the member/family cards for the register picker (default preselected).
+// Only reveal the picker when there's an actual choice (>1 card); with one card it just charges it.
+async function posLoadCards(sid){
+  posCards=[]; posChosenPmId=null;
+  var wrap=document.getElementById('posCardPickWrap'), sel=document.getElementById('posCardPick');
+  if(wrap) wrap.style.display='none';
+  if(!sid) return;
+  try{
+    var r=await fetch(SURL+'/functions/v1/list-payment-methods',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_id:sid})});
+    var d=await r.json();
+    var cards=(d&&!d.error&&d.cards)?d.cards:[];
+    posCards=cards;
+    var def=cards.filter(function(c){return c.is_default;})[0]||cards[0]||null;
+    posChosenPmId=def?def.payment_method_id:null;
+    if(sel&&cards.length){
+      sel.innerHTML=cards.map(function(c){return '<option value="'+c.payment_method_id+'"'+((c.payment_method_id===posChosenPmId)?' selected':'')+'>'+escapeCheckout(_checkoutCardLabel(c))+'</option>';}).join('');
+      if(wrap&&cards.length>1) wrap.style.display='block';
+    }
+  }catch(e){}
+}
+function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';})();document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
 // §POS-CHECKOUT — Three payment paths (Phase N, 2026-05-11)
 
 function posCartTotal(){
@@ -15551,7 +15576,8 @@ async function checkoutPOS_cardOnFile(){
         line_items: posCartLineItems(),
         credit_to_apply_cents: posCreditApplyCents,
         applied_by: _uid,
-        idempotency_key: 'poscharge-'+SID+'-'+(posSelectedStudentId||'guest')+'-'+posCreditApplyCents+'-'+posCart.map(function(_c){return _c.id+'x'+(_c.qty||1);}).join('|'),   // §NO-DOUBLE-CHARGE: server-side dedup
+        payment_method_id: posChosenPmId || null,   // §POS-CARD-PICKER — chosen card (defaults to family primary)
+        idempotency_key: 'poscharge-'+SID+'-'+(posSelectedStudentId||'guest')+'-'+posCreditApplyCents+'-'+(posChosenPmId||'def')+'-'+posCart.map(function(_c){return _c.id+'x'+(_c.qty||1);}).join('|'),   // §NO-DOUBLE-CHARGE: server-side dedup (card in key so switching card allows a new charge)
       }),
     });
     var data = await r.json();
