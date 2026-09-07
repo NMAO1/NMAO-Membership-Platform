@@ -6195,10 +6195,23 @@ function positionHelpPopover(){
   var pop = document.getElementById('helpPopover');
   if(!pop || !helpAnchorBtn) return;
   var r = helpAnchorBtn.getBoundingClientRect();
-  var w = 340;
+  var w = 340, margin = 12, vh = window.innerHeight;
   pop.style.width = w + 'px';
-  pop.style.top = (r.bottom + 8) + 'px';
   pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 16)) + 'px';
+  pop.style.overflowY = 'auto';
+  // Measure the natural height, then place on the roomier side and cap the height so it never
+  // runs off-screen (internal scroll for long hints like Closures).
+  pop.style.maxHeight = 'none'; pop.style.top = '-9999px'; pop.style.bottom = 'auto';
+  var natural = pop.offsetHeight;
+  var spaceBelow = vh - r.bottom - margin;
+  var spaceAbove = r.top - margin;
+  if(spaceBelow >= natural || spaceBelow >= spaceAbove){
+    pop.style.top = (r.bottom + 8) + 'px'; pop.style.bottom = 'auto';
+    pop.style.maxHeight = Math.max(160, spaceBelow) + 'px';
+  } else {
+    pop.style.top = 'auto'; pop.style.bottom = (vh - r.top + 8) + 'px';
+    pop.style.maxHeight = Math.max(160, spaceAbove) + 'px';
+  }
 }
 function openHelpPopover(page, btn){
   var pop = document.getElementById('helpPopover');
