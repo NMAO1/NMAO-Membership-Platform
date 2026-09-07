@@ -841,7 +841,7 @@
 
     <!-- ═══════════════ §PAGE-CLASSES ═══════════════ -->
     <div class="page" id="page-classes">
-      <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
+      <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><select id="classSortBy" onchange="try{localStorage.setItem('nmao_classSort',this.value);}catch(e){}renderAllClasses()" class="btn-sm" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--white);margin-right:0.5rem;padding:0.4rem 0.6rem" title="Sort the class list"><option value="time">Sort: Start time</option><option value="day">Sort: Day</option><option value="program">Sort: Program</option><option value="name">Sort: Class name</option><option value="instructor">Sort: Instructor</option></select><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
     </div>
 
@@ -6666,7 +6666,7 @@ function classCardHTML(c){
   var instr=c.instructor_name?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem"><i class="fa-solid fa-chalkboard-user" style="margin-right:0.3rem"></i>'+c.instructor_name+'</div>':'';
   var tags=(c.style?'<span class="class-tag">'+c.style+'</span>':'')+(c.age_group?'<span class="class-tag">'+c.age_group+'</span>':'')+(c.level?'<span class="class-tag">'+c.level+'</span>':'');
   var enroll='';
-  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+enroll+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
+  return '<div class="class-card"><div class="class-color-bar" style="background:'+(c.color||'var(--gold)')+'"></div><div class="class-time"><div class="class-time-start">'+fmtTime(c.start_time)+'</div><div class="class-time-end">'+fmtTime(c.end_time)+'</div></div><div class="class-info"><div class="class-title">'+dn+'</div>'+instr+((c.days_of_week&&c.days_of_week.length)?('<div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem"><i class="fa-regular fa-calendar" style="margin-right:0.3rem"></i>'+_classDaysLabel(c)+'</div>'):'')+enroll+'<div class="class-tags">'+tags+'</div></div><div class="class-actions"><button class="btn-sm gold" onclick="openAttendance(\''+c.id+'\',\''+st+'\')"><i class="fa-solid fa-clipboard-list"></i> Attendance</button><button class="btn-sm" onclick="openEditClass(\''+c.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.4)" onclick="event.stopPropagation();deleteClass(\''+c.id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
 }
 function buildWeekGrid(){
   var todayY=tzToday(); var cur=tzDow(); var html='';   // week anchored to the SCHOOL's local today
@@ -6680,7 +6680,43 @@ function buildWeekGrid(){
   }
   document.getElementById('weekGrid').innerHTML=html;
 }
-function renderAllClasses(){ document.getElementById('allClassesList').innerHTML=allClasses.length?allClasses.map(classCardHTML).join(''):'<div class="no-classes" style="text-align:center;padding:2rem 1rem">'+(allPrograms.length?'<div style="margin-bottom:0.5rem">Classes are your weekly schedule.</div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add your first class</button>':'<div style="margin-bottom:0.5rem">Create a program first, then schedule a class.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</div>'; }
+// §CLASS-SORT — sort/group helpers for the All Classes list.
+var DOW_ORDER = {monday:0,tuesday:1,wednesday:2,thursday:3,friday:4,saturday:5,sunday:6}; // schedule-natural, Mon-first
+var DOW_SHORT = {monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'};
+var DOW_FULL  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+function _classFirstDow(c){ var min=99; (c.days_of_week||[]).forEach(function(d){ var o=DOW_ORDER[(d||'').toLowerCase()]; if(o!=null&&o<min)min=o; }); return min; }
+function _classDaysLabel(c){ return (c.days_of_week||[]).slice().sort(function(a,b){ return (DOW_ORDER[(a||'').toLowerCase()]==null?9:DOW_ORDER[(a||'').toLowerCase()])-(DOW_ORDER[(b||'').toLowerCase()]==null?9:DOW_ORDER[(b||'').toLowerCase()]); }).map(function(d){ return DOW_SHORT[(d||'').toLowerCase()]||d; }).join(' · '); }
+function _classProgName(pid){ var p=(allPrograms||[]).find(function(x){return x.id===pid;}); return p?p.name:'No program'; }
+function renderAllClasses(){
+  var el=document.getElementById('allClassesList'); if(!el) return;
+  if(!allClasses.length){
+    el.innerHTML='<div class="no-classes" style="text-align:center;padding:2rem 1rem">'+(allPrograms.length?'<div style="margin-bottom:0.5rem">Classes are your weekly schedule.</div><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add your first class</button>':'<div style="margin-bottom:0.5rem">Create a program first, then schedule a class.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</div>';
+    return;
+  }
+  var sel=document.getElementById('classSortBy');
+  if(sel && !sel.dataset.init){ try{ var sv=localStorage.getItem('nmao_classSort'); if(sv)sel.value=sv; }catch(e){} sel.dataset.init='1'; }
+  var sortBy=(sel&&sel.value)?sel.value:'time';
+  var byTime=function(a,b){ return (a.start_time>b.start_time)?1:((a.start_time<b.start_time)?-1:0); };
+  var list=allClasses.slice();
+  if(sortBy==='day')          list.sort(function(a,b){ var d=_classFirstDow(a)-_classFirstDow(b); return d!==0?d:byTime(a,b); });
+  else if(sortBy==='program')  list.sort(function(a,b){ var d=_classProgName(a.program_id).localeCompare(_classProgName(b.program_id)); return d!==0?d:byTime(a,b); });
+  else if(sortBy==='name')     list.sort(function(a,b){ return (a.name||a.title||'').localeCompare(b.name||b.title||''); });
+  else if(sortBy==='instructor')list.sort(function(a,b){ var d=(a.instructor_name||'~').localeCompare(b.instructor_name||'~'); return d!==0?d:byTime(a,b); });
+  else                         list.sort(byTime);
+  // Group headers for the grouped sorts.
+  var groupKey=null;
+  if(sortBy==='day')          groupKey=function(c){ var o=_classFirstDow(c); return (o>=0&&o<=6)?DOW_FULL[o]:'No day set'; };
+  else if(sortBy==='program')  groupKey=function(c){ return _classProgName(c.program_id); };
+  else if(sortBy==='instructor')groupKey=function(c){ return c.instructor_name||'No instructor'; };
+  var html='';
+  if(groupKey){
+    var cur=null;
+    list.forEach(function(c){ var g=groupKey(c); if(g!==cur){ cur=g; html+='<div style="grid-column:1/-1;font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin:1rem 0 0.35rem;padding-bottom:0.3rem;border-bottom:1px solid var(--border)">'+shEsc(g)+'</div>'; } html+=classCardHTML(c); });
+  } else {
+    html=list.map(classCardHTML).join('');
+  }
+  el.innerHTML=html;
+}
 
 async function loadClasses(){
   var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
