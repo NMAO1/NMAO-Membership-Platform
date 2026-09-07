@@ -3399,6 +3399,15 @@
 </div>
 
 <div class="modal-overlay" id="posModal">
+  <!-- §POS-RESULT — prominent, unmissable paid/failed confirmation (replaces the easy-to-miss corner message) -->
+  <div id="posResultOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.78);align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2.5rem 2.25rem;text-align:center;max-width:92vw;width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <i id="posResultIcon" class="fa-solid fa-circle-check" style="font-size:3.6rem;margin-bottom:1rem"></i>
+      <div id="posResultTitle" style="font-family:var(--font-display);font-size:1.75rem;margin-bottom:0.5rem">Paid</div>
+      <div id="posResultDetail" style="font-size:0.98rem;color:var(--muted);margin-bottom:1.75rem;line-height:1.4"></div>
+      <div id="posResultActions" style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap"></div>
+    </div>
+  </div>
   <div class="modal" style="width:1040px;max-width:97vw;max-height:92vh;padding:0">
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;flex-shrink:0">
       <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--white)"><i class="fa-solid fa-store" style="color:var(--gold);margin-right:0.5rem"></i>Point of Sale</div>
@@ -15558,6 +15567,24 @@ async function checkoutPOS_cash(){
 }
 
 // Card on File path — synchronous Stripe charge against saved PM
+// §POS-RESULT — big, color-coded, sticky-until-acknowledged paid/failed confirmation.
+function posShowResult(ok, title, detail){
+  var o=document.getElementById('posResultOverlay'); if(!o) return;
+  var color = ok ? '#5A9A6A' : '#E07070';
+  var ic=document.getElementById('posResultIcon');
+  ic.className='fa-solid '+(ok?'fa-circle-check':'fa-circle-xmark'); ic.style.color=color;
+  var t=document.getElementById('posResultTitle'); t.textContent=title; t.style.color=color;
+  document.getElementById('posResultDetail').textContent=detail||'';
+  var acts=document.getElementById('posResultActions');
+  acts.innerHTML = ok
+    ? '<button class="btn-gold-full" style="width:auto;padding:0.6rem 1.4rem" onclick="posHideResult(false)"><i class="fa-solid fa-plus" style="margin-right:0.4rem"></i>New sale</button><button class="btn-sm" style="padding:0.6rem 1.2rem" onclick="posHideResult(true)">Close</button>'
+    : '<button class="btn-gold-full" style="width:auto;padding:0.6rem 1.4rem" onclick="posHideResult(false)"><i class="fa-solid fa-rotate-left" style="margin-right:0.4rem"></i>Back to cart</button><button class="btn-sm" style="padding:0.6rem 1.2rem" onclick="posHideResult(true)">Close register</button>';
+  o.style.display='flex';
+}
+function posHideResult(alsoClose){
+  var o=document.getElementById('posResultOverlay'); if(o) o.style.display='none';
+  if(alsoClose && typeof closePOS==='function') closePOS();
+}
 async function checkoutPOS_cardOnFile(){
   if(!posCart.length){setMsg('posMsg','Add items to cart first.','error');return;}
   if(!posSelectedStudentId){setMsg('posMsg','Select a student first.','error');return;}
@@ -15595,18 +15622,20 @@ async function checkoutPOS_cardOnFile(){
             '<button class="panel-action" style="font-size:0.72rem" onclick="checkoutPOS_paymentLink()"><i class="fa-solid fa-link"></i> Use Payment Link Instead</button>' +
           '</div>';
       }else{
-        setMsg('posMsg', data.error || 'Charge failed.', 'error');
+        posShowResult(false, 'Charge declined', data.error || 'The charge did not go through.');
       }
       return;
     }
     var displayPM = data.brand && data.last4 
       ? data.brand.toUpperCase() + ' ••••' + data.last4
       : data.pm_type === 'link' ? 'Stripe Link' : 'saved card';
-    setMsg('posMsg','Charged ' + displayPM + ' — $' + data.amount.toFixed(2) + ' complete.','success');
+    var _who = posSelectedStudentName || 'member';
+    var _amt = data.amount.toFixed(2);
+    document.getElementById('posMsg').textContent='';
     clearPOSCart(); await loadRevenue();
-    setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();}, 2500);
+    posShowResult(true, 'Paid $' + _amt, 'Charged ' + displayPM + ' · ' + _who);
   }catch(e){
-    setMsg('posMsg', e.message || 'Network error', 'error');
+    posShowResult(false, 'Payment failed', e.message || 'Network error');
   }finally{
     if(typeof updatePOSCheckoutButtons==='function') updatePOSCheckoutButtons(); else if(_cofBtn) _cofBtn.disabled = false;   // §NO-DOUBLE-CHARGE: restore correct button state
   }
