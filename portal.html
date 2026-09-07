@@ -1897,6 +1897,8 @@ async function buildSchedule(s){
       }
     }
     if(slug){ try{ var _clr=await sb.rpc('get_school_closures',{p_slug:slug,p_start:todayStr,p_end:weekEndStr}); portalClosures=(_clr&&_clr.data)?_clr.data:[]; }catch(e){ portalClosures=[]; } } else { portalClosures=[]; }
+    // §BELT-TEST-FEE — the member's own unpaid belt-test fees (drives the subtle "Pay fee" card).
+    try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,belt_tests(name,test_date,test_time,location)').eq('student_id',s.id).eq('school_id',SID).eq('fee_paid',false); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && parseFloat(x.fee_amount||0)>0 && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
     if(!usedRpc){
       // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
       var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
@@ -2011,11 +2013,39 @@ function portalClosureBanner(){
   for(var i=1;i<7;i++){ var d=ymdAdd(today,i); var c=portalClosureFor(d); if(c){ var sub=new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); return '<div style="background:rgba(224,112,112,0.10);border:1px solid rgba(224,112,112,0.5);color:#E07070;padding:0.75rem 1rem;font-size:0.86rem;margin-bottom:0.85rem"><i class="fa-solid fa-calendar-xmark" style="margin-right:0.5rem"></i>Closed '+sub+' &mdash; '+_cReason(c)+'.</div>'; } }
   return '';
 }
+// §BELT-TEST-FEE — a quiet "Pay fee" card, shown only when the member has an unpaid belt-test fee.
+// Opens the same member-safe hosted Stripe checkout the Shop uses; the webhook marks the fee paid.
+var portalBeltTests=[];
+function portalBeltTestCard(){
+  if(!portalBeltTests.length) return '';
+  return portalBeltTests.map(function(bt){
+    var t=bt.belt_tests||{}; var fee=parseFloat(bt.fee_amount||0);
+    var nm=String(t.name||'Belt Test').replace(/[<>]/g,'');
+    var dstr=t.test_date?new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:0.85rem 1rem;margin-bottom:0.85rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">'+
+      '<div style="min-width:0"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.4rem"></i>'+nm+'</div>'+
+      '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">'+(dstr?dstr+' · ':'')+'Test fee $'+fee.toFixed(2)+'</div></div>'+
+      '<button onclick="portalPayBeltTestFee(\''+bt.id+'\')" style="background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;white-space:nowrap">Pay fee</button>'+
+    '</div>';
+  }).join('');
+}
+async function portalPayBeltTestFee(bsId){
+  var bt=portalBeltTests.filter(function(x){return x.id===bsId;})[0]; if(!bt) return;
+  var cents=Math.round(parseFloat(bt.fee_amount||0)*100); if(cents<=0) return;
+  var nm='Belt Test Fee'+((bt.belt_tests&&bt.belt_tests.name)?(' — '+bt.belt_tests.name):'');
+  var baseUrl=window.location.origin+window.location.pathname;
+  try{
+    var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,student_id:currentStudent.id,line_items:[{name:nm,unit_amount:cents,quantity:1,product_id:null,item_type:'belt_test_fee',belt_test_student_id:bt.id}],success_url:baseUrl+'?bt_paid=1',cancel_url:baseUrl+'?bt_cancel=1'})});
+    var data=await r.json();
+    if(!r.ok||data.error||!data.url) throw new Error(data.error||'Could not start payment');
+    window.location.href=data.url;
+  }catch(e){ alert('Payment error: '+(e.message||'')); }
+}
 // Dispatcher — every re-render (including after an RSVP) keeps the chosen view.
 function renderScheduleView(){
   if(scheduleViewMode==='week') renderScheduleWeek(); else renderScheduleDay();
-  var el=document.getElementById('scheduleList'); var b=portalClosureBanner();
-  if(el && b) el.innerHTML = b + el.innerHTML;
+  var el=document.getElementById('scheduleList'); var pre=portalClosureBanner()+portalBeltTestCard();
+  if(el && pre) el.innerHTML = pre + el.innerHTML;
 }
 
 function renderScheduleDay(){
