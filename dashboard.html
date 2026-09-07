@@ -15149,6 +15149,7 @@ async function addSelectedToBeltTest(){
   beltTestPickerSelected={};
   if(typeof showToast==="function")showToast("Added "+ids.length+" student"+(ids.length!==1?"s":"")+" to test","ok");
   await loadBeltTestStudents();
+  await loadBeltTests();   // refresh the upcoming cards (roster count + Send Invites button)
 }
 
 // §BELT-TEST-INVITES — one-click: send the Belt Test Invitation to everyone on the roster who hasn't been
@@ -15199,6 +15200,7 @@ async function removeBeltTestStudent(bsid){
     return;
   }
   await loadBeltTestStudents();
+  await loadBeltTests();   // refresh the upcoming cards (roster count + Send Invites button)
 }
 
 function renderBeltTestResultsTab(invitedRows,t){
