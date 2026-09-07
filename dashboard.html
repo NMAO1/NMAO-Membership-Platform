@@ -2026,7 +2026,7 @@
     </div>
     <div style="padding:1.5rem;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1">
       <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem">
-        <button class="profile-tab" id="bttab-payments" onclick="switchBeltTestTab('payments')">Payments</button><button class="help-hint-inline" onclick="switchBeltTestTab('payments');openHelpPopover('belttests.tab_payments',this)" title="Help">?</button>
+        <button class="profile-tab active" id="bttab-students" onclick="switchBeltTestTab('students')">Students</button><button class="help-hint-inline" onclick="switchBeltTestTab('students');openHelpPopover('belttests.tab_students',this)" title="Help">?</button>
         <button class="profile-tab" id="bttab-results" onclick="switchBeltTestTab('results')">Results</button>
         <button class="profile-tab" id="bttab-payments" onclick="switchBeltTestTab('payments')">Payments</button>
       </div>
@@ -14855,15 +14855,32 @@ async function saveVideo(){
 async function deleteVideo(vid){ await sb.from('belt_level_videos').delete().eq('id',vid); await refreshBeltSystemLevels(); }
 
 // Belt Tests
+var beltTestCounts={};   // belt_test_id -> # students on the roster (for the upcoming cards)
 async function loadBeltTests(){
-  try{var r=await sb.from('belt_tests').select('*').eq('school_id',SID).order('test_date');allBeltTests=r.data||[];renderBeltTests();}catch(e){allBeltTests=[];}
+  try{
+    var r=await sb.from('belt_tests').select('*').eq('school_id',SID).order('test_date');allBeltTests=r.data||[];
+    try{ var cR=await sb.from('belt_test_students').select('belt_test_id').eq('school_id',SID); beltTestCounts={}; (cR.data||[]).forEach(function(x){ beltTestCounts[x.belt_test_id]=(beltTestCounts[x.belt_test_id]||0)+1; }); }catch(e){ beltTestCounts={}; }
+    renderBeltTests();
+  }catch(e){allBeltTests=[];}
 }
 function renderBeltTests(){
   var now=localDateStr(new Date());
   var upcoming=allBeltTests.filter(function(t){return t.test_date>=now;});
   var past=allBeltTests.filter(function(t){return t.test_date<now;});
   var upEl=document.getElementById('beltTestsUpcomingList'); var pastEl=document.getElementById('beltTestsPastList');
-  upEl.innerHTML=!upcoming.length?'<div class="no-classes">No upcoming belt tests.</div>':upcoming.map(function(t){var prog=allPrograms.find(function(p){return p.id===t.program_id;});return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>'+(prog?'<span>'+prog.name+'</span>':'')+'</div></div><span class="test-status-badge test-status-upcoming">Upcoming</span></div><div style="display:flex;gap:0.5rem;margin-top:0.75rem"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button><button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';}).join('');
+  upEl.innerHTML=!upcoming.length?'<div class="no-classes">No upcoming belt tests.</div>':upcoming.map(function(t){
+    var prog=allPrograms.find(function(p){return p.id===t.program_id;});
+    var du=Math.round((new Date(t.test_date+'T00:00:00')-new Date(now+'T00:00:00'))/86400000);
+    var duLabel=du<=0?'Today':du===1?'Tomorrow':('in '+du+' days');
+    var cnt=(beltTestCounts&&beltTestCounts[t.id])||0;
+    var meta='<span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>';
+    if(t.test_time) meta+='<span>'+fmtTime(t.test_time)+'</span>';
+    if(prog) meta+='<span>'+prog.name+'</span>';
+    if(t.location) meta+='<span>'+t.location+'</span>';
+    if(t.fee_enabled&&(t.test_fee||0)>0) meta+='<span style="color:var(--gold)">$'+Number(t.test_fee).toFixed(2)+' fee</span>';
+    var roster=cnt?('<i class="fa-solid fa-users" style="margin-right:0.35rem;color:var(--gold)"></i>'+cnt+' student'+(cnt===1?'':'s')+' on the roster'):('<span style="color:var(--muted)"><i class="fa-solid fa-user-plus" style="margin-right:0.35rem"></i>No students added yet — click Manage to add them</span>');
+    return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta">'+meta+'</div></div><span class="test-status-badge test-status-upcoming">'+duLabel+'</span></div><div style="font-size:0.82rem;color:var(--white);margin-top:0.15rem">'+roster+'</div><div style="display:flex;gap:0.5rem;margin-top:0.75rem"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button><button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';
+  }).join('');
   pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button></div></div></div>';}).join('');
 }
 function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';document.getElementById('btNotes').value='';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
@@ -14909,6 +14926,7 @@ function switchBeltTestTab(tab){ var tabs=['students','results','payments'];tabs
 //  Belt Test V2 — Picker
 // ─────────────────────────────────────────────────────────────
 var beltTestPickerSearch="";
+var beltTestPickerRows=[], beltTestPickerTest=null;   // cached so search re-renders without a DB refetch
 var beltTestPickerSelected={};
 var beltTestNextFee={};
 var beltTestPromoInfo={};
@@ -14986,6 +15004,7 @@ async function loadBeltTestStudents(){
     });
   });
 
+  beltTestPickerRows=rows; beltTestPickerTest=t;
   renderBeltTestPicker(rows,t);
   renderBeltTestResultsTab(invitedRows,t);
   renderBeltTestPaymentsTab(invitedRows,t);
@@ -15018,15 +15037,21 @@ function renderBeltTestPicker(rows,t){
   html+='<button class="btn-gold-full" style="width:auto;padding:0.6rem 1.1rem;'+(selCount?'':'opacity:0.4;cursor:not-allowed')+'" onclick="addSelectedToBeltTest()" '+(selCount?'':'disabled')+'><i class="fa-solid fa-user-plus" style="margin-right:0.4rem"></i>Add Selected ('+selCount+')</button>';
   html+='</div>';
 
-  if(invited.length){
-    html+=sectionHeader("Currently Invited",invited.length,"fa-circle-check","var(--gold)");
-    html+=invited.map(function(r){return invitedRowHTML(r);}).join("");
-  }
-
   if(q){
-    html+=sectionHeader("Search Results",searchHits.length,"fa-magnifying-glass","var(--muted2)");
-    html+=searchHits.length?searchHits.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No matches.</div>';
+    // §SEARCH-FIRST — while searching, matches appear right under the search bar (not buried below the roster).
+    html+=sectionHeader("Search Results",searchHits.length,"fa-magnifying-glass","var(--gold)");
+    html+=searchHits.length?searchHits.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No students match &ldquo;'+escHtml(beltTestPickerSearch)+'&rdquo;.</div>';
+    // Also surface any already-invited students that match, so you can see they're covered.
+    var invitedHits=invited.filter(function(r){ return (r.student.first_name+" "+r.student.last_name).toLowerCase().indexOf(q)!==-1; });
+    if(invitedHits.length){
+      html+=sectionHeader("Already Invited (matching)",invitedHits.length,"fa-circle-check","var(--gold)");
+      html+=invitedHits.map(function(r){return invitedRowHTML(r);}).join("");
+    }
   }else{
+    if(invited.length){
+      html+=sectionHeader("Currently Invited",invited.length,"fa-circle-check","var(--gold)");
+      html+=invited.map(function(r){return invitedRowHTML(r);}).join("");
+    }
     html+=sectionHeader("Eligible Now",eligibleNow.length,"fa-star","#7DBD7D");
     html+=eligibleNow.length?eligibleNow.map(function(r){return pickerRowHTML(r);}).join(""):'<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem">No students currently meet the class requirement for their next belt.</div>';
 
@@ -15080,13 +15105,16 @@ function invitedRowHTML(r){
 
 function updateBeltTestPickerSearch(v){
   beltTestPickerSearch=v||"";
-  loadBeltTestStudents();
+  // Re-render from cached rows (no DB refetch per keystroke) and keep the cursor in the search box.
+  if(beltTestPickerTest) renderBeltTestPicker(beltTestPickerRows,beltTestPickerTest);
+  var si=document.getElementById('btPickerSearch');
+  if(si){ si.focus(); try{ si.setSelectionRange(si.value.length, si.value.length); }catch(e){} }
 }
 
 function toggleBeltTestPick(sid){
   if(beltTestPickerSelected[sid])delete beltTestPickerSelected[sid];
   else beltTestPickerSelected[sid]=true;
-  loadBeltTestStudents();
+  if(beltTestPickerTest) renderBeltTestPicker(beltTestPickerRows,beltTestPickerTest);
 }
 
 async function addSelectedToBeltTest(){
