@@ -5430,7 +5430,7 @@ var HELP_CONTENT = {
 'profile.sec_billing': { title: 'Card On File', purpose: 'The saved card Stripe charges for this member. Use Add Card to save one, or Send Link to have the member add it themselves.' },
 'profile.billing_method': { title: 'Billing method', purpose: 'How this member is classified for billing. Important: the Autopay button must show green for autopay to be enabled — choosing Autopay here does not start billing on its own (autopay needs a card on file and is switched on with the green toggle). Cash, Comp, and External are manual labels for members you bill outside Stripe.' },
 'profile.autopay': { title: 'Autopay', purpose: 'The one switch that turns automatic billing on or off for this plan. ON (green) means a live Stripe subscription is charging the card on file on schedule. OFF (red) pauses it — the subscription is kept and can be resumed anytime; to fully end the plan use Cancel Plan under More actions. You can only turn autopay ON when a card is on file. Example: flip a new member to ON and their $150/mo starts billing automatically; flip a member leaving for the summer to OFF and no charges run until you flip it back.' },
-'profile.autopay_mode': { title: 'Billing start', purpose: 'How the FIRST charge behaves when you turn autopay on. Prepay today: charge one full month now, next charge is the following cycle (e.g. pay $199 today for September, next charge Oct 1). Prorate: charge only the partial days until the start date now, full amount on the date (e.g. ~$78 today for Aug 20-Sep 1, then $199 on Sep 1). Nothing today: $0 now, the first full charge lands on the start date (e.g. $0 today, $199 on Sep 1). All three then recur every month on the start date’s day.' },
+'profile.autopay_mode': { title: 'Billing start', purpose: 'How the FIRST charge behaves when you turn autopay on. Prepay today: charge one full month now; the next charge is one cycle later on that SAME day-of-month, not the 1st (e.g. a member starting Sept 13 pays $199 today, next charge Oct 13, then the 13th each month). Prorate: charge only the partial days until the start date now, full amount on the date (e.g. ~$78 today for Aug 20-Sep 1, then $199 on Sep 1). Nothing today: $0 now, the first full charge lands on the start date (e.g. $0 today, $199 on Sep 1). All three then recur every month on the start date’s day — whatever day that is, not the 1st.' },
 'profile.signup_fee': { title: 'Signup fee', purpose: 'A one-time enrollment fee set on the plan, charged to the card on file today when you turn autopay on — separate from the recurring dues. Example: a $100 signup fee is charged now, and the $199/mo membership begins on the start date. Uncheck it to skip or waive the fee for this member.' },
 
 'payments.discounts': { title: 'Discounts applied', purpose: 'Every staff discount from the last 90 days: how many sales, the total given away, and how many repeat every cycle. Each row in the ledger shows the amount, whether it is one-time or recurring, who applied it, and the reason.' },
@@ -12501,16 +12501,22 @@ function checkoutRenderCardTile(){
     return checkoutMethodTileDisabled('Card on file', 'fa-solid fa-credit-card', 'No card on file. Use Send Link to collect one, or Cash.');
   }
   var desc, tileIcon = 'fa-solid fa-credit-card';
+  var _face;
   if (card.type === 'link'){
-    // Link PMs are chargeable off-session just like a card \u2014 describe them honestly.
-    desc = 'Link' + (card.link_email ? (' \u2014 ' + card.link_email) : '') + ' \u2014 charges immediately.';
+    _face = 'Link' + (card.link_email ? (' \u2014 ' + card.link_email) : '');
     tileIcon = 'fa-solid fa-bolt';
   } else {
     var brand = (card.brand || 'card').toUpperCase();
     var last4 = card.last4 || '????';
     var exp = (card.exp_month && card.exp_year) ? (' \u00b7 Exp ' + String(card.exp_month).padStart(2,'0') + '/' + String(card.exp_year).slice(-2)) : '';
-    desc = brand + ' \u2022\u2022\u2022\u2022' + last4 + exp + ' \u2014 charges immediately.';
+    _face = brand + ' \u2022\u2022\u2022\u2022' + last4 + exp;
   }
+  // \u00a7CARD-PICKER-HINT \u2014 when there's more than one saved card, don't imply the primary is locked in;
+  // say the card is chosen on the next step (the picker) so "charges immediately" can't mislead.
+  var _ncards = (_checkout.cards || []).length;
+  desc = (_ncards > 1)
+    ? (_face + ' + ' + (_ncards - 1) + ' more \u2014 pick which card on the next step')
+    : (_face + ' \u2014 charges immediately.');
   return checkoutMethodTile('card_on_file', 'Card on file', tileIcon, desc, _checkout.method === 'card_on_file');
 }
 
