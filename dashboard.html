@@ -15192,7 +15192,9 @@ async function removeBeltTestStudent(bsid){
 function renderBeltTestResultsTab(invitedRows,t){
   var rl=document.getElementById("beltTestResultsList");
   if(!invitedRows.length){rl.innerHTML='<div class="no-classes">No students added yet.</div>';return;}
-  rl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Result</th><th>Actions</th></tr></thead><tbody>'+invitedRows.map(function(bs){
+  var pendingN=invitedRows.filter(function(bs){return bs.passed==null;}).length;
+  var head=pendingN>0?'<div style="margin-bottom:1rem"><button class="btn-sm gold" onclick="bulkPassBeltTest()"><i class="fa-solid fa-check-double" style="margin-right:0.3rem"></i>Pass all pending ('+pendingN+')</button> <span style="font-size:0.74rem;color:var(--muted)">Promotes every not-yet-marked student to their next belt.</span></div>':'';
+  rl.innerHTML=head+'<div class="table-wrap"><table><thead><tr><th>Student</th><th>Result</th><th>Actions</th></tr></thead><tbody>'+invitedRows.map(function(bs){
     var s=bs.students;var name=s?s.first_name+" "+s.last_name:"Unknown";
     var resultCell=bs.passed===true?'<span style="color:#7DBD7D">Passed</span>':bs.passed===false?'<span style="color:#E07070">Held Back</span>':'<span style="color:var(--muted)">Pending</span>';
     return '<tr><td class="name">'+escHtml(name)+'</td><td>'+resultCell+'</td><td><button class="btn-sm gold" onclick="markBeltTestResult(\''+bs.id+'\',\'promoted\')">Pass</button> <button class="btn-sm" onclick="markBeltTestResult(\''+bs.id+'\',\'held_back\')">Hold</button></td></tr>';
@@ -15203,17 +15205,53 @@ function renderBeltTestPaymentsTab(invitedRows,t){
   var pl=document.getElementById("beltTestPaymentsList");
   if(!t||!t.fee_enabled){pl.innerHTML='<div class="no-classes">No test fee configured.</div>';return;}
   if(!invitedRows.length){pl.innerHTML='<div class="no-classes">No students added yet.</div>';return;}
+  var paidN=invitedRows.filter(function(bs){return bs.fee_paid;}).length, total=invitedRows.length;
   var anyChargeable=invitedRows.some(function(bs){return !bs.fee_paid&&parseFloat(bs.fee_amount||t.test_fee||0)>0;});
-  var head=anyChargeable?'<div style="margin-bottom:0.75rem"><button class="btn-sm" style="background:#2a6f3a;color:#fff" onclick="chargeAllBeltTestFees()"><i class="fa-solid fa-bolt" style="margin-right:0.3rem"></i>Charge All Cards</button> <span style="font-size:0.74rem;color:var(--muted)">Charges saved cards for unpaid students who passed or are pending. No card on file is skipped.</span></div>':'';
-  pl.innerHTML=head+'<div class="table-wrap"><table><thead><tr><th>Student</th><th>Fee</th><th>Paid</th><th>Actions</th></tr></thead><tbody>'+invitedRows.map(function(bs){
+  // §PAYMENTS-TIDY — a single summary + one bulk action up top; per-row shows the fee as text (edit on tap),
+  // a status pill, and only the actions that apply (paid rows are quiet).
+  var head='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">'+
+    '<div style="font-size:0.85rem;color:var(--muted)"><span style="color:'+((paidN>=total)?'#7DBD7D':'var(--white)')+'">'+paidN+' of '+total+'</span> paid</div>'+
+    (anyChargeable?'<button class="btn-sm" style="background:#2a6f3a;color:#fff" onclick="chargeAllBeltTestFees()" title="Charges saved cards for every unpaid student. Anyone with no card on file is skipped."><i class="fa-solid fa-bolt" style="margin-right:0.3rem"></i>Charge all cards</button>':'')+
+  '</div>';
+  pl.innerHTML=head+'<div class="table-wrap"><table><thead><tr><th>Student</th><th>Fee</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>'+invitedRows.map(function(bs){
     var s=bs.students;var name=s?s.first_name+" "+s.last_name:"Unknown";
     var fee=parseFloat(bs.fee_amount||t.test_fee||0);
-    var chargeBtn=(!bs.fee_paid&&fee>0)?'<button class="btn-sm" style="background:#2a6f3a;color:#fff" onclick="chargeBeltTestFee(\''+bs.id+'\')">Charge Card</button> ':'';
-    return '<tr><td class="name">'+escHtml(name)+'</td><td><input type="number" id="btfee_'+bs.id+'" value="'+fee.toFixed(2)+'" min="0" step="0.01" style="width:78px;padding:0.25rem"> <button class="btn-sm" onclick="saveBeltTestFee(\''+bs.id+'\')">Save</button></td><td>'+(bs.fee_paid?'<span style="color:#5A9A6A">Paid</span>':'<span style="color:#E07070">Unpaid</span>')+'</td><td>'+chargeBtn+'<button class="btn-sm gold" onclick="markBeltTestFeePaid(\''+bs.id+'\')">Mark Paid</button> <button class="btn-sm" onclick="compBeltTestFee(\''+bs.id+'\')">Comp</button></td></tr>';
+    var feeCell='<span id="btfeeview_'+bs.id+'">$'+fee.toFixed(2)+' <button class="btn-sm" style="font-size:0.64rem;padding:0.05rem 0.35rem;opacity:0.7" onclick="btFeeEdit(\''+bs.id+'\')">edit</button></span>'+
+      '<span id="btfeeedit_'+bs.id+'" style="display:none"><input type="number" id="btfee_'+bs.id+'" value="'+fee.toFixed(2)+'" min="0" step="0.01" style="width:72px;padding:0.25rem"> <button class="btn-sm gold" onclick="saveBeltTestFee(\''+bs.id+'\')">Save</button></span>';
+    var statusCell=bs.fee_paid
+      ? '<span style="display:inline-block;padding:0.15rem 0.55rem;border-radius:3px;background:rgba(90,154,106,0.15);color:#7DBD7D;font-size:0.72rem;letter-spacing:0.03em">PAID</span>'
+      : '<span style="display:inline-block;padding:0.15rem 0.55rem;border-radius:3px;background:rgba(224,112,112,0.12);color:#E07070;font-size:0.72rem;letter-spacing:0.03em">UNPAID</span>';
+    var actions;
+    if(bs.fee_paid){
+      actions='<button class="btn-sm" style="font-size:0.7rem;color:var(--muted);border-color:var(--border)" onclick="unmarkBeltTestFeePaid(\''+bs.id+'\')">Undo</button>';
+    }else{
+      var chargeBtn=(fee>0)?'<button class="btn-sm" style="background:#2a6f3a;color:#fff" onclick="chargeBeltTestFee(\''+bs.id+'\')"><i class="fa-solid fa-credit-card" style="margin-right:0.25rem"></i>Charge</button> ':'';
+      actions=chargeBtn+'<button class="btn-sm gold" onclick="markBeltTestFeePaid(\''+bs.id+'\')">Mark paid</button> <button class="btn-sm" onclick="compBeltTestFee(\''+bs.id+'\')">Comp</button>';
+    }
+    return '<tr><td class="name">'+escHtml(name)+'</td><td>'+feeCell+'</td><td>'+statusCell+'</td><td style="text-align:right;white-space:nowrap">'+actions+'</td></tr>';
   }).join("")+'</tbody></table></div>';
 }
+function btFeeEdit(bsid){
+  var v=document.getElementById('btfeeview_'+bsid), e=document.getElementById('btfeeedit_'+bsid);
+  if(v)v.style.display='none'; if(e){ e.style.display=''; var inp=document.getElementById('btfee_'+bsid); if(inp)inp.focus(); }
+}
+async function unmarkBeltTestFeePaid(bsid){
+  await sb.from("belt_test_students").update({fee_paid:false,paid_at:null}).eq("id",bsid).eq("school_id",SID);
+  await loadBeltTestStudents();
+}
 
-async function markBeltTestResult(bsid,result){
+// §BULK-PASS — mark every not-yet-judged student as passed (each promotes to their next belt). One reload.
+async function bulkPassBeltTest(){
+  if(!currentBeltTestId) return;
+  var rows=Object.keys(beltTestInvited).map(function(k){return beltTestInvited[k];});
+  var pending=rows.filter(function(bs){return bs.passed==null;});
+  if(!pending.length){ if(typeof showToast==='function')showToast('No pending students to pass.','ok'); return; }
+  if(!confirm('Pass all '+pending.length+' pending student'+(pending.length===1?'':'s')+'? This promotes each to their next belt.')) return;
+  for(var i=0;i<pending.length;i++){ await markBeltTestResult(pending[i].id,'promoted',true); }
+  await loadBeltTestStudents();
+  if(typeof showToast==='function') showToast('Passed '+pending.length+' student'+(pending.length===1?'':'s'),'ok');
+}
+async function markBeltTestResult(bsid,result,skipReload){
   var bs=beltTestInvited[bsid]||null;
   var sid=bs?bs.student_id:null;
   if(result==="promoted"){
@@ -15229,7 +15267,7 @@ async function markBeltTestResult(bsid,result){
         else{
           var pn=document.getElementById("userName");
           await sb.from("belt_promotions").insert({school_id:SID,student_id:sid,belt_test_id:currentBeltTestId,belt_from:info.fromName||"",belt_to:info.toName||"",belt_from_id:info.curId||null,belt_to_id:info.nextId,promotion_date:localDateStr(new Date()),promoted_at:new Date().toISOString(),promoted_by:pn?pn.textContent:"",fee_charged:bs?(bs.fee_amount||0):0,fee_paid:bs?!!bs.fee_paid:false,notes:"Belt test"});
-          if(typeof showToast==="function")showToast("Promoted to "+(info.toName||"next belt"),"ok");
+          if(typeof showToast==="function"&&!skipReload)showToast("Promoted to "+(info.toName||"next belt"),"ok");
         }
       }
     }
@@ -15246,7 +15284,7 @@ async function markBeltTestResult(bsid,result){
     }
     await sb.from("belt_test_students").update({passed:false}).eq("id",bsid).eq("school_id",SID);
   }
-  await loadBeltTestStudents();
+  if(!skipReload) await loadBeltTestStudents();
 }
 
 async function markBeltTestFeePaid(bsid){
