@@ -1896,6 +1896,7 @@ async function buildSchedule(s){
         });
       }
     }
+    if(slug){ try{ var _clr=await sb.rpc('get_school_closures',{p_slug:slug,p_start:todayStr,p_end:weekEndStr}); portalClosures=(_clr&&_clr.data)?_clr.data:[]; }catch(e){ portalClosures=[]; } } else { portalClosures=[]; }
     if(!usedRpc){
       // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
       var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
@@ -1992,9 +1993,29 @@ function setScheduleViewMode(mode){
   try{ localStorage.setItem(SCHED_VIEW_KEY,scheduleViewMode); }catch(e){}
   renderScheduleView();
 }
+// §CLOSURES — surface a holiday/vacation closure banner in the member schedule.
+var portalClosures=[];
+function portalClosureFor(dstr){
+  for(var i=0;i<portalClosures.length;i++){ var c=portalClosures[i];
+    if(c.recurring_annual){ var md=dstr.slice(5), s=c.start_date.slice(5), e=c.end_date.slice(5);
+      if(s<=e ? (md>=s&&md<=e) : (md>=s||md<=e)) return c;
+    } else if(dstr>=c.start_date && dstr<=c.end_date){ return c; }
+  }
+  return null;
+}
+function _cReason(c){ return String(c.reason||'Closed').replace(/[<>]/g,''); }
+function portalClosureBanner(){
+  var today=tzToday();
+  var tc=portalClosureFor(today);
+  if(tc){ return '<div style="background:rgba(224,112,112,0.12);border:1px solid #E07070;color:#E07070;padding:0.9rem 1rem;font-size:0.9rem;margin-bottom:0.85rem"><i class="fa-solid fa-calendar-xmark" style="margin-right:0.5rem"></i><strong>We\'re closed today</strong> &mdash; '+_cReason(tc)+'. No classes today.</div>'; }
+  for(var i=1;i<7;i++){ var d=ymdAdd(today,i); var c=portalClosureFor(d); if(c){ var sub=new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); return '<div style="background:rgba(224,112,112,0.10);border:1px solid rgba(224,112,112,0.5);color:#E07070;padding:0.75rem 1rem;font-size:0.86rem;margin-bottom:0.85rem"><i class="fa-solid fa-calendar-xmark" style="margin-right:0.5rem"></i>Closed '+sub+' &mdash; '+_cReason(c)+'.</div>'; } }
+  return '';
+}
 // Dispatcher — every re-render (including after an RSVP) keeps the chosen view.
 function renderScheduleView(){
   if(scheduleViewMode==='week') renderScheduleWeek(); else renderScheduleDay();
+  var el=document.getElementById('scheduleList'); var b=portalClosureBanner();
+  if(el && b) el.innerHTML = b + el.innerHTML;
 }
 
 function renderScheduleDay(){
