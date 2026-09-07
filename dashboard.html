@@ -15174,7 +15174,19 @@ async function sendBeltTestInvites(testId){
   }
   var ids=pending.map(function(p){return p.id;});
   await sb.from('belt_test_students').update({status:'invited',invited_at:new Date().toISOString()}).in('id',ids).eq('school_id',SID);
-  if(typeof showToast==='function') showToast('Invited '+sent+' student'+(sent===1?'':'s')+(failed?(' — '+failed+' had no contact info on file'):''),'ok');
+  // §BELT-TEST-ALERT — post (or refresh) an in-portal Belt Test alert carrying the details + the test's
+  // notes ("what to bring"), so the info lives in the Updates tab where students already look. De-duped by
+  // test name so re-sending updates the same alert instead of piling up.
+  try{
+    var _exp=new Date(t.test_date+'T00:00:00'); _exp.setDate(_exp.getDate()+1);
+    var _alertBody='Belt test on '+dateStr+(t.test_time?(' at '+fmtTime(t.test_time)):'')+(t.location?(' · '+t.location):'')+'.'+(t.notes?('\n\n'+t.notes):'');
+    var _nowA=new Date().toISOString();
+    var _fields={ subject:t.name, body:_alertBody, type:'belt_test', audience:(t.program_id?'program':'all'), program_id:(t.program_id||null), status:'sent', sent_at:_nowA, scheduled_for:_nowA, expires_at:_exp.toISOString().slice(0,10), cta_label:'View schedule', cta_url:link };
+    var _ex=await sb.from('school_announcements').select('id').eq('school_id',SID).eq('type','belt_test').eq('subject',t.name).is('deleted_at',null).limit(1);
+    if(_ex.data&&_ex.data.length){ await sb.from('school_announcements').update(_fields).eq('id',_ex.data[0].id); }
+    else { _fields.school_id=SID; await sb.from('school_announcements').insert(_fields); }
+  }catch(e){}
+  if(typeof showToast==='function') showToast('Invited '+sent+' student'+(sent===1?'':'s')+(failed?(' — '+failed+' had no contact info on file'):'')+' · posted to portal Updates','ok');
   await loadBeltTests();
   if(currentBeltTestId===testId){ await loadBeltTestStudents(); }
 }
