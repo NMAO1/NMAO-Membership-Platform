@@ -589,7 +589,6 @@
     <div class="nav-section-label">Schedule</div>
     <div class="nav-item" id="nav-schedule"  onclick="navigate('schedule',this)"><i class="fa-solid fa-calendar-day nav-icon"></i> Schedule</div>
     <div class="nav-item" id="nav-classes"   onclick="navigate('classes',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> All Classes</div>
-    <div class="nav-item" id="nav-closures"  onclick="navigate('closures',this)"><i class="fa-solid fa-calendar-xmark nav-icon"></i> Closures</div>
     <div class="nav-item" id="nav-sessions"  onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
     <div class="nav-item" id="nav-events"    onclick="navigate('events',this)"><i class="fa-solid fa-calendar-days nav-icon"></i> Events</div>
     
@@ -834,6 +833,12 @@
         <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:62ch">Temporarily change your schedule for a date range  holiday weeks, summer hours  without touching your normal classes. Members can be reminded before it starts.</p>
         <div id="shiftsList"><div class="empty">Loading...</div></div>
       </div>
+      <!-- §CLOSURES — vacation/holiday closures (lives on the Schedule page, beside Shifts) -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid #E07070;padding:1.1rem 1.5rem;margin:1.25rem 0;">
+        <div class="content-heading"><h2>Closures</h2><button class="help-hint-inline" onclick="openHelpPopover('closures',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openClosureModal()"><i class="fa-solid fa-calendar-xmark"></i> New Closure</button></div>
+        <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:64ch">Close the school for a holiday or vacation in one step: it cancels those classes, blocks check-ins and sign-ups for the dates, cancels any existing reservations, and notifies your members with the reason.</p>
+        <div id="closuresList"><div class="empty">Loading&hellip;</div></div>
+      </div>
       <div class="content-heading"><h2>Today's Classes</h2><div class="rule-h"></div></div>
       <div class="schedule-grid" id="todaySchedule"></div>
       <div class="content-heading"><h2>This Week</h2><div class="rule-h"></div></div>
@@ -844,13 +849,6 @@
     <div class="page" id="page-classes">
       <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><select id="classSortBy" onchange="try{localStorage.setItem('nmao_classSort',this.value);}catch(e){}renderAllClasses()" class="btn-sm" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--white);margin-right:0.5rem;padding:0.4rem 0.6rem" title="Sort the class list"><option value="time">Sort: Start time</option><option value="day">Sort: Day</option><option value="program">Sort: Program</option><option value="name">Sort: Class name</option><option value="instructor">Sort: Instructor</option></select><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
-    </div>
-
-    <!-- §CLOSURES — vacation/holiday closures -->
-    <div class="page" id="page-closures">
-      <div class="content-heading"><h2>Closures</h2><button class="help-hint-inline" onclick="openHelpPopover('closures',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openClosureModal()"><i class="fa-solid fa-calendar-xmark"></i> New Closure</button></div>
-      <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:64ch">Close the school for a holiday or vacation in one step: it cancels those classes, blocks check-ins and sign-ups for the dates, cancels any existing reservations, and notifies your members with the reason.</p>
-      <div id="closuresList"><div class="empty">Loading&hellip;</div></div>
     </div>
 
     <div class="modal-overlay" id="closureModal">
@@ -5419,7 +5417,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',closures:'Closures',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -5433,8 +5431,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='settings')    { renderSettingsSessionTypes(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); }
-  if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
-  if(page==='closures') { if(window.loadClosures) loadClosures(); }
+  if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); if(window.loadClosures) loadClosures(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
   if(page==='payments') { loadPaymentsLedger(); }
   if(page==='billing')  { if(window.renderAccreditationCard) renderAccreditationCard(); }
