@@ -12624,10 +12624,11 @@ function renderCheckoutStep3(){
   // §POS-CARD-PICKER — for a one-time (retail/pack/custom) card-on-file charge, staff pick WHICH card
   // to charge (default = the family tuition card) and can add a card inline. Memberships always bill
   // the tuition card, so no picker there.
-  if (_checkout.method === 'card_on_file' && checkoutCartClass() === 'pos') {
+  if (_checkout.method === 'card_on_file' && (_checkout.cards || []).length) {
     var _pcards = _checkout.cards || [];
+    var _pickLbl = (checkoutCartClass() === 'membership') ? 'Bill this membership to (also becomes primary)' : 'Charge which card';
     html += '<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">' +
-      '<label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Charge which card</label>';
+      '<label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">' + _pickLbl + '</label>';
     if (_pcards.length) {
       html += '<select id="checkoutCardPick" onchange="_checkout.chosenPmId=this.value" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem;width:100%">';
       for (var _pci=0; _pci<_pcards.length; _pci++){ var _pcc=_pcards[_pci];
@@ -13029,6 +13030,7 @@ async function checkoutCompleteCard(force){
     if (cls === 'membership' || cls === 'classpack'){
       endpoint = 'create-membership-subscription';
       payload = { school_id: SID, student_id: _checkout.studentId, membership_id: _checkout.cart[0].id };
+      if (_checkout.chosenPmId) payload.payment_method_id = _checkout.chosenPmId;   // §CHOSEN-CARD — staff-picked card funds the sub + becomes primary
       var _fcd = document.getElementById('checkoutFirstChargeDate');
       if (_fcd && _fcd.value) payload.first_charge_date = _fcd.value;
       if (force) payload.allow_duplicate = true;
@@ -15532,7 +15534,7 @@ async function checkoutPOS_cash(){
     };
   });
   var r = await sb.from('payments').insert(inserts);
-  if(r.error){setMsg('posMsg',r.error.message,'error');return;}
+  if(r.error){posShowResult(false,'Could not record sale',r.error.message);return;}
 
   // Credit session packs if applicable
   for(var i=0; i<posCart.length; i++){
@@ -15561,9 +15563,10 @@ async function checkoutPOS_cash(){
       }
     }
   }
-  setMsg('posMsg','Cash sale complete! $' + total.toFixed(2) + ' recorded.','success');
+  var _who = posSelectedStudentName || 'member';
+  document.getElementById('posMsg').textContent='';
   clearPOSCart(); await loadRevenue();
-  setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();}, 2000);
+  posShowResult(true, 'Cash sale · $' + total.toFixed(2), 'Recorded · ' + _who);
 }
 
 // Card on File path — synchronous Stripe charge against saved PM
@@ -15699,11 +15702,11 @@ async function confirmPOSNewCard(){
       await recordPOSPaid('card', _posPIid);
       msg.textContent='Charged $'+_posChargeAmt.toFixed(2)+' successfully.'; msg.className='form-msg success';
       var amtDone=_posChargeAmt;
+      var _who = posSelectedStudentName || 'member';
       setTimeout(function(){
         closePOSNewCard();
-        setMsg('posMsg','Card sale complete! $'+amtDone.toFixed(2)+' charged.','success');
         clearPOSCart(); loadRevenue();
-        setTimeout(function(){document.getElementById('posMsg').textContent=''; closePOS();},2000);
+        posShowResult(true, 'Paid $'+amtDone.toFixed(2), 'Charged new card · ' + _who);
       },800);
     } else {
       msg.textContent='Payment did not complete. Please try again.'; msg.className='form-msg error'; btn.disabled=false; btn.innerHTML=_h;
