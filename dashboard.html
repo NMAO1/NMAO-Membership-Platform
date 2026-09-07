@@ -14855,11 +14855,19 @@ async function saveVideo(){
 async function deleteVideo(vid){ await sb.from('belt_level_videos').delete().eq('id',vid); await refreshBeltSystemLevels(); }
 
 // Belt Tests
-var beltTestCounts={};   // belt_test_id -> # students on the roster (for the upcoming cards)
+var beltTestCounts={}, beltTestPaidCounts={}, beltTestPendingCounts={};   // per belt_test_id: roster / fee-paid / not-yet-invited
 async function loadBeltTests(){
   try{
     var r=await sb.from('belt_tests').select('*').eq('school_id',SID).order('test_date');allBeltTests=r.data||[];
-    try{ var cR=await sb.from('belt_test_students').select('belt_test_id').eq('school_id',SID); beltTestCounts={}; (cR.data||[]).forEach(function(x){ beltTestCounts[x.belt_test_id]=(beltTestCounts[x.belt_test_id]||0)+1; }); }catch(e){ beltTestCounts={}; }
+    try{
+      var cR=await sb.from('belt_test_students').select('belt_test_id,fee_paid,status').eq('school_id',SID);
+      beltTestCounts={}; beltTestPaidCounts={}; beltTestPendingCounts={};
+      (cR.data||[]).forEach(function(x){
+        beltTestCounts[x.belt_test_id]=(beltTestCounts[x.belt_test_id]||0)+1;
+        if(x.fee_paid) beltTestPaidCounts[x.belt_test_id]=(beltTestPaidCounts[x.belt_test_id]||0)+1;
+        if((x.status||'pending')!=='invited') beltTestPendingCounts[x.belt_test_id]=(beltTestPendingCounts[x.belt_test_id]||0)+1;
+      });
+    }catch(e){ beltTestCounts={}; beltTestPaidCounts={}; beltTestPendingCounts={}; }
     renderBeltTests();
   }catch(e){allBeltTests=[];}
 }
@@ -14873,13 +14881,17 @@ function renderBeltTests(){
     var du=Math.round((new Date(t.test_date+'T00:00:00')-new Date(now+'T00:00:00'))/86400000);
     var duLabel=du<=0?'Today':du===1?'Tomorrow':('in '+du+' days');
     var cnt=(beltTestCounts&&beltTestCounts[t.id])||0;
+    var paid=(beltTestPaidCounts&&beltTestPaidCounts[t.id])||0;
+    var pending=(beltTestPendingCounts&&beltTestPendingCounts[t.id])||0;
     var meta='<span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</span>';
     if(t.test_time) meta+='<span>'+fmtTime(t.test_time)+'</span>';
     if(prog) meta+='<span>'+prog.name+'</span>';
     if(t.location) meta+='<span>'+t.location+'</span>';
     if(t.fee_enabled&&(t.test_fee||0)>0) meta+='<span style="color:var(--gold)">$'+Number(t.test_fee).toFixed(2)+' fee</span>';
-    var roster=cnt?('<i class="fa-solid fa-users" style="margin-right:0.35rem;color:var(--gold)"></i>'+cnt+' student'+(cnt===1?'':'s')+' on the roster'):('<span style="color:var(--muted)"><i class="fa-solid fa-user-plus" style="margin-right:0.35rem"></i>No students added yet — click Manage to add them</span>');
-    return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta">'+meta+'</div></div><span class="test-status-badge test-status-upcoming">'+duLabel+'</span></div><div style="font-size:0.82rem;color:var(--white);margin-top:0.15rem">'+roster+'</div><div style="display:flex;gap:0.5rem;margin-top:0.75rem"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button><button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';
+    var payStr=(t.fee_enabled&&cnt)?(' &middot; <span style="color:'+((paid>=cnt)?'#7DBD7D':'var(--muted2)')+'">'+paid+' of '+cnt+' paid</span>'):'';
+    var roster=cnt?('<i class="fa-solid fa-users" style="margin-right:0.35rem;color:var(--gold)"></i>'+cnt+' student'+(cnt===1?'':'s')+' on the roster'+payStr):('<span style="color:var(--muted)"><i class="fa-solid fa-user-plus" style="margin-right:0.35rem"></i>No students added yet — click Manage to add them</span>');
+    var inviteBtn=pending>0?'<button class="btn-sm gold" onclick="sendBeltTestInvites(\''+t.id+'\')"><i class="fa-solid fa-paper-plane"></i> Send Invites ('+pending+')</button>':'';
+    return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta">'+meta+'</div></div><span class="test-status-badge test-status-upcoming">'+duLabel+'</span></div><div style="font-size:0.82rem;color:var(--white);margin-top:0.15rem">'+roster+'</div><div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button>'+inviteBtn+'<button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';
   }).join('');
   pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button></div></div></div>';}).join('');
 }
@@ -15137,6 +15149,34 @@ async function addSelectedToBeltTest(){
   beltTestPickerSelected={};
   if(typeof showToast==="function")showToast("Added "+ids.length+" student"+(ids.length!==1?"s":"")+" to test","ok");
   await loadBeltTestStudents();
+}
+
+// §BELT-TEST-INVITES — one-click: send the Belt Test Invitation to everyone on the roster who hasn't been
+// invited yet (fires the school's belt_test_invite automation by SMS/email), then marks them invited.
+async function sendBeltTestInvites(testId){
+  var t=allBeltTests.find(function(x){return x.id===testId;}); if(!t) return;
+  var r=await sb.from('belt_test_students').select('id,student_id,status').eq('belt_test_id',testId).eq('school_id',SID);
+  var roster=r.data||[];
+  if(!roster.length){ if(typeof showToast==='function')showToast('Add students to the roster first (Manage).','err'); return; }
+  var pending=roster.filter(function(x){ return (x.status||'pending')!=='invited'; });
+  if(!pending.length){ if(typeof showToast==='function')showToast('Everyone on the roster has already been invited.','ok'); return; }
+  if(!confirm('Send the belt test invitation to '+pending.length+' student'+(pending.length===1?'':'s')+'? They’ll get your Belt Test Invitation message by text/email.')) return;
+  var slug=(window.schoolData&&window.schoolData.slug)?window.schoolData.slug:'';
+  var link='https://app.nmao.us/portal.html'+(slug?('?s='+encodeURIComponent(slug)):'');
+  var dateStr=new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var ctx={test_name:t.name,test_date:dateStr,test_time:t.test_time?fmtTime(t.test_time):'',location:t.location||'',cta_url:link,cta_label:'View belt test',force:true};
+  var sent=0,failed=0;
+  for(var i=0;i<pending.length;i++){ var p=pending[i];
+    try{
+      var resp=await fetch(SURL+'/functions/v1/run-automation',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},body:JSON.stringify({school_id:SID,trigger_key:'belt_test_invite',recipient:{type:'student',id:p.student_id},context:ctx})});
+      var d=await resp.json(); if(d&&d.success) sent++; else failed++;
+    }catch(e){ failed++; }
+  }
+  var ids=pending.map(function(p){return p.id;});
+  await sb.from('belt_test_students').update({status:'invited',invited_at:new Date().toISOString()}).in('id',ids).eq('school_id',SID);
+  if(typeof showToast==='function') showToast('Invited '+sent+' student'+(sent===1?'':'s')+(failed?(' — '+failed+' had no contact info on file'):''),'ok');
+  await loadBeltTests();
+  if(currentBeltTestId===testId){ await loadBeltTestStudents(); }
 }
 
 async function removeBeltTestStudent(bsid){
