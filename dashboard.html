@@ -589,6 +589,7 @@
     <div class="nav-section-label">Schedule</div>
     <div class="nav-item" id="nav-schedule"  onclick="navigate('schedule',this)"><i class="fa-solid fa-calendar-day nav-icon"></i> Schedule</div>
     <div class="nav-item" id="nav-classes"   onclick="navigate('classes',this)"><i class="fa-solid fa-calendar-week nav-icon"></i> All Classes</div>
+    <div class="nav-item" id="nav-closures"  onclick="navigate('closures',this)"><i class="fa-solid fa-calendar-xmark nav-icon"></i> Closures</div>
     <div class="nav-item" id="nav-sessions"  onclick="navigate('sessions',this)"><i class="fa-solid fa-user-clock nav-icon"></i> Sessions</div>
     <div class="nav-item" id="nav-events"    onclick="navigate('events',this)"><i class="fa-solid fa-calendar-days nav-icon"></i> Events</div>
     
@@ -843,6 +844,41 @@
     <div class="page" id="page-classes">
       <div class="content-heading"><h2>All Classes</h2><button class="help-hint-inline" onclick="openHelpPopover('classes',this)" title="Help">?</button><div class="rule-h"></div><select id="classSortBy" onchange="try{localStorage.setItem('nmao_classSort',this.value);}catch(e){}renderAllClasses()" class="btn-sm" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--white);margin-right:0.5rem;padding:0.4rem 0.6rem" title="Sort the class list"><option value="time">Sort: Start time</option><option value="day">Sort: Day</option><option value="program">Sort: Program</option><option value="name">Sort: Class name</option><option value="instructor">Sort: Instructor</option></select><button class="panel-action" onclick="openAddClass()"><i class="fa-solid fa-plus"></i> Add Class</button></div>
       <div class="schedule-grid" id="allClassesList"></div>
+    </div>
+
+    <!-- §CLOSURES — vacation/holiday closures -->
+    <div class="page" id="page-closures">
+      <div class="content-heading"><h2>Closures</h2><button class="help-hint-inline" onclick="openHelpPopover('closures',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openClosureModal()"><i class="fa-solid fa-calendar-xmark"></i> New Closure</button></div>
+      <p style="color:var(--muted);font-size:0.88rem;margin:-0.5rem 0 1rem;max-width:64ch">Close the school for a holiday or vacation in one step: it cancels those classes, blocks check-ins and sign-ups for the dates, cancels any existing reservations, and notifies your members with the reason.</p>
+      <div id="closuresList"><div class="empty">Loading&hellip;</div></div>
+    </div>
+
+    <div class="modal-overlay" id="closureModal">
+      <div class="modal" style="width:min(94vw,520px)">
+        <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-calendar-xmark" style="color:var(--gold);margin-right:0.5rem"></i>New Closure</span><button class="modal-close" onclick="closeClosureModal()"><i class="fa-solid fa-xmark"></i></button></div>
+        <div style="padding:1.25rem 1.5rem;max-height:76vh;overflow-y:auto">
+          <div class="field"><label>Reason (shown to members)</label><input type="text" id="closureReason" placeholder="e.g. Labor Day &mdash; Closed" oninput="closureImpactPreview()"/></div>
+          <div class="form-row">
+            <div class="field"><label>Start date</label><input type="date" id="closureStart" onchange="closureImpactPreview()"/></div>
+            <div class="field"><label>End date <span style="color:var(--muted);font-weight:normal">(optional)</span></label><input type="date" id="closureEnd" onchange="closureImpactPreview()"/></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.84rem;color:var(--white);cursor:pointer;margin-bottom:0.85rem"><input type="checkbox" id="closureRecurring"/> Repeat every year on these dates (annual holiday)</label>
+          <div id="closureImpact" style="font-size:0.82rem;color:var(--gold);background:rgba(201,168,76,0.06);border:1px solid var(--border);padding:0.6rem 0.8rem;margin-bottom:0.9rem;display:none"></div>
+          <div style="border-top:1px solid var(--border);padding-top:0.85rem;margin-bottom:0.6rem">
+            <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.5rem">Notify members</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--white);margin-bottom:0.35rem;cursor:pointer"><input type="checkbox" id="closureNotifyNow" checked/> Send a closure notice now</label>
+            <div style="display:flex;gap:1.1rem;flex-wrap:wrap;margin:0.35rem 0 0.7rem">
+              <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.82rem;color:var(--white);cursor:pointer"><input type="checkbox" class="closure-ch" value="sms" checked/> Text</label>
+              <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.82rem;color:var(--white);cursor:pointer"><input type="checkbox" class="closure-ch" value="email" checked/> Email</label>
+              <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.82rem;color:var(--white);cursor:pointer"><input type="checkbox" class="closure-ch" value="alert"/> In-app alert</label>
+            </div>
+            <div class="field"><label>Who</label><select id="closureAudience"><option value="all">All active members</option><option value="affected">Only members with a class/reservation that day</option></select></div>
+            <div class="field"><label>Also remind this many days before <span style="color:var(--muted);font-weight:normal">(optional)</span></label><input type="number" id="closureRemindDays" min="0" max="60" placeholder="e.g. 3"/></div>
+          </div>
+          <button class="btn-gold-full" id="closureSaveBtn" onclick="submitClosure()"><i class="fa-solid fa-calendar-xmark" style="margin-right:0.5rem"></i>Create Closure</button>
+          <p class="form-msg" id="closureMsg" style="margin-top:0.6rem;text-align:center"></p>
+        </div>
+      </div>
     </div>
 
     <div class="modal-overlay" id="shiftModal">
@@ -5100,6 +5136,95 @@ function classScheduleSummary(c){
   return (ds||'No days')+(t?(' \u00b7 '+t):'');
 }
 
+// §CLOSURES — vacation/holiday closures (create-closure EF + schedule_shifts kind='closure').
+var _closures=[];
+function _closureFmt(a,b){ var f=function(d){var x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-US',{month:'short',day:'numeric'});}; return a===b?f(a):(f(a)+' – '+f(b)); }
+async function loadClosures(){
+  var box=document.getElementById('closuresList'); if(!box) return;
+  box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    var r=await sb.from('schedule_shifts').select('*').eq('school_id',SID).eq('kind','closure').order('start_date',{ascending:true});
+    _closures=r.data||[]; renderClosuresList();
+  }catch(e){ box.innerHTML='<div class="empty">Could not load closures.</div>'; }
+}
+function renderClosuresList(){
+  var box=document.getElementById('closuresList'); if(!box) return;
+  if(!_closures.length){ box.innerHTML='<div class="empty" style="padding:1.5rem 1rem;color:var(--muted)">No closures yet. Use <b>New Closure</b> to close the school for a holiday or vacation.</div>'; return; }
+  box.innerHTML=_closures.map(function(s){
+    var reason=(s.reason||s.name||'Closed');
+    var rec=s.recurring_annual?'<span class="class-tag" style="margin-left:0.5rem">Every year</span>':'';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid #E07070;padding:0.9rem 1.1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">'+
+      '<div style="flex:1;min-width:180px"><div style="font-size:0.95rem;color:var(--white)"><i class="fa-solid fa-calendar-xmark" style="color:#E07070;margin-right:0.4rem"></i>'+shEsc(reason)+rec+'</div>'+
+      '<div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem">'+_closureFmt(s.start_date,s.end_date)+'</div></div>'+
+      '<button class="btn-sm" style="color:#5A9A6A;border-color:rgba(90,154,106,0.4)" onclick="reopenClosure(\''+s.id+'\',this.getAttribute(\'data-r\'))" data-r="'+shEsc(reason)+'"><i class="fa-solid fa-rotate-left"></i> Reopen</button>'+
+    '</div>';
+  }).join('');
+}
+function openClosureModal(){
+  document.getElementById('closureReason').value='';
+  document.getElementById('closureStart').value='';
+  document.getElementById('closureEnd').value='';
+  document.getElementById('closureRecurring').checked=false;
+  document.getElementById('closureNotifyNow').checked=true;
+  document.querySelectorAll('.closure-ch').forEach(function(c){ c.checked=(c.value!=='alert'); });
+  document.getElementById('closureAudience').value='all';
+  document.getElementById('closureRemindDays').value='';
+  document.getElementById('closureImpact').style.display='none';
+  var m=document.getElementById('closureMsg'); m.textContent=''; m.className='form-msg';
+  var b=document.getElementById('closureSaveBtn'); b.disabled=false; b.innerHTML='<i class="fa-solid fa-calendar-xmark" style="margin-right:0.5rem"></i>Create Closure';
+  document.getElementById('closureModal').classList.add('active');
+}
+function closeClosureModal(){ document.getElementById('closureModal').classList.remove('active'); }
+var _closureImpactTimer=null;
+function closureImpactPreview(){
+  clearTimeout(_closureImpactTimer);
+  _closureImpactTimer=setTimeout(async function(){
+    var start=document.getElementById('closureStart').value;
+    var box=document.getElementById('closureImpact');
+    if(!start){ box.style.display='none'; return; }
+    var end=document.getElementById('closureEnd').value||start;
+    try{
+      var r=await fetch(SURL+'/functions/v1/create-closure',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,start_date:start,end_date:end,preview:true})});
+      var d=await r.json();
+      if(d.error){ box.style.display='none'; return; }
+      box.style.display='block';
+      box.innerHTML='<i class="fa-solid fa-circle-info" style="margin-right:0.4rem"></i>This closes <b>'+(d.classes_affected||0)+'</b> class'+((d.classes_affected===1)?'':'es')+' on those dates and cancels <b>'+(d.reservations_affected||0)+'</b> reservation'+((d.reservations_affected===1)?'':'s')+' for <b>'+(d.students_affected||0)+'</b> member'+((d.students_affected===1)?'':'s')+'.';
+    }catch(e){ box.style.display='none'; }
+  },400);
+}
+async function submitClosure(){
+  var reason=document.getElementById('closureReason').value.trim();
+  var start=document.getElementById('closureStart').value;
+  var end=document.getElementById('closureEnd').value||start;
+  var m=document.getElementById('closureMsg');
+  if(!reason){ m.textContent='Add a reason members will see.'; m.className='form-msg error'; return; }
+  if(!start){ m.textContent='Pick a start date.'; m.className='form-msg error'; return; }
+  var channels=[]; document.querySelectorAll('.closure-ch').forEach(function(c){ if(c.checked) channels.push(c.value); });
+  var notifyNow=document.getElementById('closureNotifyNow').checked;
+  var b=document.getElementById('closureSaveBtn'); var _h=b.innerHTML; b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Creating…';
+  m.textContent=''; m.className='form-msg';
+  try{
+    var payload={school_id:SID,reason:reason,start_date:start,end_date:end,recurring_annual:document.getElementById('closureRecurring').checked,notify_now:notifyNow,notify_channels:notifyNow?channels:[],audience:document.getElementById('closureAudience').value};
+    var rd=document.getElementById('closureRemindDays').value; if(rd!=='') payload.remind_days_before=parseInt(rd)||0;
+    var r=await fetch(SURL+'/functions/v1/create-closure',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(payload)});
+    var d=await r.json();
+    if(!r.ok||d.error){ m.textContent=d.error||'Could not create closure.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; return; }
+    var notified=(d.sms_sent||0)+(d.email_sent||0);
+    m.textContent='Closed '+(d.range||'')+' — '+(d.reservations_cancelled||0)+' reservation(s) cancelled'+(notified?(', '+notified+' notified'):'')+'.'; m.className='form-msg success';
+    setTimeout(function(){ closeClosureModal(); loadClosures(); if(window.loadClasses)loadClasses(); },1300);
+  }catch(e){ m.textContent=e.message||'Network error.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; }
+}
+async function reopenClosure(id, label){
+  if(!confirm('Reopen the school for “'+(label||'this closure')+'”? Classes on those dates resume and check-ins/sign-ups are allowed again.')) return;
+  try{
+    await sb.from('schedule_shift_reminders_sent').delete().eq('shift_id',id);
+    var r=await sb.from('schedule_shifts').delete().eq('id',id).eq('school_id',SID);
+    if(r.error){ if(window.showToast)showToast('Error: '+r.error.message,'error'); return; }
+    if(window.showToast) showToast('Reopened.','ok');
+    loadClosures(); if(window.loadClasses)loadClasses();
+  }catch(e){ if(window.showToast)showToast('Error reopening.','error'); }
+}
+
 async function loadScheduleShifts(){
   var box=document.getElementById('shiftsList');
   if(box) box.innerHTML='<div class="empty">Loading...</div>';
@@ -5294,7 +5419,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',closures:'Closures',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -5309,6 +5434,7 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); }
+  if(page==='closures') { if(window.loadClosures) loadClosures(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
   if(page==='payments') { loadPaymentsLedger(); }
   if(page==='billing')  { if(window.renderAccreditationCard) renderAccreditationCard(); }
