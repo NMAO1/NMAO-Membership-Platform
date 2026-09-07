@@ -12515,9 +12515,31 @@ function checkoutRenderCardTile(){
   // say the card is chosen on the next step (the picker) so "charges immediately" can't mislead.
   var _ncards = (_checkout.cards || []).length;
   desc = (_ncards > 1)
-    ? (_face + ' + ' + (_ncards - 1) + ' more \u2014 pick which card on the next step')
+    ? (_face + ' + ' + (_ncards - 1) + ' more \u2014 choose below')
     : (_face + ' \u2014 charges immediately.');
-  return checkoutMethodTile('card_on_file', 'Card on file', tileIcon, desc, _checkout.method === 'card_on_file');
+  var _tile = checkoutMethodTile('card_on_file', 'Card on file', tileIcon, desc, _checkout.method === 'card_on_file');
+  // \u00a7CARD-PICKER-INLINE \u2014 pick the card HERE (step 2), right after selecting Card on file, so the choice
+  // happens before "Next" instead of on the review step.
+  if (_checkout.method === 'card_on_file' && _ncards > 1) _tile += checkoutCardPickerHtml();
+  return _tile;
+}
+// The card picker shown under the Card-on-file tile (and reused for the review-step summary label).
+function checkoutCardPickerHtml(){
+  var cards = _checkout.cards || [];
+  if (!cards.length) return '';
+  var isMem = (checkoutCartClass() === 'membership');
+  var lbl = isMem ? 'Bill this membership to (also becomes primary)' : 'Charge which card';
+  var opts = cards.map(function(c){ return '<option value="' + c.payment_method_id + '"' + ((c.payment_method_id === _checkout.chosenPmId) ? ' selected' : '') + '>' + escapeCheckout(_checkoutCardLabel(c)) + '</option>'; }).join('');
+  return '<div style="margin-top:0.5rem;padding:0.7rem 0.9rem;border:1px solid var(--gold);border-radius:2px;background:rgba(201,168,76,0.06)">' +
+    '<label style="display:block;font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.35rem">' + lbl + '</label>' +
+    '<select id="checkoutCardPick" onchange="_checkout.chosenPmId=this.value" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem">' + opts + '</select>' +
+    '<button class="btn-sm" style="font-size:0.7rem;margin-top:0.45rem" onclick="checkoutAddCardInline()"><i class="fa-solid fa-plus"></i> Add a card</button>' +
+  '</div>';
+}
+function checkoutChosenCardLabel(){
+  var cards = _checkout.cards || [];
+  var c = cards.filter(function(x){ return x.payment_method_id === _checkout.chosenPmId; })[0] || cards.filter(function(x){ return x.is_default; })[0] || cards[0];
+  return c ? _checkoutCardLabel(c) : 'card on file';
 }
 
 function checkoutMethodTile(method, title, icon, desc, selected){
@@ -12623,30 +12645,11 @@ function renderCheckoutStep3(){
     '<div style="font-size:0.98rem;color:var(--gold)">$' + checkoutCartTotal().toFixed(2) + '</div>' +
   '</div>';
   html += '</div>';
+  // Read-only confirmation of the method + (for card-on-file) the card chosen back on step 2's picker.
+  var _payWith = (_checkout.method === 'card_on_file') ? checkoutChosenCardLabel() : (CHECKOUT_METHOD_LABELS[_checkout.method] || '—');
   html += '<div style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">Paying with ' +
-    '<span style="color:var(--white)">' + (CHECKOUT_METHOD_LABELS[_checkout.method] || '\u2014') + '</span> \u00b7 ' +
+    '<span style="color:var(--white)">' + escapeCheckout(_payWith) + '</span> · ' +
     escapeCheckout(checkoutStudentLabel()) + '</div>';
-
-  // §POS-CARD-PICKER — for a one-time (retail/pack/custom) card-on-file charge, staff pick WHICH card
-  // to charge (default = the family tuition card) and can add a card inline. Memberships always bill
-  // the tuition card, so no picker there.
-  if (_checkout.method === 'card_on_file' && (_checkout.cards || []).length) {
-    var _pcards = _checkout.cards || [];
-    var _pickLbl = (checkoutCartClass() === 'membership') ? 'Bill this membership to (also becomes primary)' : 'Charge which card';
-    html += '<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.85rem">' +
-      '<label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">' + _pickLbl + '</label>';
-    if (_pcards.length) {
-      html += '<select id="checkoutCardPick" onchange="_checkout.chosenPmId=this.value" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem;width:100%">';
-      for (var _pci=0; _pci<_pcards.length; _pci++){ var _pcc=_pcards[_pci];
-        html += '<option value="' + _pcc.payment_method_id + '"' + ((_pcc.payment_method_id === _checkout.chosenPmId) ? ' selected' : '') + '>' + escapeCheckout(_checkoutCardLabel(_pcc)) + '</option>';
-      }
-      html += '</select>';
-    } else {
-      html += '<div style="font-size:0.8rem;color:var(--muted)">No cards on file yet.</div>';
-    }
-    html += '<button class="btn-sm" style="font-size:0.72rem;margin-top:0.5rem" onclick="checkoutAddCardInline()"><i class="fa-solid fa-plus"></i> Add a card</button>' +
-    '</div>';
-  }
 
   // §DEFERRED-BILLING — for a card-on-file recurring membership, optionally start billing on a future
   // date (e.g. migrating a member who already paid elsewhere this cycle). Blank = charge today.
