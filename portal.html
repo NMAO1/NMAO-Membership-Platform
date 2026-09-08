@@ -711,6 +711,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         </div>
       </div>
 
+      <!-- §BELT-TEST-BANNER — persistent per-student invitation + finalize card, shown on every tab -->
+      <div id="portalBeltTestBanner"></div>
+
       <!-- ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
            ¬ßSECTION: STUDENT_TABS
            Tab order: Schedule ¬∑ Updates ¬∑ Profile
@@ -1845,6 +1848,8 @@ renderSelfCancel(s, _sm);   renderPauseControls(s, _sm);   if(schoolData.allow_m
   await buildAttendance(s.id);
   await buildAnnouncements();
   if(isFamilyMode){await buildFamilySchedule();}else{await buildSchedule(s);}
+  // §BELT-TEST-BANNER — populate the persistent top-of-portal invitation card (both modes load portalBeltTests).
+  try{ var _bb=document.getElementById('portalBeltTestBanner'); if(_bb) _bb.innerHTML=(typeof portalBeltTestCard==='function')?portalBeltTestCard():''; }catch(e){}
   // Password control moved to the shared header modal (openChangePw); it sets family-aware copy itself.
   processAutoCheckIn();
   }catch(e){
@@ -2071,7 +2076,7 @@ async function portalPayBeltTestFee(bsId){
 // Dispatcher — every re-render (including after an RSVP) keeps the chosen view.
 function renderScheduleView(){
   if(scheduleViewMode==='week') renderScheduleWeek(); else renderScheduleDay();
-  var el=document.getElementById('scheduleList'); var pre=portalClosureBanner()+portalBeltTestCard();
+  var el=document.getElementById('scheduleList'); var pre=portalClosureBanner();
   if(el && pre) el.innerHTML = pre + el.innerHTML;
 }
 
@@ -3817,8 +3822,8 @@ function setFamilyViewMode(mode){
 
 // Dispatcher — keeps every existing call site working.
 function renderFamilySchedule(){
-  var _bt=portalBeltTestCard();
-  if(familyViewMode==='grid'){ renderFamilyGrid(); if(_bt){ var _g=document.getElementById('scheduleList'); if(_g) _g.innerHTML=_bt+_g.innerHTML; } return; }
+  var _bt='';
+  if(familyViewMode==='grid'){ renderFamilyGrid(); return; }
   var el=document.getElementById('scheduleList');
   var html=famViewToggleHTML();
   html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Use the switcher above to pick a child, then tap classes to check in or reserve and confirm.</p>';
