@@ -1899,6 +1899,7 @@ async function buildSchedule(s){
     if(slug){ try{ var _clr=await sb.rpc('get_school_closures',{p_slug:slug,p_start:todayStr,p_end:weekEndStr}); portalClosures=(_clr&&_clr.data)?_clr.data:[]; }catch(e){ portalClosures=[]; } } else { portalClosures=[]; }
     // §BELT-TEST-FEE — the member's own unpaid belt-test fees (drives the subtle "Pay fee" card).
     try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,belt_tests(name,test_date,test_time,location)').eq('student_id',s.id).eq('school_id',SID).eq('fee_paid',false); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && parseFloat(x.fee_amount||0)>0 && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
+    if(portalBeltTests.length){ try{ var _sd=await sb.from('schools').select('belt_test_early_discount_enabled,belt_test_early_discount_cents,belt_test_early_discount_days').eq('id',SID).single(); if(_sd&&_sd.data){ portalBtEarly={enabled:!!_sd.data.belt_test_early_discount_enabled,cents:parseInt(_sd.data.belt_test_early_discount_cents)||0,days:parseInt(_sd.data.belt_test_early_discount_days)||0}; } }catch(e){} }
     if(!usedRpc){
       // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
       var r=await sb.from('classes').select('*').eq('school_id',SID).eq('active',true).order('start_time');
@@ -2016,22 +2017,35 @@ function portalClosureBanner(){
 // §BELT-TEST-FEE — a quiet "Pay fee" card, shown only when the member has an unpaid belt-test fee.
 // Opens the same member-safe hosted Stripe checkout the Shop uses; the webhook marks the fee paid.
 var portalBeltTests=[];
+var portalBtEarly={enabled:false,cents:0,days:0};   // school-wide early-pay discount policy
+// Compute the effective price for a belt test, honoring the school's early-pay discount window.
+function _btEarly(bt){
+  var t=bt.belt_tests||{}; var feeCents=Math.round(parseFloat(bt.fee_amount||0)*100);
+  if(!portalBtEarly.enabled || portalBtEarly.cents<=0 || !t.test_date) return {cents:feeCents, off:0, byStr:''};
+  var cut=new Date(t.test_date+'T00:00:00'); cut.setDate(cut.getDate()-portalBtEarly.days);
+  var today=(typeof tzToday==='function'?tzToday():new Date().toISOString().slice(0,10));
+  if(new Date(today+'T00:00:00')<=cut){ var off=Math.min(portalBtEarly.cents, feeCents); return {cents:feeCents-off, off:off, byStr:cut.toLocaleDateString('en-US',{month:'short',day:'numeric'})}; }
+  return {cents:feeCents, off:0, byStr:''};
+}
 function portalBeltTestCard(){
   if(!portalBeltTests.length) return '';
   return portalBeltTests.map(function(bt){
     var t=bt.belt_tests||{}; var fee=parseFloat(bt.fee_amount||0);
     var nm=String(t.name||'Belt Test').replace(/[<>]/g,'');
     var dstr=t.test_date?new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    var e=_btEarly(bt);
+    var priceStr=e.off>0 ? ('<span style="text-decoration:line-through;opacity:0.55">$'+fee.toFixed(2)+'</span> $'+(e.cents/100).toFixed(2)) : ('$'+(e.cents/100).toFixed(2));
+    var earlyNote=e.off>0 ? ('<div style="font-size:0.72rem;color:var(--gold);margin-top:0.15rem">Finalize by '+e.byStr+' and save $'+(e.off/100).toFixed(2)+'</div>') : '';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:0.85rem 1rem;margin-bottom:0.85rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">'+
-      '<div style="min-width:0"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.4rem"></i>'+nm+'</div>'+
-      '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">'+(dstr?dstr+' · ':'')+'Test fee $'+fee.toFixed(2)+'</div></div>'+
-      '<button onclick="portalPayBeltTestFee(\''+bt.id+'\')" style="background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;white-space:nowrap">Pay fee</button>'+
+      '<div style="min-width:0"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.4rem"></i>You’re invited to test &mdash; '+nm+'</div>'+
+      '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">'+(dstr?dstr+' · ':'')+'Secure your place · '+priceStr+'</div>'+earlyNote+'</div>'+
+      '<button onclick="portalPayBeltTestFee(\''+bt.id+'\')" style="background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;white-space:nowrap">Finalize your spot</button>'+
     '</div>';
   }).join('');
 }
 async function portalPayBeltTestFee(bsId){
   var bt=portalBeltTests.filter(function(x){return x.id===bsId;})[0]; if(!bt) return;
-  var cents=Math.round(parseFloat(bt.fee_amount||0)*100); if(cents<=0) return;
+  var cents=_btEarly(bt).cents; if(cents<=0) return;
   var nm='Belt Test Fee'+((bt.belt_tests&&bt.belt_tests.name)?(' — '+bt.belt_tests.name):'');
   var baseUrl=window.location.origin+window.location.pathname;
   try{

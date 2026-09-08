@@ -1012,6 +1012,15 @@
     <!-- ═══════════════ §PAGE-BELTTESTS ═══════════════ -->
     <div class="page" id="page-belttests">
       <div class="content-heading"><h2>Belt Tests</h2><button class="help-hint-inline" onclick="openHelpPopover('belttests',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddBeltTest()"><i class="fa-solid fa-plus"></i> Schedule Belt Test</button></div>
+      <div id="btEarlySettings" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;margin-bottom:1.5rem">
+        <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.85rem;color:var(--white)"><input type="checkbox" id="btEarlyEnabled" onchange="btEarlyToggle()" /><span>Offer an early-payment discount on belt test fees</span><button class="help-hint-inline" onclick="event.preventDefault();openHelpPopover('belttests.early_discount',this)" title="Help">?</button></label>
+        <div id="btEarlyFields" style="display:none;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-top:0.75rem">
+          <div class="field" style="margin:0"><label>Discount ($ off)</label><input type="number" id="btEarlyAmount" min="0" step="1" value="0" style="width:120px" /></div>
+          <div class="field" style="margin:0"><label>If finalized (days before test)</label><input type="number" id="btEarlyDays" min="0" step="1" value="7" style="width:150px" /></div>
+          <button class="panel-action" onclick="saveBtEarlySettings()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+          <span class="form-msg" id="btEarlyMsg" style="align-self:center"></span>
+        </div>
+      </div>
       <div style="margin-bottom:1.5rem">
         <div class="content-heading"><h2>Upcoming</h2><button class="help-hint-inline" onclick="openHelpPopover('belttests.upcoming',this)" title="Help">?</button><div class="rule-h"></div></div>
         <div id="beltTestsUpcomingList"></div>
@@ -14868,8 +14877,31 @@ async function loadBeltTests(){
         if((x.status||'pending')!=='invited') beltTestPendingCounts[x.belt_test_id]=(beltTestPendingCounts[x.belt_test_id]||0)+1;
       });
     }catch(e){ beltTestCounts={}; beltTestPaidCounts={}; beltTestPendingCounts={}; }
+    if(!window._btEarlyLoaded){ window._btEarlyLoaded=true; loadBtEarlySettings(); }
     renderBeltTests();
   }catch(e){allBeltTests=[];}
+}
+// §BELT-TEST-EARLY — school-wide opt-in early-payment discount on belt test fees.
+function btEarlyToggle(){ var on=document.getElementById('btEarlyEnabled'); var f=document.getElementById('btEarlyFields'); if(f) f.style.display=(on&&on.checked)?'flex':'none'; }
+async function loadBtEarlySettings(){
+  try{
+    var r=await sb.from('schools').select('belt_test_early_discount_enabled,belt_test_early_discount_cents,belt_test_early_discount_days').eq('id',SID).single();
+    if(r&&r.data){ var d=r.data;
+      var en=document.getElementById('btEarlyEnabled'); if(en) en.checked=!!d.belt_test_early_discount_enabled;
+      var am=document.getElementById('btEarlyAmount'); if(am) am.value=((d.belt_test_early_discount_cents||0)/100).toFixed(0);
+      var dy=document.getElementById('btEarlyDays'); if(dy) dy.value=(d.belt_test_early_discount_days||0);
+      btEarlyToggle();
+    }
+  }catch(e){}
+}
+async function saveBtEarlySettings(){
+  var on=document.getElementById('btEarlyEnabled').checked;
+  var amt=Math.max(0,Math.round((parseFloat(document.getElementById('btEarlyAmount').value)||0)*100));
+  var days=Math.max(0,parseInt(document.getElementById('btEarlyDays').value)||0);
+  setMsg('btEarlyMsg','Saving…','');
+  var r=await sb.from('schools').update({belt_test_early_discount_enabled:on,belt_test_early_discount_cents:amt,belt_test_early_discount_days:days}).eq('id',SID);
+  if(r.error) setMsg('btEarlyMsg',r.error.message,'error');
+  else { setMsg('btEarlyMsg','Saved!','success'); setTimeout(function(){var m=document.getElementById('btEarlyMsg'); if(m) m.textContent='';},2500); }
 }
 function renderBeltTests(){
   var now=localDateStr(new Date());
