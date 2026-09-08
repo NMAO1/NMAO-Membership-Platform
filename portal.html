@@ -1898,7 +1898,7 @@ async function buildSchedule(s){
     }
     if(slug){ try{ var _clr=await sb.rpc('get_school_closures',{p_slug:slug,p_start:todayStr,p_end:weekEndStr}); portalClosures=(_clr&&_clr.data)?_clr.data:[]; }catch(e){ portalClosures=[]; } } else { portalClosures=[]; }
     // §BELT-TEST-FEE — the member's own unpaid belt-test fees (drives the subtle "Pay fee" card).
-    try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,belt_tests(name,test_date,test_time,location,notes)').eq('student_id',s.id).eq('school_id',SID).eq('status','invited'); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
+    try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,student_id,belt_tests(name,test_date,test_time,location,notes)').eq('student_id',s.id).eq('school_id',SID).eq('status','invited'); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
     if(portalBeltTests.length){ try{ var _sd=await sb.from('schools').select('belt_test_early_discount_enabled,belt_test_early_discount_cents,belt_test_early_discount_days').eq('id',SID).single(); if(_sd&&_sd.data){ portalBtEarly={enabled:!!_sd.data.belt_test_early_discount_enabled,cents:parseInt(_sd.data.belt_test_early_discount_cents)||0,days:parseInt(_sd.data.belt_test_early_discount_days)||0}; } }catch(e){} }
     if(!usedRpc){
       // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
@@ -2049,7 +2049,7 @@ function portalBeltTestCard(){
       action='<div style="margin-top:0.6rem;color:#7DBD7D;font-size:0.8rem"><i class="fa-solid fa-circle-check" style="margin-right:0.3rem"></i>Your spot is secured — see you there!</div>';
     }
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1rem 1.15rem;margin-bottom:0.85rem">'+
-      '<div style="font-size:0.95rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.45rem"></i>You’re invited to test &mdash; '+nm+'</div>'+
+      '<div style="font-size:0.95rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.45rem"></i>'+(bt._who?(String(bt._who).replace(/[<>]/g,'')+' is invited to test'):'You’re invited to test')+' &mdash; '+nm+'</div>'+
       (when?'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.25rem">'+when+'</div>':'')+
       (notes?'<div style="font-size:0.82rem;color:var(--muted2);line-height:1.55;margin-top:0.5rem;white-space:pre-line">'+notes+'</div>':'')+
       action+
@@ -2062,7 +2062,7 @@ async function portalPayBeltTestFee(bsId){
   var nm='Belt Test Fee'+((bt.belt_tests&&bt.belt_tests.name)?(' — '+bt.belt_tests.name):'');
   var baseUrl=window.location.origin+window.location.pathname;
   try{
-    var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,student_id:currentStudent.id,line_items:[{name:nm,unit_amount:cents,quantity:1,product_id:null,item_type:'belt_test_fee',belt_test_student_id:bt.id}],success_url:baseUrl+'?bt_paid=1',cancel_url:baseUrl+'?bt_cancel=1'})});
+    var r=await fetch(SURL+'/functions/v1/create-pos-checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await portalToken())},body:JSON.stringify({school_id:SID,student_id:(bt.student_id||(currentStudent?currentStudent.id:null)),line_items:[{name:nm,unit_amount:cents,quantity:1,product_id:null,item_type:'belt_test_fee',belt_test_student_id:bt.id}],success_url:baseUrl+'?bt_paid=1',cancel_url:baseUrl+'?bt_cancel=1'})});
     var data=await r.json();
     if(!r.ok||data.error||!data.url) throw new Error(data.error||'Could not start payment');
     window.location.href=data.url;
@@ -3695,6 +3695,12 @@ async function switchChild(){
     familyAllClasses=r.data||[];
   }
   var childIds=familyChildren.map(function(c){return c.id;});
+  // §BELT-TEST — invited belt tests across ALL children, shown as per-child cards on the family schedule.
+  try{
+    var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,student_id,belt_tests(name,test_date,test_time,location,notes),students(first_name,last_name)').in('student_id',childIds).eq('school_id',SID).eq('status','invited');
+    portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && x.belt_tests.test_date>=today; }).map(function(x){ x._who=x.students?((x.students.first_name||'')+' '+(x.students.last_name||'')).trim():''; return x; }));
+  }catch(e){ portalBeltTests=[]; }
+  if(portalBeltTests.length){ try{ var _sd=await sb.from('schools').select('belt_test_early_discount_enabled,belt_test_early_discount_cents,belt_test_early_discount_days').eq('id',SID).single(); if(_sd&&_sd.data){ portalBtEarly={enabled:!!_sd.data.belt_test_early_discount_enabled,cents:parseInt(_sd.data.belt_test_early_discount_cents)||0,days:parseInt(_sd.data.belt_test_early_discount_days)||0}; } }catch(e){} }
   var attR=await sb.rpc('family_attendance_state',{p_child_ids:childIds});
   todayAttendance=(attR.data||[]).map(function(a){return{student_id:a.student_id,class_sessions:{class_id:a.class_id,session_date:a.session_date}};});
   existingReservations={};
@@ -3811,7 +3817,8 @@ function setFamilyViewMode(mode){
 
 // Dispatcher — keeps every existing call site working.
 function renderFamilySchedule(){
-  if(familyViewMode==='grid'){ renderFamilyGrid(); return; }
+  var _bt=portalBeltTestCard();
+  if(familyViewMode==='grid'){ renderFamilyGrid(); if(_bt){ var _g=document.getElementById('scheduleList'); if(_g) _g.innerHTML=_bt+_g.innerHTML; } return; }
   var el=document.getElementById('scheduleList');
   var html=famViewToggleHTML();
   html+='<p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-bottom:0.85rem">Use the switcher above to pick a child, then tap classes to check in or reserve and confirm.</p>';
@@ -3828,7 +3835,7 @@ function renderFamilySchedule(){
     (function(ds,it){ dayClasses.forEach(function(cls){ html+=familyClassCardHTML(cls,ds,it); }); })(dateStr,isToday);
   }
   if(!hasAny)html=famViewToggleHTML()+'<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No classes scheduled this week.</div>';
-  el.innerHTML=html;
+  el.innerHTML=_bt+html;
   updateFamilyConfirmBar();
 }
 
