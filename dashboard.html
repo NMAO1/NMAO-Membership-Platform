@@ -2015,7 +2015,13 @@
         <div class="form-row"><div class="field"><label>Test Date <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_date',this)" title="Help">?</button></label><input type="date" id="btDate" /></div><div class="field"><label>Time <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_time',this)" title="Help">?</button></label><input type="time" id="btTime" /></div></div>
         <div class="field"><label>Location <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_location',this)" title="Help">?</button></label><input type="text" id="btLocation" placeholder="e.g. Main School" /></div>
         <div class="check-group"><label class="check-item"><input type="checkbox" id="btFeeEnabled" onchange="toggleBeltTestFee()" /><span class="check-item-label">Charge test fee <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_enabled',this)" title="Help">?</button></span></label></div>
-        <div id="btFeeFields" style="display:none"><div class="form-row"><div class="field"><label>Fee Amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_amount',this)" title="Help">?</button></label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div><div class="field"><label>Payment Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_payment',this)" title="Help">?</button></label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div></div></div>
+        <div id="btFeeFields" style="display:none">
+          <div class="check-group" style="margin-bottom:0.75rem;flex-direction:column;gap:0.4rem">
+            <label class="check-item"><input type="radio" name="btFeeMode" value="per_belt" checked onchange="btFeeModeToggle()" /><span class="check-item-label">Charge each belt&rsquo;s promotion fee <span style="color:var(--muted)">(per rank &mdash; set in Belt Systems)</span></span></label>
+            <label class="check-item"><input type="radio" name="btFeeMode" value="flat" onchange="btFeeModeToggle()" /><span class="check-item-label">Flat fee for everyone</span></label>
+          </div>
+          <div class="form-row"><div class="field" id="btFlatFeeField" style="display:none"><label>Flat fee amount <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_fee_amount',this)" title="Help">?</button></label><input type="number" id="btFeeAmount" value="0" min="0" step="0.01" /></div><div class="field"><label>Payment Method <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_payment',this)" title="Help">?</button></label><select id="btPaymentMethod"><option value="portal">Pay in Portal</option><option value="door">Pay at Door</option><option value="both">Both</option></select></div></div>
+        </div>
         <div class="field" style="margin-bottom:0"><label>Notes <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('belttests.bt_notes',this)" title="Help">?</button></label><textarea id="btNotes" rows="3" placeholder="Any notes for students testing..."></textarea></div>
       </div>
       <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveBeltTest()">Schedule Belt Test</button>
@@ -5827,7 +5833,7 @@ var HELP_CONTENT = {
   'belttests.bt_time': { title: 'Time', purpose: 'When the test starts. Shown to the students testing.' },
   'belttests.bt_location': { title: 'Location', purpose: 'Where the test happens, like Main School or an address.' },
   'belttests.bt_fee_enabled': { title: 'Charge test fee', purpose: 'When on, a fee applies to this test and the fee fields appear. Off makes it free.' },
-  'belttests.bt_fee_amount': { title: 'Fee Amount', purpose: 'The amount each student pays to test. Belt-level promotion fees can also apply per rank.' },
+  'belttests.bt_fee_amount': { title: 'Flat fee amount', purpose: 'The single amount every student pays to test — used only when you pick “Flat fee for everyone.” To charge different amounts by rank instead, pick “Charge each belt’s promotion fee,” which pulls from each belt’s promotion fee in Belt Systems.' },
   'belttests.bt_payment': { title: 'Payment Method', purpose: 'How the fee is collected, like charging the card on file or marking it paid in person.' },
   'belttests.bt_notes': { title: 'Notes', purpose: 'Any notes for the students testing, like what to bring or wear. Optional.' },
   'belttests.tab_students': { title: 'Students', purpose: 'Add the students who are testing and see the roster for this test. Start here when you open a test.' },
@@ -14928,10 +14934,12 @@ function renderBeltTests(){
   }).join('');
   pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button></div></div></div>';}).join('');
 }
-function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';document.getElementById('btNotes').value='';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
-function openEditBeltTest(tid){ var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return; document.getElementById('beltTestEditId').value=t.id;document.getElementById('btName').value=t.name||'';document.getElementById('btDate').value=t.test_date||'';document.getElementById('btTime').value=t.test_time||'';document.getElementById('btLocation').value=t.location||'';document.getElementById('btFeeEnabled').checked=!!t.fee_enabled;document.getElementById('btFeeFields').style.display=t.fee_enabled?'block':'none';document.getElementById('btFeeAmount').value=t.test_fee||0;document.getElementById('btPaymentMethod').value=t.payment_method||'portal';document.getElementById('btNotes').value=t.notes||'';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
+function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';setBtFeeMode('per_belt');document.getElementById('btNotes').value='';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
+function openEditBeltTest(tid){ var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return; document.getElementById('beltTestEditId').value=t.id;document.getElementById('btName').value=t.name||'';document.getElementById('btDate').value=t.test_date||'';document.getElementById('btTime').value=t.test_time||'';document.getElementById('btLocation').value=t.location||'';document.getElementById('btFeeEnabled').checked=!!t.fee_enabled;document.getElementById('btFeeFields').style.display=t.fee_enabled?'block':'none';document.getElementById('btFeeAmount').value=t.test_fee||0;document.getElementById('btPaymentMethod').value=t.payment_method||'portal';setBtFeeMode(t.fee_mode||'per_belt');document.getElementById('btNotes').value=t.notes||'';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
 function closeAddBeltTest(){ document.getElementById('addBeltTestModal').classList.remove('active'); }
-function toggleBeltTestFee(){ document.getElementById('btFeeFields').style.display=document.getElementById('btFeeEnabled').checked?'block':'none'; }
+function btFeeModeToggle(){ var flat=false; var rs=document.getElementsByName('btFeeMode'); for(var i=0;i<rs.length;i++){ if(rs[i].checked && rs[i].value==='flat') flat=true; } var f=document.getElementById('btFlatFeeField'); if(f) f.style.display=flat?'block':'none'; }
+function setBtFeeMode(mode){ var rs=document.getElementsByName('btFeeMode'); for(var i=0;i<rs.length;i++){ rs[i].checked=(rs[i].value===(mode||'per_belt')); } btFeeModeToggle(); }
+function toggleBeltTestFee(){ document.getElementById('btFeeFields').style.display=document.getElementById('btFeeEnabled').checked?'block':'none'; btFeeModeToggle(); }
 async function saveBeltTest(){
   var name=document.getElementById('btName').value.trim();
   var date=document.getElementById('btDate').value;
@@ -14946,6 +14954,7 @@ async function saveBeltTest(){
     location:document.getElementById('btLocation').value.trim(),
     fee_enabled:document.getElementById('btFeeEnabled')?document.getElementById('btFeeEnabled').checked:false,
     test_fee:document.getElementById('btFeeAmount')?parseFloat(document.getElementById('btFeeAmount').value)||0:0,
+    fee_mode:(document.querySelector('input[name="btFeeMode"]:checked')?document.querySelector('input[name="btFeeMode"]:checked').value:'per_belt'),
     payment_method:document.getElementById('btPaymentMethod')?document.getElementById('btPaymentMethod').value:'portal',
     notes:document.getElementById('btNotes')?document.getElementById('btNotes').value.trim():''
   };
@@ -15167,10 +15176,13 @@ async function addSelectedToBeltTest(){
   var ids=Object.keys(beltTestPickerSelected);
   if(!ids.length)return;
   var t=allBeltTests.find(function(x){return x.id===currentBeltTestId;});
-  var feeOn=!!(t&&t.fee_enabled); var flatFee=feeOn?(t.test_fee||0):0;
+  // §FEE-MODE — 'per_belt' uses each student's next-belt promotion fee (from Belt Systems);
+  // 'flat' charges the test's flat amount to everyone. No ambiguity, no silent override.
+  var feeOn=!!(t&&t.fee_enabled); var mode=(t&&t.fee_mode)||'per_belt'; var flatFee=(t&&t.test_fee)||0;
   var inserts=ids.map(function(sid){
     var rf=beltTestNextFee[sid];
-    var fee=feeOn?((rf!=null&&rf>0)?rf:flatFee):0;
+    var fee=0;
+    if(feeOn){ fee=(mode==='flat')?flatFee:((rf!=null&&rf>0)?rf:0); }
     return {school_id:SID,belt_test_id:currentBeltTestId,student_id:sid,status:"pending",fee_amount:fee};
   });
   var r=await sb.from("belt_test_students").insert(inserts);
