@@ -2274,7 +2274,15 @@ async function buildAnnouncements(){
       var icon=typeIcons[a.type]||'fa-bullhorn';var label=typeLabels[a.type]||'Announcement';
       var dt=a.sent_at?new Date(a.sent_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';
       var images=(a.image_urls&&a.image_urls.length)?a.image_urls.map(function(url){return '<img src="'+url+'" class="announcement-image" alt="'+a.subject+'" />';}).join(''):'';
-      var cta=(a.cta_label&&a.cta_url)?'<a href="'+a.cta_url+'" target="_blank" class="announcement-cta"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.4rem"></i>'+a.cta_label+'</a>':'';
+      var cta;
+      if(a.type==='belt_test'){
+        // Belt-test alert: if the viewer has an unpaid fee for this test, the CTA finalizes payment
+        // (with any early-bird price) instead of linking back to the portal.
+        var _btm=portalBeltTests.filter(function(x){ return x.belt_tests && x.belt_tests.name===a.subject; })[0]||portalBeltTests[0]||null;
+        cta=_btm ? ('<a href="#" onclick="event.preventDefault();portalPayBeltTestFee(\''+_btm.id+'\')" class="announcement-cta"><i class="fa-solid fa-trophy" style="margin-right:0.4rem"></i>Finalize your spot &middot; $'+(_btEarly(_btm).cents/100).toFixed(2)+'</a>') : '';
+      } else {
+        cta=(a.cta_label&&a.cta_url)?'<a href="'+a.cta_url+'" target="_blank" class="announcement-cta"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:0.4rem"></i>'+a.cta_label+'</a>':'';
+      }
       return '<div class="announcement-card"><div class="announcement-type"><i class="fa-solid '+icon+'"></i>'+label+'</div><div class="announcement-subject">'+a.subject+'</div>'+images+'<div class="announcement-body">'+a.body.replace(/\n/g,'<br>')+'</div>'+cta+'<div class="announcement-date"><i class="fa-solid fa-clock" style="margin-right:0.3rem"></i>'+dt+'</div></div>';
     }).join('');
  }catch(e){document.getElementById('announcementsList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Announcements unavailable.</div>';}
