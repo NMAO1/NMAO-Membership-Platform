@@ -1898,7 +1898,7 @@ async function buildSchedule(s){
     }
     if(slug){ try{ var _clr=await sb.rpc('get_school_closures',{p_slug:slug,p_start:todayStr,p_end:weekEndStr}); portalClosures=(_clr&&_clr.data)?_clr.data:[]; }catch(e){ portalClosures=[]; } } else { portalClosures=[]; }
     // §BELT-TEST-FEE — the member's own unpaid belt-test fees (drives the subtle "Pay fee" card).
-    try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,belt_tests(name,test_date,test_time,location)').eq('student_id',s.id).eq('school_id',SID).eq('fee_paid',false); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && parseFloat(x.fee_amount||0)>0 && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
+    try{ var _btf=await sb.from('belt_test_students').select('id,fee_amount,fee_paid,status,belt_tests(name,test_date,test_time,location,notes)').eq('student_id',s.id).eq('school_id',SID).eq('status','invited'); portalBeltTests=(((_btf&&_btf.data)||[]).filter(function(x){ return x.belt_tests && x.belt_tests.test_date>=todayStr; })); }catch(e){ portalBeltTests=[]; }
     if(portalBeltTests.length){ try{ var _sd=await sb.from('schools').select('belt_test_early_discount_enabled,belt_test_early_discount_cents,belt_test_early_discount_days').eq('id',SID).single(); if(_sd&&_sd.data){ portalBtEarly={enabled:!!_sd.data.belt_test_early_discount_enabled,cents:parseInt(_sd.data.belt_test_early_discount_cents)||0,days:parseInt(_sd.data.belt_test_early_discount_days)||0}; } }catch(e){} }
     if(!usedRpc){
       // Fallback: base recurrence (shift-blind) if slug/RPC unavailable
@@ -2032,14 +2032,27 @@ function portalBeltTestCard(){
   return portalBeltTests.map(function(bt){
     var t=bt.belt_tests||{}; var fee=parseFloat(bt.fee_amount||0);
     var nm=String(t.name||'Belt Test').replace(/[<>]/g,'');
-    var dstr=t.test_date?new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
-    var e=_btEarly(bt);
-    var priceStr=e.off>0 ? ('<span style="text-decoration:line-through;opacity:0.55">$'+fee.toFixed(2)+'</span> $'+(e.cents/100).toFixed(2)) : ('$'+(e.cents/100).toFixed(2));
-    var earlyNote=e.off>0 ? ('<div style="font-size:0.72rem;color:var(--gold);margin-top:0.15rem">Finalize by '+e.byStr+' and save $'+(e.off/100).toFixed(2)+'</div>') : '';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:0.85rem 1rem;margin-bottom:0.85rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">'+
-      '<div style="min-width:0"><div style="font-size:0.88rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.4rem"></i>You’re invited to test &mdash; '+nm+'</div>'+
-      '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">'+(dstr?dstr+' · ':'')+'Secure your place · '+priceStr+'</div>'+earlyNote+'</div>'+
-      '<button onclick="portalPayBeltTestFee(\''+bt.id+'\')" style="background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;cursor:pointer;white-space:nowrap">Finalize your spot</button>'+
+    var dstr=t.test_date?new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'';
+    var when=[dstr+(t.test_time?(' at '+fmtTime(t.test_time)):''), (t.location?String(t.location).replace(/[<>]/g,''):'')].filter(Boolean).join(' · ');
+    var notes=t.notes?String(t.notes).replace(/[<>]/g,''):'';
+    var unpaid=(fee>0 && !bt.fee_paid);
+    var action='';
+    if(unpaid){
+      var e=_btEarly(bt);
+      var priceStr=e.off>0 ? ('<span style="text-decoration:line-through;opacity:0.55">$'+fee.toFixed(2)+'</span> $'+(e.cents/100).toFixed(2)) : ('$'+(e.cents/100).toFixed(2));
+      var earlyNote=e.off>0 ? ('<div style="font-size:0.72rem;color:var(--gold)">Finalize by '+e.byStr+' and save $'+(e.off/100).toFixed(2)+'</div>') : '';
+      action='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:0.7rem;border-top:1px solid var(--border);padding-top:0.7rem">'+
+        '<div><div style="font-size:0.8rem;color:var(--white)">Secure your place · '+priceStr+'</div>'+earlyNote+'</div>'+
+        '<button onclick="portalPayBeltTestFee(\''+bt.id+'\')" style="background:var(--gold);color:var(--black);border:none;font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1.1rem;cursor:pointer;white-space:nowrap">Finalize your spot</button>'+
+      '</div>';
+    } else if(fee>0 && bt.fee_paid){
+      action='<div style="margin-top:0.6rem;color:#7DBD7D;font-size:0.8rem"><i class="fa-solid fa-circle-check" style="margin-right:0.3rem"></i>Your spot is secured — see you there!</div>';
+    }
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);padding:1rem 1.15rem;margin-bottom:0.85rem">'+
+      '<div style="font-size:0.95rem;color:var(--white)"><i class="fa-solid fa-trophy" style="color:var(--gold);margin-right:0.45rem"></i>You’re invited to test &mdash; '+nm+'</div>'+
+      (when?'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.25rem">'+when+'</div>':'')+
+      (notes?'<div style="font-size:0.82rem;color:var(--muted2);line-height:1.55;margin-top:0.5rem;white-space:pre-line">'+notes+'</div>':'')+
+      action+
     '</div>';
   }).join('');
 }
