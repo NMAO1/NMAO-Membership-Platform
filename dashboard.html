@@ -5178,7 +5178,7 @@ function openClosureModal(){
   document.getElementById('closureStart').value='';
   document.getElementById('closureEnd').value='';
   document.getElementById('closureRecurring').checked=false;
-  document.getElementById('closureNotifyNow').checked=true;
+  document.getElementById('closureNotifyNow').checked=false; // deliberate opt-in — don't blast members by default
   document.querySelectorAll('.closure-ch').forEach(function(c){ c.checked=(c.value!=='alert'); });
   document.getElementById('closureAudience').value='all';
   document.getElementById('closureRemindDays').value='';
@@ -5212,6 +5212,9 @@ async function submitClosure(){
   var m=document.getElementById('closureMsg');
   if(!reason){ m.textContent='Add a reason members will see.'; m.className='form-msg error'; return; }
   if(!start){ m.textContent='Pick a start date.'; m.className='form-msg error'; return; }
+  // §CLOSURE-REENTRANCY — a real send takes a few seconds; block repeat clicks while one is in flight
+  // so the button spinning can't fire the broadcast again (disabled alone wasn't holding).
+  if(window._closureBusy) return; window._closureBusy=true;
   var channels=[]; document.querySelectorAll('.closure-ch').forEach(function(c){ if(c.checked) channels.push(c.value); });
   var notifyNow=document.getElementById('closureNotifyNow').checked;
   var audience=document.getElementById('closureAudience').value;
@@ -5232,7 +5235,7 @@ async function submitClosure(){
     if(channels.indexOf('email')!==-1) parts.push(eml+' email'+(eml===1?'':'s'));
     var who=(audience==='affected')?'members with a reserved class in that range':'all active members';
     if(!confirm('Send '+parts.join(' and ')+' to '+who+' now?\n\nThis notifies real members immediately and can\'t be undone. Turn off "Notify now" if you\'re just testing.')){
-      m.textContent='Cancelled — no messages sent.'; m.className='form-msg'; return;
+      m.textContent='Cancelled — no messages sent.'; m.className='form-msg'; window._closureBusy=false; return;
     }
   }
   b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Creating…';
@@ -5242,11 +5245,12 @@ async function submitClosure(){
     var rd=document.getElementById('closureRemindDays').value; if(rd!=='') payload.remind_days_before=parseInt(rd)||0;
     var r=await fetch(SURL+'/functions/v1/create-closure',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(payload)});
     var d=await r.json();
-    if(!r.ok||d.error){ m.textContent=d.error||'Could not create closure.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; return; }
+    if(!r.ok||d.error){ m.textContent=d.error||'Could not create closure.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; window._closureBusy=false; return; }
     var notified=(d.sms_sent||0)+(d.email_sent||0);
     m.textContent='Closed '+(d.range||'')+' — '+(d.reservations_cancelled||0)+' reservation(s) cancelled'+(notified?(', '+notified+' notified'):'')+'.'; m.className='form-msg success';
+    window._closureBusy=false;
     setTimeout(function(){ closeClosureModal(); loadClosures(); if(window.loadClasses)loadClasses(); },1300);
-  }catch(e){ m.textContent=e.message||'Network error.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; }
+  }catch(e){ m.textContent=e.message||'Network error.'; m.className='form-msg error'; b.disabled=false; b.innerHTML=_h; window._closureBusy=false; }
 }
 async function reopenClosure(id, label){
   if(!confirm('Reopen the school for “'+(label||'this closure')+'”? Classes on those dates resume and check-ins/sign-ups are allowed again.')) return;
