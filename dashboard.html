@@ -1152,7 +1152,7 @@
             <div class="field"><label>Audience <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_audience',this)" title="Help">?</button></label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
             <div class="field" id="commTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_tag',this)" title="Help">?</button></label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
             <div class="field"><label>Message <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_message',this)" title="Help">?</button></label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
-            <div class="field"><label>Flyer <span style="color:var(--muted);font-weight:normal">(optional — image; embeds in the email and sends as a tappable link in the text)</span></label><div style="display:flex;gap:1rem;align-items:center"><div id="bcFlyerPreview" onclick="document.getElementById('bcFlyerInput').click()" style="width:70px;height:88px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-image"></i></div><div style="display:flex;flex-direction:column;gap:0.4rem"><button type="button" class="btn-sm" onclick="document.getElementById('bcFlyerInput').click()"><i class="fa-solid fa-upload"></i> Upload Flyer</button><button type="button" class="btn-sm" id="bcFlyerRemoveBtn" onclick="removeBroadcastFlyer()" style="display:none">Remove</button></div><input type="file" id="bcFlyerInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBroadcastFlyerUpload(event)" /></div></div><button class="panel-action" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+            <div class="field"><label>Flyer <span style="color:var(--muted);font-weight:normal">(optional — image; embeds in the email and sends as a tappable link in the text)</span></label><div style="display:flex;gap:1rem;align-items:center"><div id="bcFlyerPreview" onclick="document.getElementById('bcFlyerInput').click()" style="width:70px;height:88px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-image"></i></div><div style="display:flex;flex-direction:column;gap:0.4rem"><button type="button" class="btn-sm" onclick="document.getElementById('bcFlyerInput').click()"><i class="fa-solid fa-upload"></i> Upload Flyer</button><button type="button" class="btn-sm" id="bcFlyerRemoveBtn" onclick="removeBroadcastFlyer()" style="display:none">Remove</button></div><input type="file" id="bcFlyerInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBroadcastFlyerUpload(event)" /></div></div><button class="panel-action" id="commSendBtn" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
           <div class="panel"><div class="panel-header"><span class="panel-title">Templates</span><button class="help-hint-inline" onclick="openHelpPopover('comm.templates',this)" title="Help">?</button></div><div class="panel-body">
@@ -2087,7 +2087,7 @@
         <label>Message</label>
         <textarea id="newSmsBody" rows="4" placeholder="Type your message..." style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none;resize:vertical"></textarea>
       </div>
-      <button class="btn-gold-full" onclick="composeSendSms()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Text</button>
+      <button class="btn-gold-full" id="newSmsSendBtn" onclick="composeSendSms()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Send Text</button>
       <span class="form-msg" id="newSmsMsg" style="font-size:0.78rem"></span>
     </div>
   </div>
@@ -2370,7 +2370,7 @@
         </div>
         <div id="profileTabMessages" style="display:none">
           <div class="field" style="margin-bottom:0.75rem"><textarea id="profileMsgInput" rows="4" placeholder="Text this student (sent as SMS)..."></textarea></div>
-          <button class="panel-action" style="margin-bottom:1rem" onclick="sendStudentMessage()"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+          <button class="panel-action" id="profileMsgSendBtn" style="margin-bottom:1rem" onclick="sendStudentMessage()"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
           <p class="form-msg" id="profileMsgStatus"></p>
           <div id="profileMsgHistory" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem"></div>
         </div>
@@ -10160,6 +10160,10 @@ async function sendStudentMessage(){
   if(!currentProfileStudent) return;
   var body=document.getElementById('profileMsgInput').value.trim();
   if(!body){setMsg('profileMsgStatus','Please enter a message.','error');return;}
+  if(window._profileMsgSending) return;                 // §SMS-DOUBLE-SEND guard (billable text)
+  window._profileMsgSending=true;
+  var _b=document.getElementById('profileMsgSendBtn'), _bh=_b?_b.innerHTML:'';
+  if(_b){ _b.disabled=true; _b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Sending…'; }
   setMsg('profileMsgStatus','Sending...','');
   try{
     var r=await fetch(SURL+'/functions/v1/send-sms',{
@@ -10177,6 +10181,7 @@ async function sendStudentMessage(){
       setMsg('profileMsgStatus', (err.error||'Message failed to send'), 'error');
     }
   }catch(e){setMsg('profileMsgStatus','Error: '+e.message,'error');}
+  finally{ window._profileMsgSending=false; if(_b){ _b.disabled=false; _b.innerHTML=_bh; } }
 }
 
 // §BILLING-TAB — all memberships (past/present/future) + upcoming (Stripe-accurate where linked) + paid.
@@ -16381,6 +16386,8 @@ async function sendCommunication(){
   var body=getQuillContent('commBodyEditor');
   var _flyer = window._broadcastFlyerUrl || null;
   if(!body && !_flyer){setMsg('commMsg','Add a message or a flyer.','error');return;}
+  // §BROADCAST-GUARD — a mis/double-click here blasts email+SMS to the whole roster. Block re-entry.
+  if(window._commSending) return;
   // Flyer: embed as an image in the email; append as a tappable link in the SMS (which is text-only).
   var _emailBody = body || '';
   var _smsBody = body || '';
@@ -16406,6 +16413,17 @@ async function sendCommunication(){
     emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name,phone:s.phone};});
     smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:s.first_name+' '+s.last_name,email:s.email};});
   }
+  // §BROADCAST-GUARD — confirm the real recipient counts before a roster-wide blast.
+  var _emailN=emailRecipients.length, _smsN=smsRecipients.length;
+  if(_emailN+_smsN===0){ setMsg('commMsg','No recipients with contact info on file.','error'); return; }
+  var _who=selectedReportRecipients.length ? ('the '+(_emailN+_smsN)+' selected recipient'+((_emailN+_smsN)===1?'':'s')) : ('"'+audience+'" members');
+  if(!confirm('Send this broadcast to '+_who+' now?\n\n'+_emailN+' email'+(_emailN===1?'':'s')+' and '+_smsN+' text'+(_smsN===1?'':'s')+' will go out immediately. This can\'t be undone.')){
+    setMsg('commMsg','Cancelled — nothing sent.',''); return;
+  }
+  window._commSending=true;
+  var _sb=document.getElementById('commSendBtn'), _sbh=_sb?_sb.innerHTML:'';
+  if(_sb){ _sb.disabled=true; _sb.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Sending…'; }
+  setMsg('commMsg','Sending...','');
   var totalReached=0; var hardErrors=[]; var failNotes=[];
   if(emailRecipients.length){
     try{
@@ -16419,7 +16437,7 @@ async function sendCommunication(){
         totalReached+=(typeof ej.email_sent==='number'?ej.email_sent:0);
         (ej.errors||[]).forEach(function(x){failNotes.push(x.name+' ('+x.channel+'): '+x.reason);});
       }else{hardErrors.push('Email: '+(ej.error||'failed'));}
-    }catch(e){errors.push('Email: '+e.message);}
+    }catch(e){hardErrors.push('Email: '+e.message);}
   }
   if(smsRecipients.length){
     try{
@@ -16433,12 +16451,13 @@ async function sendCommunication(){
         totalReached+=(typeof es.sms_sent==='number'?es.sms_sent:0);
         (es.errors||[]).forEach(function(x){failNotes.push(x.name+' ('+x.channel+'): '+x.reason);});
       }else{hardErrors.push('SMS: '+(es.error||'failed'));}
-    }catch(e2){errors.push('SMS: '+e2.message);}
+    }catch(e2){hardErrors.push('SMS: '+e2.message);}
   }
   var unreachable=selectedReportRecipients.length
     ?selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;}).length
     :0;
   if(failNotes.length||hardErrors.length) console.log('Communication failures:',failNotes,hardErrors);
+  window._commSending=false; if(_sb){ _sb.disabled=false; _sb.innerHTML=_sbh; }
   if(totalReached===0){
     setMsg('commMsg',hardErrors.concat(failNotes).join(' | ')||'No messages were sent.','error');return;
   }
@@ -16695,6 +16714,8 @@ async function sendSmsReplyInline(){
   if(!inp) return;
   var body=inp.value.trim();
   if(!body) return;
+  if(window._smsReplySending) return;                   // §SMS-DOUBLE-SEND guard (Enter double-fire, billable)
+  window._smsReplySending=true; inp.disabled=true;
   try{
     var payload={school_id:SID, student_id:currentSmsStudentId||null, body:body};
     // Reply to the real thread phone; only fall back to sender if it's a phone, not a UUID thread id.
@@ -16714,6 +16735,7 @@ async function sendSmsReplyInline(){
       showToast(err.error||'Message failed to send','err');
     }
   }catch(e){ showToast('Message failed to send','err'); }
+  finally{ window._smsReplySending=false; if(inp){ inp.disabled=false; inp.focus(); } }
 }
 
 // ─────────────────────────────── §PORTAL-INVITES ───────────────────────────────
@@ -16784,6 +16806,10 @@ async function composeSendSms(){
   var toPhone=newSmsToPhone||manualPhone;
   if(!newSmsToStudentId && !toPhone){ msgEl.style.color='#E0857B'; msgEl.textContent='Pick a student or lead, or enter a phone number.'; return; }
   if(!body){ msgEl.style.color='#E0857B'; msgEl.textContent='Type a message.'; return; }
+  if(window._newSmsSending) return;                     // §SMS-DOUBLE-SEND guard (billable text)
+  window._newSmsSending=true;
+  var _b=document.getElementById('newSmsSendBtn'), _bh=_b?_b.innerHTML:'';
+  if(_b){ _b.disabled=true; _b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Sending…'; }
   msgEl.style.color='var(--muted)'; msgEl.textContent='Sending...';
   try{
     var payload={ school_id:SID, body:body };
@@ -16805,6 +16831,7 @@ async function composeSendSms(){
       msgEl.style.color='#E0857B'; msgEl.textContent=err.error||'Message failed to send.';
     }
   }catch(e){ msgEl.style.color='#E0857B'; msgEl.textContent='Message failed to send.'; }
+  finally{ window._newSmsSending=false; if(_b){ _b.disabled=false; _b.innerHTML=_bh; } }
 }
 
 var portalInviteState={channel:'email',
