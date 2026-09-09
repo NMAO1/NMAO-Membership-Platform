@@ -443,7 +443,7 @@
         <div class="card-body">
           <div class="field">
             <label>Email <span style="color:var(--red)">*</span></label>
-            <input type="email" id="step1Email" placeholder="your@email.com" autocomplete="email" oninput="updateStep1AContinue()" />
+            <input type="email" id="step1Email" placeholder="your@email.com" autocomplete="email" oninput="updateStep1AContinue()" onkeydown="if(event.key==='Enter'&&!document.getElementById('s1aNext').disabled)proceedToTypeSelection()" />
           </div>
           <p class="form-msg" id="s1aMsg"></p>
           <button class="btn-primary" id="s1aNext" onclick="proceedToTypeSelection()" disabled>
@@ -1303,7 +1303,8 @@
         showSuccess(first, selectedSetting.name);
 
       } catch(e) {
-        setMsg('s4Msg', 'Booking failed: ' + e.message + '. Please try again or contact the school.', 'error');
+        console.error('booking failed:', e);
+        setMsg('s4Msg', 'We couldn’t complete your booking. Please try again, or contact the school if it keeps happening.', 'error');
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
       }

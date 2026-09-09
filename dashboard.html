@@ -3805,7 +3805,6 @@ async function initSessionGuard(){
   window.CURRENT_SCHOOL = school;
   if(school) paintSessionIdentity(user, school);
 
-  console.log('[session-guard] verified:', user.email, 'school:', school ? school.name : '(unknown)', '('+SID+')');
   return true;
 }
 function showSessionError(user, reason, school){
@@ -4303,7 +4302,7 @@ function showLogo(url) {
   var img=document.getElementById('schoolLogoImg'); var textWrap=document.getElementById('sidebarLogoTextWrap');
   if (img) { img.src=url; img.style.display='block'; }
   if (textWrap) textWrap.style.display='none';
-  var lp=document.getElementById('logoPreview'); if(lp) lp.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:contain" />';
+  var lp=document.getElementById('logoPreview'); if(lp) lp.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:contain" alt="Image" />';
 }
 async function handleLogoUpload(event) {
   var file=event.target.files[0]; if(!file) return;
@@ -9197,7 +9196,7 @@ async function openStudentProfile(sid) {
   var s = r.data; currentProfileStudent = s;
   var ini = ((s.first_name?s.first_name[0]:'')+(s.last_name?s.last_name[0]:'')).toUpperCase();
   var av  = document.getElementById('profileAvatar');
-  if (s.photo_url) { av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />'; }
+  if (s.photo_url) { av.innerHTML='<img src="'+s.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="Member photo" />'; }
   else { av.innerHTML='<span id="profileInitials">'+ini+'</span>'; }
   av.style.borderColor='#444';
   var _bbReset=document.getElementById('profileBeltBadge'); if(_bbReset){ _bbReset.style.display='none'; _bbReset.textContent=''; _bbReset.style.background=''; _bbReset.style.color=''; }
@@ -10273,34 +10272,6 @@ async function compNextBill(smId){
   }catch(e){ alert('Comp failed: '+(e&&e.message?e.message:e)); }
 }
 
-// §REFUND — refund a paid Stripe charge for one bill (full or partial). Returns the money via Stripe (and
-// NMAO's application fee to the school); the refund-payment EF enforces exact amounts / double-refund
-// guards against Stripe. maxDollars is the remaining refundable balance (hint only).
-async function refundBill(paymentId, maxDollars){
-  var maxTxt=(maxDollars!=null && isFinite(maxDollars))?(' (up to $'+Number(maxDollars).toFixed(2)+')'):'';
-  var amtStr=prompt('Refund amount in dollars'+maxTxt+'.\n\nLeave blank to refund the full remaining amount.','');
-  if(amtStr===null) return;
-  var amount_cents=null; amtStr=(''+amtStr).trim();
-  if(amtStr!==''){
-    var a=parseFloat(amtStr.replace(/[$,]/g,''));
-    if(!isFinite(a)||a<=0){ alert('Enter a valid amount greater than $0, or leave it blank for a full refund.'); return; }
-    amount_cents=Math.round(a*100);
-  }
-  var reason=prompt('Reason for this refund (saved on the payment record):','');
-  if(reason===null) return;
-  var summary=(amount_cents!=null)?('$'+(amount_cents/100).toFixed(2)):'the full remaining amount';
-  if(!confirm('Refund '+summary+' to the member?\n\nThis returns the money through Stripe and cannot be undone.')) return;
-  try{
-    var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
-    var body={school_id:SID, payment_id:paymentId, applied_by:uid, reason:reason||''};
-    if(amount_cents!=null) body.amount_cents=amount_cents;
-    var r=await fetch(SURL+'/functions/v1/refund-payment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(body)});
-    var d={}; try{ d=await r.json(); }catch(e){}
-    if(!r.ok||d.error){ alert('Could not refund: '+((d.error||'error').replace(/^[A-Z_]+:\s*/,''))); return; }
-    if(window.showToast) showToast('Refunded $'+((d.amount_cents||0)/100).toFixed(2)+(d.fully?' — payment fully refunded.':' — partial refund applied.'),'ok');
-    if(currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id);
-  }catch(e){ alert('Refund failed: '+(e&&e.message?e.message:e)); }
-}
 
 // ═══════════════════════ §CHARGE-DETAIL DRAWER ═══════════════════════
 // ONE shared transaction-detail component. Every charge list in the dashboard (school-wide Revenue
@@ -10913,7 +10884,7 @@ async function handlePhotoUpload(event){
   var pub=sb.storage.from('student-photos').getPublicUrl(path).data.publicUrl;
   await sb.from('students').update({photo_url:pub}).eq('id',currentProfileStudent.id);
   currentProfileStudent.photo_url=pub;
-  document.getElementById('profileAvatar').innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  document.getElementById('profileAvatar').innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="Photo" />';
 await loadStudents();
 }
 
@@ -10929,7 +10900,7 @@ async function handleProductPhotoUpload(event){
   var pub=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl+'?t='+Date.now();
   window._pendingProductImageUrl=pub;
   var preview=document.getElementById('productImagePreview');
-  if(preview)preview.innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover" />';
+  if(preview)preview.innerHTML='<img src="'+pub+'" style="width:100%;height:100%;object-fit:cover" alt="Photo" />';
 }
 
 async function saveProfileNote(){
@@ -11029,10 +11000,6 @@ function handleImportFile(event){
     buildImportPlan().then(function(p){
       var c=p.counts, famN=p.families.filter(function(f){return f.defaultOn;}).length;
       document.getElementById('importConflictInfo').innerHTML='Analyzed: '+c['new']+' new \u00b7 '+c.merge+' to merge \u00b7 '+c.restore+' to restore \u00b7 '+c.conflict+' to review \u00b7 '+famN+' potential famil'+(famN===1?'y':'ies')+' <span style="color:var(--muted)">\u2014 review matches &amp; families on the next step</span>';
-      if(window.console){ console.log('SMART IMPORT PLAN', p);
-        if(console.table){ console.table(p.rows.map(function(r){return {row:r.idx+1, name:(r.c.first+' '+r.c.last).trim(), category:r.category, matched_by:r.matchedBy||'', conflicts:(r.conflictFields||[]).join('|')};})); }
-        if(p.families.length){ console.log('POTENTIAL FAMILIES', p.families); }
-      }
     }).catch(function(err){ document.getElementById('importConflictInfo').textContent='Analysis error: '+((err&&err.message)?err.message:'unknown'); });
   };
   reader.readAsText(file);
@@ -14421,7 +14388,7 @@ async function openInstructorProfile(instrId){
   var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
   var ini=((instr.first_name||' ')[0]+(instr.last_name||' ')[0]).toUpperCase();
   var av=document.getElementById('instrProfileAvatar');
-  if(instr.photo_url){av.innerHTML='<img src="'+instr.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';}
+  if(instr.photo_url){av.innerHTML='<img src="'+instr.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="Instructor photo" />';}
   else{av.textContent=ini;}
   document.getElementById('instrProfileName').textContent=name;
   document.getElementById('instrProfileSpecialties').textContent=instr.specialties||'Instructor';
@@ -15750,7 +15717,7 @@ function renderProducts(){
     if(p.quick_list)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold)">Quick List</span>';
     if(p.member_app)badges+='<span class="chip chip-active" style="font-size:0.65rem">App</span>';
     if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
-    var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';
+    var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" alt="Product image" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';
     var badgeTag=p.badge_style&&p.badge_text?'<div class="product-badge-tag badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';
     var delBtn='<button onclick="event.stopPropagation();deleteProduct(\''+p.id+'\')" style="position:absolute;top:0.4rem;left:0.4rem;width:28px;height:28px;background:rgba(0,0,0,0.7);border:1px solid rgba(224,112,112,0.5);color:#E07070;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2" title="Delete product"><i class="fa-solid fa-trash" style="font-size:0.72rem"></i></button>';
     var qrBtn=p.public_pay_enabled?'<button onclick="event.stopPropagation();openProductPayQr(\''+p.id+'\')" style="position:absolute;top:0.4rem;right:0.4rem;width:44px;height:44px;background:var(--gold);border:none;color:#0A0A0A;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,0.45)" title="Public pay QR / link"><i class="fa-solid fa-qrcode" style="font-size:1.25rem"></i></button>':'';
@@ -15771,7 +15738,7 @@ function openProductPayQr(pid){
 }
   function selectBadgeStyle(style,btn){ selectedBadgeStyle=style; document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.remove('selected');}); btn.classList.add('selected'); document.getElementById('badgeTextField').style.display=style?'block':'none'; }
 function openAddProduct(){ document.getElementById('addProductTitle').textContent='Add Product';document.getElementById('productEditId').value='';document.getElementById('productName').value='';document.getElementById('productCategory').value='Uniforms';document.getElementById('productSubcategory').value='';document.getElementById('productRetailPrice').value='0';document.getElementById('productWholesalePrice').value='0';document.getElementById('productTrackInventory').checked=false;document.getElementById('productFeatured').checked=false;document.getElementById('productQuickList').checked=false;document.getElementById('productMemberApp').checked=false;document.getElementById('productPublicPay').checked=false;document.getElementById('productInventoryQty').value='0';document.getElementById('productReorderQty').value='0';document.getElementById('inventoryFields').style.display='none';document.getElementById('productBadgeText').value='';selectedBadgeStyle='';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.remove('selected');});var noneBtn=document.querySelector('.badge-style-btn[data-badge=""]');if(noneBtn)noneBtn.classList.add('selected');document.getElementById('badgeTextField').style.display='none';window._pendingProductImageUrl=null;var prevAdd=document.getElementById('productImagePreview');if(prevAdd)prevAdd.innerHTML='<i class="fa-solid fa-box"></i>';document.getElementById('productMsg').textContent='';setTimeout(function(){if(quillEditors['productDescEditor'])quillEditors['productDescEditor'].setText('');},50);document.getElementById('addProductModal').classList.add('active'); }
-function openEditProduct(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; document.getElementById('addProductTitle').textContent='Edit Product';document.getElementById('productEditId').value=p.id;document.getElementById('productName').value=p.name||'';document.getElementById('productCategory').value=p.category||'Uniforms';document.getElementById('productSubcategory').value=p.subcategory||'';document.getElementById('productRetailPrice').value=p.retail_price||0;document.getElementById('productWholesalePrice').value=p.wholesale_price||0;document.getElementById('productTrackInventory').checked=!!p.track_inventory;document.getElementById('productFeatured').checked=!!p.featured;document.getElementById('productQuickList').checked=!!p.quick_list;document.getElementById('productMemberApp').checked=!!p.member_app;document.getElementById('productPublicPay').checked=!!p.public_pay_enabled;document.getElementById('productInventoryQty').value=p.inventory_qty||0;document.getElementById('productReorderQty').value=p.reorder_qty||0;document.getElementById('inventoryFields').style.display=p.track_inventory?'block':'none';selectedBadgeStyle=p.badge_style||'';document.getElementById('productBadgeText').value=p.badge_text||'';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.badge===(p.badge_style||''));});document.getElementById('badgeTextField').style.display=selectedBadgeStyle?'block':'none';window._pendingProductImageUrl=p.image_url||null;var prevEdit=document.getElementById('productImagePreview');if(prevEdit){if(p.image_url){prevEdit.innerHTML='<img src="'+p.image_url+'" style="width:100%;height:100%;object-fit:cover" />';}else{prevEdit.innerHTML='<i class="fa-solid fa-box"></i>';}}document.getElementById('productMsg').textContent='';setTimeout(function(){if(quillEditors['productDescEditor'])setQuillContent('productDescEditor',p.description||'');},50);document.getElementById('addProductModal').classList.add('active'); }
+function openEditProduct(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; document.getElementById('addProductTitle').textContent='Edit Product';document.getElementById('productEditId').value=p.id;document.getElementById('productName').value=p.name||'';document.getElementById('productCategory').value=p.category||'Uniforms';document.getElementById('productSubcategory').value=p.subcategory||'';document.getElementById('productRetailPrice').value=p.retail_price||0;document.getElementById('productWholesalePrice').value=p.wholesale_price||0;document.getElementById('productTrackInventory').checked=!!p.track_inventory;document.getElementById('productFeatured').checked=!!p.featured;document.getElementById('productQuickList').checked=!!p.quick_list;document.getElementById('productMemberApp').checked=!!p.member_app;document.getElementById('productPublicPay').checked=!!p.public_pay_enabled;document.getElementById('productInventoryQty').value=p.inventory_qty||0;document.getElementById('productReorderQty').value=p.reorder_qty||0;document.getElementById('inventoryFields').style.display=p.track_inventory?'block':'none';selectedBadgeStyle=p.badge_style||'';document.getElementById('productBadgeText').value=p.badge_text||'';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.badge===(p.badge_style||''));});document.getElementById('badgeTextField').style.display=selectedBadgeStyle?'block':'none';window._pendingProductImageUrl=p.image_url||null;var prevEdit=document.getElementById('productImagePreview');if(prevEdit){if(p.image_url){prevEdit.innerHTML='<img src="'+p.image_url+'" style="width:100%;height:100%;object-fit:cover" alt="Product image" />';}else{prevEdit.innerHTML='<i class="fa-solid fa-box"></i>';}}document.getElementById('productMsg').textContent='';setTimeout(function(){if(quillEditors['productDescEditor'])setQuillContent('productDescEditor',p.description||'');},50);document.getElementById('addProductModal').classList.add('active'); }
 function closeAddProduct(){ document.getElementById('addProductModal').classList.remove('active'); }
 async function saveProduct(){
   var eid=document.getElementById('productEditId').value; var name=document.getElementById('productName').value.trim();
@@ -15798,7 +15765,7 @@ function buildPOSQuickItems(){
   var quickItems=allProducts.filter(function(p){return p.quick_list&&p.active;});
   var el=document.getElementById('posQuickGrid');
   if(!quickItems.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.82rem;grid-column:1/-1">No Quick List items yet.</div>';return;}
-  el.innerHTML=quickItems.map(function(p){var badgeTag=p.badge_style&&p.badge_text?'<div style="position:absolute;top:0.3rem;right:0.3rem;font-size:0.55rem;padding:0.1rem 0.35rem;font-weight:700" class="badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';var thumb=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:60px;object-fit:cover;margin-bottom:0.4rem;border:1px solid var(--border)" />':'<div style="width:100%;height:60px;background:var(--black);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:0.4rem"><i class="fa-solid fa-box"></i></div>';return '<div class="pos-quick-item" onclick="addToPOSCart(\''+p.id+'\')" id="pos-quick-'+p.id+'" style="position:relative">'+badgeTag+thumb+'<div class="pos-quick-name">'+p.name+'</div><div class="pos-quick-price">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div></div>';}).join('');
+  el.innerHTML=quickItems.map(function(p){var badgeTag=p.badge_style&&p.badge_text?'<div style="position:absolute;top:0.3rem;right:0.3rem;font-size:0.55rem;padding:0.1rem 0.35rem;font-weight:700" class="badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';var thumb=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:60px;object-fit:cover;margin-bottom:0.4rem;border:1px solid var(--border)" alt="Product image" />':'<div style="width:100%;height:60px;background:var(--black);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:0.4rem"><i class="fa-solid fa-box"></i></div>';return '<div class="pos-quick-item" onclick="addToPOSCart(\''+p.id+'\')" id="pos-quick-'+p.id+'" style="position:relative">'+badgeTag+thumb+'<div class="pos-quick-name">'+p.name+'</div><div class="pos-quick-price">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div></div>';}).join('');
 }
 function filterPOSProducts(){
   var q=document.getElementById('posSearch').value.toLowerCase().trim();
@@ -15807,7 +15774,7 @@ function filterPOSProducts(){
   quickEl.style.display='none'; resultsEl.style.display='block';
   var filtered=allProducts.filter(function(p){return p.active&&(p.name||'').toLowerCase().includes(q);}).slice(0,8);
   if(!filtered.length){listEl.innerHTML='<div style="font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic">No products found.</div>';return;}
-  listEl.innerHTML=filtered.map(function(p){var thumb=p.image_url?'<img src="'+p.image_url+'" style="width:40px;height:40px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)" />':'<div style="width:40px;height:40px;background:var(--black);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;flex-shrink:0"><i class="fa-solid fa-box"></i></div>';return '<div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border)" onclick="addToPOSCart(\''+p.id+'\')">'+thumb+'<div style="flex:1;min-width:0"><div style="font-size:0.85rem;color:var(--white)">'+p.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+p.category+'</div></div><div style="font-size:0.88rem;color:var(--gold);flex-shrink:0">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div></div>';}).join('');
+  listEl.innerHTML=filtered.map(function(p){var thumb=p.image_url?'<img src="'+p.image_url+'" style="width:40px;height:40px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)" alt="Product image" />':'<div style="width:40px;height:40px;background:var(--black);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;flex-shrink:0"><i class="fa-solid fa-box"></i></div>';return '<div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border)" onclick="addToPOSCart(\''+p.id+'\')">'+thumb+'<div style="flex:1;min-width:0"><div style="font-size:0.85rem;color:var(--white)">'+p.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+p.category+'</div></div><div style="font-size:0.88rem;color:var(--gold);flex-shrink:0">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div></div>';}).join('');
 }
 function addToPOSCart(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='product';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name,price:parseFloat(p.retail_price||0),qty:1,type:'product'});} renderPOSCart(); }
 function addPackToPOSCart(pid){ var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='pack';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name+' ('+p.quantity+' sessions)',price:parseFloat(p.price||0),qty:1,type:'pack',pack:p});} renderPOSCart(); }
@@ -16368,7 +16335,7 @@ async function handleBroadcastFlyerUpload(ev){
     if(up.error) throw new Error(up.error.message);
     var pub = sb.storage.from('event-flyers').getPublicUrl(path);
     window._broadcastFlyerUrl = pub.data.publicUrl;
-    var prev=document.getElementById('bcFlyerPreview'); if(prev) prev.innerHTML='<img src="'+window._broadcastFlyerUrl+'" style="width:100%;height:100%;object-fit:cover" />';
+    var prev=document.getElementById('bcFlyerPreview'); if(prev) prev.innerHTML='<img src="'+window._broadcastFlyerUrl+'" style="width:100%;height:100%;object-fit:cover" alt="Flyer" />';
     var rb=document.getElementById('bcFlyerRemoveBtn'); if(rb) rb.style.display='';
     setMsg('commMsg','Flyer attached.','success');
   }catch(e){ setMsg('commMsg','Flyer upload failed: '+((e&&e.message)||'error'),'error'); }
@@ -16456,7 +16423,7 @@ async function sendCommunication(){
   var unreachable=selectedReportRecipients.length
     ?selectedReportRecipients.filter(function(r){return !r.email&&!r.phone;}).length
     :0;
-  if(failNotes.length||hardErrors.length) console.log('Communication failures:',failNotes,hardErrors);
+  if(failNotes.length||hardErrors.length) console.error('Communication failures:',failNotes,hardErrors);
   window._commSending=false; if(_sb){ _sb.disabled=false; _sb.innerHTML=_sbh; }
   if(totalReached===0){
     setMsg('commMsg',hardErrors.concat(failNotes).join(' | ')||'No messages were sent.','error');return;
@@ -18897,9 +18864,9 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     if(!preview) return;
     var url=window._pendingEventFlyerUrl, type=window._pendingEventFlyerType, thumb=window._pendingEventFlyerThumb;
     if(url){
-      if(thumb){ preview.innerHTML='<img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover" />'; }
+      if(thumb){ preview.innerHTML='<img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover" alt="Attachment" />'; }
       else if(type==="pdf"){ preview.innerHTML='<div style="text-align:center;color:var(--gold)"><i class="fa-solid fa-file-pdf" style="font-size:1.8rem"></i><div style="font-size:0.58rem;color:var(--muted);margin-top:0.2rem">PDF</div></div>'; }
-      else { preview.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" />'; }
+      else { preview.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" alt="Image" />'; }
       if(rm) rm.style.display="";
     } else {
       preview.innerHTML='<i class="fa-solid fa-image"></i>';

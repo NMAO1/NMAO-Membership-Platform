@@ -413,39 +413,7 @@
       return esc(c.class_name)+' \u00b7 '+DAY_LABEL[dd.getDay()]+' '+MONTHS[dd.getMonth()].slice(0,3)+' '+dd.getDate()+' \u00b7 '+fmtTime(c.start_time);
     }
 
-    function openReserve(idx){
-      var c=rows[idx];
-      openModal(
-        '<div class="modal-title">Reserve your spot</div>'+
-        '<div class="modal-sub">'+classSummary(c)+'</div>'+
-        '<div class="field"><label>Email or phone on your account</label><input type="text" id="resContact" placeholder="you@example.com" /></div>'+
-        '<button class="btn btn-primary" style="width:100%" id="resBtn" onclick="submitReserve('+idx+')">Reserve</button>'+
-        '<div class="modal-msg" id="resMsg"></div>'+
-        '<div class="modal-sub" style="margin-top:0.75rem">New here? Close this and tap ‚ÄúTry a free class.‚Äù</div>'
-      );
-    }
-    async function submitReserve(idx){
-      var c=rows[idx]; var contact=document.getElementById('resContact').value.trim();
-      var msg=document.getElementById('resMsg'); msg.className='modal-msg';
-      if(!contact){ msg.className='modal-msg err'; msg.textContent='Please enter your email or phone.'; return; }
-      var btn=document.getElementById('resBtn'); btn.disabled=true; msg.textContent='Reserving\u2026';
-      var res=await callEF({ action:'reserve', slug:slug, class_id:c.class_id, session_date:c.session_date, email_or_phone:contact });
-      if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
-      lastReserve={ token:res.cancel_token, contact:contact };
-      openModal(
-        '<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div>'+
-        '<div class="center" style="font-size:1rem;margin-bottom:0.4rem">'+esc(res.message||'Reserved!')+'</div>'+
-        '<div class="modal-sub center">'+classSummary(c)+'</div>'+
-        (res.cancel_token ? '<button class="btn btn-ghost" style="width:100%;margin-top:0.5rem" onclick="submitCancel()">Cancel this reservation</button><div class="modal-msg" id="cxMsg"></div>' : '')+
-        '<button class="btn btn-primary" style="width:100%;margin-top:0.6rem" onclick="closeModal();loadSchedule()">Done</button>'
-      );
-    }
-    async function submitCancel(){
-      if(!lastReserve) return;
-      var msg=document.getElementById('cxMsg'); if(msg){ msg.className='modal-msg'; msg.textContent='Cancelling\u2026'; }
-      var res=await callEF({ action:'cancel', slug:slug, cancel_token:lastReserve.token, email_or_phone:lastReserve.contact });
-      if(msg){ msg.className='modal-msg '+((res&&res.ok)?'ok':'err'); msg.textContent=(res&&res.message)||(res&&res.error)||'Done.'; }
-    }
+    // (Removed dead openReserve/submitReserve/submitCancel — public page uses "Log in to book" + "Try a free class".)
 
     function openTrial(idx){
       var c=rows[idx];
