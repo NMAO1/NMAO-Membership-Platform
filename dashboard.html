@@ -5214,10 +5214,31 @@ async function submitClosure(){
   if(!start){ m.textContent='Pick a start date.'; m.className='form-msg error'; return; }
   var channels=[]; document.querySelectorAll('.closure-ch').forEach(function(c){ if(c.checked) channels.push(c.value); });
   var notifyNow=document.getElementById('closureNotifyNow').checked;
-  var b=document.getElementById('closureSaveBtn'); var _h=b.innerHTML; b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Creating…';
+  var audience=document.getElementById('closureAudience').value;
+  var b=document.getElementById('closureSaveBtn'); var _h=b.innerHTML;
+  // §CLOSURE-CONFIRM — if this closure will TEXT/EMAIL members, confirm with a real recipient count first.
+  // (A silent broadcast on a mis-test is what we're guarding against — text/email reaches real students.)
+  var willBlast = notifyNow && (channels.indexOf('sms')!==-1 || channels.indexOf('email')!==-1);
+  if(willBlast){
+    b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Checking…';
+    var sms=0, eml=0;
+    try{
+      var pr=await fetch(SURL+'/functions/v1/create-closure',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,start_date:start,end_date:end,audience:audience,preview:true})});
+      var pd=await pr.json(); sms=pd.sms_recipients||0; eml=pd.email_recipients||0;
+    }catch(_e){}
+    b.disabled=false; b.innerHTML=_h;
+    var parts=[];
+    if(channels.indexOf('sms')!==-1) parts.push(sms+' text'+(sms===1?'':'s'));
+    if(channels.indexOf('email')!==-1) parts.push(eml+' email'+(eml===1?'':'s'));
+    var who=(audience==='affected')?'members with a reserved class in that range':'all active members';
+    if(!confirm('Send '+parts.join(' and ')+' to '+who+' now?\n\nThis notifies real members immediately and can\'t be undone. Turn off "Notify now" if you\'re just testing.')){
+      m.textContent='Cancelled — no messages sent.'; m.className='form-msg'; return;
+    }
+  }
+  b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Creating…';
   m.textContent=''; m.className='form-msg';
   try{
-    var payload={school_id:SID,reason:reason,start_date:start,end_date:end,recurring_annual:document.getElementById('closureRecurring').checked,notify_now:notifyNow,notify_channels:notifyNow?channels:[],audience:document.getElementById('closureAudience').value};
+    var payload={school_id:SID,reason:reason,start_date:start,end_date:end,recurring_annual:document.getElementById('closureRecurring').checked,notify_now:notifyNow,notify_channels:notifyNow?channels:[],audience:audience};
     var rd=document.getElementById('closureRemindDays').value; if(rd!=='') payload.remind_days_before=parseInt(rd)||0;
     var r=await fetch(SURL+'/functions/v1/create-closure',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify(payload)});
     var d=await r.json();
