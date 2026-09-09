@@ -1417,6 +1417,21 @@
           <p class="form-msg" id="slugMsg"></p>
         </div>
         <div style="border-top:1px solid var(--border)"></div>
+        <!-- §SMS-NUMBER — pick the school's texting number from the pool (Option C) -->
+        <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Texting Number</div>
+        <div class="field">
+          <label>Your school's SMS number <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.smsnumber',this)" title="Help">?</button></label>
+          <div id="smsNumberCurrent" style="font-size:1rem;color:var(--white);margin-bottom:0.5rem">—</div>
+          <select id="smsNumberPick" style="width:100%;margin-bottom:0.5rem;display:none;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.55rem 0.65rem"></select>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <button class="panel-action" style="width:fit-content" id="smsNumberChangeBtn" onclick="startChangeSmsNumber()"><i class="fa-solid fa-phone"></i> Change Number</button>
+            <button class="panel-action" style="width:fit-content;display:none" id="smsNumberSaveBtn" onclick="saveSmsNumber()"><i class="fa-solid fa-floppy-disk"></i> Save Number</button>
+            <button class="btn-sm" style="display:none" id="smsNumberCancelBtn" onclick="cancelChangeSmsNumber()">Cancel</button>
+          </div>
+          <p style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem">The number your texts come from and that members reply to. Changing it returns your current number to the shared pool — members who saved the old one won't reach you, so only change it before you've shared it widely.</p>
+          <p class="form-msg" id="smsNumberMsg"></p>
+        </div>
+        <div style="border-top:1px solid var(--border)"></div>
         <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Payment Behavior</div>
         <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.passfees',this)" title="Help">?</button></div></div></label></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.cardupdate',this)" title="Help">?</button></div></div></label></div>
@@ -4328,6 +4343,61 @@ var r=await sb.from('schools').update({name:document.getElementById('settingName
   if(r.error){setMsg('settingsMsg',r.error.message,'error');}else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();
     SCHOOL_TZ=_tzPick||SCHOOL_TZ; if(window.CURRENT_SCHOOL){window.CURRENT_SCHOOL.timezone=_tzPick;window.CURRENT_SCHOOL.timezone_confirmed=true;} var _tzb=document.getElementById('timezoneConfirmBanner'); if(_tzb) _tzb.style.display='none';}
 }
+
+// §SMS-NUMBER — view + pick the school's texting number from the pool (Option C). Owner-only EF
+// manage-school-number: 'list' (current + available) and 'set' (atomic swap via claim_specific_school_number).
+function fmtSmsPhone(e164){
+  if(!e164) return '';
+  var d=(''+e164).replace(/[^0-9]/g,''); if(d.length===11&&d[0]==='1') d=d.slice(1);
+  if(d.length!==10) return e164;
+  return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);
+}
+async function loadSmsNumber(){
+  var cur=document.getElementById('smsNumberCurrent'); if(!cur) return;
+  cancelChangeSmsNumber();
+  cur.textContent='Loading…';
+  try{
+    var r=await fetch(SURL+'/functions/v1/manage-school-number',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,action:'list'})});
+    var d=await r.json();
+    if(!r.ok||d.error){ cur.textContent='—'; window._smsAvailable=[]; return; }
+    window._smsAvailable=d.available||[];
+    cur.innerHTML = d.current&&d.current.e164
+      ? '<i class="fa-solid fa-comment-sms" style="color:#7DAAD4;margin-right:0.4rem"></i>'+fmtSmsPhone(d.current.e164)
+      : '<span style="color:var(--muted)">No texting number yet — assigned automatically once your school goes live.</span>';
+    // Change is only meaningful when there are other numbers to pick.
+    var chBtn=document.getElementById('smsNumberChangeBtn');
+    if(chBtn) chBtn.style.display=(window._smsAvailable.length? '':'none');
+  }catch(e){ cur.textContent='—'; }
+}
+function startChangeSmsNumber(){
+  var sel=document.getElementById('smsNumberPick'); var avail=window._smsAvailable||[];
+  if(!avail.length){ setMsg('smsNumberMsg','No other numbers are available right now.','error'); return; }
+  sel.innerHTML=avail.map(function(n){ return '<option value="'+n.e164+'">'+fmtSmsPhone(n.e164)+'  ·  '+n.area_code+' area</option>'; }).join('');
+  sel.style.display='';
+  document.getElementById('smsNumberChangeBtn').style.display='none';
+  document.getElementById('smsNumberSaveBtn').style.display='';
+  document.getElementById('smsNumberCancelBtn').style.display='';
+  setMsg('smsNumberMsg','','');
+}
+function cancelChangeSmsNumber(){
+  var sel=document.getElementById('smsNumberPick'); if(sel){ sel.style.display='none'; }
+  var a=document.getElementById('smsNumberChangeBtn'), b=document.getElementById('smsNumberSaveBtn'), c=document.getElementById('smsNumberCancelBtn');
+  if(a) a.style.display=((window._smsAvailable||[]).length?'':'none');
+  if(b) b.style.display='none'; if(c) c.style.display='none';
+}
+async function saveSmsNumber(){
+  var sel=document.getElementById('smsNumberPick'); var e164=sel.value; if(!e164) return;
+  if(!confirm('Switch your texting number to '+fmtSmsPhone(e164)+'?\n\nYour current number goes back to the shared pool and can be reassigned. Members who saved the old number won\'t reach you.')) return;
+  var b=document.getElementById('smsNumberSaveBtn'); var _h=b.innerHTML; b.disabled=true; b.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Saving…';
+  try{
+    var r=await fetch(SURL+'/functions/v1/manage-school-number',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,action:'set',e164:e164})});
+    var d=await r.json();
+    b.disabled=false; b.innerHTML=_h;
+    if(!r.ok||d.error){ setMsg('smsNumberMsg',d.error||'Could not change the number.','error'); return; }
+    setMsg('smsNumberMsg','Texting number updated.','success');
+    await loadSmsNumber();
+  }catch(e){ b.disabled=false; b.innerHTML=_h; setMsg('smsNumberMsg','Network error.','error'); }
+}
 async function saveMembershipSettings(){
   var v=document.getElementById('settingMaxRollover').value;
   var maxRollover=v===''?null:parseInt(v);
@@ -5468,7 +5538,7 @@ function navigate(page,el){
 if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='memberships') { renderClassPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
-  if(page==='settings')    { renderSettingsSessionTypes(); }
+  if(page==='settings')    { renderSettingsSessionTypes(); if(window.loadSmsNumber) loadSmsNumber(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
   if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); if(window.loadClosures) loadClosures(); }
@@ -6072,6 +6142,7 @@ var HELP_CONTENT = {
   'settings.logo': { title: 'School Logo', purpose: 'Your school logo, shown in the member portal and on public pages. A square image gives the cleanest fit.' },
   'settings.passfees': { title: 'Pass Transaction Fees to Students', purpose: 'When on, the card processing fee is added to what the student pays, so it comes out of their charge instead of your revenue. When off, you absorb it.' },
   'settings.cardupdate': { title: 'Allow Members to Update Payment Card', purpose: 'When on, members can change their own saved card from the portal. When off, only you can update it for them.' },
+  'settings.smsnumber': { title: 'Texting Number', purpose: 'The phone number your school’s texts are sent from and that members reply to. One is assigned automatically when your school goes live. You can switch to any other number in the pool — but changing it returns your old number to the pool, and members who saved it won’t reach you, so change it before sharing it widely.' },
   'settings.booking': { title: 'Public Booking Page', purpose: 'Controls for the public page where anyone can browse and book your classes with no login. Set how it looks and what it shows.' },
   'settings.bk_link': { title: 'Shareable Link', purpose: 'The public address of your booking page. Copy it to share on social media, your website, or in messages so prospects can book directly.' },
   'settings.bk_spots': { title: 'Show Spots Remaining', purpose: 'When on, the public page shows how many seats are left in each class, which can nudge people to book before it fills.' },
