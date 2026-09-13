@@ -12253,7 +12253,7 @@ async function loadUpcomingRevenue(){
     var el15=document.getElementById('upc15'); if(!el15) return;
     var passFees=false;
     try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
-    var r=await sb.from('student_memberships').select('id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('status',['active','trialing','past_due']);
+    var r=await sb.from('student_memberships').select('id,student_id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('status',['active','trialing','past_due']);
     var rows=r.data||[];
     // Pull Stripe-exact next-charge dates for auto (card-on-file) members.
     // Cash/manual members have no subscription and fall back to the computed due date.
@@ -12275,7 +12275,8 @@ async function loadUpcomingRevenue(){
       var amt=smChargeAmount(m,passFees);
       var mode=sm.stripe_subscription_id?'auto':'cash';
       var nm=sm.students?(((sm.students.first_name||'')+' '+(sm.students.last_name||'')).trim()):'Member';
-      if(sm.status==='past_due'){ pastDue+=amt; pastN++; list.push({name:nm,date:null,amount:amt,mode:mode,status:'past_due'}); continue; }
+      var _proj={smId:sm.id, studentId:sm.student_id, subId:sm.stripe_subscription_id||null, intervalMonths:smIntervalMonths(m), membershipName:(m.name||'Membership')};
+      if(sm.status==='past_due'){ pastDue+=amt; pastN++; list.push(Object.assign({name:nm,date:null,amount:amt,mode:mode,status:'past_due'},_proj)); continue; }
       if(parseFloat(m.price||0)<=0) continue;
       var next;
       if(sm.stripe_subscription_id && stripeDates[sm.stripe_subscription_id]){ next=new Date(stripeDates[sm.stripe_subscription_id]*1000); }
@@ -12284,7 +12285,7 @@ async function loadUpcomingRevenue(){
       if(next.getTime()>d30.getTime()) continue;
       if(mode==='auto'){ a30+=amt; if(next.getTime()<=d15.getTime()) a15+=amt; }
       else { c30+=amt; if(next.getTime()<=d15.getTime()) c15+=amt; }
-      list.push({name:nm,date:next,amount:amt,mode:mode,status:sm.status});
+      list.push(Object.assign({name:nm,date:next,amount:amt,mode:mode,status:sm.status},_proj));
     }
     _upcoming={list:list,a15:a15,c15:c15,a30:a30,c30:c30,pastDue:pastDue,pastN:pastN};
     paintUpcomingTile('upc15','upc15sub',a15,c15);
@@ -12299,14 +12300,17 @@ function paintUpcomingTile(amtId,subId,auto,cash){
   var s=document.getElementById(subId);
   if(s) s.innerHTML='<span style="color:var(--gold)"><i class="fa-solid fa-bolt"></i> $'+auto.toFixed(2)+'</span> auto &nbsp;\u00b7&nbsp; <span style="color:var(--white)"><i class="fa-solid fa-money-bill"></i> $'+cash.toFixed(2)+'</span> cash';
 }
+var _projItems=[]; var _projWin=30;
 function openUpcomingBreakdown(win){
   if(!_upcoming) return;
+  _projWin=win;
   var now=new Date(); var lim=new Date(now.getTime()+win*86400000);
   document.getElementById('revBreakdownTitle').textContent='Next '+win+' Days (Projected)';
   var plEl=document.getElementById('revBreakdownPeriodLabel'); if(plEl) plEl.textContent='Next '+win+' days';
   document.getElementById('revenueBreakdownModal').classList.add('active');
   var items=_upcoming.list.filter(function(x){ return x.status!=='past_due' && x.date && x.date.getTime()<=lim.getTime(); });
   items.sort(function(a,b){ return a.date.getTime()-b.date.getTime(); });
+  _projItems=items;
   var total=items.reduce(function(s,x){return s+x.amount;},0);
   document.getElementById('revBreakdownTotalAmt').textContent='$'+total.toFixed(2);
   var html='';
@@ -12316,10 +12320,86 @@ function openUpcomingBreakdown(win){
     var cashT=total-autoT;
     html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-bolt" style="color:var(--gold)"></i> Automated</div><div style="font-size:0.88rem;color:var(--gold)">$'+autoT.toFixed(2)+'</div></div>';
     html+='<div class="rev-breakdown-item"><div style="font-size:0.85rem;color:var(--white)"><i class="fa-solid fa-money-bill"></i> Manual / cash</div><div style="font-size:0.88rem;color:var(--gold)">$'+cashT.toFixed(2)+'</div></div>';
-    html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem">Scheduled charges</div>';
-    items.forEach(function(x){ var badge=x.mode==='auto'?'<span style="font-size:0.62rem;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.05rem 0.3rem">AUTO</span>':'<span style="font-size:0.62rem;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:0.05rem 0.3rem">CASH</span>'; html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+x.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+smDateLabel(x.date)+' &nbsp; '+badge+'</div></div><div style="color:var(--gold)">$'+x.amount.toFixed(2)+'</div></div>'; });
+    html+='<div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.35rem">Scheduled charges <span style="text-transform:none;letter-spacing:0;color:var(--muted)">· tap a member to pay, waive, or skip</span></div>';
+    items.forEach(function(x,ix){ var badge=x.mode==='auto'?'<span style="font-size:0.62rem;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0.05rem 0.3rem">AUTO</span>':'<span style="font-size:0.62rem;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:0.05rem 0.3rem">CASH</span>'; html+='<div onclick="openProjBillActions('+ix+')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><div><div style="color:var(--white)">'+escapeCheckout(x.name)+' <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;color:var(--muted);margin-left:0.25rem"></i></div><div style="font-size:0.72rem;color:var(--muted)">'+smDateLabel(x.date)+' &nbsp; '+badge+'</div></div><div style="color:var(--gold)">$'+x.amount.toFixed(2)+'</div></div>'; });
   }
   document.getElementById('revBreakdownList').innerHTML=html;
+}
+
+/* §PROJ-BILL-ACTIONS — drill into a projected bill to pay / waive / skip. These are PROJECTIONS off
+   student_memberships (not DB rows), so: cash pay = record an offline payment + advance the cycle;
+   waive/skip = advance the cash cycle (auto members: comp-next-invoice zeroes the upcoming Stripe
+   invoice). Auto members pay themselves, so no "pay now" there (would double-charge the sub). */
+function _projYmd(d){ var x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+async function _projUid(){ try{ var s=await sb.auth.getUser(); return (s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){ return null; } }
+async function _projAdvanceCash(x){
+  var nd=new Date(x.date); nd.setMonth(nd.getMonth()+(x.intervalMonths||1));
+  var r=await sb.from('student_memberships').update({first_charge_date:_projYmd(nd)}).eq('id',x.smId).eq('school_id',SID);
+  if(r.error) throw new Error(r.error.message);
+  return _projYmd(nd);
+}
+async function _projCompNextInvoice(smId){
+  var uid=await _projUid();
+  var r=await fetch(SURL+'/functions/v1/comp-next-invoice',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,student_membership_id:smId,applied_by:uid})});
+  var d={}; try{ d=await r.json(); }catch(e){}
+  if(!r.ok||d.error) throw new Error(d.error||'Could not waive the invoice.');
+  return d;
+}
+function openProjBillActions(idx){
+  var x=_projItems[idx]; if(!x) return;
+  var auto=x.mode==='auto';
+  var h='';
+  h+='<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem"><button class="btn-sm" onclick="openUpcomingBreakdown(_projWin)"><i class="fa-solid fa-chevron-left"></i> Back</button></div>';
+  h+='<div style="text-align:center;padding:0.5rem 0 1rem"><div style="font-family:var(--font-display);font-size:1.15rem;color:var(--white)">'+escapeCheckout(x.name)+'</div><div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">'+escapeCheckout(x.membershipName)+' &middot; '+smDateLabel(x.date)+'</div><div style="font-size:1.5rem;color:var(--gold);margin-top:0.4rem">$'+x.amount.toFixed(2)+'</div><div style="font-size:0.68rem;color:var(--muted);margin-top:0.2rem">'+(auto?'Autopay — charges the card automatically on this date':'Cash / manual — collected by staff')+'</div></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:0.55rem">';
+  if(!auto){ h+='<button class="btn-gold-full" onclick="projRecordCash('+idx+')"><i class="fa-solid fa-money-bill" style="margin-right:0.5rem"></i>Record cash payment ($'+x.amount.toFixed(2)+')</button>'; }
+  h+='<button class="panel-action" style="width:100%;justify-content:center" onclick="projWaiveBill('+idx+')"><i class="fa-solid fa-hand-holding-heart" style="margin-right:0.5rem"></i>Waive this bill (comp)</button>';
+  h+='<button class="panel-action" style="width:100%;justify-content:center" onclick="projSkipBill('+idx+')"><i class="fa-solid fa-forward" style="margin-right:0.5rem"></i>Skip this cycle</button>';
+  h+='</div>';
+  h+='<p class="form-msg" id="projActMsg" style="text-align:center"></p>';
+  if(auto) h+='<div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.4rem">Autopay members are charged automatically — no manual "pay" needed.</div>';
+  document.getElementById('revBreakdownList').innerHTML=h;
+}
+async function _projRefresh(){ try{ await loadUpcomingRevenue(); }catch(e){} openUpcomingBreakdown(_projWin); }
+async function projRecordCash(idx){
+  var x=_projItems[idx]; if(!x) return;
+  if(!confirm('Record a $'+x.amount.toFixed(2)+' cash/manual payment from '+x.name+' and advance to the next cycle?')) return;
+  var m=document.getElementById('projActMsg'); if(m){ m.textContent='Recording…'; m.className='form-msg'; }
+  try{
+    var nowIso=new Date().toISOString();
+    var ins=await sb.from('payments').insert({ school_id:SID, student_id:x.studentId, amount:x.amount, type:'membership', status:'paid', description:'Cash/manual tuition — '+x.membershipName, created_at:nowIso, paid_at:nowIso });
+    if(ins.error) throw new Error(ins.error.message);
+    await _projAdvanceCash(x);
+    if(window.showToast) showToast('Recorded $'+x.amount.toFixed(2)+' — advanced to next cycle.','ok');
+    if(typeof loadRevenue==='function') try{ await loadRevenue(); }catch(e){}
+    await _projRefresh();
+  }catch(e){ if(m){ m.textContent=(e&&e.message)||'Could not record payment.'; m.className='form-msg error'; } }
+}
+async function projWaiveBill(idx){
+  var x=_projItems[idx]; if(!x) return;
+  if(!confirm('Waive (comp) this '+(x.mode==='auto'?'upcoming charge':'bill')+' for '+x.name+'? They won\'t be charged this cycle.')) return;
+  var m=document.getElementById('projActMsg'); if(m){ m.textContent='Waiving…'; m.className='form-msg'; }
+  try{
+    if(x.mode==='auto'){ await _projCompNextInvoice(x.smId); }
+    else {
+      var nowIso=new Date().toISOString();
+      await sb.from('payments').insert({ school_id:SID, student_id:x.studentId, amount:0, type:'membership', status:'paid', description:'Tuition waived (comp) — '+x.membershipName, created_at:nowIso, paid_at:nowIso });
+      await _projAdvanceCash(x);
+    }
+    if(window.showToast) showToast('Waived this cycle.','ok');
+    await _projRefresh();
+  }catch(e){ if(m){ m.textContent=(e&&e.message)||'Could not waive.'; m.className='form-msg error'; } }
+}
+async function projSkipBill(idx){
+  var x=_projItems[idx]; if(!x) return;
+  if(!confirm('Skip this cycle for '+x.name+'? This upcoming charge is removed; they\'re billed again next period.')) return;
+  var m=document.getElementById('projActMsg'); if(m){ m.textContent='Skipping…'; m.className='form-msg'; }
+  try{
+    if(x.mode==='auto'){ await _projCompNextInvoice(x.smId); }
+    else { await _projAdvanceCash(x); }
+    if(window.showToast) showToast('Skipped one cycle.','ok');
+    await _projRefresh();
+  }catch(e){ if(m){ m.textContent=(e&&e.message)||'Could not skip.'; m.className='form-msg error'; } }
 }
 
 async function autoSendCardLink(sid){
