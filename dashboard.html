@@ -12358,11 +12358,14 @@ function openProjBillActions(idx){
   h+='<button class="panel-action" style="width:100%;justify-content:center" onclick="projWaiveBill('+idx+')"><i class="fa-solid fa-hand-holding-heart" style="margin-right:0.5rem"></i>Waive this bill (comp)</button>';
   h+='<button class="panel-action" style="width:100%;justify-content:center" onclick="projSkipBill('+idx+')"><i class="fa-solid fa-forward" style="margin-right:0.5rem"></i>Skip this cycle</button>';
   h+='</div>';
+  h+='<div style="border-top:1px solid var(--border);margin:0.85rem 0 0.6rem"></div>';
+  h+='<button class="panel-action" style="width:100%;justify-content:center" onclick="projOpenProfile('+idx+')"><i class="fa-solid fa-user" style="margin-right:0.5rem"></i>Open member profile <span style="font-size:0.7rem;color:var(--muted);margin-left:0.35rem">— change plan, card, status</span></button>';
   h+='<p class="form-msg" id="projActMsg" style="text-align:center"></p>';
   if(auto) h+='<div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.4rem">Autopay members are charged automatically — no manual "pay" needed.</div>';
   document.getElementById('revBreakdownList').innerHTML=h;
 }
 async function _projRefresh(){ try{ await loadUpcomingRevenue(); }catch(e){} openUpcomingBreakdown(_projWin); }
+function projOpenProfile(idx){ var x=_projItems[idx]; if(!x||!x.studentId) return; closeRevenueBreakdown(); openStudentProfile(x.studentId); }
 async function projRecordCash(idx){
   var x=_projItems[idx]; if(!x) return;
   if(!confirm('Record a $'+x.amount.toFixed(2)+' cash/manual payment from '+x.name+' and advance to the next cycle?')) return;
