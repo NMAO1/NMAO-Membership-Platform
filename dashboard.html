@@ -1129,8 +1129,33 @@
         </div>
       </div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span>
-        <label style="margin-left:auto;font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem;cursor:pointer"><input type="checkbox" id="dscOnlyFilter" onchange="loadPaymentsLedger()" /> Discounted only</label>
+        <button class="panel-action" style="font-size:0.75rem;margin-left:auto" onclick="openPaymentsExport()" title="Download payments as a CSV for QuickBooks / Excel"><i class="fa-solid fa-file-csv" style="margin-right:0.3rem"></i>Export</button>
+        <label style="margin-left:0.75rem;font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem;cursor:pointer"><input type="checkbox" id="dscOnlyFilter" onchange="loadPaymentsLedger()" /> Discounted only</label>
       </div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Discount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody></table></div></div>
+    </div>
+
+    <!-- §PAYMENTS-EXPORT — QuickBooks / Excel CSV of payments for a date range -->
+    <div class="modal-overlay" id="paymentsExportModal">
+      <div class="modal" style="width:min(94vw,480px)">
+        <div class="modal-header"><span class="modal-title">Export payments (CSV)</span><button class="help-hint-inline" onclick="openHelpPopover('payments.export',this)" title="Help">?</button><button class="modal-close" onclick="closePaymentsExport()"><i class="fa-solid fa-xmark"></i></button></div>
+        <div style="padding:1.25rem 1.5rem">
+          <div style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Date range</div>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.85rem">
+            <button class="btn-sm" onclick="paymentsExportPreset('month')">This month</button>
+            <button class="btn-sm" onclick="paymentsExportPreset('lastmonth')">Last month</button>
+            <button class="btn-sm" onclick="paymentsExportPreset('quarter')">This quarter</button>
+            <button class="btn-sm" onclick="paymentsExportPreset('year')">This year</button>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-bottom:0.85rem">
+            <div class="field" style="flex:1;margin:0"><label>Start</label><input type="date" id="pexStart" /></div>
+            <div class="field" style="flex:1;margin:0"><label>End</label><input type="date" id="pexEnd" /></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--white);cursor:pointer;margin-bottom:1rem"><input type="checkbox" id="pexIncludeRefunds" checked /> Include refunded payments</label>
+          <button class="btn-gold-full" onclick="downloadPaymentsCSV()"><i class="fa-solid fa-file-csv" style="margin-right:0.5rem"></i>Download CSV</button>
+          <p class="form-msg" id="pexMsg" style="text-align:center;margin-top:0.6rem"></p>
+          <p style="font-size:0.7rem;color:var(--muted);text-align:center;margin-top:0.4rem">Opens in Excel or imports into QuickBooks (map the columns in its import wizard). One row per sale, dated by payment date (cash basis).</p>
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════ §PAGE-COMMUNICATIONS ═══════════════ -->
@@ -3697,6 +3722,57 @@ function downloadTextFile(text,filename,mime){
   var a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(u);},1000);
 }
+
+/* ===== §PAYMENTS-EXPORT — QuickBooks / Excel CSV of payments over a date range ===== */
+function openPaymentsExport(){ paymentsExportPreset('month'); document.getElementById('paymentsExportModal').classList.add('active'); var m=document.getElementById('pexMsg'); if(m){m.textContent='';m.className='form-msg';} }
+function closePaymentsExport(){ document.getElementById('paymentsExportModal').classList.remove('active'); }
+function _pexYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function paymentsExportPreset(p){
+  var now=new Date(), y=now.getFullYear(), m=now.getMonth(), s, e;
+  if(p==='lastmonth'){ s=new Date(y,m-1,1); e=new Date(y,m,0); }
+  else if(p==='quarter'){ var q=Math.floor(m/3); s=new Date(y,q*3,1); e=new Date(y,q*3+3,0); }
+  else if(p==='year'){ s=new Date(y,0,1); e=new Date(y,11,31); }
+  else { s=new Date(y,m,1); e=new Date(y,m+1,0); }   // this month (default)
+  document.getElementById('pexStart').value=_pexYmd(s);
+  document.getElementById('pexEnd').value=_pexYmd(e);
+}
+function _pexCsvCell(v){ v=(v==null)?'':(''+v); return /[",\n\r]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
+function _pexDate(iso){ if(!iso) return ''; var d=new Date(iso); if(isNaN(d.getTime())) return ''; return ('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2)+'/'+d.getFullYear(); }
+function _pexMethod(p){
+  var t=(p.payment_tenders||[]).map(function(x){return x.tender_type;});
+  t=t.filter(function(v,i){return v&&t.indexOf(v)===i;});
+  if(t.length) return t.sort().join('+');
+  if(p.stripe_charge_id||p.stripe_invoice_id) return 'card';
+  return 'cash/manual';
+}
+async function downloadPaymentsCSV(){
+  var start=document.getElementById('pexStart').value, end=document.getElementById('pexEnd').value;
+  var incRef=document.getElementById('pexIncludeRefunds').checked;
+  var msg=document.getElementById('pexMsg');
+  if(!start||!end){ msg.textContent='Pick a start and end date.'; msg.className='form-msg error'; return; }
+  if(start>end){ msg.textContent='Start date is after the end date.'; msg.className='form-msg error'; return; }
+  msg.textContent='Building export…'; msg.className='form-msg';
+  try{
+    var r=await sb.from('payments')
+      .select('paid_at,created_at,type,description,amount,fee_passed_cents,amount_refunded_cents,status,stripe_charge_id,stripe_invoice_id,students(first_name,last_name),payment_tenders(tender_type,amount_cents)')
+      .eq('school_id',SID).gte('created_at',start+'T00:00:00').lte('created_at',end+'T23:59:59.999').order('created_at',{ascending:true});
+    if(r.error) throw new Error(r.error.message);
+    var rows=(r.data||[]);
+    if(!incRef) rows=rows.filter(function(p){ return p.status!=='refunded'; });
+    var cols=['Date','Customer','Type','Description','Method','Amount','Fee','Refunded','Net','Status','Stripe Charge ID','Stripe Invoice ID'];
+    var lines=[cols.join(',')];
+    var tA=0,tF=0,tR=0,tN=0;
+    rows.forEach(function(p){
+      var s=p.students, cust=s?(((s.first_name||'')+' '+(s.last_name||'')).trim()||'Walk-in'):'Walk-in';
+      var amt=parseFloat(p.amount||0)||0, fee=(p.fee_passed_cents||0)/100, ref=(p.amount_refunded_cents||0)/100, net=amt-ref;
+      tA+=amt; tF+=fee; tR+=ref; tN+=net;
+      lines.push([ _pexDate(p.paid_at||p.created_at), _pexCsvCell(cust), _pexCsvCell(p.type||''), _pexCsvCell(p.description||''), _pexCsvCell(_pexMethod(p)), amt.toFixed(2), fee.toFixed(2), ref.toFixed(2), net.toFixed(2), _pexCsvCell(p.status||''), _pexCsvCell(p.stripe_charge_id||''), _pexCsvCell(p.stripe_invoice_id||'') ].join(','));
+    });
+    lines.push(['TOTALS ('+rows.length+')','','','','',tA.toFixed(2),tF.toFixed(2),tR.toFixed(2),tN.toFixed(2),'','',''].join(','));
+    downloadTextFile(lines.join('\r\n'), 'nmao-payments-'+start+'_to_'+end+'.csv', 'text/csv;charset=utf-8');
+    msg.textContent='Exported '+rows.length+' payment'+(rows.length===1?'':'s')+' — $'+tN.toFixed(2)+' net.'; msg.className='form-msg success';
+  }catch(e){ msg.textContent=(e&&e.message)||'Export failed.'; msg.className='form-msg error'; }
+}
 async function downloadQr(fmt){
   if(!qrState.url||typeof QRCode==='undefined')return;
   try{
@@ -5676,6 +5752,7 @@ var HELP_CONTENT = {
 'profile.signup_fee': { title: 'Signup fee', purpose: 'A one-time enrollment fee set on the plan, charged to the card on file today when you turn autopay on — separate from the recurring dues. Example: a $100 signup fee is charged now, and the $199/mo membership begins on the start date. Uncheck it to skip or waive the fee for this member.' },
 
 'payments.discounts': { title: 'Discounts applied', purpose: 'Every staff discount from the last 90 days: how many sales, the total given away, and how many repeat every cycle. Each row in the ledger shows the amount, whether it is one-time or recurring, who applied it, and the reason.' },
+'payments.export': { title: 'Export payments', purpose: 'Download your payments for a date range as a CSV — one row per sale with the customer, type, method (including split cash+card), amount, fee, refunds and net, plus a totals row. Opens in Excel or imports into QuickBooks (map the columns once in its import wizard). Dated by payment date (cash basis).' },
 'custom.cc_startdate': { title: 'Start date', purpose: 'The member-since date this membership began. Backdate for a migrated member; blank = today. Record-only, does not affect billing.' },
 'custom.cc_billingday': { title: 'Autopay billing day', purpose: 'The day of the month this plan bills. Charge today bills now and every cycle after; 1st/15th/custom anchor billing to that day.' },
 'custom.cc_prorate': { title: 'Prorate first charge', purpose: 'Collect a partial charge now for the days until the selected billing day, then bill full on that day each cycle. Available when a specific billing day is chosen.' },
