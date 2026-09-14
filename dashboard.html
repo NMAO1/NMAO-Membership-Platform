@@ -2335,8 +2335,10 @@
               <label id="mpAllRow" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpAmt" value="all" onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Due + next charge <span id="mpAllAmt" style="color:var(--gold)"></span></span></label>
               <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.55rem;cursor:pointer;flex-wrap:wrap"><input type="radio" name="mpAmt" value="other" onchange="mpAmtChange()"><span style="font-size:0.82rem;color:var(--white)">Other</span><span style="color:var(--muted)">$</span><input type="number" id="mpOtherInput" step="0.01" min="0" placeholder="0.00" oninput="var o=document.querySelector('input[name=mpAmt][value=other]');if(o)o.checked=true;mpAmtChange()" style="width:90px;background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.3rem 0.5rem;font-family:var(--font-ui)"></label>
               <div style="font-size:0.64rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin:0.65rem 0 0.5rem">Payment Method</div>
-              <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpMethod" value="card" checked><span id="mpCardLabel" style="font-size:0.82rem;color:var(--white)">Card on file</span></label>
-              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;flex-wrap:wrap"><input type="radio" name="mpMethod" value="offline"><span style="font-size:0.82rem;color:var(--white)">Offline</span><select id="mpOfflineType" style="background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.25rem 0.4rem;font-size:0.78rem;font-family:var(--font-ui)"><option value="cash">Cash</option><option value="check">Check</option><option value="other">Other</option></select></label>
+              <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer"><input type="radio" name="mpMethod" value="card" checked onchange="mpMethodChange()"><span id="mpCardLabel" style="font-size:0.82rem;color:var(--white)">Card on file</span></label>
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;flex-wrap:wrap;margin-bottom:0.4rem"><input type="radio" name="mpMethod" value="offline" onchange="mpMethodChange()"><span style="font-size:0.82rem;color:var(--white)">Offline</span><select id="mpOfflineType" style="background:var(--surface);border:1px solid var(--border);color:var(--white);padding:0.25rem 0.4rem;font-size:0.78rem;font-family:var(--font-ui)"><option value="cash">Cash</option><option value="check">Check</option><option value="other">Other</option></select></label>
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer"><input type="radio" name="mpMethod" value="split" onchange="mpMethodChange()"><span style="font-size:0.82rem;color:var(--white)">Split — cash + card</span></label>
+              <div id="mpSplitRow" style="display:none;margin:0.35rem 0 0 1.5rem"><span style="font-size:0.75rem;color:var(--muted)">Cash portion $</span> <input type="number" id="mpSplitCash" step="0.01" min="0" value="0" oninput="mpSplitChange()" style="width:90px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);padding:0.25rem 0.4rem;font-size:0.8rem" /> <span id="mpSplitCardLine" style="font-size:0.75rem;color:var(--gold);margin-left:0.35rem"></span></div>
               <div style="margin-top:0.85rem"><button class="panel-action gold" id="mpSubmitBtn" style="font-size:0.72rem" onclick="submitMakePayment()"><i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge <span id="mpSubmitAmt"></span></button><p id="mpMsg" class="form-msg" style="margin-top:0.4rem"></p></div>
             </div>
           </div>
@@ -3531,6 +3533,14 @@
         <div id="posCardPickWrap" style="display:none;margin-top:0.6rem">
           <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Charge which card</label>
           <select id="posCardPick" onchange="posChosenPmId=this.value" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.45rem 0.6rem"></select>
+        </div>
+        <!-- §SPLIT-TENDER — cash portion; the "Charge Card on File" button then covers the remainder -->
+        <div id="posSplitRow" style="display:none;margin-top:0.6rem;padding:0.6rem 0.7rem;background:var(--black);border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <label style="font-size:0.78rem;color:var(--muted);white-space:nowrap">Cash portion (split) $</label>
+            <input type="number" id="posSplitCash" step="0.01" min="0" value="0" oninput="onPosSplitCashInput()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.4rem 0.6rem;outline:none" />
+          </div>
+          <div id="posSplitCardLine" style="font-size:0.76rem;color:var(--muted);margin-top:0.35rem">Leave $0 for a full card charge. Any cash entered is recorded; “Charge Card on File” covers the rest.</div>
         </div>
         <button id="posBtnCardOnFile" class="btn-gold-full" style="margin-top:0.75rem;opacity:0.5;cursor:not-allowed" onclick="checkoutPOS_cardOnFile()" disabled><i class="fa-solid fa-bolt" style="margin-right:0.5rem"></i>Charge Card on File</button>
         <button id="posBtnNewCard" class="btn-gold-full" style="margin-top:0.5rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="checkoutPOS_newCard()"><i class="fa-solid fa-credit-card" style="margin-right:0.5rem"></i>Charge New Card</button>
@@ -10611,7 +10621,20 @@ function mpSelectedCents(){
   if(v==='all') return _mp.allCents;
   var o=parseFloat(document.getElementById('mpOtherInput').value); return (isFinite(o)&&o>0)?Math.round(o*100):0;
 }
-function mpAmtChange(){ var c=mpSelectedCents(); var el=document.getElementById('mpSubmitAmt'); if(el) el.textContent='$'+(c/100).toFixed(2); }
+function mpAmtChange(){ var c=mpSelectedCents(); var el=document.getElementById('mpSubmitAmt'); if(el) el.textContent='$'+(c/100).toFixed(2); mpSplitChange(); }
+// §SPLIT-TENDER (Make a Payment) — a cash slice recorded alongside the card charge.
+function mpMethodChange(){
+  var m=(document.querySelector('input[name=mpMethod]:checked')||{}).value;
+  var row=document.getElementById('mpSplitRow'); if(row) row.style.display=(m==='split')?'block':'none';
+  if(m==='split') mpSplitChange();
+}
+function mpSplitChange(){
+  var total=mpSelectedCents();
+  var el=document.getElementById('mpSplitCash'); var cash=el?Math.round((parseFloat(el.value)||0)*100):0;
+  if(cash>total){ cash=total; if(el) el.value=(cash/100).toFixed(2); }
+  var line=document.getElementById('mpSplitCardLine');
+  if(line) line.textContent='Card charges $'+(Math.max(0,total-cash)/100).toFixed(2);
+}
 async function submitMakePayment(){
   var cents=mpSelectedCents(); var msg=document.getElementById('mpMsg');
   if(!cents||cents<=0){ msg.textContent='Enter an amount greater than $0.'; msg.className='form-msg error'; return; }
@@ -10627,9 +10650,16 @@ async function submitMakePayment(){
       if(ins.error) throw new Error(ins.error.message);
       msg.textContent='Recorded $'+(cents/100).toFixed(2)+' ('+mtype+').'; msg.className='form-msg success';
     } else {
+      // card OR split — both charge the card via create-pos-charge; split also records a cash slice.
+      var splitCashCents=0;
+      if(method==='split'){
+        var _se=document.getElementById('mpSplitCash'); splitCashCents=_se?Math.round((parseFloat(_se.value)||0)*100):0;
+        if(splitCashCents<=0) throw new Error('Enter the cash portion for the split.');
+        if(splitCashCents>=cents) throw new Error('Cash covers the whole amount — use Offline / Cash instead.');
+      }
       var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
       var idem=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('mp_'+Date.now()+'_'+Math.round(Math.random()*1e6));
-      var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({ school_id:SID, student_id:_billsCtx.sid, line_items:[{name:'Bill payment', unit_amount:cents, quantity:1, product_id:null, item_type:'custom'}], credit_to_apply_cents:0, applied_by:uid, idempotency_key:idem })});
+      var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({ school_id:SID, student_id:_billsCtx.sid, line_items:[{name:'Bill payment', unit_amount:cents, quantity:1, product_id:null, item_type:'custom'}], credit_to_apply_cents:0, cash_amount_cents:splitCashCents, applied_by:uid, idempotency_key:idem })});
       var jd={}; try{ jd=await resp.json(); }catch(e){}
       if(!resp.ok || jd.error){
         var em=jd.error||'Charge failed';
@@ -10638,7 +10668,9 @@ async function submitMakePayment(){
         else em=em.replace(/^[A-Z_]+:\s*/,'');
         throw new Error(em);
       }
-      msg.textContent='Charged $'+(((jd.gross_charged_cents!=null?jd.gross_charged_cents:cents))/100).toFixed(2)+(jd.last4?(' to card ····'+jd.last4):'')+'.'; msg.className='form-msg success';
+      if(splitCashCents>0){ msg.textContent='Split recorded — $'+(splitCashCents/100).toFixed(2)+' cash + $'+(((jd.gross_charged_cents!=null?jd.gross_charged_cents:(cents-splitCashCents)))/100).toFixed(2)+(jd.last4?(' on card ····'+jd.last4):' on card')+'.'; }
+      else { msg.textContent='Charged $'+(((jd.gross_charged_cents!=null?jd.gross_charged_cents:cents))/100).toFixed(2)+(jd.last4?(' to card ····'+jd.last4):'')+'.'; }
+      msg.className='form-msg success';
     }
     // §PASTDUE-CLOSE — the payment succeeded. If it covered the full past-due balance, void exactly the
     // failed rows that made it up so "Past due" clears instead of re-counting / being chargeable again.
@@ -12821,9 +12853,43 @@ function renderCheckoutStep2(){
 function renderCheckoutMethodTiles(){
   var html = '';
   html += checkoutRenderCardTile();
+  html += checkoutRenderSplitTile();
   html += checkoutMethodTile('link', 'Send payment link', 'fa-solid fa-link', 'Copy, email, text, or show a QR. They pay securely on Stripe.', _checkout.method === 'link');
   html += checkoutMethodTile('cash', 'Cash / manual', 'fa-solid fa-money-bill-wave', 'Record a cash, check, or manual card payment. No processing fee.', _checkout.method === 'cash');
   return html;
+}
+
+// §SPLIT-TENDER — part cash at the desk, remainder on the card on file. POS-class sales only
+// (create-pos-charge). Needs a card on file for the card slice.
+function checkoutRenderSplitTile(){
+  if (checkoutCartClass() !== 'pos') return '';
+  if (!checkoutCardAllowed() || !_checkout.cardLoaded) return '';
+  var card = _checkout.card;
+  if (!card || !card.has_card) return '';
+  var _tile = checkoutMethodTile('split', 'Split — cash + card', 'fa-solid fa-scissors', 'Part cash at the desk, the rest on the card on file.', _checkout.method === 'split');
+  if (_checkout.method === 'split') _tile += checkoutSplitPanelHtml();
+  return _tile;
+}
+function checkoutSplitPanelHtml(){
+  var total = checkoutCartTotal();
+  var cashVal = (_checkout.splitCash != null) ? _checkout.splitCash : '';
+  var cardCents = Math.max(0, Math.round(total * 100) - Math.round((parseFloat(cashVal) || 0) * 100));
+  var h = '<div style="border:1px solid var(--gold);border-top:none;padding:0.75rem 0.9rem;background:var(--surface)">';
+  h += '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem">Sale total <b style="color:var(--white)">$' + total.toFixed(2) + '</b></div>';
+  h += '<label style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Amount paid in cash</label>';
+  h += '<div style="display:flex;align-items:center;gap:0.4rem;margin:0.25rem 0 0.55rem"><span style="color:var(--muted)">$</span><input type="number" id="checkoutSplitCash" step="0.01" min="0" max="' + total.toFixed(2) + '" value="' + escapeCheckout(String(cashVal)) + '" oninput="onCheckoutSplitInput()" placeholder="0.00" style="flex:1;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.95rem;padding:0.45rem 0.6rem;outline:none" /></div>';
+  h += '<div id="checkoutSplitCardLine" style="font-size:0.82rem;color:var(--gold)"><i class="fa-solid fa-credit-card" style="margin-right:0.35rem"></i>Card on file charges: <b>$' + (cardCents / 100).toFixed(2) + '</b></div>';
+  if ((_checkout.cards || []).length > 1) h += checkoutCardPickerHtml();
+  h += '</div>';
+  return h;
+}
+function onCheckoutSplitInput(){
+  var el = document.getElementById('checkoutSplitCash'); if (!el) return;
+  _checkout.splitCash = el.value;
+  var total = checkoutCartTotal();
+  var cardCents = Math.max(0, Math.round(total * 100) - Math.round((parseFloat(el.value) || 0) * 100));
+  var line = document.getElementById('checkoutSplitCardLine');
+  if (line) line.innerHTML = '<i class="fa-solid fa-credit-card" style="margin-right:0.35rem"></i>Card on file charges: <b>$' + (cardCents / 100).toFixed(2) + '</b>';
 }
 
 function checkoutRenderCardTile(){
@@ -12967,7 +13033,7 @@ function checkoutAddCardInline(){
    iPad-safe (var/single-quote/no-template/no-arrow). async/await OK (used elsewhere).
    ============================================================ */
 
-var CHECKOUT_METHOD_LABELS = { card_on_file: 'Card on file', link: 'Payment link', cash: 'Cash / manual' };
+var CHECKOUT_METHOD_LABELS = { card_on_file: 'Card on file', link: 'Payment link', cash: 'Cash / manual', split: 'Split — cash + card' };
 
 /* ---- Step 3 render: review summary ---- */
 function renderCheckoutStep3(){
@@ -12988,7 +13054,10 @@ function renderCheckoutStep3(){
   '</div>';
   html += '</div>';
   // Read-only confirmation of the method + (for card-on-file) the card chosen back on step 2's picker.
-  var _payWith = (_checkout.method === 'card_on_file') ? checkoutChosenCardLabel() : (CHECKOUT_METHOD_LABELS[_checkout.method] || '—');
+  var _payWith;
+  if (_checkout.method === 'card_on_file') _payWith = checkoutChosenCardLabel();
+  else if (_checkout.method === 'split'){ var _tc=Math.round(checkoutCartTotal()*100), _cc=Math.round((parseFloat(_checkout.splitCash||0)||0)*100); _payWith='Cash $'+(_cc/100).toFixed(2)+' + '+checkoutChosenCardLabel()+' $'+(Math.max(0,_tc-_cc)/100).toFixed(2); }
+  else _payWith = (CHECKOUT_METHOD_LABELS[_checkout.method] || '—');
   html += '<div style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">Paying with ' +
     '<span style="color:var(--white)">' + escapeCheckout(_payWith) + '</span> · ' +
     escapeCheckout(checkoutStudentLabel()) + '</div>';
@@ -13019,6 +13088,7 @@ function checkoutComplete(){
   if (_checkout.method === 'cash'){ checkoutCompleteCash(); return; }
   if (_checkout.method === 'link'){ checkoutCompleteLink(); return; }
   if (_checkout.method === 'card_on_file'){ checkoutCompleteCard(); return; }
+  if (_checkout.method === 'split'){ checkoutCompleteSplit(); return; }
   if (_checkout.method === 'card_later'){ checkoutActivateAwaitingCard(); return; }
   setMsg('checkoutMsg', 'This payment method is wired in the next bite.', 'error');
 }
@@ -13415,6 +13485,35 @@ async function checkoutCompleteCard(force){
   } catch (e){
     checkoutCardError((e && e.message) ? e.message : 'Network error.');
   }
+}
+
+// §SPLIT-TENDER complete — charge the card ONLY for the remainder; the cash slice is recorded (not charged).
+// One create-pos-charge call with cash_amount_cents → one sale, two tenders (cash + card). Card-first: if
+// the card declines the sale fails and NO cash is recorded (fail-safe against half-collected sales).
+async function checkoutCompleteSplit(force){
+  var total = checkoutCartTotal();
+  var totalCents = Math.round(total * 100);
+  var cashCents = Math.round((parseFloat(_checkout.splitCash != null ? _checkout.splitCash : '') || 0) * 100);
+  if (cashCents <= 0){ setMsg('checkoutMsg', 'Enter the cash amount for the split (or use the Cash or Card method).', 'error'); return; }
+  if (cashCents >= totalCents){ setMsg('checkoutMsg', 'Cash covers the whole sale — use the Cash / manual method instead.', 'error'); return; }
+  if (!(_checkout.card && _checkout.card.has_card)){ setMsg('checkoutMsg', 'No card on file to charge the remainder.', 'error'); return; }
+  var cardCents = totalCents - cashCents;
+  setMsg('checkoutMsg', 'Charging $' + (cardCents/100).toFixed(2) + ' to the card…', '');
+  checkoutSetBusy(true);
+  if (force || !_checkout.idemKey) _checkout.idemKey = checkoutNewIdemKey();
+  try{
+    var payload = { school_id: SID, student_id: _checkout.studentId, line_items: checkoutPosLineItems(), cash_amount_cents: cashCents };
+    if (_checkout.chosenPmId) payload.payment_method_id = _checkout.chosenPmId;
+    payload.idempotency_key = _checkout.idemKey;
+    payload = await coDscPayload(payload);
+    var r = await fetch(SURL + '/functions/v1/create-pos-charge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await authToken()) }, body: JSON.stringify(payload) });
+    var data = await r.json();
+    if (!r.ok || !data || data.error){ _checkout.idemKey = null; checkoutCardError((data && data.error) ? data.error : 'The card charge did not go through — no cash was recorded.'); return; }
+    _checkout.idemKey = null;
+    checkoutRefreshAfterSale();
+    var brandLine = (data.brand && data.last4) ? (String(data.brand).toUpperCase() + ' ••••' + data.last4) : 'card on file';
+    checkoutShowSuccess('Split recorded — $' + (cashCents/100).toFixed(2) + ' cash + $' + (cardCents/100).toFixed(2) + ' on ' + brandLine + '.');
+  }catch(e){ checkoutCardError((e && e.message) ? e.message : 'Network error.'); }
 }
 
 /* Collect-card-later from checkout: activate the recurring membership now (awaiting card),
@@ -15844,7 +15943,7 @@ async function deleteProduct(pid){
 }
 
 // POS
-function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';})();document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
+function openPOS(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';var _s=document.getElementById('posSplitRow');if(_s)_s.style.display='none';var _si=document.getElementById('posSplitCash');if(_si)_si.value='0';})();posSplitCashCents=0;document.getElementById('posSearch').value='';document.getElementById('posSearchResults').style.display='none';document.getElementById('posStudentSearch').value='';document.getElementById('posStudentResults').style.display='none';document.getElementById('posSelectedStudent').style.display='none';document.getElementById('posMsg').textContent='';renderPOSCart();buildPOSQuickItems();populateSessionPackDropdowns();updatePOSCheckoutButtons();document.getElementById('posModal').classList.add('active'); }
 function closePOS(){ document.getElementById('posModal').classList.remove('active'); }
 function buildPOSQuickItems(){
   var quickItems=allProducts.filter(function(p){return p.quick_list&&p.active;});
@@ -15901,8 +16000,12 @@ async function posLoadCards(sid){
       if(wrap&&cards.length>1) wrap.style.display='block';
     }
   }catch(e){}
+  // §SPLIT-TENDER — reveal the cash-split row only when the member has a card (the slice needs one).
+  posSplitCashCents=0; var _si=document.getElementById('posSplitCash'); if(_si) _si.value='0';
+  var _sl=document.getElementById('posSplitCardLine'); if(_sl) _sl.innerHTML='Leave $0 for a full card charge. Any cash entered is recorded; “Charge Card on File” covers the rest.';
+  var _sr=document.getElementById('posSplitRow'); if(_sr) _sr.style.display=(posCards&&posCards.length)?'block':'none';
 }
-function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';})();document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
+function clearPOSCart(){ posCart=[];posSelectedStudentId=null;posSelectedStudentName=null;posCreditBalanceCents=0;posCreditApplyCents=0;posCards=[];posChosenPmId=null;(function(){var _w=document.getElementById('posCardPickWrap');if(_w)_w.style.display='none';var _s=document.getElementById('posSplitRow');if(_s)_s.style.display='none';var _si=document.getElementById('posSplitCash');if(_si)_si.value='0';})();posSplitCashCents=0;document.getElementById('posStudentSearch').value='';document.getElementById('posSelectedStudent').style.display='none';renderPOSCart();buildPOSQuickItems(); }
 // §POS-CHECKOUT — Three payment paths (Phase N, 2026-05-11)
 
 function posCartTotal(){
@@ -15966,6 +16069,19 @@ function onPosCreditInput(){
   posCreditApplyCents=cents;
   var line=document.getElementById('posCreditCardLine');
   if(line){ var cardCents=posCartTotalCents()-cents; line.textContent = cents>0 ? ('Card: $'+(cardCents/100).toFixed(2)+(cardCents<=0?' (no card needed)':'')) : ''; }
+  onPosSplitCashInput(); // re-clamp any split cash against the new remainder
+}
+var posSplitCashCents = 0;
+// §SPLIT-TENDER (POS) — cash portion; the "Charge Card on File" button covers the remainder (total − credit − cash).
+function onPosSplitCashInput(){
+  var inp=document.getElementById('posSplitCash'); if(!inp){ posSplitCashCents=0; return; }
+  var v=parseFloat(inp.value); if(!isFinite(v)||v<0) v=0;
+  var cents=Math.round(v*100);
+  var maxCash=Math.max(0, posCartTotalCents()-posCreditApplyCents);
+  if(cents>maxCash){ cents=maxCash; inp.value=(cents/100).toFixed(2); }
+  posSplitCashCents=cents;
+  var line=document.getElementById('posSplitCardLine');
+  if(line){ var cardCents=posCartTotalCents()-posCreditApplyCents-cents; line.innerHTML = cents>0 ? ('<span style="color:var(--gold)">“Charge Card on File” will charge $'+(cardCents/100).toFixed(2)+(cardCents<=0?' — nothing on the card':'')+'</span>') : 'Leave $0 for a full card charge. Any cash entered is recorded; “Charge Card on File” covers the rest.'; }
 }
 function updatePOSCheckoutButtons(){
   var hasItems = posCart.length > 0;
@@ -16095,9 +16211,10 @@ async function checkoutPOS_cardOnFile(){
         student_id: posSelectedStudentId,
         line_items: posCartLineItems(),
         credit_to_apply_cents: posCreditApplyCents,
+        cash_amount_cents: posSplitCashCents,   // §SPLIT-TENDER — cash slice recorded; card covers total − credit − cash
         applied_by: _uid,
         payment_method_id: posChosenPmId || null,   // §POS-CARD-PICKER — chosen card (defaults to family primary)
-        idempotency_key: 'poscharge-'+SID+'-'+(posSelectedStudentId||'guest')+'-'+posCreditApplyCents+'-'+(posChosenPmId||'def')+'-'+posCart.map(function(_c){return _c.id+'x'+(_c.qty||1);}).join('|'),   // §NO-DOUBLE-CHARGE: server-side dedup (card in key so switching card allows a new charge)
+        idempotency_key: 'poscharge-'+SID+'-'+(posSelectedStudentId||'guest')+'-'+posCreditApplyCents+'-c'+posSplitCashCents+'-'+(posChosenPmId||'def')+'-'+posCart.map(function(_c){return _c.id+'x'+(_c.qty||1);}).join('|'),   // §NO-DOUBLE-CHARGE: server-side dedup (card + cash in key so switching allows a new charge)
       }),
     });
     var data = await r.json();
