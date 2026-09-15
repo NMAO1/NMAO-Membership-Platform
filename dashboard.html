@@ -15265,9 +15265,37 @@ function renderBeltTests(){
     var payStr=(t.fee_enabled&&cnt)?(' &middot; <span style="color:'+((paid>=cnt)?'#7DBD7D':'var(--muted2)')+'">'+paid+' of '+cnt+' paid</span>'):'';
     var roster=cnt?('<i class="fa-solid fa-users" style="margin-right:0.35rem;color:var(--gold)"></i>'+cnt+' student'+(cnt===1?'':'s')+' on the roster'+payStr):('<span style="color:var(--muted)"><i class="fa-solid fa-user-plus" style="margin-right:0.35rem"></i>No students added yet — click Manage to add them</span>');
     var inviteBtn=pending>0?'<button class="btn-sm gold" onclick="sendBeltTestInvites(\''+t.id+'\')"><i class="fa-solid fa-paper-plane"></i> Send Invites ('+pending+')</button>':'';
-    return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta">'+meta+'</div></div><span class="test-status-badge test-status-upcoming">'+duLabel+'</span></div><div style="font-size:0.82rem;color:var(--white);margin-top:0.15rem">'+roster+'</div><div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button>'+inviteBtn+'<button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div></div>';
+    return '<div class="test-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta">'+meta+'</div></div><span class="test-status-badge test-status-upcoming">'+duLabel+'</span></div><div style="font-size:0.82rem;color:var(--white);margin-top:0.15rem">'+roster+'</div><div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap"><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> Manage</button>'+inviteBtn+'<button class="btn-sm" onclick="openEditBeltTest(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.45)" onclick="deleteBeltTest(\''+t.id+'\')"><i class="fa-solid fa-trash"></i> Delete</button></div></div>';
   }).join('');
-  pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button></div></div></div>';}).join('');
+  pastEl.innerHTML=!past.length?'<div class="no-classes">No past belt tests.</div>':past.map(function(t){return '<div class="test-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="test-card-title">'+t.name+'</div><div class="test-card-meta"><span>'+new Date(t.test_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div></div><div style="display:flex;gap:0.5rem"><span class="test-status-badge test-status-complete">Complete</span><button class="panel-action" onclick="openBeltTestDetail(\''+t.id+'\')"><i class="fa-solid fa-eye"></i> View</button><button class="btn-sm" style="color:#E07070;border-color:rgba(224,112,112,0.45)" onclick="deleteBeltTest(\''+t.id+'\')"><i class="fa-solid fa-trash"></i> Delete</button></div></div></div>';}).join('');
+}
+// §BELT-TEST-DELETE — remove a belt test (roster + the test row). Preserves belt-promotion HISTORY by
+// unlinking it (belt_promotions.belt_test_id -> null) rather than deleting a student's belt record.
+var _beltTestDeleting=false;
+async function deleteBeltTest(tid){
+  if(_beltTestDeleting) return;
+  var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return;
+  var cnt=(beltTestCounts&&beltTestCounts[tid])||0;
+  var warn='Delete belt test "'+(t.name||'this test')+'"?';
+  warn += (cnt>0)
+    ? '\n\nThis removes the test and its roster of '+cnt+' student'+(cnt===1?'':'s')+' (including invitation and payment status).'
+    : '\n\nThis removes the test.';
+  warn += '\n\nBelt promotions already awarded are kept. This cannot be undone.';
+  if(!confirm(warn)) return;
+  _beltTestDeleting=true;
+  try{
+    // Preserve promotion history: unlink it from the test before deleting (best-effort).
+    try{ await sb.from('belt_promotions').update({belt_test_id:null}).eq('belt_test_id',tid).eq('school_id',SID); }catch(_e){}
+    var d1=await sb.from('belt_test_students').delete().eq('belt_test_id',tid).eq('school_id',SID);
+    if(d1.error) throw new Error(d1.error.message);
+    var d2=await sb.from('belt_tests').delete().eq('id',tid).eq('school_id',SID);
+    if(d2.error) throw new Error(d2.error.message);
+    if(window.showToast) showToast('Belt test deleted.','ok');
+    await loadBeltTests();
+  }catch(e){
+    var m=(e&&e.message)||'error';
+    if(window.showToast) showToast('Could not delete: '+m,'error'); else alert('Could not delete the belt test: '+m);
+  }finally{ _beltTestDeleting=false; }
 }
 function openAddBeltTest(){ document.getElementById('beltTestEditId').value='';document.getElementById('btName').value='';document.getElementById('btDate').value='';document.getElementById('btTime').value='';document.getElementById('btLocation').value='';document.getElementById('btFeeEnabled').checked=false;document.getElementById('btFeeFields').style.display='none';document.getElementById('btFeeAmount').value='0';document.getElementById('btPaymentMethod').value='portal';setBtFeeMode('per_belt');document.getElementById('btNotes').value='';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
 function openEditBeltTest(tid){ var t=allBeltTests.find(function(x){return x.id===tid;}); if(!t) return; document.getElementById('beltTestEditId').value=t.id;document.getElementById('btName').value=t.name||'';document.getElementById('btDate').value=t.test_date||'';document.getElementById('btTime').value=t.test_time||'';document.getElementById('btLocation').value=t.location||'';document.getElementById('btFeeEnabled').checked=!!t.fee_enabled;document.getElementById('btFeeFields').style.display=t.fee_enabled?'block':'none';document.getElementById('btFeeAmount').value=t.test_fee||0;document.getElementById('btPaymentMethod').value=t.payment_method||'portal';setBtFeeMode(t.fee_mode||'per_belt');document.getElementById('btNotes').value=t.notes||'';document.getElementById('beltTestMsg').textContent='';document.getElementById('addBeltTestModal').classList.add('active'); }
