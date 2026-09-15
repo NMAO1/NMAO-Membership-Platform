@@ -20672,6 +20672,39 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
   subscribeSmsInbox();
 
 })();
+
+// §LIVE-REFRESH (Phase 1) — keep the open dashboard near-live without a manual reload.
+// Re-pulls the ACTIVE page's data on a paused-when-hidden interval + the instant the staffer
+// returns to the tab. Messages are intentionally omitted (already live via the sms_inbox realtime
+// subscription + 60s badge poll above). Guardrails: never refresh while a modal/panel is open or an
+// input is focused (won't clobber a checkout or a half-typed form), and only the VISIBLE tab refreshes.
+(function(){
+  var INTERVAL_MS = 25000;
+  var REFRESH = {
+    home:     function(){ if(window.loadRevenue) loadRevenue(); if(window.buildHomeStats) buildHomeStats(); },
+    members:  function(){ if(window.loadStudents) loadStudents(); },
+    leads:    function(){ if(window.loadLeads) loadLeads(); },
+    payments: function(){ if(window.loadPaymentsLedger) loadPaymentsLedger(); }
+  };
+  function safeToRefresh(){
+    if(document.hidden) return false;
+    if(document.querySelector('.modal-overlay.active')) return false;            // a modal is open = mid-task
+    var mp=document.getElementById('makePaymentPanel'); if(mp && mp.offsetParent!==null) return false;
+    var ae=document.activeElement;
+    if(ae){ var tag=(ae.tagName||'').toLowerCase(); if(tag==='input'||tag==='textarea'||tag==='select'||ae.isContentEditable) return false; }
+    return true;
+  }
+  function refreshNow(){
+    if(!safeToRefresh()) return;
+    var fn=REFRESH[window.__currentPage];
+    if(fn){ try{ fn(); }catch(e){} }
+  }
+  setInterval(refreshNow, INTERVAL_MS);                                          // paused-when-hidden (guarded above)
+  var _t=null;
+  function soon(){ clearTimeout(_t); _t=setTimeout(refreshNow, 400); }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) soon(); });
+  window.addEventListener('focus', soon);
+})();
 </script>
 <script>
 // ═══════════════════ §FULFILLMENT — Retail fulfillment queue ═══════════════════
