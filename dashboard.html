@@ -3074,7 +3074,7 @@
 
 <!-- §MODAL-PRODUCT -->
 <div class="modal-overlay" id="addProductModal">
-  <div class="modal" style="width:840px;max-width:96vw">
+  <div class="modal" style="width:1080px;max-width:96vw">
     <div class="modal-header"><span class="modal-title" id="addProductTitle">Add Product</span><button class="help-hint-inline" onclick="openHelpPopover('retail.prod_form',this)" title="Help">?</button><button class="modal-close" onclick="safeClose('addProductModal',closeAddProduct)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
 <input type="hidden" id="productEditId" value="" />
@@ -3087,10 +3087,6 @@
             <div class="field"><label>Product Name <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_name',this)" title="Help">?</button></label><input type="text" id="productName" placeholder="e.g. Karate Gi - Adult Medium" /></div>
             <div class="form-row"><div class="field"><label>Category <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_category',this)" title="Help">?</button></label><select id="productCategory"><option value="Uniforms">Uniforms</option><option value="Gear">Gear</option><option value="Weapons">Weapons</option><option value="Supplements">Supplements</option><option value="Apparel">Apparel</option><option value="Private Lessons">Private Lessons</option><option value="Events">Events</option><option value="Other">Other</option></select></div><div class="field"><label>Subcategory (optional) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_subcategory',this)" title="Help">?</button></label><input type="text" id="productSubcategory" placeholder="e.g. Gi, Gloves" /></div></div>
             <div class="field" style="margin-bottom:0"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_desc',this)" title="Help">?</button></label><div id="productDescEditor"></div></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
-            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tag" style="color:var(--gold)"></i>Pricing <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_pricing',this)" title="Help">?</button></div>
-            <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Retail Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_retail',this)" title="Help">?</button></label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div><div class="field" style="margin-bottom:0"><label>Wholesale Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_wholesale',this)" title="Help">?</button></label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div></div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:1rem">
@@ -3118,6 +3114,10 @@
               <button class="badge-style-btn" data-badge="black" onclick="selectBadgeStyle('black',this)" style="color:var(--gold);border-color:var(--gold);background:#000">Black</button>
             </div>
             <div class="field" id="badgeTextField" style="display:none;margin-bottom:0"><label>Badge Text (max 20 chars) <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_badge',this)" title="Help">?</button></label><input type="text" id="productBadgeText" placeholder="e.g. SALE, NEW" maxlength="20" style="text-transform:uppercase" /></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-tag" style="color:var(--gold)"></i>Pricing <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_pricing',this)" title="Help">?</button></div>
+            <div class="form-row" style="margin-bottom:0"><div class="field" style="margin-bottom:0"><label>Retail Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_retail',this)" title="Help">?</button></label><input type="number" id="productRetailPrice" value="0" min="0" step="0.01" /></div><div class="field" style="margin-bottom:0"><label>Wholesale Price <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_wholesale',this)" title="Help">?</button></label><input type="number" id="productWholesalePrice" value="0" min="0" step="0.01" /></div></div>
           </div>
         </div>
       </div>
