@@ -1558,6 +1558,14 @@ function openChangePw(){
 }
 function closeChangePw(){ var m=document.getElementById('changePwModal'); if(m) m.classList.remove('active'); }
 function maybePromptFirstRunPassword(){
+  // §PW-FIX 2026-09-16: force the "set your password" screen ONLY during a recovery/
+  // setup session — i.e. first entry via an invite link, or a reset link. Never on a
+  // normal password login. The old gate keyed on students.password_set, which is
+  // written from the member's own session and can silently fail to persist (RLS
+  // email-match, guardian/family logins, case mismatch) — so the modal re-appeared on
+  // EVERY login. First-entry & reset arrivals are handled by showRecoverySetPassword();
+  // this normal-render prompt now stays quiet unless we're genuinely in recovery.
+  if(!recoveryMode) return;
   if(!currentStudent) return;
   if(currentStudent.password_set) return;
   document.getElementById('firstRunPwInput').value='';
