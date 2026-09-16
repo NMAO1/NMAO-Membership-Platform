@@ -471,6 +471,8 @@
     .ql-container { background: var(--black); border-color: var(--border) !important; border-radius: 0 0 2px 2px; min-height: 160px; }
     .ql-editor   { color: var(--white); font-family: var(--font-ui); font-size: 0.95rem; min-height: 160px; }
     .ql-editor.ql-blank::before { color: var(--muted); }
+    /* Product editor: shorter description so the modal's left column balances the right stack. */
+    #productDescEditor.ql-container, #productDescEditor .ql-editor { min-height: 128px; }
     .ql-toolbar .ql-stroke { stroke: #9A8F80 !important; }
     .ql-toolbar .ql-fill   { fill:  #9A8F80 !important; }
     .ql-toolbar button:hover .ql-stroke { stroke: var(--gold) !important; }
@@ -3089,7 +3091,7 @@
             <div class="field" style="margin-bottom:0"><label>Description <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('retail.prod_desc',this)" title="Help">?</button></label><div id="productDescEditor"></div></div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:1rem">
+        <div style="display:flex;flex-direction:column;gap:1rem;justify-content:space-between">
           <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
             <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-boxes-stacked" style="color:var(--gold)"></i>Availability &amp; Inventory <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_availability',this)" title="Help">?</button></div>
             <div class="check-group" style="margin-top:0">
