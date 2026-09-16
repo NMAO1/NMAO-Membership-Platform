@@ -69,7 +69,7 @@
     var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
     var sb = supabase.createClient(SURL, SKEY);
 
-    var state = { slug: null, product_id: null, price: 0, paying: false };
+    var state = { slug: null, product_id: null, price: 0, paying: false, variants: [], variant_id: null };
 
     function getParam(name){ var p = new URLSearchParams(window.location.search); return p.get(name); }
 
@@ -135,10 +135,35 @@
         : '';
       var descText = d.description ? stripHtml(d.description) : '';
       var desc = descText ? ('<div class="pay-desc">' + escapeHtml(descText) + '</div>') : '';
-      var soldOut = (d.in_stock === false);
+
+      // §RETAIL-VARIANTS — size picker when the product has variants; else the flat product.
+      var hasVariants = state.variants && state.variants.length;
+      var sizePicker = '', soldOut, priceStr;
+      if (hasVariants) {
+        var inStock = state.variants.filter(function(v){ return v.in_stock; });
+        soldOut = inStock.length === 0;
+        var first = inStock[0] || state.variants[0];
+        state.variant_id = first ? first.id : null;
+        state.price = first ? first.retail_price : d.retail_price;
+        priceStr = money(state.price);
+        var optName = (first && first.option1_name) ? first.option1_name : 'Size';
+        var opts = state.variants.map(function(v){
+          var lbl = v.label || (v.option1 + (v.option2 ? ' / ' + v.option2 : ''));
+          return '<option value="' + escapeHtml(v.id) + '" data-price="' + (v.retail_price || 0) + '"' +
+                 (v.in_stock ? '' : ' disabled') + (v.id === state.variant_id ? ' selected' : '') + '>' +
+                 escapeHtml(lbl) + ' — ' + escapeHtml(money(v.retail_price)) + (v.in_stock ? '' : ' (sold out)') + '</option>';
+        }).join('');
+        sizePicker = '<div style="margin:0 0 1.1rem;text-align:left">' +
+          '<label for="paySize" style="display:block;font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Choose ' + escapeHtml(optName) + '</label>' +
+          '<select id="paySize" onchange="onSizeChange()" style="width:100%;padding:0.7rem;background:var(--black,#0A0A0A);color:#fff;border:1px solid var(--border);border-radius:8px;font-size:1rem">' + opts + '</select>' +
+        '</div>';
+      } else {
+        soldOut = (d.in_stock === false);
+        priceStr = money(d.retail_price);
+      }
       var btn = soldOut
         ? '<button class="btn-primary" disabled>Sold Out</button>'
-        : '<button class="btn-primary" id="payBtn" onclick="payNow()">Pay ' + escapeHtml(money(d.retail_price)) + '</button>';
+        : '<button class="btn-primary" id="payBtn" onclick="payNow()">Pay <span id="payBtnAmt">' + escapeHtml(priceStr) + '</span></button>';
 
       document.getElementById('root').innerHTML =
         '<div class="header">' + logo +
@@ -148,12 +173,24 @@
         '<div class="card">' +
           img +
           '<div class="offer-headline">' + escapeHtml(d.name || 'Pay') + '</div>' +
-          '<div class="pay-price">' + escapeHtml(money(d.retail_price)) + '</div>' +
+          '<div class="pay-price" id="payPrice">' + escapeHtml(priceStr) + '</div>' +
           desc +
+          sizePicker +
           btn +
           '<div id="payMsg"></div>' +
           '<div class="fineprint">Secure checkout powered by Stripe. A receipt is emailed to you.</div>' +
         '</div>';
+    }
+
+    function onSizeChange(){
+      var sel = document.getElementById('paySize');
+      if (!sel) return;
+      var opt = sel.options[sel.selectedIndex];
+      if (!opt || opt.disabled) return;
+      state.variant_id = sel.value;
+      state.price = parseFloat(opt.getAttribute('data-price')) || 0;
+      var p1 = document.getElementById('payPrice'); if (p1) p1.textContent = money(state.price);
+      var p2 = document.getElementById('payBtnAmt'); if (p2) p2.textContent = money(state.price);
     }
 
     async function payNow(){
@@ -164,7 +201,7 @@
       setMsg('', '');
       try {
         var res = await sb.functions.invoke('create-public-product-checkout', {
-          body: { slug: state.slug, product_id: state.product_id }
+          body: { slug: state.slug, product_id: state.product_id, variant_id: state.variant_id }
         });
         var data = res.data || {};
         if (data.checkout_url){ window.location.href = data.checkout_url; return; }
@@ -198,6 +235,11 @@
         }
         var d = res.data[0];
         state.price = d.retail_price;
+        // §RETAIL-VARIANTS — if this product has sizes, load them for a picker.
+        try {
+          var vres = await sb.rpc('get_public_product_variants', { p_slug: slug, p_product_id: product });
+          state.variants = (vres && vres.data) ? vres.data : [];
+        } catch (e) { state.variants = []; }
         applyBranding(d);
         renderProduct(d);
         if (getParam('cancelled')){ setMsg('Payment cancelled. You can try again.', ''); }

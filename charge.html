@@ -105,15 +105,16 @@ let ITEMS = null;
     if(Array.isArray(arr) && arr.length){
       ITEMS = arr.map(function(i){
         // unit_amount may be negative (a discount line) so the Stripe charge nets down.
+        // i.v = product_variants.id (size/color) — server prices + decrements that variant.
         return { name: String(i.n || 'Item'), unit_amount: Math.round(i.a || 0),
-                 quantity: Math.max(1, parseInt(i.q) || 1), product_id: i.p || null, item_type: i.t || 'custom' };
+                 quantity: Math.max(1, parseInt(i.q) || 1), product_id: i.p || null, variant_id: i.v || null, item_type: i.t || 'custom' };
       });
     }
   }catch(e){}
 })();
 const CHARGE_TOTAL = ITEMS ? (ITEMS.reduce(function(s,i){ return s + i.unit_amount * i.quantity; }, 0) / 100) : AMT;
 const LINE_ITEMS = ITEMS
-  ? ITEMS.map(function(i){ return { name: i.name + (i.quantity > 1 ? ' x' + i.quantity : ''), unit_amount: i.unit_amount, quantity: i.quantity, product_id: i.product_id, item_type: i.item_type }; })
+  ? ITEMS.map(function(i){ return { name: i.name + (i.quantity > 1 ? ' x' + i.quantity : ''), unit_amount: i.unit_amount, quantity: i.quantity, product_id: i.product_id, variant_id: i.variant_id, item_type: i.item_type }; })
   : [{ name: DESC, unit_amount: Math.round(AMT * 100), quantity: 1, product_id: null, item_type: 'custom' }];
 
 const $ = (id) => document.getElementById(id);

@@ -3121,6 +3121,23 @@
           </div>
         </div>
       </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;margin-top:1rem">
+        <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-layer-group" style="color:var(--gold)"></i>Sizes &amp; Variants <button class="help-hint-inline" onclick="openHelpPopover('retail.sec_variants',this)" title="Help">?</button></div>
+        <label class="check-item"><input type="checkbox" id="productHasVariants" onchange="toggleVariants()" /><span class="check-item-label">This product comes in multiple sizes / variants</span></label>
+        <div id="variantsBody" style="display:none;margin-top:0.85rem">
+          <div class="form-row"><div class="field"><label>Option 1 name</label><input type="text" id="variantOpt1Name" value="Size" placeholder="Size" onchange="_syncVariantHead()" /></div><div class="field"><label>Option 2 name (optional)</label><input type="text" id="variantOpt2Name" placeholder="e.g. Color" onchange="_syncVariantHead()" /></div></div>
+          <div class="form-row"><div class="field"><label>Option 1 values (comma-separated)</label><input type="text" id="variantOpt1Values" placeholder="S, M, L, XL, XXL" /></div><div class="field"><label>Option 2 values (comma-separated)</label><input type="text" id="variantOpt2Values" placeholder="Black, White" /></div></div>
+          <button type="button" class="panel-action" onclick="generateVariantGrid()"><i class="fa-solid fa-table-cells"></i> Generate rows</button>
+          <div style="overflow-x:auto;margin-top:0.85rem">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+              <thead><tr id="variantHeadRow" style="text-align:left;color:var(--muted)"><th style="padding:0.35rem">Size</th><th class="variant-opt2-col" style="padding:0.35rem;display:none">Option 2</th><th style="padding:0.35rem">SKU</th><th style="padding:0.35rem">Price</th><th style="padding:0.35rem">Qty</th><th></th></tr></thead>
+              <tbody id="variantRows"></tbody>
+            </table>
+          </div>
+          <button type="button" class="panel-action" style="margin-top:0.5rem" onclick="addVariantRow()"><i class="fa-solid fa-plus"></i> Add row</button>
+          <p style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem">Leave Price blank to use the product's retail price. Inventory is tracked per row.</p>
+        </div>
+      </div>
       <button class="btn-gold-full" style="margin-top:1.25rem" onclick="saveProduct()">Save Product</button>
       <p class="form-msg" id="productMsg"></p>
     </div>
@@ -16011,7 +16028,8 @@ function renderProducts(){
     if(p.featured)  badges+='<span class="chip chip-pending" style="font-size:0.65rem">Featured</span>';
     if(p.quick_list)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold)">Quick List</span>';
     if(p.member_app)badges+='<span class="chip chip-active" style="font-size:0.65rem">App</span>';
-    if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
+    if(p.has_variants)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)"><i class="fa-solid fa-layer-group" style="font-size:0.6rem;margin-right:2px"></i>Sizes</span>';
+    else if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
     var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" alt="Product image" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';
     var badgeTag=p.badge_style&&p.badge_text?'<div class="product-badge-tag badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';
     var delBtn='<button onclick="event.stopPropagation();deleteProduct(\''+p.id+'\')" style="position:absolute;top:0.4rem;left:0.4rem;width:28px;height:28px;background:rgba(0,0,0,0.7);border:1px solid rgba(224,112,112,0.5);color:#E07070;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2" title="Delete product"><i class="fa-solid fa-trash" style="font-size:0.72rem"></i></button>';
@@ -16032,15 +16050,19 @@ function openProductPayQr(pid){
   openQrModal({title:'Pay QR - '+(p.name||'Item'), url:url, filenameBase:(p.name||'product')+'-pay-qr', flyerText:flyer});
 }
   function selectBadgeStyle(style,btn){ selectedBadgeStyle=style; document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.remove('selected');}); btn.classList.add('selected'); document.getElementById('badgeTextField').style.display=style?'block':'none'; }
-function openAddProduct(){ document.getElementById('addProductTitle').textContent='Add Product';document.getElementById('productEditId').value='';document.getElementById('productName').value='';document.getElementById('productCategory').value='Uniforms';document.getElementById('productSubcategory').value='';document.getElementById('productRetailPrice').value='0';document.getElementById('productWholesalePrice').value='0';document.getElementById('productTrackInventory').checked=false;document.getElementById('productFeatured').checked=false;document.getElementById('productQuickList').checked=false;document.getElementById('productMemberApp').checked=false;document.getElementById('productPublicPay').checked=false;document.getElementById('productInventoryQty').value='0';document.getElementById('productReorderQty').value='0';document.getElementById('inventoryFields').style.display='none';document.getElementById('productBadgeText').value='';selectedBadgeStyle='';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.remove('selected');});var noneBtn=document.querySelector('.badge-style-btn[data-badge=""]');if(noneBtn)noneBtn.classList.add('selected');document.getElementById('badgeTextField').style.display='none';window._pendingProductImageUrl=null;var prevAdd=document.getElementById('productImagePreview');if(prevAdd)prevAdd.innerHTML='<i class="fa-solid fa-box"></i>';document.getElementById('productMsg').textContent='';setTimeout(function(){if(quillEditors['productDescEditor'])quillEditors['productDescEditor'].setText('');},50);document.getElementById('addProductModal').classList.add('active'); }
-function openEditProduct(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; document.getElementById('addProductTitle').textContent='Edit Product';document.getElementById('productEditId').value=p.id;document.getElementById('productName').value=p.name||'';document.getElementById('productCategory').value=p.category||'Uniforms';document.getElementById('productSubcategory').value=p.subcategory||'';document.getElementById('productRetailPrice').value=p.retail_price||0;document.getElementById('productWholesalePrice').value=p.wholesale_price||0;document.getElementById('productTrackInventory').checked=!!p.track_inventory;document.getElementById('productFeatured').checked=!!p.featured;document.getElementById('productQuickList').checked=!!p.quick_list;document.getElementById('productMemberApp').checked=!!p.member_app;document.getElementById('productPublicPay').checked=!!p.public_pay_enabled;document.getElementById('productInventoryQty').value=p.inventory_qty||0;document.getElementById('productReorderQty').value=p.reorder_qty||0;document.getElementById('inventoryFields').style.display=p.track_inventory?'block':'none';selectedBadgeStyle=p.badge_style||'';document.getElementById('productBadgeText').value=p.badge_text||'';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.badge===(p.badge_style||''));});document.getElementById('badgeTextField').style.display=selectedBadgeStyle?'block':'none';window._pendingProductImageUrl=p.image_url||null;var prevEdit=document.getElementById('productImagePreview');if(prevEdit){if(p.image_url){prevEdit.innerHTML='<img src="'+p.image_url+'" style="width:100%;height:100%;object-fit:cover" alt="Product image" />';}else{prevEdit.innerHTML='<i class="fa-solid fa-box"></i>';}}document.getElementById('productMsg').textContent='';setTimeout(function(){if(quillEditors['productDescEditor'])setQuillContent('productDescEditor',p.description||'');},50);document.getElementById('addProductModal').classList.add('active'); }
+function openAddProduct(){ document.getElementById('addProductTitle').textContent='Add Product';document.getElementById('productEditId').value='';document.getElementById('productName').value='';document.getElementById('productCategory').value='Uniforms';document.getElementById('productSubcategory').value='';document.getElementById('productRetailPrice').value='0';document.getElementById('productWholesalePrice').value='0';document.getElementById('productTrackInventory').checked=false;document.getElementById('productFeatured').checked=false;document.getElementById('productQuickList').checked=false;document.getElementById('productMemberApp').checked=false;document.getElementById('productPublicPay').checked=false;document.getElementById('productInventoryQty').value='0';document.getElementById('productReorderQty').value='0';document.getElementById('inventoryFields').style.display='none';document.getElementById('productBadgeText').value='';selectedBadgeStyle='';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.remove('selected');});var noneBtn=document.querySelector('.badge-style-btn[data-badge=""]');if(noneBtn)noneBtn.classList.add('selected');document.getElementById('badgeTextField').style.display='none';window._pendingProductImageUrl=null;var prevAdd=document.getElementById('productImagePreview');if(prevAdd)prevAdd.innerHTML='<i class="fa-solid fa-box"></i>';document.getElementById('productMsg').textContent='';document.getElementById('productHasVariants').checked=false;document.getElementById('variantsBody').style.display='none';document.getElementById('variantOpt1Name').value='Size';document.getElementById('variantOpt2Name').value='';document.getElementById('variantOpt1Values').value='';document.getElementById('variantOpt2Values').value='';document.getElementById('variantRows').innerHTML='';setTimeout(function(){if(quillEditors['productDescEditor'])quillEditors['productDescEditor'].setText('');},50);document.getElementById('addProductModal').classList.add('active'); }
+function openEditProduct(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; document.getElementById('addProductTitle').textContent='Edit Product';document.getElementById('productEditId').value=p.id;document.getElementById('productName').value=p.name||'';document.getElementById('productCategory').value=p.category||'Uniforms';document.getElementById('productSubcategory').value=p.subcategory||'';document.getElementById('productRetailPrice').value=p.retail_price||0;document.getElementById('productWholesalePrice').value=p.wholesale_price||0;document.getElementById('productTrackInventory').checked=!!p.track_inventory;document.getElementById('productFeatured').checked=!!p.featured;document.getElementById('productQuickList').checked=!!p.quick_list;document.getElementById('productMemberApp').checked=!!p.member_app;document.getElementById('productPublicPay').checked=!!p.public_pay_enabled;document.getElementById('productInventoryQty').value=p.inventory_qty||0;document.getElementById('productReorderQty').value=p.reorder_qty||0;document.getElementById('inventoryFields').style.display=p.track_inventory?'block':'none';selectedBadgeStyle=p.badge_style||'';document.getElementById('productBadgeText').value=p.badge_text||'';document.querySelectorAll('.badge-style-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.badge===(p.badge_style||''));});document.getElementById('badgeTextField').style.display=selectedBadgeStyle?'block':'none';window._pendingProductImageUrl=p.image_url||null;var prevEdit=document.getElementById('productImagePreview');if(prevEdit){if(p.image_url){prevEdit.innerHTML='<img src="'+p.image_url+'" style="width:100%;height:100%;object-fit:cover" alt="Product image" />';}else{prevEdit.innerHTML='<i class="fa-solid fa-box"></i>';}}document.getElementById('productMsg').textContent='';document.getElementById('productHasVariants').checked=!!p.has_variants;document.getElementById('variantOpt1Name').value=p.option1_name||'Size';document.getElementById('variantOpt2Name').value=p.option2_name||'';document.getElementById('variantOpt1Values').value='';document.getElementById('variantOpt2Values').value='';document.getElementById('variantsBody').style.display=p.has_variants?'block':'none';document.getElementById('variantRows').innerHTML='';if(p.has_variants){_syncVariantHead();loadVariantsInto(p.id);}setTimeout(function(){if(quillEditors['productDescEditor'])setQuillContent('productDescEditor',p.description||'');},50);document.getElementById('addProductModal').classList.add('active'); }
 function closeAddProduct(){ document.getElementById('addProductModal').classList.remove('active'); }
 async function saveProduct(){
   var eid=document.getElementById('productEditId').value; var name=document.getElementById('productName').value.trim();
   if(!name){setMsg('productMsg','Product name required.','error');return;} setMsg('productMsg','Saving...','');
-  var payload={name:name,category:document.getElementById('productCategory').value,subcategory:document.getElementById('productSubcategory').value.trim()||null,retail_price:parseFloat(document.getElementById('productRetailPrice').value)||0,wholesale_price:parseFloat(document.getElementById('productWholesalePrice').value)||0,description:getQuillContent('productDescEditor'),track_inventory:document.getElementById('productTrackInventory').checked,inventory_qty:parseInt(document.getElementById('productInventoryQty').value)||0,reorder_qty:parseInt(document.getElementById('productReorderQty').value)||0,featured:document.getElementById('productFeatured').checked,quick_list:document.getElementById('productQuickList').checked,member_app:document.getElementById('productMemberApp').checked,public_pay_enabled:document.getElementById('productPublicPay').checked,badge_style:selectedBadgeStyle||null,badge_text:document.getElementById('productBadgeText').value.trim().toUpperCase()||null,image_url:window._pendingProductImageUrl||null,active:true};
-  var r; if(eid){r=await sb.from('products').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('products').insert(payload);}
-  if(r.error){setMsg('productMsg',r.error.message,'error');}else{setMsg('productMsg',name+(eid?' updated!':' added!'),'success');await loadProducts();setTimeout(closeAddProduct,1000);}
+  var hasVar=document.getElementById('productHasVariants').checked;
+  var payload={name:name,category:document.getElementById('productCategory').value,subcategory:document.getElementById('productSubcategory').value.trim()||null,retail_price:parseFloat(document.getElementById('productRetailPrice').value)||0,wholesale_price:parseFloat(document.getElementById('productWholesalePrice').value)||0,description:getQuillContent('productDescEditor'),track_inventory:document.getElementById('productTrackInventory').checked,inventory_qty:parseInt(document.getElementById('productInventoryQty').value)||0,reorder_qty:parseInt(document.getElementById('productReorderQty').value)||0,featured:document.getElementById('productFeatured').checked,quick_list:document.getElementById('productQuickList').checked,member_app:document.getElementById('productMemberApp').checked,public_pay_enabled:document.getElementById('productPublicPay').checked,badge_style:selectedBadgeStyle||null,badge_text:document.getElementById('productBadgeText').value.trim().toUpperCase()||null,image_url:window._pendingProductImageUrl||null,active:true,has_variants:hasVar,option1_name:hasVar?(document.getElementById('variantOpt1Name').value.trim()||'Size'):null,option2_name:(hasVar&&_variantOpt2Active())?document.getElementById('variantOpt2Name').value.trim():null};
+  var r,productId=eid; if(eid){r=await sb.from('products').update(payload).eq('id',eid);}else{payload.school_id=SID;r=await sb.from('products').insert(payload).select('id').single();if(r.data)productId=r.data.id;}
+  if(r.error){setMsg('productMsg',r.error.message,'error');return;}
+  try{ if(hasVar){await saveProductVariants(productId);} else if(eid){await sb.from('product_variants').delete().eq('product_id',eid);} }
+  catch(e){ setMsg('productMsg','Product saved, but variants failed: '+e.message,'error'); await loadProducts(); return; }
+  setMsg('productMsg',name+(eid?' updated!':' added!'),'success');await loadProducts();setTimeout(closeAddProduct,1000);
 }
 
 // §PRODUCT-DELETE — Soft delete a product (hides from catalog, preserves payment history)
@@ -16051,6 +16073,70 @@ async function deleteProduct(pid){
   var r=await sb.from('products').update({active:false}).eq('id',pid);
   if(r.error){showToast('Error: '+r.error.message,'error');return;}
   await loadProducts();
+}
+
+// ===== §RETAIL-VARIANTS — per-size inventory (product_variants table) =====
+function toggleVariants(){ document.getElementById('variantsBody').style.display=document.getElementById('productHasVariants').checked?'block':'none'; _syncVariantHead(); }
+function _variantOpt2Active(){ return !!document.getElementById('variantOpt2Name').value.trim(); }
+function _syncVariantHead(){
+  var head=document.getElementById('variantHeadRow'); if(!head)return;
+  head.querySelector('th').textContent=document.getElementById('variantOpt1Name').value.trim()||'Size';
+  var opt2=_variantOpt2Active();
+  document.querySelectorAll('.variant-opt2-col').forEach(function(c){c.style.display=opt2?'':'none';});
+  var head2=head.querySelector('th.variant-opt2-col'); if(head2)head2.textContent=document.getElementById('variantOpt2Name').value.trim()||'Option 2';
+}
+function _esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+function addVariantRow(d){
+  d=d||{}; var opt2=_variantOpt2Active();
+  var tr=document.createElement('tr');
+  tr.innerHTML='<td style="padding:0.25rem"><input type="text" class="v-opt1" value="'+_esc(d.option1)+'" style="width:100%" placeholder="e.g. Large" /></td>'+
+    '<td class="variant-opt2-col" style="padding:0.25rem;'+(opt2?'':'display:none')+'"><input type="text" class="v-opt2" value="'+_esc(d.option2)+'" style="width:100%" /></td>'+
+    '<td style="padding:0.25rem"><input type="text" class="v-sku" value="'+_esc(d.sku)+'" style="width:100%" placeholder="—" /></td>'+
+    '<td style="padding:0.25rem"><input type="number" class="v-price" value="'+(d.retail_price!=null?d.retail_price:'')+'" min="0" step="0.01" style="width:90px" placeholder="base" /></td>'+
+    '<td style="padding:0.25rem"><input type="number" class="v-qty" value="'+(d.inventory_qty!=null?d.inventory_qty:0)+'" min="0" style="width:70px" /></td>'+
+    '<td style="padding:0.25rem"><button type="button" class="panel-action" onclick="this.closest(\'tr\').remove()" title="Remove"><i class="fa-solid fa-trash"></i></button></td>';
+  document.getElementById('variantRows').appendChild(tr);
+}
+function generateVariantGrid(){
+  _syncVariantHead();
+  var v1=document.getElementById('variantOpt1Values').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  if(!v1.length){showToast('Enter Option 1 values first (e.g. S, M, L)','error');return;}
+  var opt2=_variantOpt2Active();
+  var v2=opt2?document.getElementById('variantOpt2Values').value.split(',').map(function(s){return s.trim();}).filter(Boolean):[''];
+  if(opt2&&!v2.length)v2=[''];
+  document.getElementById('variantRows').innerHTML='';
+  v1.forEach(function(a){ v2.forEach(function(b){ addVariantRow({option1:a,option2:opt2?b:'',inventory_qty:0}); }); });
+}
+async function loadVariantsInto(productId){
+  document.getElementById('variantRows').innerHTML='';
+  var r=await sb.from('product_variants').select('*').eq('product_id',productId).order('sort_order');
+  (r.data||[]).forEach(function(v){ addVariantRow(v); });
+}
+function _readVariantRows(){
+  var out=[], i=0, opt2=_variantOpt2Active();
+  document.querySelectorAll('#variantRows tr').forEach(function(tr){
+    var o1=tr.querySelector('.v-opt1').value.trim(); if(!o1)return;
+    var priceRaw=tr.querySelector('.v-price').value;
+    out.push({option1:o1,option2:opt2?(tr.querySelector('.v-opt2').value.trim()||null):null,sku:tr.querySelector('.v-sku').value.trim()||null,retail_price:priceRaw===''?null:(parseFloat(priceRaw)||0),inventory_qty:parseInt(tr.querySelector('.v-qty').value)||0,sort_order:i++});
+  });
+  return out;
+}
+// Diff-based save: match existing by option combo → update; new → insert; missing → delete.
+// Avoids churning variant ids (Phase 2 payment lines will reference them).
+async function saveProductVariants(productId){
+  var rows=_readVariantRows();
+  var er=await sb.from('product_variants').select('id,option1,option2').eq('product_id',productId);
+  var existing=er.data||[];
+  var keyOf=function(o1,o2){return o1+''+(o2||'');};
+  var exMap={}; existing.forEach(function(e){exMap[keyOf(e.option1,e.option2)]=e.id;});
+  var seen={};
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i]; var k=keyOf(row.option1,row.option2); seen[k]=true;
+    var rec={option1:row.option1,option2:row.option2,label:row.option2?(row.option1+' / '+row.option2):row.option1,sku:row.sku,retail_price:row.retail_price,inventory_qty:row.inventory_qty,track_inventory:true,active:true,sort_order:row.sort_order};
+    if(exMap[k]){ var u=await sb.from('product_variants').update(rec).eq('id',exMap[k]); if(u.error)throw new Error(u.error.message); }
+    else{ rec.product_id=productId; rec.school_id=SID; var ins=await sb.from('product_variants').insert(rec); if(ins.error)throw new Error(ins.error.message); }
+  }
+  for(var j=0;j<existing.length;j++){ var e=existing[j]; if(!seen[keyOf(e.option1,e.option2)]){ await sb.from('product_variants').delete().eq('id',e.id); } }
 }
 
 // POS
@@ -16071,7 +16157,34 @@ function filterPOSProducts(){
   if(!filtered.length){listEl.innerHTML='<div style="font-size:0.82rem;color:var(--muted);padding:0.5rem;font-style:italic">No products found.</div>';return;}
   listEl.innerHTML=filtered.map(function(p){var thumb=p.image_url?'<img src="'+p.image_url+'" style="width:40px;height:40px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)" alt="Product image" />':'<div style="width:40px;height:40px;background:var(--black);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;flex-shrink:0"><i class="fa-solid fa-box"></i></div>';return '<div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border)" onclick="addToPOSCart(\''+p.id+'\')">'+thumb+'<div style="flex:1;min-width:0"><div style="font-size:0.85rem;color:var(--white)">'+p.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+p.category+'</div></div><div style="font-size:0.88rem;color:var(--gold);flex-shrink:0">$'+parseFloat(p.retail_price||0).toFixed(2)+'</div></div>';}).join('');
 }
-function addToPOSCart(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='product';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name,price:parseFloat(p.retail_price||0),qty:1,type:'product'});} renderPOSCart(); }
+function addToPOSCart(pid){ var p=allProducts.find(function(x){return x.id===pid;}); if(!p) return; if(p.has_variants){ openPOSVariantPicker(p); return; } var existing=posCart.find(function(c){return c.id===pid&&c.type==='product';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,productId:p.id,name:p.name,price:parseFloat(p.retail_price||0),qty:1,type:'product'});} renderPOSCart(); }
+// §RETAIL-VARIANTS — pick a size/variant before adding to the register cart.
+async function openPOSVariantPicker(p){
+  var ov=document.getElementById('posVariantOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='posVariantOverlay'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999'; ov.onclick=function(e){if(e.target===ov)ov.style.display='none';}; document.body.appendChild(ov); }
+  ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;max-width:420px;width:90%;max-height:80vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem"><div style="font-weight:600;color:var(--white)">'+escapeCheckout(p.name)+' — choose '+escapeCheckout((p.option1_name||'size').toLowerCase())+'</div><button class="btn-sm" onclick="document.getElementById(\'posVariantOverlay\').style.display=\'none\'">✕</button></div><div id="posVariantList" style="color:var(--muted)">Loading…</div></div>';
+  ov.style.display='flex';
+  var r=await sb.from('product_variants').select('*').eq('product_id',p.id).eq('active',true).order('sort_order');
+  var vs=r.data||[]; var list=document.getElementById('posVariantList');
+  if(!vs.length){ list.innerHTML='<div style="font-style:italic">No sizes configured for this product.</div>'; return; }
+  window._posVariantProduct=p; window._posVariants=vs;
+  list.innerHTML=vs.map(function(v,idx){
+    var price=(v.retail_price!=null?v.retail_price:p.retail_price)||0;
+    var oos=v.track_inventory&&(v.inventory_qty||0)<=0;
+    var stock=v.track_inventory?(oos?'Out of stock':(v.inventory_qty+' left')):'';
+    var label=v.label||(v.option1+(v.option2?' / '+v.option2:''));
+    return '<button '+(oos?'disabled':'')+' onclick="pickPOSVariant('+idx+')" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:0.7rem 0.9rem;margin-bottom:0.5rem;background:'+(oos?'transparent':'var(--bg)')+';border:1px solid var(--border);border-radius:8px;color:'+(oos?'var(--muted)':'var(--white)')+';cursor:'+(oos?'not-allowed':'pointer')+'"><span>'+escapeCheckout(label)+'</span><span style="color:var(--gold)">$'+price.toFixed(2)+(stock?' · <span style="color:var(--muted);font-size:0.75rem">'+stock+'</span>':'')+'</span></button>';
+  }).join('');
+}
+function pickPOSVariant(idx){
+  var p=window._posVariantProduct, v=(window._posVariants||[])[idx]; if(!p||!v) return;
+  var price=(v.retail_price!=null?v.retail_price:p.retail_price)||0;
+  var label=v.label||(v.option1+(v.option2?' / '+v.option2:''));
+  var cartId=p.id+'::'+v.id; var existing=posCart.find(function(c){return c.id===cartId;});
+  if(existing){existing.qty+=1;}else{posCart.push({id:cartId,productId:p.id,variantId:v.id,name:p.name+' — '+label,price:parseFloat(price)||0,qty:1,type:'product'});}
+  var ov=document.getElementById('posVariantOverlay'); if(ov)ov.style.display='none';
+  renderPOSCart();
+}
 function addPackToPOSCart(pid){ var p=allSessionPacks.find(function(x){return x.id===pid;}); if(!p) return; var existing=posCart.find(function(c){return c.id===pid&&c.type==='pack';}); if(existing){existing.qty+=1;}else{posCart.push({id:p.id,name:p.name+' ('+p.quantity+' sessions)',price:parseFloat(p.price||0),qty:1,type:'pack',pack:p});} renderPOSCart(); }
 function addCustomToPOSCart(){
   var nameEl=document.getElementById('posCustomName'), amtEl=document.getElementById('posCustomAmount');
@@ -16139,7 +16252,8 @@ function posCartLineItems(){
       name: c.name + (c.qty > 1 ? ' x' + c.qty : ''),
       unit_amount: Math.round(c.price * 100),
       quantity: c.qty,
-      product_id: isCustom ? null : c.id,
+      product_id: isCustom ? null : (c.productId || c.id),
+      variant_id: c.variantId || null,
       item_type: c.type === 'pack' ? 'session_pack' : (isCustom ? 'custom' : 'product'),
     };
   });

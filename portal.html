@@ -3250,7 +3250,16 @@ async function buildShop(){
       .eq('active',true)
       .eq('member_app',true)
       .order('name');
+    // §RETAIL-VARIANTS — load per-size stock so variant products aren't hidden by their (0) product-level qty.
+    var vr=await sb.from('product_variants').select('*').eq('school_id',SID).eq('active',true).order('sort_order');
+    var variantsByProduct={}; (vr.data||[]).forEach(function(v){ (variantsByProduct[v.product_id]=variantsByProduct[v.product_id]||[]).push(v); });
+    window._shopVariants=variantsByProduct; window._shopProducts={};
     var products=(r.data||[]).filter(function(p){
+      window._shopProducts[p.id]=p;
+      if(p.has_variants){
+        var vs=variantsByProduct[p.id]||[];
+        return vs.some(function(v){ return !v.track_inventory || (v.inventory_qty||0)>0; });
+      }
       if(p.track_inventory && (p.inventory_qty||0)<=0) return false;
       return true;
     });
@@ -3292,15 +3301,7 @@ async function buildShop(){
             descHtml+
           '</div>'+
         '</div>'+
-        '<div class="shop-buy-row">'+
-          '<div class="shop-price">$'+price.toFixed(2)+'</div>'+
-          '<div class="shop-qty-control">'+
-            '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',-1,'+maxQty+')">-</button>'+
-            '<span class="shop-qty-num" id="pqty-'+p.id+'">1</span>'+
-            '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',1,'+maxQty+')">+</button>'+
-          '</div>'+
-          '<button class="btn-buy-product" id="pbtn-'+p.id+'" onclick="addToShopCart(\''+p.id+'\')"><i class="fa-solid fa-cart-plus" style="margin-right:0.3rem"></i>Add</button>'+
-        '</div>'+
+        _shopBuyRow(p,price,maxQty)+
       '</div>';
     }).join('');
     renderShopCart();
@@ -3320,6 +3321,62 @@ function updateProductQty(pid,delta,maxQty){
   qtyEl.textContent=next;
 }
 
+// §RETAIL-VARIANTS — member shop: buy-row is a size <select> for variant products.
+function _shopBuyRow(p,price,maxQty){
+  if(!p.has_variants){
+    return '<div class="shop-buy-row">'+
+      '<div class="shop-price">$'+price.toFixed(2)+'</div>'+
+      '<div class="shop-qty-control">'+
+        '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',-1,'+maxQty+')">-</button>'+
+        '<span class="shop-qty-num" id="pqty-'+p.id+'">1</span>'+
+        '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',1,'+maxQty+')">+</button>'+
+      '</div>'+
+      '<button class="btn-buy-product" id="pbtn-'+p.id+'" onclick="addToShopCart(\''+p.id+'\')"><i class="fa-solid fa-cart-plus" style="margin-right:0.3rem"></i>Add</button>'+
+    '</div>';
+  }
+  var vs=(window._shopVariants&&window._shopVariants[p.id])||[]; var first=null;
+  var opts=vs.map(function(v){
+    var vp=(v.retail_price!=null?v.retail_price:p.retail_price)||0;
+    var oos=v.track_inventory&&(v.inventory_qty||0)<=0; if(!oos&&!first)first=v;
+    var lbl=(v.label||(v.option1+(v.option2?' / '+v.option2:'')));
+    return '<option value="'+v.id+'" data-price="'+vp+'"'+(oos?' disabled':'')+'>'+lbl+' — $'+vp.toFixed(2)+(v.track_inventory?(oos?' (out)':' ('+v.inventory_qty+' left)'):'')+'</option>';
+  }).join('');
+  var startPrice=first?((first.retail_price!=null?first.retail_price:p.retail_price)||0):price;
+  return '<div class="shop-buy-row" style="flex-wrap:wrap;gap:0.5rem">'+
+    '<select id="vsel-'+p.id+'" onchange="onShopVariantChange(\''+p.id+'\')" style="flex:1 1 140px;min-width:130px;padding:0.45rem;background:var(--black);color:var(--white);border:1px solid var(--border);border-radius:6px;font-size:0.85rem">'+opts+'</select>'+
+    '<div class="shop-price" id="vprice-'+p.id+'">$'+startPrice.toFixed(2)+'</div>'+
+    '<div class="shop-qty-control">'+
+      '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',-1,99)">-</button>'+
+      '<span class="shop-qty-num" id="pqty-'+p.id+'">1</span>'+
+      '<button class="shop-qty-btn" onclick="updateProductQty(\''+p.id+'\',1,99)">+</button>'+
+    '</div>'+
+    '<button class="btn-buy-product" id="pbtn-'+p.id+'" onclick="addVariantToShopCart(\''+p.id+'\')"><i class="fa-solid fa-cart-plus" style="margin-right:0.3rem"></i>Add</button>'+
+  '</div>';
+}
+function onShopVariantChange(pid){
+  var sel=document.getElementById('vsel-'+pid), ps=document.getElementById('vprice-'+pid);
+  if(!sel||!ps)return; var opt=sel.options[sel.selectedIndex]; if(!opt)return;
+  ps.textContent='$'+(parseFloat(opt.getAttribute('data-price')||'0')||0).toFixed(2);
+}
+function addVariantToShopCart(pid){
+  var p=(window._shopProducts||{})[pid]; var vs=(window._shopVariants&&window._shopVariants[pid])||[];
+  var sel=document.getElementById('vsel-'+pid); if(!p||!sel){flashAddedButton(pid,'Error',true);return;}
+  var v=vs.filter(function(x){return x.id===sel.value;})[0];
+  if(!v){flashAddedButton(pid,'Pick a size',true);return;}
+  var qtyEl=document.getElementById('pqty-'+pid); var addQty=qtyEl?(parseInt(qtyEl.textContent)||1):1;
+  var vp=(v.retail_price!=null?v.retail_price:p.retail_price)||0;
+  var lbl=(v.label||(v.option1+(v.option2?' / '+v.option2:'')));
+  var maxQty=v.track_inventory?(v.inventory_qty||0):99;
+  var cartId=pid+'::'+v.id, existing=null;
+  for(var i=0;i<shopCart.length;i++){ if(shopCart[i].id===cartId){existing=shopCart[i];break;} }
+  var newQty=(existing?existing.qty:0)+addQty;
+  if(v.track_inventory && newQty>maxQty){ flashAddedButton(pid,'Stock limit',true); return; }
+  if(existing){ existing.qty=newQty; }
+  else{ shopCart.push({id:cartId,productId:pid,variantId:v.id,name:p.name+' — '+lbl,price:parseFloat(vp)||0,qty:addQty,image_url:p.image_url||null,track_inventory:!!v.track_inventory,inventory_qty:v.inventory_qty||0}); }
+  if(qtyEl)qtyEl.textContent='1';
+  flashAddedButton(pid,'Added',false);
+  renderShopCart();
+}
 async function addToShopCart(pid){
   var qtyEl=document.getElementById('pqty-'+pid);
   var addQty=qtyEl?(parseInt(qtyEl.textContent)||1):1;
@@ -3460,7 +3517,8 @@ async function checkoutShopCart(){
         name:c.name,
         unit_amount:Math.round(c.price*100),
         quantity:c.qty,
-        product_id:c.id,
+        product_id:c.productId||c.id,
+        variant_id:c.variantId||null,
         item_type:'product'
       };
     });
