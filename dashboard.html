@@ -16367,6 +16367,14 @@ async function checkoutPOS_cash(){
   var r = await sb.from('payments').insert(inserts);
   if(r.error){posShowResult(false,'Could not record sale',r.error.message);return;}
 
+  // §RETAIL-VARIANTS Phase 3 — cash sales decrement inventory (products + variants),
+  // matching the card path. Best-effort per line; a decrement hiccup never fails the sale.
+  for(var di=0; di<posCart.length; di++){
+    var dc=posCart[di];
+    if(dc.type!=='product') continue;
+    try{ await sb.rpc('pos_decrement_stock',{p_product_id:(dc.productId||dc.id), p_variant_id:(dc.variantId||null), p_qty:dc.qty}); }catch(e){}
+  }
+
   // Credit session packs if applicable
   for(var i=0; i<posCart.length; i++){
     var item = posCart[i];
