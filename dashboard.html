@@ -10038,7 +10038,7 @@ async function saveChangeMembership() {
   var mid=val; var pid=null; if(val.includes('|')){var parts=val.split('|');mid=parts[0];pid=parts[1];}
   var title=document.getElementById('profileMembershipChangeTitle').textContent;
   if(title==='Add Free Plan'){
-    var r=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'add',p_program_id:pid});
+    var r=await sb.rpc('assign_membership',{p_student_id:currentProfileStudent.id,p_membership_id:mid,p_mode:'add',p_program_id:pid,p_billing_method:'comp'});
     if(r.error){setMsg('changeMembershipMsg',r.error.message,'error');}else{setMsg('changeMembershipMsg','Added!','success');await loadProfileMemberships(currentProfileStudent.id);setTimeout(function(){document.getElementById('profileMembershipChangeBox').style.display='none';},800);}
   }else{
     var curMid=currentProfileStudent.membership_id||null;
@@ -12407,6 +12407,10 @@ async function loadUpcomingRevenue(){
     for(var i=0;i<rows.length;i++){
       var sm=rows[i]; var m=sm.memberships||{};
       if(m.class_limit_type==='class_pack') continue;
+      // §NON-RECURRING — one_time / trial / pack memberships are paid once (or a fixed
+      // prepaid term), so they must NEVER project a recurring charge. smIntervalMonths()
+      // otherwise defaults them to monthly and bills the full price every 30 days.
+      if(m.billing_type==='one_time'||m.billing_type==='trial'||m.billing_type==='pack') continue;
       var amt=smChargeAmount(m,passFees);
       var mode=sm.stripe_subscription_id?'auto':'cash';
       var nm=sm.students?(((sm.students.first_name||'')+' '+(sm.students.last_name||'')).trim()):'Member';
