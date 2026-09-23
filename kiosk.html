@@ -274,6 +274,17 @@ var r=await sb.from("schools").select("id,name,slug,logo_url,bio,tagline,color,b
     await loadFamilies();
     await loadPrograms();
     await detectCurrentClass();
+    // §AUTO-REFRESH — re-pick the current class every 60s so an idle kiosk advances
+    // across class boundaries on its own (it used to stick until a check-in or a manual
+    // refresh). Guarded: never shift the banner while a student is mid-check-in or a
+    // celebration is showing.
+    setInterval(function(){
+      var cv = document.getElementById('kioskCheckinView');
+      var cel = document.getElementById('kioskCelebration');
+      if (cv && cv.style.display !== 'none') return;
+      if (cel && cel.classList.contains('active')) return;
+      detectCurrentClass();
+    }, 60000);
     document.getElementById('kioskSearch').focus();
     // Preview mode for milestone test from dashboard
     if (params.get("preview") === "1") {

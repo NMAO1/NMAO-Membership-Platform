@@ -10240,7 +10240,7 @@ async function loadPromotionHistory(sid){
   el.innerHTML=data.map(function(p){var dt=p.promotion_date?new Date(p.promotion_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):new Date(p.promoted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});return '<div style="padding:0.85rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem"><div style="font-size:0.92rem;color:#F5F0E8">'+p.belt_from+' \u2192 '+p.belt_to+'</div><div style="font-size:0.75rem;color:var(--muted)">'+dt+'</div></div>'+(p.promoted_by?'<div style="font-size:0.75rem;color:var(--muted)">By: '+p.promoted_by+'</div>':'')+'</div>';}).join('');
 }
 async function loadProfileAttendance(sid){
-  var r=await sb.from('class_attendance').select('*, class_sessions(session_date,start_time,classes(name,title))').eq('student_id',sid).order('noted_at',{ascending:false}).limit(20);
+  var r=await sb.from('class_attendance').select('*, class_sessions(session_date,start_time,class_id,classes(name,title))').eq('student_id',sid).order('noted_at',{ascending:false}).limit(20);
   var data=r.data||[]; var total=data.length;
   var nm=null; for(var i=0;i<MILESTONES.length;i++){if(MILESTONES[i]>total){nm=MILESTONES[i];break;}}
   var pm=0; for(var j=0;j<MILESTONES.length;j++){if(MILESTONES[j]<=total)pm=MILESTONES[j];}
@@ -10248,7 +10248,26 @@ async function loadProfileAttendance(sid){
   document.getElementById('profileClassTracker').innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem"><div style="font-family:var(--font-display);font-size:2.2rem;color:var(--gold);line-height:1">'+total+'</div><div style="font-size:0.75rem;color:var(--muted)">classes attended</div></div><div class="mbar-bg"><div class="mbar-fill" style="width:'+pct+'%"></div></div>'+(nm?'<div style="font-size:0.75rem;color:var(--muted);">'+(nm-total)+' to milestone '+nm+'</div>':'<div style="font-size:0.75rem;color:var(--gold);">All milestones reached!</div>');
   var le=document.getElementById('profileAttendanceList');
   if(!data.length){le.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No classes attended yet.</div>';return;}
-  le.innerHTML=data.map(function(a){var sess=a.class_sessions;var cls=sess&&sess.classes;var cn=cls?(cls.name||cls.title||'Class'):'Class';var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'--');return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold)"><div style="font-size:0.88rem;color:#F5F0E8"><i class="fa-solid fa-person-walking" style="color:var(--gold);margin-right:0.4rem"></i>'+cn+'</div><div style="font-size:0.75rem;color:var(--muted)">'+dt+'</div></div>';}).join('');
+  // §SIGN-IN-STAMPS — match each check-in to its RSVP (class_enrollments) by class+date so we can
+  // show the reservation time alongside the check-in time. Times render in the school's timezone.
+  var rsvpMap={};
+  try{
+    var er=await sb.from('class_enrollments').select('class_id,session_date,created_at').eq('student_id',sid).order('created_at',{ascending:true}).limit(200);
+    (er.data||[]).forEach(function(e){var k=(e.class_id||'')+'|'+(e.session_date||'');if(!rsvpMap[k])rsvpMap[k]=e.created_at;});
+  }catch(_e){}
+  function fmtStampTime(ts){ if(!ts) return null; try{ return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:SCHOOL_TZ}); }catch(e){ return null; } }
+  le.innerHTML=data.map(function(a){
+    var sess=a.class_sessions;var cls=sess&&sess.classes;var cn=cls?(cls.name||cls.title||'Class'):'Class';
+    var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'--');
+    var checkedIn=fmtStampTime(a.noted_at);
+    var rk=sess?((sess.class_id||'')+'|'+(sess.session_date||'')):'';
+    var reserved=(rk&&rsvpMap[rk])?fmtStampTime(rsvpMap[rk]):null;
+    var stamps=[];
+    if(reserved) stamps.push('<i class="fa-regular fa-calendar-check" style="margin-right:0.25rem;color:var(--muted)"></i>Reserved '+reserved);
+    if(checkedIn) stamps.push('<i class="fa-solid fa-right-to-bracket" style="margin-right:0.25rem;color:var(--gold)"></i>Checked in '+checkedIn);
+    var stampLine=stamps.length?'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.25rem">'+stamps.join(' &nbsp;&middot;&nbsp; ')+'</div>':'';
+    return '<div style="padding:0.65rem 0.75rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--gold)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:0.88rem;color:#F5F0E8"><i class="fa-solid fa-person-walking" style="color:var(--gold);margin-right:0.4rem"></i>'+cn+'</div><div style="font-size:0.75rem;color:var(--muted)">'+dt+'</div></div>'+stampLine+'</div>';
+  }).join('');
 }
 async function loadStudentSessions(sid){
   var el=document.getElementById('profileSessionsList');
