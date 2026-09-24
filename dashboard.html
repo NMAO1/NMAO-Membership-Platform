@@ -10252,16 +10252,26 @@ async function loadProfileAttendance(sid){
   // show the reservation time alongside the check-in time. Times render in the school's timezone.
   var rsvpMap={};
   try{
-    var er=await sb.from('class_enrollments').select('class_id,session_date,created_at').eq('student_id',sid).order('created_at',{ascending:true}).limit(200);
-    (er.data||[]).forEach(function(e){var k=(e.class_id||'')+'|'+(e.session_date||'');if(!rsvpMap[k])rsvpMap[k]=e.created_at;});
+    var er=await sb.from('class_enrollments').select('class_id,session_date,created_at').eq('student_id',sid).order('created_at',{ascending:false}).limit(200);
+    // Bucket ALL reservation times per class+date. session_date is a calendar day (no session_id on
+    // enrollments), so a class with two occurrences on one day shares a key; keep every created_at and
+    // pick the right one per check-in below. Skip null session_date (a blanket enrollment isn't a per-day RSVP).
+    (er.data||[]).forEach(function(e){ if(!e.session_date) return; var k=(e.class_id||'')+'|'+e.session_date; (rsvpMap[k]=rsvpMap[k]||[]).push(e.created_at); });
   }catch(_e){}
   function fmtStampTime(ts){ if(!ts) return null; try{ return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:SCHOOL_TZ}); }catch(e){ return null; } }
   le.innerHTML=data.map(function(a){
     var sess=a.class_sessions;var cls=sess&&sess.classes;var cn=cls?(cls.name||cls.title||'Class'):'Class';
-    var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'--');
+    var dt=sess?new Date(sess.session_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):(a.noted_at?new Date(a.noted_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:SCHOOL_TZ}):'--');
     var checkedIn=fmtStampTime(a.noted_at);
     var rk=sess?((sess.class_id||'')+'|'+(sess.session_date||'')):'';
-    var reserved=(rk&&rsvpMap[rk])?fmtStampTime(rsvpMap[rk]):null;
+    // Pick the reservation made closest before this check-in (handles two same-day occurrences of one
+    // class), and ignore an "RSVP" logged within 60s of check-in (that's a walk-in enrolled at the door).
+    var reserved=null;
+    if(rk&&rsvpMap[rk]&&a.noted_at){
+      var _noted=new Date(a.noted_at).getTime(),_best=null;
+      rsvpMap[rk].forEach(function(ts){var t=new Date(ts).getTime();if(t<=_noted+1000&&(_best===null||t>_best))_best=t;});
+      if(_best!==null&&_noted-_best>60000) reserved=fmtStampTime(_best);
+    }
     var stamps=[];
     if(reserved) stamps.push('<i class="fa-regular fa-calendar-check" style="margin-right:0.25rem;color:var(--muted)"></i>Reserved '+reserved);
     if(checkedIn) stamps.push('<i class="fa-solid fa-right-to-bracket" style="margin-right:0.25rem;color:var(--gold)"></i>Checked in '+checkedIn);
