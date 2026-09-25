@@ -1468,6 +1468,10 @@
         <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Payment Behavior</div>
         <div class="field"><label class="check-item"><input type="checkbox" id="passFeesToggle" /><div><div class="check-item-label">Pass Transaction Fees to Students <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.passfees',this)" title="Help">?</button></div></div></label></div>
         <div class="field"><label class="check-item"><input type="checkbox" id="cardUpdateToggle" /><div><div class="check-item-label">Allow Members to Update Payment Card <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('settings.cardupdate',this)" title="Help">?</button></div></div></label></div>
+        <div style="border-top:1px solid var(--border)"></div>
+        <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)">Notifications</div>
+        <div class="field"><label class="check-item"><input type="checkbox" id="digestEnabledToggle" /><div><div class="check-item-label">Daily Digest email</div><div style="font-size:0.72rem;color:var(--muted)">A morning briefing of your day &mdash; classes, private sessions, birthdays, at-risk students, money owed, and packs expiring. Quiet days include a martial-arts quote.</div></div></label></div>
+        <div class="field" style="display:flex;align-items:center;gap:0.5rem"><label class="check-item-label" for="digestHour" style="margin:0">Send at</label><select id="digestHour" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.4rem 0.6rem;outline:none"><option value="5">5:00 AM</option><option value="6">6:00 AM</option><option value="7" selected>7:00 AM</option><option value="8">8:00 AM</option><option value="9">9:00 AM</option><option value="10">10:00 AM</option></select><span style="font-size:0.72rem;color:var(--muted)">your school&rsquo;s local time</span></div>
         <button class="panel-action" style="width:fit-content" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
         <p class="form-msg" id="settingsMsg"></p>
       </div></div>
@@ -4341,6 +4345,8 @@ if(d.sidebar_text_color){ document.getElementById('settingSidebarText').value=d.
     buildMilestonesEditor();
     if (d.pass_fees_to_students) document.getElementById('passFeesToggle').checked = true;
     if (d.allow_member_card_updates) document.getElementById('cardUpdateToggle').checked = true;
+    document.getElementById('digestEnabledToggle').checked = (d.digest_enabled !== false);
+    if (document.getElementById('digestHour')) document.getElementById('digestHour').value = String(d.digest_hour || 7);
     // Phase 11.D: school-wide rollover cap (NULL = no cap)
 if (d.max_rollover_balance !== null && d.max_rollover_balance !== undefined) {
   document.getElementById('settingMaxRollover').value = d.max_rollover_balance;
@@ -4449,7 +4455,7 @@ function selectFont(font,el)   { selectedFont=font; document.querySelectorAll('.
 async function saveSettings() {
 var _tzPick=document.getElementById('settingTimezone').value;
 // Saving Settings is an explicit timezone choice → confirm it (freezes the state-inference trigger).
-var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked,allow_member_card_updates:document.getElementById('cardUpdateToggle').checked,timezone:_tzPick,timezone_confirmed:true}).eq('id',SID);
+var r=await sb.from('schools').update({name:document.getElementById('settingName').value.trim(),email:document.getElementById('settingEmail').value.trim(),phone:document.getElementById('settingPhone').value.trim(),city:document.getElementById('settingCity').value.trim(),state:document.getElementById('settingState').value.trim(),pass_fees_to_students:document.getElementById('passFeesToggle').checked,allow_member_card_updates:document.getElementById('cardUpdateToggle').checked,digest_enabled:document.getElementById('digestEnabledToggle').checked,digest_hour:(parseInt((document.getElementById('digestHour')||{}).value,10)||7),timezone:_tzPick,timezone_confirmed:true}).eq('id',SID);
   if(r.error){setMsg('settingsMsg',r.error.message,'error');}else{setMsg('settingsMsg','Saved!','success');document.getElementById('schoolName').textContent=document.getElementById('settingName').value.trim();document.getElementById('topSchoolName').textContent=document.getElementById('settingName').value.trim();
     SCHOOL_TZ=_tzPick||SCHOOL_TZ; if(window.CURRENT_SCHOOL){window.CURRENT_SCHOOL.timezone=_tzPick;window.CURRENT_SCHOOL.timezone_confirmed=true;} var _tzb=document.getElementById('timezoneConfirmBanner'); if(_tzb) _tzb.style.display='none';}
 }
@@ -15396,6 +15402,7 @@ function switchBeltTestTab(tab){ var tabs=['students','results','payments'];tabs
 // ─────────────────────────────────────────────────────────────
 var beltTestPickerSearch="";
 var beltTestPickerRows=[], beltTestPickerTest=null;   // cached so search re-renders without a DB refetch
+var beltTestInvitedRows=[];   // the roster rendered straight from belt_test_students (not the allStudents intersection)
 var beltTestPickerSelected={};
 var beltTestNextFee={};
 var beltTestPromoInfo={};
@@ -15474,6 +15481,29 @@ async function loadBeltTestStudents(){
   });
 
   beltTestPickerRows=rows; beltTestPickerTest=t;
+
+  // §ROSTER-FROM-SOURCE — build the "Currently Invited" list from belt_test_students itself (like the
+  // Results/Payments tabs), NOT by intersecting with the in-memory allStudents set. Otherwise a rostered
+  // student who isn't in allStudents (archived, alumni, or not loaded) silently disappears from the
+  // Students tab and can't be removed. Use the rich per-student row where we have one, else synthesize a
+  // minimal one straight from the joined student on the belt_test_students row.
+  var _rowByStudent={}; rows.forEach(function(r){ _rowByStudent[r.student.id]=r; });
+  function _beltRowFor(s){
+    var prog=(allPrograms||[]).find(function(p){return p.id===s.program_id;});
+    var belts=prog&&prog.belt_system_id?beltsBySystem[prog.belt_system_id]:null;
+    var current=null,nextBelt=null;
+    if(belts&&belts.length){ current=belts.find(function(b){return b.id===s.current_belt_id;})||belts[0]; var ci=current?belts.indexOf(current):-1; nextBelt=ci>=0?(belts[ci+1]||null):null; }
+    var sinceISO=lastPromo[s.id]||(s.start_date?s.start_date+"T00:00:00":null);
+    var attList=attendance[s.id]||[]; var count=0;
+    if(sinceISO){ var sinceMs=new Date(sinceISO).getTime(); attList.forEach(function(a){ if(new Date(a).getTime()>=sinceMs)count++; }); } else { count=attList.length; }
+    return {student:s,program:prog,currentBelt:current,nextBelt:nextBelt,count:count,gap:null,eligible:false,nearEligible:false,hasBeltSystem:!!belts&&belts.length>0,invitedRow:null};
+  }
+  beltTestInvitedRows=(invitedRows||[]).map(function(ir){
+    var vm=_rowByStudent[ir.student_id];
+    if(!vm){ var s=ir.students||{id:ir.student_id,first_name:"(student)",last_name:"",program_id:null,current_belt_id:null,start_date:null}; vm=_beltRowFor(s); }
+    vm.invitedRow=ir; return vm;
+  });
+
   renderBeltTestPicker(rows,t);
   renderBeltTestResultsTab(invitedRows,t);
   renderBeltTestPaymentsTab(invitedRows,t);
@@ -15483,7 +15513,7 @@ function renderBeltTestPicker(rows,t){
   var sl=document.getElementById("beltTestStudentsList");
   var q=(beltTestPickerSearch||"").toLowerCase();
 
-  var invited=rows.filter(function(r){return r.invitedRow;});
+  var invited=(beltTestInvitedRows||[]).slice();
   var pool=rows.filter(function(r){return !r.invitedRow;});
   if(t.program_id)pool=pool.filter(function(r){return r.student.program_id===t.program_id;});
 
@@ -21007,6 +21037,12 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
   </div>
 </div>
 <script>
+/* §DIGEST-DEEPLINK — honor #<section> in the URL (Daily Digest email links) → open that nav section. */
+(function(){
+  function go(){ var h=(location.hash||'').replace(/^#/,'').trim(); if(!h) return true; var el=document.getElementById('nav-'+h); if(el && typeof navigate==='function'){ try{ navigate(h, el); }catch(e){} return true; } return false; }
+  window.addEventListener('hashchange', go);
+  var tries=0, iv=setInterval(function(){ tries++; if(go() || tries>40){ clearInterval(iv); } }, 250);
+})();
 (function(){
   function showMobileNotice(){
     try{ if(window.sessionStorage && sessionStorage.getItem('nmao_mobile_notice')==='1') return; }catch(e){}
