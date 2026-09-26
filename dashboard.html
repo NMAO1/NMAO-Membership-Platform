@@ -10614,6 +10614,12 @@ function renderChargeDetail(row, ctx){
   var markPaidBtn = canMarkPaid
     ? '<button class="cd-act-btn gold" id="cdMarkPaidBtn" onclick="cdMarkPaid()"><i class="fa-solid fa-check"></i>Mark as paid</button>'
     : '';
+  // Delete an errant bill: only records with no successful money movement (failed / pending /
+  // unpaid, no Stripe charge). Paid or Stripe-charged rows are never deletable here — refund those.
+  var canDelete = canMarkPaid;
+  var deleteBtn = canDelete
+    ? '<button class="cd-act-btn danger" id="cdDeleteBtn" onclick="cdDeleteBill()"><i class="fa-solid fa-trash"></i>Delete bill</button>'
+    : '';
   var refundForm =
     '<div id="cdRefundForm" style="display:none;margin-top:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border)">' +
       '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.5rem">Refundable balance: ' + cdMoney(remaining) + '. Leave amount blank for a full refund.</div>' +
@@ -10626,7 +10632,7 @@ function renderChargeDetail(row, ctx){
     '</div>';
   var notRefundableNote = (!refundable && refundReason) ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem;font-style:italic">' + refundReason + '</div>' : '';
   var actionsZone = '<div class="cd-zone"><div class="cd-zone-label">Actions</div>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem">' + markPaidBtn + refundBtn + receiptBtn + stripeBtn + '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem">' + markPaidBtn + refundBtn + receiptBtn + stripeBtn + deleteBtn + '</div>' +
     refundForm + notRefundableNote + '</div>';
 
   // ── Zone 5: timeline ──
@@ -10691,6 +10697,25 @@ async function cdMarkPaid(){
     if(window.showToast) showToast('Marked as paid.');
     await cdRefreshAfterAction();
   }catch(e){ alert('Could not mark paid: ' + (e&&e.message?e.message:e)); if(btn){ btn.disabled=false; btn.textContent='Mark as paid'; } }
+}
+
+async function cdDeleteBill(){
+  var row = _chargeCtx.row; if(!row) return;
+  var ctx = _chargeCtx.ctx;
+  var amt = cdMoney(parseFloat(row.amount||0));
+  if(!confirm('Delete this ' + amt + ' bill permanently?\n\nOnly do this for a mistaken or uncollected charge — it removes the record entirely and cannot be undone.')) return;
+  var btn = document.getElementById('cdDeleteBtn'); if(btn){ btn.disabled=true; btn.textContent='Deleting…'; }
+  try{
+    try{ await sb.from('payment_tenders').delete().eq('payment_id', row.id); }catch(e){} // best-effort, usually none
+    var del = await sb.from('payments').delete().eq('id', row.id).eq('school_id', SID);
+    if(del.error) throw del.error;
+    if(window.showToast) showToast('Bill deleted.');
+    closeChargeDetail();
+    // refresh the lists/tiles the drawer was opened from (don't re-open the deleted row)
+    try{ if(ctx==='bills' && currentProfileStudent && currentProfileStudent.id) await loadBillsTile(currentProfileStudent.id); }catch(e){}
+    try{ if(typeof loadRevenue==='function') await loadRevenue(); }catch(e){}
+    try{ var rm=document.getElementById('revenueBreakdownModal'); if(rm && rm.classList.contains('active') && typeof currentRevPeriod!=='undefined' && currentRevPeriod){ await openRevenueBreakdown(currentRevPeriod); } }catch(e){}
+  }catch(e){ alert('Could not delete: ' + (e&&e.message?e.message:e)); if(btn){ btn.disabled=false; btn.textContent='Delete bill'; } }
 }
 
 async function cdRefreshAfterAction(){
