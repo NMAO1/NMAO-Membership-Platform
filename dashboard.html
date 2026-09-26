@@ -12965,6 +12965,18 @@ function renderCheckoutTotal(){
     modeEl.style.display = rec ? '' : 'none';
   }
   var d = coDscGet();
+  // Mirror the true total into the Step-3 review body so schools see the amount actually sold.
+  var _rt = document.getElementById('checkoutReviewTotals');
+  if (_rt){
+    if (d){
+      _rt.innerHTML =
+        '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.35rem 0;color:var(--muted);font-size:0.82rem"><div>Subtotal</div><div>$' + t.toFixed(2) + '</div></div>' +
+        '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.35rem 0;color:var(--muted);font-size:0.82rem"><div>Discount' + (d.reason ? ' · ' + escapeCheckout(d.reason) : '') + '</div><div>−$' + (d.cents/100).toFixed(2) + (d.mode==='forever' ? ' every cycle' : '') + '</div></div>' +
+        '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.6rem 0;border-top:1px solid var(--border)"><div style="font-size:0.86rem;color:var(--white)">Total</div><div style="font-size:0.98rem;color:var(--gold)">$' + d.net.toFixed(2) + '</div></div>';
+    } else {
+      _rt.innerHTML = '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.6rem 0"><div style="font-size:0.86rem;color:var(--white)">Total</div><div style="font-size:0.98rem;color:var(--gold)">$' + t.toFixed(2) + '</div></div>';
+    }
+  }
   if (!d){
     el.innerHTML = 'Total <span style="color:var(--gold);margin-left:0.3rem">$' + t.toFixed(2) + '</span>';
     return;
@@ -13235,10 +13247,8 @@ function renderCheckoutStep3(){
       '<div style="font-size:0.84rem;color:var(--gold)">$' + (c.price * c.qty).toFixed(2) + '</div>' +
     '</div>';
   }
-  html += '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.6rem 0">' +
-    '<div style="font-size:0.86rem;color:var(--white)">Total</div>' +
-    '<div style="font-size:0.98rem;color:var(--gold)">$' + checkoutCartTotal().toFixed(2) + '</div>' +
-  '</div>';
+  // Totals (subtotal / discount / true total) are filled by renderCheckoutTotal so the discount shows here.
+  html += '<div id="checkoutReviewTotals"></div>';
   html += '</div>';
   // Read-only confirmation of the method + (for card-on-file) the card chosen back on step 2's picker.
   var _payWith;
