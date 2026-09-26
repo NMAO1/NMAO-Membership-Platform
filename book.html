@@ -434,6 +434,14 @@
 
    <!-- ── STEP 1: Identity (Phase A) + Session Type (Phase B) ── -->
     <div class="card" id="step1" style="display:none">
+      <!-- Phase (member): signed-in family-member picker (shown instead of email when a portal session exists) -->
+      <div id="step1PhaseMember" style="display:none">
+        <div class="card-header">
+          <div class="card-title">Who's this session for?</div>
+          <div class="card-sub">Choose the family member booking this session.</div>
+        </div>
+        <div class="card-body"><div id="memberPickerList"></div></div>
+      </div>
       <!-- Phase A: Email entry -->
       <div id="step1PhaseA">
         <div class="card-header">
@@ -539,6 +547,7 @@
       <div class="card-body">
         <div id="bookingSummary" style="margin-bottom:1rem"></div>
         <hr class="divider" />
+        <div id="anonIdentityBlock">
         <div class="form-row">
           <div class="field">
             <label>First Name <span style="color:var(--red)">*</span></label>
@@ -571,6 +580,7 @@
         </span>
       </label>
     </div>
+    </div><!-- /anonIdentityBlock -->
 
     <div class="field">
       <label>Goals or Notes (optional)</label>
@@ -673,6 +683,7 @@
         return;
       }
       await loadPage(slug, id);
+      await detectMember();   // if a portal session is present, offer a family-member picker instead of email
     };
 
     // ── Load Page ────────────────────────────────────────────
@@ -859,6 +870,66 @@
     function updateStep1AContinue() {
       var email = document.getElementById('step1Email').value.trim();
       document.getElementById('s1aNext').disabled = !validateEmail(email);
+    }
+
+    // ── Signed-in member: skip the email step, pick the family member, book by exact student id ──
+    // book.html shares the portal's Supabase session (same origin, localStorage), so a logged-in member
+    // is resolved here and books via book_member_session (exact student_id) — no re-entry, correct pack,
+    // and no chance of a shared family email crediting the wrong sibling.
+    var memberStudentId = null, memberName = '';
+    async function detectMember() {
+      try {
+        var sess = await sb.auth.getSession();
+        if (!sess || !sess.data || !sess.data.session) return;             // not signed in → anon email flow
+        var br = await sb.rpc('get_bookable_students');
+        var list = (br && br.data) ? br.data : [];
+        if (instructor && instructor.school_id) list = list.filter(function(s){ return s.school_id === instructor.school_id; });
+        var seen = {}, uniq = [];
+        list.forEach(function(s){ if (!seen[s.student_id]) { seen[s.student_id] = 1; uniq.push(s); } });
+        if (!uniq.length) return;                                          // signed in but no student here → email flow
+        renderMemberPicker(uniq);
+        document.getElementById('step1PhaseA').style.display = 'none';
+        document.getElementById('step1PhaseMember').style.display = 'block';
+      } catch (e) { /* any failure → fall back to the anonymous email flow */ }
+    }
+    function renderMemberPicker(list) {
+      document.getElementById('memberPickerList').innerHTML = list.map(function(s){
+        var nm = ((s.first_name || '') + ' ' + (s.last_name || '')).trim() || 'Student';
+        return '<button class="type-option" onclick="chooseMemberStudent(\'' + s.student_id + '\',\'' + nm.replace(/'/g, "\\'") + '\')" style="width:100%;text-align:left;margin-bottom:0.5rem">' +
+          '<i class="fa-solid fa-user" style="margin-right:0.5rem;color:var(--gold)"></i>' + escHtml(nm) + '</button>';
+      }).join('');
+    }
+    function chooseMemberStudent(id, name) {
+      memberStudentId = id; memberName = name;
+      var chk = document.getElementById('bookUsePack'); if (chk) chk.checked = true;         // members usually hold credits
+      var ai = document.getElementById('anonIdentityBlock'); if (ai) ai.style.display = 'none'; // identity already known
+      document.getElementById('step1bSub').textContent = 'Booking for ' + name + ' with ' + (instructor.first_name || 'your instructor') + '.';
+      document.getElementById('step1PhaseMember').style.display = 'none';
+      document.getElementById('step1PhaseA').style.display = 'none';
+      document.getElementById('step1PhaseB').style.display = 'block';
+      renderTypesList();
+    }
+    async function submitMemberBooking() {
+      var usePack = !!(document.getElementById('bookUsePack') && document.getElementById('bookUsePack').checked);
+      var notes = document.getElementById('bookNotes').value.trim();
+      var btn = document.getElementById('bookBtn'); btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.45rem"></i>Booking...';
+      setMsg('s4Msg', '', '');
+      try {
+        var r = await sb.rpc('book_member_session', {
+          p_student_id: memberStudentId, p_instructor_id: instructor.id,
+          p_session_type_id: selectedSetting.session_type_id, p_session_date: selectedDate,
+          p_start_time: selectedTime, p_use_pack: usePack,
+          p_notes: notes ? ('Booking for ' + memberName + '\n' + notes) : ('Booking for ' + memberName)
+        });
+        if (r.error) throw new Error(r.error.message);
+        showSuccess(memberName || 'You', selectedSetting.name);
+      } catch (e) {
+        console.error('member booking failed:', e);
+        setMsg('s4Msg', 'We couldn’t complete your booking. Please try again, or contact the school.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking';
+      }
     }
 
     // ── Step 1 Phase A → Phase B transition ──────────────────────
@@ -1243,6 +1314,7 @@
     }
 
     async function submitBooking() {
+      if (memberStudentId) { return submitMemberBooking(); }   // signed-in member → exact-student path
       var first = document.getElementById('bookFirst').value.trim();
       var last  = document.getElementById('bookLast').value.trim();
       var email = document.getElementById('bookEmail').value.trim();
