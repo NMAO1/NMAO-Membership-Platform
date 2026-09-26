@@ -10607,6 +10607,13 @@ function renderChargeDetail(row, ctx){
   var stripeBtn = link
     ? '<a class="cd-act-btn" href="' + link + '" target="_blank" rel="noopener"><i class="fa-brands fa-stripe-s"></i>View in Stripe</a>'
     : '';
+  // A failed / not-yet-paid record with no successful Stripe charge can be reconciled as
+  // collected off-platform (cash, check, or a card run elsewhere). Same effect as recording
+  // a manual payment, applied to the existing row.
+  var canMarkPaid = (row.status==='failed' || row.status==='pending' || !row.status) && !hasStripeRef;
+  var markPaidBtn = canMarkPaid
+    ? '<button class="cd-act-btn gold" id="cdMarkPaidBtn" onclick="cdMarkPaid()"><i class="fa-solid fa-check"></i>Mark as paid</button>'
+    : '';
   var refundForm =
     '<div id="cdRefundForm" style="display:none;margin-top:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border)">' +
       '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.5rem">Refundable balance: ' + cdMoney(remaining) + '. Leave amount blank for a full refund.</div>' +
@@ -10619,7 +10626,7 @@ function renderChargeDetail(row, ctx){
     '</div>';
   var notRefundableNote = (!refundable && refundReason) ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem;font-style:italic">' + refundReason + '</div>' : '';
   var actionsZone = '<div class="cd-zone"><div class="cd-zone-label">Actions</div>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem">' + refundBtn + receiptBtn + stripeBtn + '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem">' + markPaidBtn + refundBtn + receiptBtn + stripeBtn + '</div>' +
     refundForm + notRefundableNote + '</div>';
 
   // ── Zone 5: timeline ──
@@ -10670,6 +10677,20 @@ async function cdResendReceipt(){
     else { var bits=[]; if(d.sms_sent) bits.push('text'); if(d.email_sent) bits.push('email'); if(window.showToast) showToast(bits.length ? ('Receipt sent by ' + bits.join(' & ') + '.') : 'Member has no phone or email on file — nothing sent.'); }
   }catch(e){ alert('Receipt failed: ' + (e&&e.message?e.message:e)); }
   if(btn){ btn.disabled=false; }
+}
+
+async function cdMarkPaid(){
+  var row = _chargeCtx.row; if(!row) return;
+  var amt = cdMoney(parseFloat(row.amount||0));
+  if(!confirm('Mark this ' + amt + ' payment as paid?\n\nUse this only if the money was actually collected (cash, check, or a card run off-platform). It will count as received revenue.')) return;
+  var btn = document.getElementById('cdMarkPaidBtn'); if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  try{
+    var nowIso = new Date().toISOString();
+    var upd = await sb.from('payments').update({ status:'paid', paid_at:nowIso }).eq('id', row.id).eq('school_id', SID);
+    if(upd.error) throw upd.error;
+    if(window.showToast) showToast('Marked as paid.');
+    await cdRefreshAfterAction();
+  }catch(e){ alert('Could not mark paid: ' + (e&&e.message?e.message:e)); if(btn){ btn.disabled=false; btn.textContent='Mark as paid'; } }
 }
 
 async function cdRefreshAfterAction(){
