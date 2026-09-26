@@ -597,6 +597,14 @@
         </span>
       </label>
     </div>
+        <div class="field" id="bookDiscountField">
+          <label>Discount code (optional)</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="text" id="bookDiscountCode" placeholder="Enter code" autocapitalize="characters" style="flex:1;text-transform:uppercase;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem 0.75rem;outline:none" />
+            <button type="button" class="btn-back" style="width:auto;padding:0.6rem 1.1rem;margin:0" onclick="applyBookDiscount()">Apply</button>
+          </div>
+          <p class="form-msg" id="bookDiscountMsg"></p>
+        </div>
         <p class="form-msg" id="s4Msg"></p>
         <button class="btn-primary" id="bookBtn" onclick="submitBooking()">
           <i class="fa-solid fa-circle-check" style="margin-right:0.45rem"></i>Confirm Booking
@@ -920,7 +928,8 @@
           p_student_id: memberStudentId, p_instructor_id: instructor.id,
           p_session_type_id: selectedSetting.session_type_id, p_session_date: selectedDate,
           p_start_time: selectedTime, p_use_pack: usePack,
-          p_notes: notes ? ('Booking for ' + memberName + '\n' + notes) : ('Booking for ' + memberName)
+          p_notes: notes ? ('Booking for ' + memberName + '\n' + notes) : ('Booking for ' + memberName),
+          p_discount_code: bookDiscountCode || null
         });
         if (r.error) throw new Error(r.error.message);
         showSuccess(memberName || 'You', selectedSetting.name);
@@ -1293,7 +1302,7 @@
       if (!selectedSetting || !selectedDate || !selectedTime) return;
       var instrName = ((instructor.first_name || '') + ' ' + (instructor.last_name || '')).trim();
       var duration  = selectedSetting.duration_minutes;
-      var price     = selectedSetting.price;
+      var price     = (bookDiscountPrice != null) ? Number(bookDiscountPrice) : selectedSetting.price;
 
       document.getElementById('bookingSummary').innerHTML =
         '<div class="summary-box">' +
@@ -1301,7 +1310,7 @@
         mkSummaryItem('fa-calendar',        'Date',       formatDate(selectedDate)) +
         mkSummaryItem('fa-clock',           'Time',       fmtTime(selectedTime) + ' \u00B7 ' + duration + ' min') +
         mkSummaryItem('fa-chalkboard-user', 'Instructor', instrName) +
-        (price > 0 ? mkSummaryItem('fa-credit-card', 'Price', '$' + price.toFixed(2)) : '') +
+        (price > 0 ? mkSummaryItem('fa-credit-card', 'Price', '$' + price.toFixed(2) + (bookDiscountPrice != null ? ' \u00B7 was $' + selectedSetting.price.toFixed(2) : '')) : '') +
         '</div>';
     }
 
@@ -1311,6 +1320,35 @@
         '<div><div class="summary-label">' + label + '</div>' +
         '<div class="summary-val">' + (value || '\u2014') + '</div></div>' +
         '</div>';
+    }
+
+    // ── Session discount code (validated + applied server-side; previewed here) ──
+    var bookDiscountCode = '', bookDiscountPrice = null;
+    async function applyBookDiscount() {
+      var code = (document.getElementById('bookDiscountCode').value || '').trim();
+      if (!code || !selectedSetting) return;
+      setMsg('bookDiscountMsg', 'Checking…', '');
+      try {
+        var r = await sb.rpc('validate_session_discount', {
+          p_school_id: instructor.school_id, p_session_type_id: selectedSetting.session_type_id,
+          p_code: code, p_base_price: selectedSetting.price
+        });
+        var d = r && r.data;
+        if (d && d.valid) {
+          bookDiscountCode = d.code; bookDiscountPrice = d.new_price;
+          setMsg('bookDiscountMsg', 'Code applied — $' + Number(d.new_price).toFixed(2) + (d.name ? ' (' + d.name + ')' : ''), 'success');
+        } else {
+          bookDiscountCode = ''; bookDiscountPrice = null;
+          setMsg('bookDiscountMsg', discountReasonText(d && d.reason), 'error');
+        }
+        if (typeof renderBookingSummary === 'function') renderBookingSummary();
+      } catch (e) {
+        bookDiscountCode = ''; bookDiscountPrice = null;
+        setMsg('bookDiscountMsg', 'Couldn’t check that code.', 'error');
+      }
+    }
+    function discountReasonText(r) {
+      return ({ not_found: 'Code not found.', expired: 'That code has expired.', not_yet: 'That code isn’t active yet.', not_sessions: 'That code doesn’t apply to sessions.', used_up: 'That code has been fully used.' })[r] || 'That code can’t be applied.';
     }
 
     async function submitBooking() {
@@ -1365,7 +1403,8 @@
           p_notes:           sessionNotes,
           p_pack_id:         null,
           p_sms_consent:     smsConsent,
-          p_use_pack:        usePack
+          p_use_pack:        usePack,
+          p_discount_code:   bookDiscountCode || null
         });
         if (rpcRes.error) throw new Error(rpcRes.error.message);
         var newSessionId = rpcRes.data;
