@@ -137,6 +137,20 @@
     var sb = supabase.createClient(SURL, SKEY);
     var EF_URL = SURL + '/functions/v1/book-public-class';
 
+    // Ad attribution: capture UTM params on load (persist for the session so they
+    // survive navigation within the site before the prospect books a trial).
+    var NMAO_UTM = (function(){
+      try{
+        var out={}, qs=new URLSearchParams(location.search), any=false;
+        ['source','medium','campaign','term','content'].forEach(function(k){
+          var v=qs.get('utm_'+k); if(v){ out[k]=String(v).slice(0,200); any=true; }
+        });
+        if(any){ try{ sessionStorage.setItem('nmao_utm', JSON.stringify(out)); }catch(e){} return out; }
+        try{ var s=sessionStorage.getItem('nmao_utm'); if(s) return JSON.parse(s); }catch(e){}
+        return {};
+      }catch(e){ return {}; }
+    })();
+
     var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     var DAY_LABEL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -439,7 +453,7 @@
       var msg=document.getElementById('tMsg'); msg.className='modal-msg';
       if(!first || !email){ msg.className='modal-msg err'; msg.textContent='Please enter your first name and email.'; return; }
       var btn=document.getElementById('tBtn'); btn.disabled=true; msg.textContent='Booking\u2026';
-      var res=await callEF({ action:'trial', slug:slug, class_id:c.class_id, session_date:c.session_date, first:first, last:last, email:email, phone:phone, sms_consent:sms });
+      var res=await callEF({ action:'trial', slug:slug, class_id:c.class_id, session_date:c.session_date, first:first, last:last, email:email, phone:phone, sms_consent:sms, utm:NMAO_UTM });
       if(!res || !res.ok){ msg.className='modal-msg err'; msg.textContent=(res&&res.error)||'Something went wrong.'; btn.disabled=false; return; }
       openModal(
         '<div class="result-icon"><i class="fa-solid fa-circle-check"></i></div>'+
