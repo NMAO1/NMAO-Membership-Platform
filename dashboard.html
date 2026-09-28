@@ -1089,6 +1089,24 @@
         <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-calendar-check" style="color:#7DAAD4"></i> Trial Scheduled</div><div id="leads-trial"></div></div>
         <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-circle-check" style="color:var(--gold)"></i> Converted</div><div id="leads-converted"></div></div>
       </div>
+      <!-- §ATTRIBUTION — closed-loop: lead → trial → enrolled → revenue, by acquisition channel -->
+      <div class="panel" style="margin-top:0.5rem">
+        <div class="panel-body">
+          <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.75rem">
+            <i class="fa-solid fa-bullhorn" style="color:#7DAAD4"></i>
+            <span style="font-family:var(--font-display);font-size:1.02rem;color:var(--white)">Campaign Attribution &amp; ROI</span>
+            <span style="font-size:0.72rem;color:var(--muted)">lead → trial → enrolled → revenue, by channel</span>
+            <button class="help-hint-inline" onclick="openHelpPopover('leads.attribution',this)" title="Help">?</button>
+            <select id="attrRange" onchange="renderAttribution()" style="margin-left:auto;background:var(--black);border:1px solid var(--border);color:var(--white);font-size:0.78rem;padding:0.3rem 0.5rem;border-radius:4px;outline:none">
+              <option value="30">Last 30 days</option>
+              <option value="90" selected>Last 90 days</option>
+              <option value="365">Last 12 months</option>
+              <option value="3650">All time</option>
+            </select>
+          </div>
+          <div id="attrBody"><div class="no-classes">Loading…</div></div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════ §PAGE-FAMILIES ═══════════════ -->
@@ -6125,6 +6143,7 @@ var HELP_CONTENT = {
   'leads.lead_program': { title: 'Interested Program', purpose: 'The program they are interested in, like Kids BJJ. Helps you tailor follow-up.' },
   'leads.lead_source': { title: 'Source', purpose: 'How they found you, like Instagram, a referral, or a walk-in. Useful for seeing what marketing works.' },
   'leads.lead_status': { title: 'Status', purpose: 'Their stage in the pipeline: New, Contacted, Trial Scheduled, or Converted. This sets which column they sit in.' },
+  'leads.attribution': { title: 'Campaign Attribution & ROI', purpose: 'Follows each acquisition channel all the way through the funnel: leads → trials → enrolled students → revenue. Ad traffic is grouped by its UTM source and campaign; organic leads by their source. Revenue is the paid, all-time revenue of the students those leads became, so you can see which channels actually produce paying members — not just clicks.' },
   'leads.lead_notes': { title: 'Notes', purpose: 'Anything useful about this lead, like what they asked for or when to follow up.' },
   families: {
     title: 'Families',
@@ -9060,8 +9079,12 @@ function renderMembersTableFiltered(list) {
 // §FAMILY-ADD — when set, the next saveStudent() insert links the new child to this
 // family so the existing family-aware "Charge Card on File" bills the shared card.
 var _afmFamilyId=null;
+// §ATTRIBUTION — when set (via Convert), the next saveStudent() insert links the new
+// student back to the lead it came from, closing the ad→lead→trial→enrolled→revenue loop.
+var _convertFromLeadId=null;
 function openAddStudent() {
   _afmFamilyId=null;
+  _convertFromLeadId=null;
   var today = localDateStr(new Date());
   document.getElementById('addStudentTitle').textContent = 'Add New Student';
   document.getElementById('stuEditId').value    = '';
@@ -9080,7 +9103,7 @@ function openAddStudent() {
   populateStudentProgramDropdown();
   document.getElementById('addStudentModal').classList.add('active');
 }
-function closeAddStudent() { _afmFamilyId=null; resetStuCard(); document.getElementById('addStudentModal').classList.remove('active'); }
+function closeAddStudent() { _afmFamilyId=null; _convertFromLeadId=null; resetStuCard(); document.getElementById('addStudentModal').classList.remove('active'); }
 // §FAMILY-ADD — add a sibling from a student's profile. Ensures the family exists
 // (auto-creating one + linking this student if they're solo, like Sarah Formont),
 // then opens the standard Add Student modal pre-linked to that family. The child is
@@ -9173,8 +9196,9 @@ async function saveStudent() {
 
 var r;
   var _famAdd=_afmFamilyId; // capture before any reset
+  var _fromLead=_convertFromLeadId; // §ATTRIBUTION — capture before any reset
   if (eid) { r=await sb.from('students').update(payload).eq('id',eid); }
-  else { payload.school_id=SID; payload.source=_famAdd?'family_add':'manual'; if(_famAdd) payload.family_id=_famAdd; r=await sb.from('students').insert(payload).select('id').single(); }
+  else { payload.school_id=SID; payload.source=_fromLead?'lead':(_famAdd?'family_add':'manual'); if(_famAdd) payload.family_id=_famAdd; if(_fromLead) payload.lead_id=_fromLead; r=await sb.from('students').insert(payload).select('id').single(); }
   if (r.error) { setMsg('studentMsg',r.error.message,'error'); }
   else {
     // §JUNCTION-ON-CREATE — new students get an active student_memberships row so they are
@@ -9197,6 +9221,8 @@ var r;
         }
       }
       await sb.from('student_memberships').insert(_jrow);
+      // §ATTRIBUTION — mark the source lead converted so the pipeline + attribution rollup reflect it
+      if(_fromLead){ try{ await sb.from('leads').update({status:'converted', converted_at:new Date().toISOString()}).eq('id',_fromLead); }catch(e){} _convertFromLeadId=null; }
     }
     setMsg('studentMsg',first+' '+last+(eid?' updated!':(_famAdd?' added to the family!':' added!'))+_cardNote, _cardNote?'':'success'); await loadStudents(); if(eid&&currentProfileStudent) await openStudentProfile(eid);
     // Family add: refresh the parent profile's Family tile so the new sibling shows immediately.
@@ -14309,9 +14335,41 @@ async function loadLeads(){
     var r=await sb.from('leads').select('*').eq('school_id',SID).is('deleted_at',null).order('created_at',{ascending:false});
     allLeads=r.data||[];
     renderLeads();
+    renderAttribution();
     document.getElementById('anaLeads').textContent=allLeads.length;
     document.getElementById('anaConverted').textContent=allLeads.filter(function(l){return l.status==='converted';}).length;
   }catch(e){allLeads=[];}
+}
+// §ATTRIBUTION — closed-loop ROI table: ad/organic channel → leads → trials → enrolled → revenue.
+async function renderAttribution(){
+  var body=document.getElementById('attrBody'); if(!body) return;
+  var days=parseInt((document.getElementById('attrRange')||{}).value||'90',10);
+  var to=new Date(), from=new Date(Date.now()-days*86400000);
+  body.innerHTML='<div class="no-classes">Loading…</div>';
+  var r=await sb.rpc('lead_attribution_rollup',{p_school_id:SID,p_from:from.toISOString(),p_to:to.toISOString()});
+  if(r.error){ body.innerHTML='<div class="no-classes">Could not load attribution.</div>'; return; }
+  var rows=r.data||[];
+  if(!rows.length){ body.innerHTML='<div class="no-classes">No leads in this window yet. Tag your ads with UTM links (utm_source, utm_campaign) and convert leads to students to see channel ROI here.</div>'; return; }
+  var money=function(n){return '$'+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});};
+  var pct=function(a,b){return b>0?Math.round(a/b*100)+'%':'—';};
+  var tot={leads:0,trials:0,converted:0,enrolled:0,revenue:0};
+  rows.forEach(function(x){tot.leads+=x.leads;tot.trials+=x.trials;tot.converted+=x.converted;tot.enrolled+=x.enrolled;tot.revenue+=Number(x.revenue)||0;});
+  var th='<tr style="text-align:left;color:var(--muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em"><th style="padding:0.4rem 0.6rem">Channel</th><th>Campaign</th><th style="text-align:right;padding:0.4rem 0.6rem">Leads</th><th style="text-align:right;padding:0.4rem 0.6rem">Trials</th><th style="text-align:right;padding:0.4rem 0.6rem">Enrolled</th><th style="text-align:right;padding:0.4rem 0.6rem">Conv%</th><th style="text-align:right;padding:0.4rem 0.6rem">Revenue</th><th style="text-align:right;padding:0.4rem 0.6rem">Rev/Lead</th></tr>';
+  var trs=rows.map(function(x){
+    var rev=Number(x.revenue)||0;
+    return '<tr style="border-top:1px solid var(--border);font-size:0.85rem">'
+      +'<td style="padding:0.45rem 0.6rem;color:var(--white)"><i class="fa-solid fa-bullhorn" style="color:#7DAAD4;margin-right:0.3rem;font-size:0.7rem"></i>'+escapeCheckout(x.channel)+'</td>'
+      +'<td style="color:var(--muted)">'+(x.campaign?escapeCheckout(x.campaign):'—')+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem">'+x.leads+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem">'+x.trials+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem;color:var(--gold)">'+x.enrolled+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem;color:var(--muted)">'+pct(x.enrolled,x.leads)+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem;color:#7DBD7D">'+money(rev)+'</td>'
+      +'<td style="text-align:right;padding:0.45rem 0.6rem;color:var(--muted)">'+(x.leads>0?money(rev/x.leads):'—')+'</td>'
+      +'</tr>';
+  }).join('');
+  var totRow='<tr style="border-top:2px solid var(--gold);font-weight:600;font-size:0.85rem"><td style="padding:0.45rem 0.6rem">Total</td><td></td><td style="text-align:right;padding:0.45rem 0.6rem">'+tot.leads+'</td><td style="text-align:right;padding:0.45rem 0.6rem">'+tot.trials+'</td><td style="text-align:right;padding:0.45rem 0.6rem;color:var(--gold)">'+tot.enrolled+'</td><td style="text-align:right;padding:0.45rem 0.6rem;color:var(--muted)">'+pct(tot.enrolled,tot.leads)+'</td><td style="text-align:right;padding:0.45rem 0.6rem;color:#7DBD7D">'+money(tot.revenue)+'</td><td style="text-align:right;padding:0.45rem 0.6rem;color:var(--muted)">'+(tot.leads>0?money(tot.revenue/tot.leads):'—')+'</td></tr>';
+  body.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead>'+th+'</thead><tbody>'+trs+totRow+'</tbody></table></div>';
 }
 function leadAgo(ts){
   if(!ts) return '';
@@ -14372,6 +14430,8 @@ function convertLeadToStudent(){
   var lid=document.getElementById('leadEditId').value;
   var l=allLeads.find(function(x){return x.id===lid;}); if(!l) return;
   closeAddLead();
+  _convertFromLeadId=l.id; // §ATTRIBUTION — link the new student to this lead on save
+  document.getElementById('addStudentModal')._fromLeadUtm=(l.utm_source?[l.utm_source,l.utm_campaign].filter(Boolean).join(' / '):'');
   document.getElementById('addStudentTitle').textContent='Add Student (from Lead)';
   document.getElementById('stuEditId').value='';
   document.getElementById('stuFirst').value=l.first_name||'';
