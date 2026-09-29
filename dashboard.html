@@ -6667,6 +6667,7 @@ async function renderTournamentCard(){
   } else {
     el.innerHTML=head(badge('ENABLED','#5A9A6A'))
       +'<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.9rem">Your school is live — here’s how to get your students competing:</div>'
+      +'<div id="tournamentStatus" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.9rem"></div>'
       +(code ?
         '<div style="background:var(--black);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:0.85rem 1rem;margin-bottom:0.85rem">'
         +'<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Your school code</div>'
@@ -6680,11 +6681,30 @@ async function renderTournamentCard(){
       +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.9rem">'
       +'<button class="btn-sm" onclick="copyInviteMessage(\''+impEsc(code||'')+'\',this)"><i class="fa-solid fa-paste"></i> Copy invite message</button>'
       +'<button class="btn-sm" onclick="openTournamentInvites()"><i class="fa-solid fa-paper-plane"></i> Send guardian invites</button>'
+      +'<a class="btn-sm" href="https://school.nmao.us" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> School Portal</a>'
       +'</div>'
       +_tFlowHtml()
-      +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.7rem">Set each athlete’s competitive rank in the Tournament School Portal.</div>'
+      +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.7rem">Set each athlete’s competitive rank in the <a href="https://school.nmao.us" target="_blank" rel="noopener" style="color:var(--gold)">Tournament School Portal</a>.</div>'
       +'<div id="tournamentMsg" style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem"></div>';
+    loadTournamentStatus();
   }
+}
+async function loadTournamentStatus(){
+  var el=document.getElementById('tournamentStatus'); if(!el||!SID) return;
+  var stat=function(val,label){ return '<div style="flex:1;min-width:120px;background:var(--black);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem">'
+    +'<div style="font-family:var(--font-display);font-size:1.3rem;color:var(--gold);line-height:1.1">'+val+'</div>'
+    +'<div style="font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:0.15rem">'+label+'</div></div>'; };
+  el.innerHTML=stat('…','Students joined')+stat('…','Next tournament')+stat('…','Last payout');
+  try{
+    var res=await sb.functions.invoke('tournament-status',{ body:{ school_id:SID } });
+    var d=res&&res.data; if(!d||!d.ok||!d.enabled){ el.innerHTML=''; return; }
+    var joined=(d.joined==null)?'—':String(d.joined);
+    var next='Season 1 · Jan 15';
+    if(d.next_round&&d.next_round.closes_at){ var dt=new Date(d.next_round.closes_at); next=dt.toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+    var payout='—';
+    if(d.last_payout&&d.last_payout.amount_cents!=null){ payout='$'+(d.last_payout.amount_cents/100).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}); }
+    el.innerHTML=stat(joined,'Students joined')+stat(next,'Next tournament')+stat(payout,'Last payout');
+  }catch(e){ el.innerHTML=''; }
 }
 function showTournamentQr(code){
   var c=document.getElementById('tournamentQr'); if(!c) return;
