@@ -21232,5 +21232,16 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     function closeHelpCenter(){ document.getElementById('helpCenterOverlay').style.display='none'; document.body.style.overflow=''; }
     document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var o=document.getElementById('helpCenterOverlay'); if(o&&o.style.display==='block') closeHelpCenter(); } });
   </script>
+  <!-- ✨ AI "Polish" writing helper on description fields -->
+  <script src="ai-polish.js" defer></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      if (!window.attachPolish) return;
+      attachPolish('#evDescription', { kind: 'event' });   // event
+      attachPolish('#stDescription', { kind: 'class' });   // class / session
+      attachPolish('#spDescription', { kind: 'pack' });    // class pack
+      attachPolish('#tagDescription', { kind: 'generic' }); // member tag
+    });
+  </script>
 </body>
 </html>
