@@ -321,10 +321,10 @@
     /* §CSS-FORMS */
     .check-group { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; margin-bottom: 1rem; }
     .check-item  { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; border: none; border-radius: 24px; background: #333; cursor: pointer; flex-shrink: 0; position: relative; transition: 0.3s; }
-    .check-item input[type="checkbox"]::after { content: ''; position: absolute; width: 18px; height: 18px; top: 3px; left: 3px; background: #888; border-radius: 50%; transition: 0.3s; }
-    .check-item input[type="checkbox"]:checked { background: rgba(201,168,76,0.3); background: color-mix(in srgb, var(--gold) 30%, transparent); }
-    .check-item input[type="checkbox"]:checked::after { background: var(--gold); transform: translateX(20px); }
+    /* Toggle knob drawn as a background radial-gradient on the input itself (reliable on all
+       browsers, unlike ::after on a checkbox). Off = grey knob left; on = gold knob right. */
+    .check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; border: none; border-radius: 24px; background-color: #333; background-image: radial-gradient(circle 9px at 12px 50%, #888 96%, rgba(0,0,0,0) 100%); background-repeat: no-repeat; cursor: pointer; flex-shrink: 0; transition: background-color 0.25s, background-position 0.25s; }
+    .check-item input[type="checkbox"]:checked { background-color: rgba(201,168,76,0.3); background-color: color-mix(in srgb, var(--gold) 30%, transparent); background-image: radial-gradient(circle 9px at 32px 50%, var(--gold) 96%, rgba(0,0,0,0) 100%); }
     .check-item-label { font-size: 0.88rem; color: var(--muted2); font-family: var(--font-ui); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
