@@ -19,13 +19,13 @@
     s.textContent =
       '.ai-polish-btn{margin-top:6px;font:600 .7rem var(--font-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#C9A84C);background:none;border:1px solid var(--gold,#C9A84C);border-radius:6px;padding:.32rem .68rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}' +
       '.ai-polish-btn:hover{background:rgba(201,168,76,.12)}' +
-      '.ai-polish-pop{position:absolute;z-index:99999;width:344px;max-width:92vw;background:var(--surface,#17161a);border:1px solid var(--gold,#C9A84C);border-radius:10px;box-shadow:0 14px 44px rgba(0,0,0,.6);padding:14px;font-family:var(--font-ui,sans-serif);color:var(--muted,#cfcfcf)}' +
+      '.ai-polish-pop{position:absolute;z-index:99999;width:520px;max-width:94vw;background:var(--surface,#17161a);border:1px solid var(--gold,#C9A84C);border-radius:10px;box-shadow:0 14px 44px rgba(0,0,0,.6);padding:18px;font-family:var(--font-ui,sans-serif);color:var(--muted,#cfcfcf)}' +
       '.ai-polish-pop h4{margin:0 0 9px;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold,#C9A84C)}' +
       '.ai-polish-tones{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}' +
       '.ai-polish-tone{font-size:.72rem;padding:.3rem .6rem;border-radius:99px;border:1px solid var(--border,#333);background:var(--black,#0e0e12);color:var(--muted,#cfcfcf);cursor:pointer}' +
       '.ai-polish-tone.on{border-color:var(--gold,#C9A84C);color:var(--gold,#C9A84C);background:rgba(201,168,76,.14);font-weight:600}' +
       '.ai-polish-hint{width:100%;box-sizing:border-box;background:var(--black,#0e0e12);border:1px solid var(--border,#333);color:inherit;border-radius:7px;padding:8px;font:inherit;font-size:.82rem;margin-bottom:9px}' +
-      '.ai-polish-preview{background:var(--black,#0e0e12);border:1px solid var(--border,#333);border-radius:7px;padding:10px;font-size:.85rem;line-height:1.5;color:#e9e9e9;white-space:pre-wrap;margin:2px 0 10px;max-height:210px;overflow:auto}' +
+      '.ai-polish-preview{background:var(--black,#0e0e12);border:1px solid var(--border,#333);border-radius:7px;padding:13px 14px;font-size:.95rem;line-height:1.6;color:#e9e9e9;white-space:pre-wrap;margin:2px 0 12px;max-height:46vh;overflow:auto}' +
       '.ai-polish-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}' +
       '.ai-polish-do{font:600 .72rem var(--font-ui,sans-serif);letter-spacing:.06em;text-transform:uppercase;color:var(--black,#141210);background:var(--gold,#C9A84C);border:none;border-radius:7px;padding:.5rem .85rem;cursor:pointer}' +
       '.ai-polish-do.ghost{color:var(--muted,#cfcfcf);background:none;border:1px solid var(--border,#333)}' +
@@ -70,7 +70,7 @@
     document.body.appendChild(pop);
     var r = btn.getBoundingClientRect();
     pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
-    pop.style.left = (window.scrollX + Math.min(r.left, window.innerWidth - 360)) + 'px';
+    pop.style.left = (window.scrollX + Math.max(8, Math.min(r.left, window.innerWidth - 540))) + 'px';
     openPop = pop;
     setTimeout(function () { document.addEventListener('mousedown', onDoc, true); }, 0);
 
