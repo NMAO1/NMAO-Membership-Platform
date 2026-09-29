@@ -49,7 +49,7 @@
     return d.result;
   }
 
-  function openPanel(ta, kind, btn) {
+  function openPanel(target, kind, btn) {
     closePop();
     css();
     var tone = localStorage.getItem(LS_KEY) || 'friendly';
@@ -96,16 +96,14 @@
         '</div>';
       body.querySelector('.ai-polish-preview').textContent = result;
       body.querySelector('[data-act="use"]').onclick = function () {
-        ta.value = result;
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
-        ta.dispatchEvent(new Event('change', { bubbles: true }));
+        target.set(result);
         closePop();
       };
       body.querySelector('[data-act="again"]').onclick = function () { run(mode); };
     }
 
     async function run(mode) {
-      var text = mode === 'draft' ? hint.value.trim() : ta.value.trim();
+      var text = mode === 'draft' ? hint.value.trim() : (target.get() || '').trim();
       if (mode === 'improve' && !text) { setMsg('Nothing to improve — type some text, or draft from a hint.', 'err'); return; }
       if (mode === 'draft' && !text) { setMsg('Add a few words in the hint box to draft from.', 'err'); return; }
       setMsg('Thinking…', 'ok');
@@ -125,18 +123,48 @@
     });
   }
 
+  function addButton(anchorEl, target, kind) {
+    css();
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'ai-polish-btn'; btn.innerHTML = '✨ Polish';
+    btn.title = 'Improve or draft this description with AI';
+    btn.onclick = function () { openPanel(target, kind, btn); };
+    anchorEl.insertAdjacentElement('afterend', btn);
+  }
+
+  // Plain <textarea> / <input> fields.
   window.attachPolish = function (selector, opts) {
     opts = opts || {};
     var kind = opts.kind || 'generic';
     document.querySelectorAll(selector).forEach(function (ta) {
       if (!ta || ta.dataset.polishAttached) return;
       ta.dataset.polishAttached = '1';
-      css();
-      var btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'ai-polish-btn'; btn.innerHTML = '✨ Polish';
-      btn.title = 'Improve or draft this description with AI';
-      btn.onclick = function () { openPanel(ta, kind, btn); };
-      ta.insertAdjacentElement('afterend', btn);
+      addButton(ta, {
+        get: function () { return ta.value; },
+        set: function (v) {
+          ta.value = v;
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+          ta.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+      }, kind);
     });
+  };
+
+  // Quill rich-text editors (dashboard uses window.quillEditors[containerId]).
+  window.attachPolishQuill = function (containerId, opts) {
+    opts = opts || {};
+    var kind = opts.kind || 'generic';
+    var el = document.getElementById(containerId);
+    if (!el || el.dataset.polishAttached) return;
+    el.dataset.polishAttached = '1';
+    function q() { return window.quillEditors && window.quillEditors[containerId]; }
+    addButton(el, {
+      get: function () { var e = q(); return e ? e.getText() : (el.innerText || ''); },
+      set: function (v) {
+        var e = q();
+        if (e) { e.setText(v); e.root.dispatchEvent(new Event('input', { bubbles: true })); }
+        else { el.innerText = v; }
+      },
+    }, kind);
   };
 })();
