@@ -6632,24 +6632,74 @@ async function dismissSetupBanner(){
 // (provisions active students as PENDING competitors); each guardian completes consent +
 // season + payment (normal rate) via an invite link; the school sets competitive rank.
 var _tournamentInvites=null;
+function _tStep(icon,title,body){
+  return '<div style="background:var(--black);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.8rem">'
+    +'<div style="font-size:0.82rem;color:var(--gold);font-weight:600;margin-bottom:0.25rem"><i class="fa-solid '+icon+'" style="margin-right:0.4rem"></i>'+title+'</div>'
+    +'<div style="font-size:0.8rem;color:var(--muted);line-height:1.5">'+body+'</div></div>';
+}
+function _tFlowHtml(){
+  var steps=['Share your code / send invites','Student downloads NMAO Compete','Joins your school — you approve','Auto-enrolled in the current season','Submits their video for the next tournament','Judged &amp; ranked','Your payout at month’s end'];
+  return '<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:0.2rem 0 0.5rem">What happens next</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center">'
+    +steps.map(function(s,i){ return '<span style="font-size:0.76rem;color:var(--white);background:var(--black);border:1px solid var(--border);border-radius:99px;padding:0.28rem 0.65rem">'+(i+1)+'. '+s+'</span>'+(i<steps.length-1?'<i class="fa-solid fa-chevron-right" style="color:var(--muted);font-size:0.66rem"></i>':''); }).join('')
+    +'</div>';
+}
 async function renderTournamentCard(){
   var el=document.getElementById('tournamentCard'); if(!el||!SID) return;
-  var enabled=false;
-  try{ var sr=await sb.from('schools').select('tournament_school_id').eq('id',SID).single(); if(sr&&sr.data){ enabled=!!sr.data.tournament_school_id; } }catch(e){}
+  var enabled=false, code=null;
+  try{ var sr=await sb.from('schools').select('name,tournament_school_id,tournament_join_code').eq('id',SID).single();
+       if(sr&&sr.data){ enabled=!!sr.data.tournament_school_id; code=sr.data.tournament_join_code||null; window.__schoolName=sr.data.name||window.__schoolName; } }catch(e){}
   el.style.display='block';
+  var badge=function(txt,col){ return '<span style="font-size:0.62rem;color:'+col+';border:1px solid '+col+';border-radius:4px;padding:0 0.4rem;margin-left:0.35rem;vertical-align:middle">'+txt+'</span>'; };
+  var head=function(b){ return '<div style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);margin-bottom:0.35rem"><i class="fa-solid fa-trophy" style="margin-right:0.5rem"></i>NMAO Tournaments'+b+'</div>'; };
   if(!enabled){
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">'
-      +'<div style="flex:1;min-width:260px"><div style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.3rem"><i class="fa-solid fa-trophy" style="margin-right:0.5rem"></i>NMAO Tournaments</div>'
-      +'<div style="font-size:0.88rem;color:var(--muted);line-height:1.55">Get your students competing in the NMAO Tournament app in a couple of clicks, using your existing roster. <strong style="color:var(--white)">Enabling is free</strong> — each competitor’s season entry is paid separately at the normal rate, and you set each athlete’s competitive rank. Completely optional.</div></div>'
-      +'<button class="panel-action" onclick="enableTournaments()"><i class="fa-solid fa-bolt"></i> Enable Tournaments</button></div>'
+    el.innerHTML=head(badge('FREE TO ENABLE','#5A9A6A'))
+      +'<div style="font-size:0.9rem;color:var(--white);line-height:1.55;margin-bottom:0.9rem">Give your students a national season to train <em>for</em> — and run your own <strong>in-house tournaments</strong> the moment you enable.</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0.7rem;margin-bottom:1rem">'
+      +_tStep('fa-medal','A real season','9 judged national tournaments a year, ranked, with a monthly reveal. Season 1 opens Jan 15, 2027 — and you can run in-house tournaments at your school right away.')
+      +_tStep('fa-mobile-screen-button','They compete from their phone','Students download the free NMAO Compete app, join your school with your code, and submit a video each round. Judges score it — placements + national ranking.')
+      +_tStep('fa-hand-holding-dollar','You earn, monthly','$0 to enable. Up to <strong style="color:var(--gold)">35%</strong> of your students’ entry fees comes back to your account at month’s end (15% → 25% on the platform or accredited → 35% both).')
+      +_tStep('fa-sliders','You stay in control','You set each athlete’s competitive rank; guardians complete consent + payment. Optional, anytime.')
+      +'</div>'
+      +'<button class="panel-action" onclick="enableTournaments()"><i class="fa-solid fa-bolt"></i> Enable Tournaments — Free</button>'
+      +'<span style="font-size:0.8rem;color:var(--muted);margin-left:0.6rem">Uses your existing roster · nothing is charged</span>'
       +'<div id="tournamentMsg" style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem"></div>';
   } else {
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">'
-      +'<div><div style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.2rem"><i class="fa-solid fa-trophy" style="margin-right:0.5rem"></i>NMAO Tournaments <span style="font-size:0.66rem;color:#5A9A6A;border:1px solid #5A9A6A;border-radius:4px;padding:0 0.4rem;margin-left:0.3rem;vertical-align:middle">ENABLED</span></div>'
-      +'<div style="font-size:0.85rem;color:var(--muted)">Your school is set up in the Tournament app. Send each guardian their invite to finish their child’s registration; set competitive rank in the Tournament School Portal.</div></div>'
-      +'<button class="panel-action" onclick="openTournamentInvites()"><i class="fa-solid fa-paper-plane"></i> Manage invites</button></div>'
+    el.innerHTML=head(badge('ENABLED','#5A9A6A'))
+      +'<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.9rem">Your school is live — here’s how to get your students competing:</div>'
+      +(code ?
+        '<div style="background:var(--black);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:0.85rem 1rem;margin-bottom:0.85rem">'
+        +'<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Your school code</div>'
+        +'<div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">'
+        +'<span style="font-family:var(--font-display);font-size:1.7rem;color:var(--gold);letter-spacing:0.08em">'+impEsc(code)+'</span>'
+        +'<button class="btn-sm" onclick="copyTournamentLink(\''+impEsc(code)+'\',this)"><i class="fa-solid fa-copy"></i> Copy</button>'
+        +'<button class="btn-sm" onclick="showTournamentQr(\''+impEsc(code)+'\')"><i class="fa-solid fa-qrcode"></i> QR</button>'
+        +'</div><div id="tournamentQr" style="margin-top:0.7rem"></div>'
+        +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">Students enter this in the NMAO Compete app to join your school — you approve each request.</div></div>'
+        : '')
+      +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.9rem">'
+      +'<button class="btn-sm" onclick="copyInviteMessage(\''+impEsc(code||'')+'\',this)"><i class="fa-solid fa-paste"></i> Copy invite message</button>'
+      +'<button class="btn-sm" onclick="openTournamentInvites()"><i class="fa-solid fa-paper-plane"></i> Send guardian invites</button>'
+      +'</div>'
+      +_tFlowHtml()
+      +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.7rem">Set each athlete’s competitive rank in the Tournament School Portal.</div>'
       +'<div id="tournamentMsg" style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem"></div>';
   }
+}
+function showTournamentQr(code){
+  var c=document.getElementById('tournamentQr'); if(!c) return;
+  if(c.innerHTML){ c.innerHTML=''; return; }
+  var url='https://compete.nmao.us/?code='+encodeURIComponent(code);
+  try{ QRCode.toDataURL(url,{width:170,margin:1,color:{dark:'#0e0e12',light:'#ffffff'}},function(err,d){
+    if(err){ c.textContent='Could not render QR.'; return; }
+    c.innerHTML='<img src="'+d+'" width="170" height="170" alt="Join QR" style="background:#fff;border-radius:8px;padding:6px" /><div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem">Scan to join · code '+impEsc(code)+'</div>';
+  }); }catch(e){ c.textContent='QR unavailable.'; }
+}
+function copyInviteMessage(code,btn){
+  var name=window.__schoolName||'Our school';
+  var msg='🥋 '+name+' is now part of the NMAO national tournament season!\n\n'
+    +'Download the free NMAO Compete app, join our school with code '+(code||'[your code]')+', and submit your form for our next tournament. You’ll be judged, ranked nationally, and can compete in our in-house tournaments too.\n\nLet’s represent! 🏆';
+  try{ navigator.clipboard.writeText(msg); if(btn){ var o=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-check"></i> Copied'; setTimeout(function(){btn.innerHTML=o;},1500);} }catch(e){}
 }
 function _activeStudentCount(){ try{ return (allStudents||[]).filter(function(s){return s.status==='active'&&!s.deleted_at;}).length; }catch(e){ return 0; } }
 async function _callProvisionTournament(){
@@ -6659,7 +6709,7 @@ async function _callProvisionTournament(){
 }
 async function enableTournaments(){
   var n=_activeStudentCount();
-  if(!window.confirm('Enable NMAO Tournaments?\n\nThis provisions your '+n+' active students as PENDING competitors in the NMAO Tournament app. Enabling is FREE — nothing is charged now. Each guardian then completes their child’s consent, season and payment (normal rate) via an invite link, and you set each athlete’s competitive rank in the Tournament School Portal.')) return;
+  if(!window.confirm('Enable NMAO Tournaments?\n\nThis provisions your '+n+' active students as PENDING competitors in the NMAO Tournament app. Enabling is FREE — nothing is charged now. Each guardian then completes their child’s consent and entry payment via an invite link — students are auto-enrolled in the current season — and you set each athlete’s competitive rank in the Tournament School Portal.')) return;
   var msg=document.getElementById('tournamentMsg'); if(msg){ msg.style.color='var(--muted)'; msg.textContent='Enabling… provisioning your roster.'; }
   try{
     var res=await _callProvisionTournament();
@@ -6679,7 +6729,7 @@ async function openTournamentInvites(){
 function renderTournamentInvites(invites){
   var body=document.getElementById('tournamentInviteBody'); if(!body) return;
   if(!invites.length){ body.innerHTML='<div style="color:var(--muted)">No invites yet. Once your school is provisioned, each active student appears here with a guardian invite link.</div>'; return; }
-  var h='<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.85rem">Send each guardian their invite — they complete consent, season and payment. You set competitive rank in the Tournament School Portal. Links are single-use and expire.</div>';
+  var h='<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.85rem">Send each guardian their invite — they complete consent and entry payment (students are auto-enrolled in the current season). You set competitive rank in the Tournament School Portal. Links are single-use and expire.</div>';
   h+=invites.map(function(iv){
     var name=iv.student_name||iv.external_member_student_id||'Student';
     var url=iv.invite_url||'';
