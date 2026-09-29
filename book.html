@@ -686,6 +686,10 @@
       var p    = new URLSearchParams(window.location.search);
       var slug = p.get('slug');
       var id   = p.get('instructor') || p.get('id');
+      // Capture ad/social attribution from the URL (?utm_source=…) to tag the trial lead.
+      window.__slug = slug;
+      window.__utm = {};
+      ['source','medium','campaign','term','content'].forEach(function(k){ var v = p.get('utm_' + k); if (v) window.__utm[k] = v; });
       if (!slug && !id) {
         showError('No booking link found. Please use the direct link provided by your instructor.');
         return;
@@ -1410,6 +1414,13 @@
         var newSessionId = rpcRes.data;
 
         // (lead creation + consent now handled inside book_public_session)
+
+        // Tag the fresh trial lead with the CTA's social/ad attribution (best-effort).
+        try {
+          if (window.__slug && window.__utm && window.__utm.source) {
+            await sb.rpc('capture_lead_utm', { p_slug: window.__slug, p_email: email.toLowerCase(), p_utm: window.__utm });
+          }
+        } catch (_e) { /* attribution is non-critical */ }
 
         showSuccess(first, selectedSetting.name);
 
