@@ -625,6 +625,7 @@
 <div class="nav-item" onclick="window.open('kiosk.html?school='+(window.schoolData&&window.schoolData.slug?window.schoolData.slug:'')+'&k='+(window.schoolData&&window.schoolData.kiosk_token?window.schoolData.kiosk_token:''),'_blank')"><i class="fa-solid fa-tablet-screen-button nav-icon"></i> Kiosk Mode</div>
     <div class="nav-section-label">Integrations</div>
     <div class="nav-item" id="nav-integrations" onclick="navigate('integrations',this)"><i class="fa-solid fa-trophy nav-icon"></i> Tournament</div>
+    <div class="nav-item" id="nav-growth" onclick="navigate('growth',this)"><i class="fa-solid fa-bullhorn nav-icon"></i> Growth Engine</div>
   </div>
   <div class="sidebar-footer">
     <div class="user-info">
@@ -1633,8 +1634,12 @@
           <div style="padding:1.5rem;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch" id="tournamentInviteBody"></div>
         </div>
       </div>
+    </div>
 
-      <!-- §GROWTH ENGINE — school-facing marketing outcomes + enroll -->
+    <!-- ═══════════════ §PAGE-GROWTH ═══════════════ -->
+    <div class="page" id="page-growth">
+      <div class="content-heading"><h2>Growth Engine</h2><div class="rule-h"></div></div>
+      <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">NMAO promotes your school to bring in new students &mdash; and this is where you see exactly what it produces.</p>
       <div id="growthCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
       <div class="modal-overlay" id="growthJoinModal">
         <div class="modal" style="width:600px;max-width:96vw">
@@ -3735,6 +3740,9 @@
 // ─────────────────────────────── §INIT ───────────────────────────────
 
 var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+// Growth Engine homebase (Tournament project) — public read for boost tiers (anon key, public table)
+var TOURN_URL = 'https://oxzuavpyoetchwebdejp.supabase.co';
+var TOURN_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94enVhdnB5b2V0Y2h3ZWJkZWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NjgyNjUsImV4cCI6MjEwMTU0NDI2NX0.SEBXeo_FqsyqV8xS5dwaGymXI6mYPy8-9uMAgaX4fhg';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 // Returns the signed-in user's access token so payment functions can verify who is charging (falls back to anon).
 async function authToken(){ try{ var _s=await sb.auth.getSession(); if(_s&&_s.data&&_s.data.session&&_s.data.session.access_token) return _s.data.session.access_token; }catch(e){} return SKEY; }
@@ -5674,7 +5682,7 @@ function navigate(page,el){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var t=document.getElementById('page-'+page); if(t) t.classList.add('active');
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
-  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations'};
+  var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations',growth:'Growth Engine'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
@@ -5687,7 +5695,8 @@ if(page==='sessions')    { renderSessionTypes(); renderSessionPacks(); }
   if(page==='analytics')   { buildInstructorComparison(); loadRevenueChart(); buildLeadFunnel(); }
   if(page==='settings')    { renderSettingsSessionTypes(); if(window.loadSmsNumber) loadSmsNumber(); }
   if(page==='shareembed') { if(window.renderShareHub) renderShareHub(); if(window.loadSocialProfiles) loadSocialProfiles(); if(window.loadScheduleEmbeds) loadScheduleEmbeds(); if(window.loadMembershipEmbeds) loadMembershipEmbeds(); }
-  if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); if(window.renderGrowthCard) renderGrowthCard(); }
+  if(page==='integrations') { if(window.renderTournamentCard) renderTournamentCard(); }
+  if(page==='growth') { if(window.renderGrowthCard) renderGrowthCard(); }
   if(page==='schedule') { if(window.loadScheduleShifts) loadScheduleShifts(); if(window.loadClosures) loadClosures(); }
   if(page==='communications') { if(window.switchCommTab) switchCommTab('broadcast'); loadSmsInbox(); }
   if(page==='payments') { loadPaymentsLedger(); }
@@ -6728,7 +6737,7 @@ async function renderGrowthCard(){
     el.innerHTML=head(badge('FREE','#5A9A6A'))
       +'<div style="font-size:0.9rem;color:var(--white);line-height:1.55;margin-bottom:0.9rem">Let NMAO promote your school on our national channels — and watch exactly how many new students it sends you.</div>'
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0.7rem;margin-bottom:1rem">'
-      +_tStep('fa-bullhorn','We promote you nationally','Student Spotlights, accredited-school features, and your best moments — posted by our team on NMAO’s channels.')
+      +_tStep('fa-bullhorn','We promote you — national + local','<strong>Organically nationally</strong> — Student Spotlights, accredited features, and your best moments on NMAO’s channels. Plus <strong>paid boosts run only in your local area</strong>, where every dollar goes to boosting your posts to nearby families to drive enrollment.')
       +_tStep('fa-hand','You stay in control','We only feature content you tag or submit. Pull it anytime.')
       +_tStep('fa-user-plus','It drives real students','Every promotion links to YOUR trial page — and this tab shows the leads, trials, and enrollments it creates.')
       +_tStep('fa-gift','Free to start','Organic promotion is an accreditation benefit. Optional paid local boosts later.')
@@ -6780,20 +6789,32 @@ function openGrowthJoin(){
   var body=document.getElementById('growthJoinBody'); if(!body) return;
   body.innerHTML='<div style="font-size:0.88rem;color:var(--white);line-height:1.6;margin-bottom:0.9rem">You stay in control. NMAO will only feature content you <strong>tag</strong> (with an Approved Tag) or <strong>submit</strong> — and you can pull permission anytime. When we feature you, we add NMAO branding and a caption that drives sign-ups to your school.</div>'
     +'<ul style="font-size:0.82rem;color:var(--muted);line-height:1.7;margin:0 0 1rem;padding-left:1.1rem"><li>We only repost content you tag or submit.</li><li>You confirm you hold the rights and consents — including a parent/guardian media release for any minor shown.</li><li>You can revoke anytime by removing the tag or asking us to take it down.</li></ul>'
-    +'<label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.8rem;cursor:pointer"><input type="checkbox" id="growthBoost" style="margin-top:0.2rem" /><span style="font-size:0.85rem;color:var(--white)"><strong>Boost opt-in (optional).</strong> <span style="color:var(--muted)">NMAO may also use my tagged content in <strong>paid</strong> local promotions for my school. Changeable anytime.</span></span></label>'
+    +'<div style="margin-bottom:0.8rem"><div style="font-weight:600;color:var(--gold);font-size:0.9rem;margin-bottom:0.2rem">Local boost (optional)</div><div style="color:var(--muted);font-size:0.82rem;margin-bottom:0.5rem">Beyond free national promotion, we can run <strong>paid ads only in your area</strong> — every dollar goes to boosting your posts to nearby families. Pick a level (changeable anytime):</div><div id="growthBoostBox">Loading options…</div></div>'
     +'<div class="field" style="max-width:320px"><label>Your name (for the record)</label><input type="text" id="growthName" placeholder="Full name" /></div>'
     +'<div style="display:flex;align-items:center;gap:0.8rem;margin-top:0.8rem"><button class="panel-action" id="growthJoinBtn" onclick="submitGrowthJoin()"><i class="fa-solid fa-check"></i> I agree — join free</button><span id="growthJoinMsg" style="font-size:0.82rem;color:var(--muted)"></span></div>';
   document.getElementById('growthJoinModal').classList.add('active');
+  loadGrowthTiers();
+}
+async function loadGrowthTiers(){
+  var box=document.getElementById('growthBoostBox'); if(!box) return;
+  var opt=function(val,title,price,blurb,checked){ return '<label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.5rem 0.65rem;border:1px solid var(--border);border-radius:8px;margin-bottom:0.4rem;cursor:pointer;background:var(--black)"><input type="radio" name="growthTier" value="'+val+'"'+(checked?' checked':'')+' style="margin-top:0.25rem" /><span style="font-size:0.84rem;color:var(--white)"><strong>'+title+'</strong>'+(price?' <span style="color:var(--gold)">'+price+'</span>':'')+(blurb?'<br><span style="color:var(--muted);font-size:0.8rem">'+blurb+'</span>':'')+'</span></label>'; };
+  try{
+    var r=await fetch(TOURN_URL+'/rest/v1/growth_boost_tiers?active=eq.true&order=sort&select=id,name,monthly_price_cents,blurb',{headers:{apikey:TOURN_ANON,Authorization:'Bearer '+TOURN_ANON}});
+    var tiers=await r.json(); if(!Array.isArray(tiers)) tiers=[];
+    var html=opt('','No boost — free national promotion only','','',true);
+    tiers.forEach(function(t){ var p='$'+Math.round((t.monthly_price_cents||0)/100).toLocaleString()+'/mo'; html+=opt(t.id,t.name,p,t.blurb||'',false); });
+    box.innerHTML=html;
+  }catch(e){ box.innerHTML='<div style="color:var(--muted);font-size:0.8rem">Free national promotion only (boost options unavailable right now).</div>'; }
 }
 function closeGrowthJoin(){ var m=document.getElementById('growthJoinModal'); if(m) m.classList.remove('active'); }
 async function submitGrowthJoin(){
   var nameEl=document.getElementById('growthName'); var name=nameEl?nameEl.value.trim():'';
-  var boost=!!(document.getElementById('growthBoost')||{}).checked;
+  var tierEl=document.querySelector('input[name="growthTier"]:checked'); var tier=tierEl?tierEl.value:'';
   var msg=document.getElementById('growthJoinMsg');
   if(!name){ if(msg){ msg.textContent='Enter your name to agree.'; msg.style.color='#e08a8a'; } return; }
   var btn=document.getElementById('growthJoinBtn'); if(btn) btn.disabled=true; if(msg){ msg.textContent='Enrolling…'; msg.style.color='var(--muted)'; }
   try{
-    var resp=await fetch(SURL+'/functions/v1/provision-tournament',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,growth_only:true,promo:{accept:true,allow_paid:boost,name:name}})});
+    var resp=await fetch(SURL+'/functions/v1/provision-tournament',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({school_id:SID,growth_only:true,promo:{accept:true,boost_tier:tier||null,name:name}})});
     var d=await resp.json().catch(function(){return {};});
     if(!resp.ok||!d.ok) throw new Error((d&&d.error)||'Enrollment failed.');
     closeGrowthJoin(); await renderGrowthCard();
