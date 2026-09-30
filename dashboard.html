@@ -6754,7 +6754,14 @@ async function renderGrowthCard(){
       +'<div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;margin-bottom:0.35rem">'
       +TAGS.map(function(t){ return '<span style="font-size:0.8rem;color:var(--gold);background:rgba(201,168,76,0.10);border:1px solid rgba(201,168,76,0.35);border-radius:99px;padding:0.28rem 0.7rem">'+t+'</span>'; }).join('')
       +'<button class="btn-sm" onclick="copyGrowthTags(this)"><i class="fa-solid fa-copy"></i> Copy tags</button></div>'
-      +'<div style="font-size:0.78rem;color:var(--muted)">Tag any post with these and our team may feature it on NMAO’s channels.</div>';
+      +'<div style="font-size:0.78rem;color:var(--muted)">Tag any post with these and our team may feature it on NMAO’s channels.</div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem">'
+      +'<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Submit content</div>'
+      +'<div style="font-size:0.8rem;color:var(--muted);line-height:1.5;margin-bottom:0.6rem">Drop a photo or clip — we’ll draft an on-brand caption and add it to NMAO’s feature queue for our team to review.</div>'
+      +'<input type="file" id="growthDropFile" accept="image/*,video/*" style="display:none" onchange="growthDropUpload(this)" />'
+      +'<button class="btn-sm" onclick="document.getElementById(\'growthDropFile\').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Choose photo / clip</button>'
+      +'<span id="growthDropMsg" style="font-size:0.8rem;color:var(--muted);margin-left:0.6rem"></span>'
+      +'</div>';
     loadGrowthResults();
   }
 }
@@ -6781,6 +6788,49 @@ function renderGrowthResults(r){
       +'</tbody></table>';
   }
   box.innerHTML=html;
+}
+async function growthDropUpload(input){
+  var file=input.files&&input.files[0]; if(!file) return;
+  var msg=document.getElementById('growthDropMsg');
+  var setM=function(t,c){ if(msg){ msg.textContent=t; msg.style.color=c||'var(--muted)'; } };
+  if(file.size>60*1024*1024){ setM('File too large (max 60MB).','#e08a8a'); input.value=''; return; }
+  var isVideo=/^video\//.test(file.type||'');
+  setM('Uploading…');
+  try{
+    var ext=(String(file.name).split('.').pop()||(isVideo?'mp4':'jpg')).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
+    var uid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
+    var path=SID+'/'+uid+'.'+ext;
+    var up=await sb.storage.from('growth-media').upload(path, file, {contentType:file.type||undefined, upsert:false});
+    if(up.error) throw up.error;
+    setM('Analyzing…');
+    var frame=await growthKeyframe(file, isVideo).catch(function(){ return null; });
+    var resp=await fetch(SURL+'/functions/v1/growth-submit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({path:path,media_type:isVideo?'video':'image',frame_b64:frame?frame.b64:null,frame_mime:frame?frame.mime:null})});
+    var d=await resp.json().catch(function(){ return {}; });
+    if(!resp.ok||!d.ok) throw new Error((d&&d.error)||'Submit failed.');
+    setM('Sent to NMAO for review ✓','#5A9A6A');
+  }catch(e){ setM(e.message||'Upload failed.','#e08a8a'); }
+  input.value='';
+}
+function growthKeyframe(file, isVideo){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var toJpeg=function(source,w,h){
+      var max=1024, scale=Math.min(1,max/Math.max(w||max,h||max));
+      var cw=Math.max(1,Math.round((w||max)*scale)), ch=Math.max(1,Math.round((h||max)*scale));
+      var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+      cv.getContext('2d').drawImage(source,0,0,cw,ch);
+      var data=cv.toDataURL('image/jpeg',0.85); URL.revokeObjectURL(url);
+      resolve({b64:data.split(',')[1], mime:'image/jpeg'});
+    };
+    if(isVideo){
+      var v=document.createElement('video'); v.muted=true; v.preload='metadata'; v.src=url;
+      v.onloadeddata=function(){ try{ v.currentTime=Math.min(1,(v.duration||2)/2); }catch(e){ try{v.currentTime=0;}catch(_){} } };
+      v.onseeked=function(){ toJpeg(v, v.videoWidth, v.videoHeight); };
+      v.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('video')); };
+    } else {
+      var img=new Image(); img.onload=function(){ toJpeg(img, img.naturalWidth, img.naturalHeight); }; img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('image')); }; img.src=url;
+    }
+  });
 }
 function copyGrowthTags(btn){
   try{ navigator.clipboard.writeText('@nationalmartialart #NMAOaccredited #NMAO #NMAOspotlight'); if(btn){ var o=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-check"></i> Copied'; setTimeout(function(){btn.innerHTML=o;},1500);} }catch(e){}
