@@ -6726,9 +6726,9 @@ async function loadTournamentStatus(){
 }
 async function renderGrowthCard(){
   var el=document.getElementById('growthCard'); if(!el||!SID) return;
-  var enrolled=false;
-  try{ var sr=await sb.from('schools').select('name,growth_enrolled,growth_boost,tournament_school_id').eq('id',SID).single();
-       if(sr&&sr.data){ enrolled=!!sr.data.growth_enrolled; window.__schoolName=sr.data.name||window.__schoolName; window.__tSchool=sr.data.tournament_school_id||null; } }catch(e){}
+  var enrolled=false, bStatus='none', bTier='';
+  try{ var sr=await sb.from('schools').select('name,growth_enrolled,growth_boost,tournament_school_id,growth_boost_status,growth_boost_tier').eq('id',SID).single();
+       if(sr&&sr.data){ enrolled=!!sr.data.growth_enrolled; window.__schoolName=sr.data.name||window.__schoolName; window.__tSchool=sr.data.tournament_school_id||null; bStatus=sr.data.growth_boost_status||'none'; bTier=sr.data.growth_boost_tier||''; } }catch(e){}
   el.style.display='block';
   var TAGS=['@nationalmartialart','#NMAOaccredited','#NMAO','#NMAOspotlight'];
   var badge=function(t,c){ return '<span style="font-size:0.62rem;color:'+c+';border:1px solid '+c+';border-radius:4px;padding:0 0.4rem;margin-left:0.35rem;vertical-align:middle">'+t+'</span>'; };
@@ -6762,8 +6762,9 @@ async function renderGrowthCard(){
       +'<button class="btn-sm" onclick="document.getElementById(\'growthDropFile\').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Choose photo / clip</button>'
       +'<span id="growthDropMsg" style="font-size:0.8rem;color:var(--muted);margin-left:0.6rem"></span>'
       +'</div>'
-      +'<div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem"><div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Recently featured</div><div id="growthFeatured" style="font-size:0.82rem;color:var(--muted)">Loading…</div></div>';
-    loadGrowthResults(); loadGrowthFeatured();
+      +'<div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem"><div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Recently featured</div><div id="growthFeatured" style="font-size:0.82rem;color:var(--muted)">Loading…</div></div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem"><div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Local boost</div><div id="growthBoostMgr" style="font-size:0.82rem;color:var(--muted)">Loading…</div></div>';
+    loadGrowthResults(); loadGrowthFeatured(); loadGrowthBoost(bStatus, bTier);
   }
 }
 async function loadGrowthResults(){
@@ -6789,6 +6790,50 @@ function renderGrowthResults(r){
       +'</tbody></table>';
   }
   box.innerHTML=html;
+}
+async function loadGrowthBoost(status, tier){
+  var box=document.getElementById('growthBoostMgr'); if(!box) return;
+  var tiers=[];
+  try{ var r=await fetch(TOURN_URL+'/rest/v1/growth_boost_tiers?active=eq.true&order=sort&select=id,name,monthly_price_cents,blurb',{headers:{apikey:TOURN_ANON,Authorization:'Bearer '+TOURN_ANON}}); tiers=await r.json(); if(!Array.isArray(tiers)) tiers=[]; }catch(e){}
+  window.__boostTiers=tiers;
+  var tget=function(id){ return tiers.find(function(x){return x.id===id;}); };
+  var priceOf=function(id){ var t=tget(id); return t?('$'+Math.round(t.monthly_price_cents/100).toLocaleString()+'/mo'):''; };
+  var nameOf=function(id){ var t=tget(id); return t?t.name:(id||''); };
+  var active=(status==='requested'||status==='active'||status==='paused');
+  var badge=status==='active'?'<span style="color:#5A9A6A">● Active</span>':status==='requested'?'<span style="color:var(--gold)">● Requested — pending our team</span>':status==='paused'?'<span style="color:var(--muted)">⏸ Paused</span>':'';
+  var html='';
+  if(active){
+    html+='<div style="font-size:0.85rem;color:var(--white);margin-bottom:0.55rem"><strong>'+impEsc(nameOf(tier))+'</strong> <span style="color:var(--gold)">'+priceOf(tier)+'</span> &nbsp; '+badge+'</div>';
+    html+='<div style="display:flex;gap:0.5rem;flex-wrap:wrap">';
+    if(status!=='paused') html+='<button class="btn-sm" onclick="growthBoostAction(\'pause\')">Pause</button>';
+    else html+='<button class="btn-sm" onclick="growthBoostAction(\'request\',\''+impEsc(tier)+'\')">Resume</button>';
+    html+='<button class="btn-sm" onclick="growthBoostShowPicker()">Change level</button>';
+    html+='<button class="btn-sm" onclick="growthBoostAction(\'cancel\')">Cancel</button></div>';
+    html+='<div id="growthBoostPicker" style="display:none;margin-top:0.6rem"></div>';
+    html+='<div style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem">Paid ads run only in your local area. Our team confirms and starts your boost.</div>';
+  } else {
+    html+='<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem">Request a paid boost — we run ads <strong>only in your area</strong> to bring nearby families in. Cancel anytime.</div>'+boostPickerHtml(tiers,'');
+  }
+  html+='<div id="growthBoostMsg" style="font-size:0.8rem;color:var(--muted);margin-top:0.5rem"></div>';
+  box.innerHTML=html;
+}
+function boostPickerHtml(tiers, sel){
+  var opts=(tiers||[]).map(function(t){ return '<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+impEsc(t.name)+' — $'+Math.round(t.monthly_price_cents/100).toLocaleString()+'/mo</option>'; }).join('');
+  return '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><select id="growthBoostTier" style="background:var(--black);border:1px solid var(--border);color:var(--white);border-radius:7px;padding:0.4rem 0.6rem;font-size:0.85rem"><option value="">Choose a level…</option>'+opts+'</select><input id="growthBoostNote" placeholder="Anything we should know? (optional)" style="flex:1;min-width:180px;background:var(--black);border:1px solid var(--border);color:var(--white);border-radius:7px;padding:0.4rem 0.6rem;font-size:0.85rem" /><button class="panel-action" onclick="growthBoostAction(\'request\')">Request boost</button></div>';
+}
+function growthBoostShowPicker(){ var p=document.getElementById('growthBoostPicker'); if(!p) return; p.style.display=(p.style.display==='none'?'block':'none'); if(p.style.display==='block') p.innerHTML=boostPickerHtml(window.__boostTiers||[],''); }
+async function growthBoostAction(action, tierArg){
+  var msg=document.getElementById('growthBoostMsg'); var setM=function(t,c){ if(msg){ msg.textContent=t; msg.style.color=c||'var(--muted)'; } };
+  var tier=tierArg||'';
+  if(action==='request' && !tier){ var sel=document.getElementById('growthBoostTier'); tier=sel?sel.value:''; if(!tier){ setM('Choose a boost level.','#e08a8a'); return; } }
+  var note=''; var nEl=document.getElementById('growthBoostNote'); if(nEl) note=nEl.value;
+  setM('Saving…');
+  try{
+    var res=await sb.rpc('growth_boost_request',{p_tier:tier||null,p_note:note||null,p_action:action});
+    if(res.error) throw res.error;
+    var d=res.data||{};
+    loadGrowthBoost(d.status, d.tier);
+  }catch(e){ setM(e.message||'Could not save.','#e08a8a'); }
 }
 async function loadGrowthFeatured(){
   var box=document.getElementById('growthFeatured'); if(!box) return;
