@@ -4113,6 +4113,7 @@ var currentBeltTestId       = null, currentRosterClassId = null, currentRosterSe
 var rosterAttendance        = {};
 var currentRosterTab = 'all';
 var currentRosterStudents = [];
+var currentRosterTrials = [];  // §TRIAL-ROSTER — trial attendees from leads (not students)
 var rosterCoveringIds = new Set();
 var milestoneSettings       = {}, calWeekOffset = 0, calMonthOffset = 0, calView = 'week';
 var selectedFont            = 'Cormorant Garamond', productFilter = 'all';
@@ -7161,6 +7162,19 @@ async function openClassRosterFromCal(classId,dateStr){
   var studR=await sb.from('students').select('*').eq('school_id',SID).in('status',['active','trial']).order('last_name');
   var students=studR.data||[];
   currentRosterStudents = students;
+  // §TRIAL-ROSTER — trial attendees live in the leads table (trial_class_id + trial_session_date),
+  // not students, and instructors can't read leads directly, so pull them via the gated RPC.
+  // Display-only (a lead has no students row, so it can't be written to class_attendance).
+  currentRosterTrials = [];
+  try{
+    var trR=await sb.rpc('class_trial_roster',{p_class_id:classId,p_session_date:dateStr});
+    if(trR.error) console.error('trial roster rpc:',trR.error);
+    else currentRosterTrials=(trR.data||[]).map(function(t){return {
+      __trial:true, id:'lead:'+t.lead_id, lead_id:t.lead_id,
+      first_name:t.first_name||'', last_name:t.last_name||'',
+      source:t.source, utm_source:t.utm_source, utm_campaign:t.utm_campaign, status:t.status
+    };});
+  }catch(e){ console.error('trial roster load:',e); }
   currentRosterTab='rsvp';
   switchRosterTab('rsvp');
 }
@@ -7299,8 +7313,18 @@ function renderRosterList() {
     var q = qEl ? qEl.value.toLowerCase().trim() : '';
     if (q) filtered = filtered.filter(function(s){ return (s.first_name + ' ' + s.last_name).toLowerCase().indexOf(q) !== -1; });
   }
+  // §TRIAL-ROSTER — trial attendees appear on RSVP'd (default) and All tabs; they reserved a
+  // trial slot for this class/date. Hidden on Checked In (no student record to check in) and
+  // Eligible (membership-coverage concept). Honors the All/Eligible search box.
+  var trials = (currentRosterTrials || []);
+  if (tab === 'checked' || tab === 'eligible') trials = [];
+  if (tab === 'eligible' || tab === 'all') {
+    var qTEl = document.getElementById('rosterSearchInput');
+    var qT = qTEl ? qTEl.value.toLowerCase().trim() : '';
+    if (qT) trials = trials.filter(function(t){ return (t.first_name + ' ' + t.last_name).toLowerCase().indexOf(qT) !== -1; });
+  }
   document.getElementById('classRosterCount').textContent = Object.keys(rosterAttendance).length;
-  if (!filtered.length) {
+  if (!filtered.length && !trials.length) {
     var qEl2 = document.getElementById('rosterSearchInput');
     var hasQuery = (tab === 'eligible' || tab === 'all') && qEl2 && qEl2.value.trim();
     var emptyMsg;
@@ -7312,7 +7336,8 @@ function renderRosterList() {
     list.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:0.75rem">' + emptyMsg + '</div>';
     return;
   }
-  list.innerHTML = filtered.map(function(s) {
+  var trialHtml = trials.map(renderTrialRosterRow).join('');
+  var studHtml = filtered.map(function(s) {
     var present = !!rosterAttendance[s.id];
     var rsvpStatus = rosterRsvpIds[s.id];
     var rsvpBadge = '';
@@ -7325,6 +7350,26 @@ function renderRosterList() {
       '</button>' +
     '</div>';
   }).join('');
+  list.innerHTML = trialHtml + studHtml;
+}
+// §TRIAL-ROSTER — friendly "where the trial came from" label (mirrors the Trials flow attribution)
+function trialOriginLabel(t){
+  var map={ig:'Instagram',instagram:'Instagram',fb:'Facebook',facebook:'Facebook',tiktok:'TikTok',google:'Google',yelp:'Yelp'};
+  var via = t.utm_source ? (map[(t.utm_source||'').toLowerCase()]||t.utm_source) : '';
+  if(!via && t.source){ via = (t.source==='public_trial') ? 'Website' : t.source.replace(/_/g,' '); }
+  return via ? ('Trial · via ' + via) : 'Trial';
+}
+function renderTrialRosterRow(t){
+  var nm=((t.first_name||'')+' '+(t.last_name||'')).trim()||'Trial attendee';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid rgba(139,92,246,0.35);border-left:2px solid #8b5cf6;margin-bottom:0.25rem" id="rrow-' + t.id + '">' +
+    '<div>' +
+      '<div style="font-size:0.88rem;color:var(--white)">' + impEsc(nm) +
+        '<span style="font-size:0.58rem;color:#c4b5fd;background:rgba(139,92,246,0.18);border:1px solid rgba(139,92,246,0.4);border-radius:3px;padding:0.1rem 0.35rem;margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase;vertical-align:middle">Trial</span>' +
+      '</div>' +
+      '<div style="font-size:0.66rem;color:var(--muted);margin-top:0.15rem">' + impEsc(trialOriginLabel(t)) + '</div>' +
+    '</div>' +
+    '<span title="Trial attendee - not yet a member" style="color:#8b5cf6;font-size:1.1rem"><i class="fa-solid fa-star"></i></span>' +
+  '</div>';
 }
 function closeClassRoster(){
   document.getElementById('classRosterModal').classList.remove('active');
