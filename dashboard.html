@@ -7344,10 +7344,13 @@ function renderRosterList() {
     if (rsvpStatus === 'attended') rsvpBadge = '<span style="font-size:0.62rem;color:var(--gold);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">checked in</span>';
     else if (rsvpStatus === 'enrolled') rsvpBadge = '<span style="font-size:0.62rem;color:var(--muted2);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">expected</span>';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : rsvpStatus ? 'rgba(201,168,76,0.4)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
-      '<div style="font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + rsvpBadge + '</div>' +
-      '<button onclick="toggleRosterAttendance(\'' + s.id + '\')" id="rbtn-' + s.id + '" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:' + (present ? 'var(--gold)' : 'var(--muted)') + '">' +
-        '<i class="fa-solid ' + (present ? 'fa-circle-check' : 'fa-circle') + '"></i>' +
-      '</button>' +
+      '<div onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" style="flex:1;min-width:0;cursor:pointer;font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + rsvpBadge + '</div>' +
+      '<div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">' +
+        '<button onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" aria-label="View profile" style="background:none;border:none;cursor:pointer;font-size:1.05rem;color:var(--muted)"><i class="fa-solid fa-circle-user"></i></button>' +
+        '<button onclick="toggleRosterAttendance(\'' + s.id + '\')" id="rbtn-' + s.id + '" title="' + (present ? 'Checked in — tap to undo' : 'Mark present') + '" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:' + (present ? 'var(--gold)' : 'var(--muted)') + '">' +
+          '<i class="fa-solid ' + (present ? 'fa-circle-check' : 'fa-circle') + '"></i>' +
+        '</button>' +
+      '</div>' +
     '</div>';
   }).join('');
   list.innerHTML = trialHtml + studHtml;
@@ -7382,6 +7385,18 @@ function closeClassRoster(){
     buildWeekGrid();
     if(calView==='month') buildMonthCalendar();
   });
+}
+// §ROSTER-PROFILE — open a roster row's member profile ON TOP of the open roster
+// modal (which stays behind, so closing the profile returns to the roster). Roster
+// rows are students (active/trial), so they resolve to a full profile. If a future
+// row represents a lead (trial attendee not yet converted), route to the lead editor
+// instead of a would-be-empty student profile.
+function openRosterRowProfile(sid){
+  var row=(currentRosterStudents||[]).find(function(s){return s.id===sid;});
+  if(row && (row.is_lead || row.lead_id)){ openEditLead(row.lead_id||row.id); return; }
+  var pm=document.getElementById('studentProfileModal');
+  if(pm) pm.style.zIndex='600';   // above the roster modal (z-index 400)
+  openStudentProfile(sid);
 }
 // ─────────────────────────────── §SCHEDULE ───────────────────────────────
 
@@ -9740,7 +9755,7 @@ async function openStudentProfile(sid) {
   await buildProfileGuardians(sid);
   document.getElementById('manualPayDate').value = localDateStr(new Date());
 }
-function closeStudentProfile() { document.getElementById('studentProfileModal').classList.remove('active'); currentProfileStudent=null; }
+function closeStudentProfile() { var pm=document.getElementById('studentProfileModal'); pm.classList.remove('active'); pm.style.zIndex=''; currentProfileStudent=null; }
 
 function switchProfileTab(tab) {
   var tabs = ['attendance','sessions','promotions','notes','messages','financial'];
