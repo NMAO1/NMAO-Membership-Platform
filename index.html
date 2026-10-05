@@ -462,6 +462,22 @@ var SURL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
 var sc = supabase.createClient(SURL, SKEY);
 
+// §NET-GUARD — when the connection drops (Wi-Fi switch, sleep/wake, DNS blip) the
+// Supabase client keeps firing token?grant_type=refresh_token on its background
+// ticker; each one fails (ERR_NAME_NOT_RESOLVED) and floods the console. Pause the
+// auto-refresher while the browser reports offline and resume (debounced, since
+// ERR_NETWORK_CHANGED can flap) once it's back, so a dropped link can't spam.
+(function () {
+  var paused = false, timer = null;
+  function pause() { if (paused) return; paused = true; try { sc.auth.stopAutoRefresh(); } catch (_e) {} }
+  function resume() { if (!paused) return; paused = false; try { sc.auth.startAutoRefresh(); } catch (_e) {} }
+  try {
+    window.addEventListener('offline', pause);
+    window.addEventListener('online', function () { if (timer) clearTimeout(timer); timer = setTimeout(resume, 600); });
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) pause();
+  } catch (_e) {}
+})();
+
 // Canonical $99 tier (tier_3) - new schools point here for SMS metering + config.
 var NMAO_TIER_ID = '7019f0b2-370b-4702-9e3b-9974382f0b8e';
 
@@ -492,6 +508,32 @@ function setMsg(t, c) {
   el.className = 'msg ' + c;
 }
 
+// §NET-MSG — tell a network failure (DNS/connection drop → "Failed to fetch") apart
+// from a real auth error (wrong password), so we can show a human message + Retry
+// instead of the raw "Failed to fetch".
+function isNetErr(err) {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  if (!err) return false;
+  var m = ((err.message || '') + '').toLowerCase();
+  return err.name === 'AuthRetryableFetchError'
+      || m.indexOf('failed to fetch') >= 0   // Chrome/Firefox
+      || m.indexOf('load failed') >= 0        // Safari
+      || m.indexOf('networkerror') >= 0
+      || m.indexOf('network request failed') >= 0;
+}
+
+function setNetMsg(retryFn) {
+  var el = document.getElementById('mMsg');
+  el.className = 'msg er';
+  el.textContent = "Can't reach the server - check your connection and try again. ";
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = 'Retry';
+  b.style.cssText = 'margin-left:0.4rem;padding:0.15rem 0.6rem;font:inherit;font-size:0.85em;cursor:pointer;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit';
+  b.onclick = function () { el.textContent = ''; retryFn(); };
+  el.appendChild(b);
+}
+
 function toggleFaq(el) {
   el.parentNode.classList.toggle('open');
 }
@@ -501,8 +543,13 @@ async function doLogin() {
   var p = document.getElementById('lP').value;
   if (!e || !p) { setMsg('Please fill in all fields.', 'er'); return; }
   setMsg('Signing in...', '');
-  var r = await sc.auth.signInWithPassword({ email: e, password: p });
-  if (r.error) { setMsg(r.error.message, 'er'); }
+  var r;
+  try { r = await sc.auth.signInWithPassword({ email: e, password: p }); }
+  catch (ex) { r = { error: ex }; }           // defensive: client can throw on a hard network drop
+  if (r.error) {
+    if (isNetErr(r.error)) { setNetMsg(doLogin); }
+    else { setMsg(r.error.message, 'er'); }
+  }
   else { window.location.href = 'dashboard.html'; }
 }
 
@@ -526,7 +573,10 @@ async function doSignup() {
       userId = si.data.user.id; haveSession = true;
       var exist = await sc.from('schools').select('id').eq('owner_id', userId).limit(1);
       if (exist.data && exist.data.length) { window.location.href = 'dashboard.html'; return; }
-    } else { setMsg(auth.error.message, 'er'); btn.disabled = false; btn.textContent = 'Start Free Trial'; return; }
+    } else {
+      if (isNetErr(auth.error)) { setNetMsg(doSignup); } else { setMsg(auth.error.message, 'er'); }
+      btn.disabled = false; btn.textContent = 'Start Free Trial'; return;
+    }
   }
   
   // §SIGNUP-HARDENING — school creation runs server-side (register-school EF):
