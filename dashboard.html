@@ -19741,7 +19741,10 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     var priceVal = prefill ? prefill.price : "0";
     var sessionsVal = prefill ? (prefill.sessions_included || 0) : 0;
     var visVal = prefill ? prefill.visibility : "public";
-    var tierId = prefill ? prefill.id : "";
+    // Only real uuids become the dataset id. A seeded/default tier has no id,
+    // so prefill.id is undefined; assigning undefined to dataset coerces it to
+    // the string "undefined", which later fails as a uuid on save. Keep it "".
+    var tierId = (prefill && prefill.id) ? prefill.id : "";
     var div = document.createElement("div");
     div.className = "ev-tier-row";
     div.style.cssText = "display:grid;grid-template-columns:2fr 1fr 1.2fr 1.5fr auto;gap:0.5rem;align-items:end;padding:0.65rem;background:var(--black);border:1px solid var(--border)";
@@ -19909,8 +19912,12 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
     tierRows.forEach(function(row, idx){
       var label = (row.querySelector(".ev-tier-label").value || "").trim();
       if (!label) return;
+      var rawTierId = row.dataset.tierId;
+      // Guard against a stringified undefined/null landing in the dataset so we
+      // never send the literal "undefined" to a uuid column (-> insert, not update).
+      var tierId = (rawTierId && rawTierId !== "undefined" && rawTierId !== "null") ? rawTierId : null;
       tiers.push({
-        id: row.dataset.tierId || null,
+        id: tierId,
         label: label,
         price: parseFloat(row.querySelector(".ev-tier-price").value) || 0,
         sessions_included: parseInt(row.querySelector(".ev-tier-sessions").value) || 0,
