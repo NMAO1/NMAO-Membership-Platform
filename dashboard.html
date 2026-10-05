@@ -3036,7 +3036,10 @@
               <input type="text" class="booking-slug-input" id="instrBookingSlug" placeholder="e.g. john-smith" onblur="saveInstructorSlug()" />
             </div>
             <div class="booking-link-preview" id="instrBookingLinkPreview"></div>
-            <button class="btn-sm" style="margin-top:0.5rem" onclick="copyBookingLink()"><i class="fa-solid fa-copy" style="margin-right:0.3rem"></i>Copy Link</button>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+              <button class="btn-sm" onclick="copyBookingLink()"><i class="fa-solid fa-copy" style="margin-right:0.3rem"></i>Copy Link</button>
+              <button class="btn-sm" onclick="showInstructorBookingQr()"><i class="fa-solid fa-qrcode" style="margin-right:0.3rem"></i>QR Code</button>
+            </div>
           </div>
         </div>
         <div>
@@ -7964,7 +7967,7 @@ async function buildMemberDrill(){
   var sids=[]; pays.forEach(function(p){ if(p.student_id && sids.indexOf(p.student_id)===-1) sids.push(p.student_id); });
   var smByStudent={};
   try{
-    var smr=await sb.from('student_memberships').select('student_id,stripe_subscription_id,first_charge_date,start_date,started_at,status,memberships(name,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('student_id',sids).in('status',['active','trialing','past_due']);
+    var smr=await sb.from('student_memberships').select('student_id,stripe_subscription_id,first_charge_date,start_date,started_at,status,memberships(name,billing_type,billing_length,billing_unit,class_limit_type,autopay_day,prorate_to_first)').eq('school_id',SID).in('student_id',sids).in('status',['active','trialing','past_due']);
     (smr.data||[]).forEach(function(sm){ if(!smByStudent[sm.student_id]) smByStudent[sm.student_id]=[]; smByStudent[sm.student_id].push(sm); });
   }catch(e){}
   var stripeDates={};
@@ -11123,7 +11126,7 @@ async function renderBillsUpcoming(ids, nameById, isFamily){
   _billsCtx.chargeableUpcomingCents=0;
   el.innerHTML='<div style="color:var(--muted);font-size:0.8rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Checking upcoming…</div>';
   try{
-    var r=await sb.from('student_memberships').select('id,student_id,status,price,autopay,billing_method,stripe_subscription_id,cycle_end_date,first_charge_date,start_date,is_class_pack, memberships(name,billing_type,class_limit_type)').in('student_id',ids).eq('school_id',SID).in('status',['active','trialing','past_due']);
+    var r=await sb.from('student_memberships').select('id,student_id,status,price,autopay,billing_method,stripe_subscription_id,cycle_end_date,first_charge_date,start_date,started_at,is_class_pack, memberships(name,billing_type,billing_length,billing_unit,class_limit_type,autopay_day,prorate_to_first)').in('student_id',ids).eq('school_id',SID).in('status',['active','trialing','past_due']);
     var mems=(r.data||[]).filter(function(sm){ return !sm.is_class_pack && sm.memberships && sm.memberships.class_limit_type!=='class_pack' && INTERVAL_MAP[sm.memberships.billing_type]; });
     if(!mems.length){ el.innerHTML=''; return; }
     var stripeMap={};
@@ -11139,7 +11142,7 @@ async function renderBillsUpcoming(ids, nameById, isFamily){
     var rowsHtml=mems.map(function(sm){
       var m=sm.memberships; var su=stripeMap[sm.id]; var amt,dstr,tag;
       if(su){ amt=su.amount_cents/100; dstr=su.next_date?smDateLabel((''+su.next_date).substring(0,10)):'—'; tag='via Stripe'; }
-      else { var d=sm.cycle_end_date||sm.first_charge_date||sm.start_date; amt=sm.price!=null?parseFloat(sm.price):null; dstr=d?smDateLabel(d):'—'; tag='scheduled'; }
+      else { var _nd=smNextChargeDate(sm,m); amt=sm.price!=null?parseFloat(sm.price):null; dstr=_nd?smDateLabel(_nd):'—'; tag='scheduled'; }
       if(amt!=null) totalCents+=Math.round(amt*100);
       var ap=(sm.billing_method==='autopay'||sm.autopay===true);
       // Only manual/scheduled bills for the LOADED student are safe to collect via the panel. A row that
@@ -12841,11 +12844,23 @@ function smIntervalMonths(m){ if(!m) return 1; if(m.billing_type==='yearly') ret
 function smChargeAmount(m, passFees){ var base=parseFloat((m&&m.price)||0); if(!passFees||base<=0) return base; var baseCents=Math.round(base*100); var grossCents=Math.round((baseCents+30)/(1-0.039)); return grossCents/100; }
 function smNextChargeDate(sm, m){
   var now=new Date();
+  // Explicit one-time first-charge deferral still wins while it is in the future.
   if(sm.first_charge_date){ var fc=smParseDateLocal(sm.first_charge_date); if(fc && fc.getTime()>now.getTime()) return fc; }
+  var iv=smIntervalMonths(m); if(!iv||iv<1) iv=1;
+  // §BILLING-DAY-DISPLAY — mirror create-membership-subscription (§PRORATE-TO-BILLING-DAY):
+  // a plan that prorates to its autopay billing day bills on THAT day-of-month (e.g. the 1st),
+  // NOT on the member's signup/start day. Only honor it when prorate_to_first is on AND autopay_day
+  // is a real day 1..28; anniversary (or no billing day) keeps the signup day — that plan's intent,
+  // and what Stripe actually does. This is the computed fallback for members WITHOUT a live Stripe
+  // sub (cash / awaiting-card); card-on-file rows use the real Stripe date, not this.
+  var apd=(m&&m.autopay_day!=null)?(''+m.autopay_day):'';
+  var billDay=(m&&m.prorate_to_first===true&&/^\d+$/.test(apd))?parseInt(apd,10):null;
+  if(billDay!=null&&(billDay<1||billDay>28)) billDay=null;
   var anchorStr=sm.first_charge_date||sm.start_date||(sm.started_at?(''+sm.started_at).split('T')[0]:null);
   var d=smParseDateLocal(anchorStr); if(!d) return null;
-  var iv=smIntervalMonths(m); var guard=0;
-  while(d.getTime()<=now.getTime() && guard<800){ d.setMonth(d.getMonth()+iv); guard++; }
+  if(billDay!=null) d.setDate(billDay);
+  var guard=0;
+  while(d.getTime()<=now.getTime() && guard<800){ d.setMonth(d.getMonth()+iv); if(billDay!=null) d.setDate(billDay); guard++; }
   return d;
 }
 
@@ -12855,7 +12870,7 @@ async function loadUpcomingRevenue(){
     var el15=document.getElementById('upc15'); if(!el15) return;
     var passFees=false;
     try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
-    var r=await sb.from('student_memberships').select('id,student_id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type)').eq('school_id',SID).in('status',['active','trialing','past_due']);
+    var r=await sb.from('student_memberships').select('id,student_id,status,stripe_subscription_id,first_charge_date,start_date,started_at,students(first_name,last_name),memberships(name,price,billing_type,billing_length,billing_unit,class_limit_type,autopay_day,prorate_to_first)').eq('school_id',SID).in('status',['active','trialing','past_due']);
     var rows=r.data||[];
     // Pull Stripe-exact next-charge dates for auto (card-on-file) members.
     // Cash/manual members have no subscription and fall back to the computed due date.
@@ -15423,6 +15438,23 @@ function updateBookingLinkPreview(slug){
   var prev=document.getElementById('instrBookingLinkPreview');
   if(!prev) return;
 prev.textContent=slug?APP_URL+'book.html?slug='+slug:'Enter a slug above';
+}
+// §INSTR-BOOKING-QR — per-instructor booking QR (reuses the shared openQrModal engine:
+// preview + copy-URL + SVG/PNG/JPEG download, labeled with the instructor's name so a
+// printed/shared sheet is self-explanatory). Encodes the exact public booking link.
+function showInstructorBookingQr(){
+  if(!currentInstructorProfile) return;
+  var slug=currentInstructorProfile.booking_slug;
+  if(!slug){alert('Please save a slug first.');return;}
+  var url=APP_URL+'book.html?slug='+slug;
+  var name=((currentInstructorProfile.first_name||'')+' '+(currentInstructorProfile.last_name||'')).trim()||'Instructor';
+  var school=(window.schoolData&&window.schoolData.name)?window.schoolData.name:'our school';
+  openQrModal({
+    title:name+' — Booking QR',
+    url:url,
+    filenameBase:(slug||name)+'-booking-qr',
+    flyerText:'Scan to book a session with '+name+' at '+school+'.'
+  });
 }
 function copyBookingLink(){
   if(!currentInstructorProfile) return;

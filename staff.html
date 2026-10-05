@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
   <style>
     /* ‚îÄ‚îÄ BASE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -665,6 +666,23 @@
   </div>
 
   <div class="profile-info" id="profileInfoCard"></div>
+
+  <!-- My Booking Page (per-instructor QR + link; parity with the owner dashboard) -->
+  <div class="profile-info" id="myBookingCard" style="margin-top:0.85rem;display:none">
+    <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--gold);margin-bottom:0.25rem">My Booking Page</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.8rem;line-height:1.4">Share this link or show the QR so anyone can book a private session with you.</div>
+    <div id="myBookingBody" style="display:none">
+      <div id="myBookingUrl" style="font-size:0.78rem;color:var(--white);word-break:break-all;background:var(--black);border:1px solid var(--border);padding:0.6rem;margin-bottom:0.7rem"></div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button onclick="copyMyBookingLink()" style="flex:1;min-width:120px;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);padding:0.6rem;font-family:var(--font-ui);font-size:0.82rem;cursor:pointer"><i class="fa-solid fa-copy" style="margin-right:0.3rem"></i>Copy Link</button>
+        <button onclick="showMyBookingQr()" style="flex:1;min-width:120px;background:var(--gold-bg);border:1px solid var(--gold-dk);color:var(--gold);padding:0.6rem;font-family:var(--font-ui);font-size:0.82rem;cursor:pointer"><i class="fa-solid fa-qrcode" style="margin-right:0.3rem"></i>Show QR</button>
+      </div>
+    </div>
+    <div id="myBookingHint" style="display:none;font-size:0.8rem;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-border);padding:0.7rem 0.8rem;line-height:1.45;gap:0.5rem;align-items:flex-start">
+      <i class="fa-solid fa-circle-info" style="margin-top:0.12rem;flex-shrink:0"></i>
+      <span>Your public booking page isn’t turned on yet. Ask your school owner to enable it for you — then your personal link and QR code show up here to share and print.</span>
+    </div>
+  </div>
 
   <div class="profile-info" id="clusterCard" style="margin-top:0.85rem">
     <div style="font-family:var(--font-display);font-size:1.05rem;color:var(--gold);margin-bottom:0.25rem">Private Session Booking</div>
@@ -2236,6 +2254,60 @@ async function buildProfileTab(){
     '<div class="profile-info-row"><div class="profile-info-label">School</div><div class="profile-info-value">'+(schoolData.name||'\u2014')+'</div></div>'
   ].join('');
   renderClusterEditor(s);
+  renderMyBookingCard(s);
+}
+
+// §MY-BOOKING-QR — the instructor's own booking link + QR, shown on their Profile tab so
+// they can pull it up and let a prospect scan on the spot (parity with the owner dashboard's
+// per-instructor QR). Hidden unless the owner has enabled this instructor's public booking page.
+function myBookingUrl(){
+  var s=currentInstructor;
+  if(!s||!s.booking_link_enabled||!s.booking_slug) return '';
+  return 'https://app.nmao.us/book.html?slug='+s.booking_slug;
+}
+function renderMyBookingCard(s){
+  var card=document.getElementById('myBookingCard');
+  if(!card) return;
+  card.style.display='block';   // always visible on the Profile tab
+  var url=myBookingUrl();
+  var body=document.getElementById('myBookingBody');
+  var hint=document.getElementById('myBookingHint');
+  if(url){
+    // Enabled: show the shareable link + Copy/QR actions.
+    document.getElementById('myBookingUrl').textContent=url;
+    body.style.display='block';
+    hint.style.display='none';
+  }else{
+    // Not enabled yet: nudge the instructor to ask their owner to turn it on.
+    body.style.display='none';
+    hint.style.display='flex';
+  }
+}
+function copyMyBookingLink(){
+  var url=myBookingUrl();
+  if(!url){ showToast('Your booking page isn’t enabled yet — ask your school owner to turn it on.','err'); return; }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){showToast('Booking link copied!','ok');},function(){showToast(url,'ok');});
+  }else{ showToast(url,'ok'); }
+}
+async function showMyBookingQr(){
+  var url=myBookingUrl();
+  if(!url){ showToast('Your booking page isn’t enabled yet — ask your school owner to turn it on.','err'); return; }
+  if(typeof QRCode==='undefined'){ showToast('QR library not loaded.','err'); return; }
+  var name=getInstrName(currentInstructor);
+  try{
+    var dataUrl=await QRCode.toDataURL(url,{width:512,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;z-index:12000;padding:1rem';
+    ov.onclick=function(){ ov.remove(); };
+    ov.innerHTML='<div style="background:#fff;padding:1.3rem;border-radius:8px;text-align:center;max-width:320px" onclick="event.stopPropagation()">'+
+      '<div style="color:#0a0a0a;font-family:var(--font-display);font-size:1.05rem;margin-bottom:0.2rem">'+name+'</div>'+
+      '<div style="color:#555;font-size:0.72rem;margin-bottom:0.8rem">Scan to book a session</div>'+
+      '<img src="'+dataUrl+'" style="width:260px;height:260px;display:block;margin:0 auto" alt="Booking QR" />'+
+      '<a href="'+dataUrl+'" download="'+(currentInstructor.booking_slug||'booking')+'-qr.png" style="display:inline-block;margin-top:0.9rem;background:#0a0a0a;color:#fff;padding:0.5rem 1.1rem;font-size:0.8rem;text-decoration:none;border-radius:4px">Download PNG</a>'+
+    '</div>';
+    document.body.appendChild(ov);
+  }catch(e){ showToast('Could not generate QR code.','err'); }
 }
 
 function clFmt(t){ if(!t) return 'the anchor'; var p=(''+t).split(':'); var h=parseInt(p[0],10); var m=p[1]; var ap=h>=12?'PM':'AM'; var h12=(h%12)||12; return h12+':'+m+' '+ap; }
