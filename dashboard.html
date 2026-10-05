@@ -11125,7 +11125,7 @@ function renderChargeDetail(row, ctx){
   // unpaid, no Stripe charge). Paid or Stripe-charged rows are never deletable here — refund those.
   var canDelete = canMarkPaid;
   var deleteBtn = canDelete
-    ? '<button class="cd-act-btn danger" id="cdDeleteBtn" onclick="cdDeleteBill()"><i class="fa-solid fa-trash"></i>Delete bill</button>'
+    ? '<button class="cd-act-btn danger" id="cdDeleteBtn" title="Removes this ledger record only — it does not stop or refund any charge" onclick="cdDeleteBill()"><i class="fa-solid fa-trash"></i>Delete bill</button>'
     : '';
   var refundForm =
     '<div id="cdRefundForm" style="display:none;margin-top:0.75rem;padding:0.85rem;background:var(--surface);border:1px solid var(--border)">' +
@@ -11210,7 +11210,27 @@ async function cdDeleteBill(){
   var row = _chargeCtx.row; if(!row) return;
   var ctx = _chargeCtx.ctx;
   var amt = cdMoney(parseFloat(row.amount||0));
-  if(!confirm('Delete this ' + amt + ' bill permanently?\n\nOnly do this for a mistaken or uncollected charge — it removes the record entirely and cannot be undone.')) return;
+  // §DELETE-BILL-GUARD — deleting a bill only removes the LEDGER RECORD; it never stops or refunds a
+  // Stripe charge. Belt-and-suspenders: a Stripe-linked row must never be deletable (the button is
+  // already hidden for these, but refuse here too). And if the member has an active autopay
+  // subscription, warn loudly and steer to cancel — this is the "I deleted the bill but they were
+  // still charged" trap.
+  if(row.stripe_charge_id || row.stripe_payment_intent_id || row.stripe_invoice_id){
+    alert('This bill is linked to a Stripe charge, so it can’t be deleted.\n\nTo reverse money, issue a refund. To stop future billing, cancel the subscription — deleting the record would NOT do either.');
+    return;
+  }
+  var hasActiveSub=false;
+  try{
+    if(row.student_id){
+      var sr=await sb.from('student_memberships').select('id').eq('student_id',row.student_id).eq('school_id',SID).eq('status','active').not('stripe_subscription_id','is',null).limit(1);
+      hasActiveSub=!!(sr.data && sr.data.length);
+    }
+  }catch(e){}
+  var warn='Delete this ' + amt + ' bill permanently?\n\nThis only removes the RECORD from your ledger. It does NOT stop or refund any charge, and it can’t be undone. Only do this for a mistaken or uncollected bill.';
+  if(hasActiveSub){
+    warn += '\n\n⚠️ This member has an ACTIVE autopay subscription. Deleting this record will NOT stop their recurring charges — to stop billing, cancel the subscription instead (Membership → Cancel Plan).';
+  }
+  if(!confirm(warn)) return;
   var btn = document.getElementById('cdDeleteBtn'); if(btn){ btn.disabled=true; btn.textContent='Deleting…'; }
   try{
     try{ await sb.from('payment_tenders').delete().eq('payment_id', row.id); }catch(e){} // best-effort, usually none
