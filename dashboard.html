@@ -21907,5 +21907,115 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
       attachPolishQuill('alertBodyEditor', { kind: 'alert' });   // alert
     });
   </script>
+
+  <!-- ============================================================
+       SUPPORT DESK — floating chat with the NMAO team
+       School sends questions → stored + fanned out to the team; replies
+       appear here live. Self-contained; inits once SID is ready.
+       ============================================================ -->
+  <style>
+    #nmaoSupportFab{position:fixed;right:20px;bottom:20px;z-index:100000;width:58px;height:58px;border-radius:50%;background:var(--gold,#C9A84C);color:#0A0A0A;border:none;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:1.35rem;transition:transform .15s}
+    #nmaoSupportFab:hover{transform:scale(1.06)}
+    #nmaoSupportFab .fab-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#C0504A;color:#fff;font-size:0.66rem;font-weight:700;display:none;align-items:center;justify-content:center;font-family:var(--font-ui,sans-serif)}
+    #nmaoSupportPanel{position:fixed;right:20px;bottom:88px;z-index:100000;width:362px;max-width:calc(100vw - 32px);height:524px;max-height:calc(100vh - 120px);background:var(--surface,#141414);border:1px solid var(--border,#2A2520);border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,.6);display:none;flex-direction:column;overflow:hidden}
+    #nmaoSupportPanel.open{display:flex}
+    .nsp-head{flex-shrink:0;padding:0.85rem 1rem;border-bottom:1px solid var(--border,#2A2520);background:var(--surface2,#1A1A1A);display:flex;align-items:center;justify-content:space-between}
+    .nsp-title{font-family:var(--font-display,serif);font-size:1.05rem;color:var(--white,#F5F0E8)}
+    .nsp-sub{font-size:0.66rem;color:var(--muted2,#9A8F80);margin-top:0.1rem}
+    .nsp-x{background:none;border:none;color:var(--muted2,#9A8F80);font-size:1.3rem;cursor:pointer;line-height:1}
+    .nsp-msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem;display:flex;flex-direction:column;gap:0.55rem}
+    .nsp-b{max-width:84%;padding:0.6rem 0.85rem;font-size:0.9rem;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;color:var(--white,#F5F0E8)}
+    .nsp-b.me{align-self:flex-end;background:color-mix(in srgb,var(--gold,#C9A84C) 16%,transparent);border:1px solid var(--gold,#C9A84C);border-radius:12px 3px 3px 12px}
+    .nsp-b.them{align-self:flex-start;background:var(--black,#0A0A0A);border:1px solid var(--border,#2A2520);border-radius:3px 12px 12px 3px}
+    .nsp-meta{font-size:0.62rem;color:var(--muted2,#9A8F80);margin-top:0.2rem}
+    .nsp-empty{margin:auto;text-align:center;color:var(--muted,#7A7060);font-size:0.86rem;padding:0 1.2rem;line-height:1.65}
+    .nsp-reply{flex-shrink:0;padding:0.6rem;border-top:1px solid var(--border,#2A2520);display:flex;gap:0.4rem;align-items:flex-end}
+    .nsp-reply textarea{flex:1;background:var(--black,#0A0A0A);border:1px solid var(--border,#2A2520);color:var(--white,#F5F0E8);font-family:var(--font-ui,sans-serif);font-size:16px;padding:0.55rem 0.7rem;outline:none;resize:none;max-height:6rem;line-height:1.35;border-radius:4px}
+    .nsp-reply button{background:var(--gold,#C9A84C);color:#0A0A0A;border:none;padding:0 0.95rem;height:2.6rem;cursor:pointer;font-weight:700;border-radius:4px;flex-shrink:0;font-family:var(--font-ui,sans-serif)}
+    .nsp-reply button:disabled{opacity:.45}
+    .nsp-foot{flex-shrink:0;padding:0.4rem 0.75rem;border-top:1px solid var(--border,#2A2520);font-size:0.66rem;color:var(--muted,#7A7060);text-align:center}
+    .nsp-foot a{color:var(--gold,#C9A84C);text-decoration:none}
+    @media(max-width:480px){#nmaoSupportPanel{right:8px;left:8px;width:auto;bottom:80px;height:calc(100vh - 100px)}}
+  </style>
+  <script>
+  (function(){
+    var SUPPORT_SEND = SURL + '/functions/v1/support-send';
+    var opened=false, unread=0, loaded=false, seen={};
+    function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function fmt(ts){return new Date(ts||Date.now()).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+    function notify(msg){ if(window.toast) window.toast(msg); else alert(msg); }
+
+    function build(){
+      var fab=document.createElement('button');
+      fab.id='nmaoSupportFab'; fab.title='Chat with NMAO'; fab.setAttribute('aria-label','Chat with NMAO support');
+      fab.innerHTML='<i class="fa-solid fa-comments"></i><span class="fab-badge" id="nspBadge"></span>';
+      fab.onclick=toggle; document.body.appendChild(fab);
+      var p=document.createElement('div'); p.id='nmaoSupportPanel';
+      p.innerHTML=''
+        +'<div class="nsp-head"><div><div class="nsp-title">NMAO Support</div><div class="nsp-sub">Questions? A specialist will reply here.</div></div><button class="nsp-x" onclick="window.__nspToggle()" aria-label="Close">&times;</button></div>'
+        +'<div class="nsp-msgs" id="nspMsgs"></div>'
+        +'<div class="nsp-reply"><textarea id="nspInput" rows="1" placeholder="Ask us anything…"></textarea><button id="nspSend">Send</button></div>'
+        +'<div class="nsp-foot">Looking for how-tos? <a href="help-center.html" target="_blank">Open the Help Center</a></div>';
+      document.body.appendChild(p);
+      document.getElementById('nspSend').onclick=send;
+      var ta=document.getElementById('nspInput');
+      ta.addEventListener('input',function(){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,96)+'px';});
+      ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+    }
+    window.__nspToggle=toggle;
+    function toggle(){
+      var p=document.getElementById('nmaoSupportPanel'); opened=!opened; p.classList.toggle('open',opened);
+      if(opened){ unread=0; badge(); if(!loaded) loadMsgs(); scrollB(); setTimeout(function(){var i=document.getElementById('nspInput');if(i)i.focus();},50); }
+    }
+    function badge(){ var b=document.getElementById('nspBadge'); if(!b)return; if(unread>0){b.textContent=unread>9?'9+':String(unread);b.style.display='flex';} else b.style.display='none'; }
+    function render(list){
+      var el=document.getElementById('nspMsgs');
+      if(!list.length){ el.innerHTML='<div class="nsp-empty">👋 Hi! Ask us anything about your account, billing, classes, or getting set up — a specialist will get back to you right here.</div>'; return; }
+      el.innerHTML=list.map(function(m){var me=m.sender==='school';var who=(!me&&m.author)?esc(m.author)+' · ':'';return '<div class="nsp-b '+(me?'me':'them')+'">'+esc(m.body||'')+'<div class="nsp-meta">'+who+fmt(m.created_at)+'</div></div>';}).join('');
+    }
+    function append(m){
+      var el=document.getElementById('nspMsgs'); var empty=el.querySelector('.nsp-empty'); if(empty)el.innerHTML='';
+      var me=m.sender==='school'; var who=(!me&&m.author)?esc(m.author)+' · ':'';
+      var d=document.createElement('div'); d.className='nsp-b '+(me?'me':'them');
+      d.innerHTML=esc(m.body||'')+'<div class="nsp-meta">'+who+fmt(m.created_at)+'</div>';
+      el.appendChild(d); scrollB();
+    }
+    function scrollB(){ var el=document.getElementById('nspMsgs'); if(el) requestAnimationFrame(function(){el.scrollTop=el.scrollHeight;}); }
+    async function loadMsgs(){
+      try{
+        var r=await sb.from('support_messages').select('id,sender,author,body,created_at').eq('school_id',SID).order('created_at',{ascending:true});
+        var list=(r&&r.data)||[]; list.forEach(function(m){seen[m.id]=1;}); render(list); loaded=true; scrollB();
+      }catch(e){ loaded=true; }
+    }
+    async function send(){
+      var ta=document.getElementById('nspInput'); var body=(ta.value||'').trim(); if(!body)return;
+      var btn=document.getElementById('nspSend'); btn.disabled=true;
+      try{
+        var tok=await authToken();
+        var res=await fetch(SUPPORT_SEND,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({school_id:SID,body:body})});
+        var j=await res.json().catch(function(){return {};});
+        if(!j.ok){ notify(j.error||'Could not send your message.'); btn.disabled=false; return; }
+        append({sender:'school',body:body,created_at:Date.now()}); ta.value=''; ta.style.height='auto';
+      }catch(e){ notify('Could not send your message.'); }
+      btn.disabled=false;
+    }
+    async function init(){
+      try{ if(window.SID_READY) await window.SID_READY; }catch(e){}
+      if(!SID) return;
+      build();
+      try{
+        sb.channel('support_'+SID).on('postgres_changes',
+          {event:'INSERT',schema:'public',table:'support_messages',filter:'school_id=eq.'+SID},
+          function(payload){
+            var m=payload&&payload.new; if(!m||seen[m.id])return; seen[m.id]=1;
+            if(m.sender!=='nmao') return;              // our own sends are shown optimistically
+            if(loaded) append(m);
+            if(!opened){ unread++; badge(); }
+          }).subscribe();
+      }catch(e){}
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  })();
+  </script>
 </body>
 </html>

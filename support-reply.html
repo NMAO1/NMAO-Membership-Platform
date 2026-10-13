@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <title>Support Reply — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Team-side reply page for the Support Desk (token-authed, no login). */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold:#C9A84C; --black:#0A0A0A; --surface:#141414; --surface2:#1A1A1A;
+      --border:#2A2520; --white:#F5F0E8; --muted:#7A7060; --muted2:#9A8F80;
+      --green:#5A9A6A; --red:#C07070;
+      --font-display:'Cormorant Garamond',serif; --font-ui:'Lato',sans-serif;
+    }
+    html, body { height:100%; }
+    body { background:var(--black); color:var(--white); font-family:var(--font-ui);
+      height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+
+    .chat-header { flex-shrink:0; padding:0.9rem 1.15rem; border-bottom:1px solid var(--border); background:var(--surface); }
+    .chat-top { display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; }
+    .chat-school { font-family:var(--font-display); font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); margin-bottom:0.1rem; }
+    .chat-name { font-family:var(--font-display); font-size:1.35rem; color:var(--white); line-height:1.1; }
+    .assign-row { display:flex; align-items:center; gap:0.5rem; margin-top:0.55rem; flex-wrap:wrap; }
+    .pill { font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; padding:0.25rem 0.55rem; border:1px solid var(--border); color:var(--muted2); border-radius:2px; }
+    .pill.open { color:var(--green); border-color:var(--green); }
+    .pill.claimed { color:var(--gold); border-color:var(--gold); }
+    .pill.resolved { color:var(--muted); }
+    .mini-btn { background:transparent; border:1px solid var(--border); color:var(--muted2); font-family:var(--font-ui); font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase; padding:0.3rem 0.6rem; cursor:pointer; }
+    .mini-btn:hover { border-color:var(--gold); color:var(--gold); }
+    .agent-field { margin-top:0.55rem; }
+    .agent-field input { width:100%; background:var(--black); border:1px solid var(--border); color:var(--white); font-family:var(--font-ui); font-size:0.9rem; padding:0.5rem 0.7rem; outline:none; }
+    .agent-field label { display:block; font-size:0.62rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem; }
+
+    .chat-messages { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:1.15rem; display:flex; flex-direction:column; gap:0.6rem; }
+    .bubble { max-width:82%; padding:0.65rem 0.9rem; font-size:0.95rem; line-height:1.4; color:var(--white); word-wrap:break-word; white-space:pre-wrap; }
+    .bubble.inbound { align-self:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:3px 14px 14px 3px; }
+    .bubble.outbound { align-self:flex-end; background:color-mix(in srgb, var(--gold) 16%, transparent); border:1px solid var(--gold); border-radius:14px 3px 3px 14px; }
+    .bubble-meta { font-size:0.66rem; color:var(--muted2); margin-top:0.25rem; }
+    .chat-empty { margin:auto; text-align:center; color:var(--muted); font-style:italic; font-size:0.9rem; }
+
+    .chat-reply { flex-shrink:0; padding:0.75rem; padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0)); border-top:1px solid var(--border); background:var(--surface); display:flex; gap:0.5rem; align-items:flex-end; }
+    .chat-reply textarea { flex:1; background:var(--black); border:1px solid var(--border); color:var(--white); font-family:var(--font-ui); font-size:1rem; padding:0.7rem 0.85rem; outline:none; resize:none; max-height:7rem; line-height:1.35; }
+    .chat-reply button { background:var(--gold); color:var(--black); border:none; padding:0 1.1rem; height:2.85rem; cursor:pointer; font-size:1rem; font-weight:700; flex-shrink:0; }
+    .chat-reply button:disabled { opacity:0.45; }
+
+    .center-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1.5rem; gap:1rem; text-align:center; }
+    .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .center-icon { font-size:2.4rem; } .center-title { font-family:var(--font-display); font-size:1.4rem; }
+    .center-sub { font-size:0.88rem; color:var(--muted2); line-height:1.6; max-width:22rem; }
+    .center-text { font-size:0.82rem; color:var(--muted); letter-spacing:0.08em; }
+    .toast { position:fixed; left:50%; bottom:5.5rem; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--gold); color:var(--white); padding:0.6rem 1rem; font-size:0.82rem; max-width:90%; display:none; z-index:10; }
+    .toast.show { display:block; } .toast.err { border-color:var(--red); color:var(--red); }
+  </style>
+</head>
+<body>
+  <div class="center-wrap" id="loadingState"><div class="spinner"></div><div class="center-text">Loading question…</div></div>
+
+  <div class="center-wrap" id="errorState" style="display:none">
+    <div class="center-icon">⚠️</div>
+    <div class="center-title">Link Unavailable</div>
+    <div class="center-sub" id="errorMsg">This reply link is invalid or has expired.</div>
+  </div>
+
+  <div class="chat-header" id="chatHeader" style="display:none">
+    <div class="chat-top">
+      <div>
+        <div class="chat-school">NMAO Support Desk</div>
+        <div class="chat-name" id="chatName"></div>
+      </div>
+      <button class="mini-btn" id="resolveBtn" onclick="markResolved()">Resolve</button>
+    </div>
+    <div class="assign-row">
+      <span class="pill" id="statusPill">—</span>
+      <span class="pill" id="assignPill" style="display:none"></span>
+      <button class="mini-btn" id="claimBtn" onclick="claimThread()" style="display:none">Claim this</button>
+    </div>
+    <div class="agent-field">
+      <label for="agentName">Your name (shown to the school)</label>
+      <input type="text" id="agentName" placeholder="e.g. Brad — NMAO" oninput="saveAgent()" />
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages" style="display:none"></div>
+  <div class="chat-reply" id="chatReply" style="display:none">
+    <textarea id="replyInput" rows="1" placeholder="Reply to the school…" oninput="autoGrow(this)" onkeydown="onReplyKey(event)"></textarea>
+    <button id="sendBtn" onclick="sendReply()">Send</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var SUPABASE_URL = 'https://ykiozrdwudawpxdzbbyc.supabase.co';
+    var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
+    var SUPPORT_URL = SUPABASE_URL + '/functions/v1/support-reply';
+    var token = null, assigned = null, status = 'open';
+
+    window.onload = function () {
+      var p = new URLSearchParams(window.location.search);
+      token = p.get('t');
+      var saved = '';
+      try { saved = localStorage.getItem('nmao_support_agent') || ''; } catch (e) {}
+      document.getElementById('agentName').value = saved;
+      if (!token) { showError('No reply token found in this link.'); return; }
+      loadThread();
+    };
+
+    function agent() { return (document.getElementById('agentName').value || '').trim(); }
+    function saveAgent() { try { localStorage.setItem('nmao_support_agent', agent()); } catch (e) {} }
+
+    async function api(method, payload) {
+      var opts = { method: method, headers: { 'Authorization': 'Bearer ' + ANON_KEY } };
+      var url = SUPPORT_URL;
+      if (method === 'GET') { url += '?t=' + encodeURIComponent(token); }
+      else { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(payload); }
+      var res = await fetch(url, opts);
+      return res.json();
+    }
+
+    async function loadThread() {
+      try {
+        var r = await api('GET');
+        if (!r.ok) { showError(r.error || 'Unable to load.'); return; }
+        document.getElementById('chatName').textContent = r.school || 'School';
+        status = r.status || 'open';
+        assigned = r.assigned_to || null;
+        renderStatus();
+        renderMessages(r.messages || []);
+        showThread();
+        scrollToBottom();
+      } catch (e) { showError('Unable to load this question. Please try again.'); }
+    }
+
+    function renderStatus() {
+      var sp = document.getElementById('statusPill');
+      var ap = document.getElementById('assignPill');
+      var claim = document.getElementById('claimBtn');
+      var resolve = document.getElementById('resolveBtn');
+      sp.className = 'pill ' + (status === 'resolved' ? 'resolved' : (assigned ? 'claimed' : 'open'));
+      sp.textContent = status === 'resolved' ? 'Resolved' : (assigned ? 'Claimed' : 'Open — unclaimed');
+      if (assigned) { ap.style.display = ''; ap.className = 'pill claimed'; ap.textContent = 'Handled by ' + assigned; claim.style.display = 'none'; }
+      else { ap.style.display = 'none'; claim.style.display = ''; }
+      resolve.textContent = status === 'resolved' ? 'Reopen' : 'Resolve';
+    }
+
+    function renderMessages(msgs) {
+      var el = document.getElementById('chatMessages');
+      if (!msgs.length) { el.innerHTML = '<div class="chat-empty">No messages yet.</div>'; return; }
+      el.innerHTML = msgs.map(function (m) {
+        var out = m.sender === 'nmao';
+        var dt = new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        var who = m.author ? escText(m.author) + ' · ' : '';
+        return '<div class="bubble ' + (out ? 'outbound' : 'inbound') + '">' + escText(m.body || '') +
+          '<div class="bubble-meta">' + who + dt + '</div></div>';
+      }).join('');
+    }
+
+    async function sendReply() {
+      var input = document.getElementById('replyInput');
+      var body = input.value.trim();
+      if (!body) return;
+      if (!agent()) { showToast('Add your name first so the school knows who replied.', true); document.getElementById('agentName').focus(); return; }
+      saveAgent();
+      var btn = document.getElementById('sendBtn'); btn.disabled = true;
+      try {
+        var r = await api('POST', { t: token, action: 'reply', body: body, agent: agent() });
+        if (!r.ok) { showToast(r.error || 'Reply failed.', true); btn.disabled = false; return; }
+        appendOutbound(body, agent());
+        if (!assigned) { assigned = agent(); status = 'open'; renderStatus(); }
+        input.value = ''; autoGrow(input); scrollToBottom();
+      } catch (e) { showToast('Reply failed to send.', true); }
+      btn.disabled = false;
+    }
+
+    async function claimThread() {
+      if (!agent()) { showToast('Add your name first.', true); document.getElementById('agentName').focus(); return; }
+      saveAgent();
+      try {
+        var r = await api('POST', { t: token, action: 'claim', agent: agent() });
+        if (r.ok) { assigned = agent(); renderStatus(); showToast('Claimed — the team sees it is handled by you.'); }
+        else showToast(r.error || 'Could not claim.', true);
+      } catch (e) { showToast('Could not claim.', true); }
+    }
+
+    async function markResolved() {
+      if (status === 'resolved') { showToast('Already resolved — just reply to reopen it.'); return; }
+      try {
+        var r = await api('POST', { t: token, action: 'resolve' });
+        if (r.ok) { status = 'resolved'; renderStatus(); showToast('Marked resolved.'); }
+        else showToast(r.error || 'Could not update.', true);
+      } catch (e) { showToast('Could not update.', true); }
+    }
+
+    function appendOutbound(body, who) {
+      var el = document.getElementById('chatMessages');
+      var empty = el.querySelector('.chat-empty'); if (empty) el.innerHTML = '';
+      var dt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      var div = document.createElement('div'); div.className = 'bubble outbound';
+      div.innerHTML = escText(body) + '<div class="bubble-meta">' + (who ? escText(who) + ' · ' : '') + dt + '</div>';
+      el.appendChild(div);
+    }
+
+    function showThread() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('chatHeader').style.display = 'block';
+      document.getElementById('chatMessages').style.display = 'flex';
+      document.getElementById('chatReply').style.display = 'flex';
+    }
+    function showError(msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorMsg').textContent = msg;
+      document.getElementById('errorState').style.display = 'flex';
+    }
+    function scrollToBottom() { var el = document.getElementById('chatMessages'); requestAnimationFrame(function () { el.scrollTop = el.scrollHeight; }); }
+    var toastTimer = null;
+    function showToast(msg, isErr) {
+      var t = document.getElementById('toast'); t.textContent = msg;
+      t.className = 'toast show' + (isErr ? ' err' : ''); clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.className = 'toast'; }, 4000);
+    }
+    function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 112) + 'px'; }
+    function onReplyKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); } }
+    function escText(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  </script>
+</body>
+</html>
