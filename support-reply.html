@@ -204,7 +204,9 @@
         var out = m.sender === 'nmao';
         var dt = new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         var who = m.author ? escText(m.author) + ' · ' : '';
-        return '<div class="bubble ' + (out ? 'outbound' : 'inbound') + '">' + escText(m.body || '') +
+        var shots = (m.attachments || []).map(function (u) { return '<a href="' + u + '" target="_blank" rel="noopener"><img src="' + u + '" style="display:block;max-width:100%;margin-top:0.45rem;border-radius:8px;border:1px solid var(--border)"></a>'; }).join('');
+        var badge = m.kind === 'error' ? '<span style="display:inline-block;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);border:1px solid var(--red);border-radius:3px;padding:0.05rem 0.35rem;margin-bottom:0.3rem">⚠ Error report</span><br>' : '';
+        return '<div class="bubble ' + (out ? 'outbound' : 'inbound') + '">' + badge + escText(m.body || '') + shots +
           '<div class="bubble-meta">' + who + dt + '</div></div>';
       }).join('');
     }

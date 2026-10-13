@@ -5,10 +5,13 @@
 //
 // Stores the school's message in the shared support thread (one per school) and
 // FANS OUT an email to the whole team — every active onboarding_specialist plus
-// the primary addresses — each with a one-click tokenized reply link, so any
-// specialist can pick it up and respond fast.
+// the primary addresses — each with a one-click tokenized reply link.
 //
-// Input:  { school_id, body }     (Authorization: Bearer <user jwt>)
+// ERROR REPORTS: when kind='error', the message carries screenshot attachment(s)
+// + "what were you trying to do", the email is flagged urgent, AND an SMS alert
+// is texted to the NMAO lead so errors are handled as fast as possible.
+//
+// Input:  { school_id, body, kind?, attachments? }   (Authorization: Bearer <user jwt>)
 // Output: { ok:true, thread_id } | { ok:false, error }
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -17,9 +20,15 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_KEY = Deno.env.get("RESEND_OUTREACH_KEY") || "";
+const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID") || "";
+const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
+const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
+
 const FROM = "NMAO Support <outreach@outreach.nmao.us>";
 const PRIMARY = ["senseibrad@nmao.us", "support@nmao.us"]; // always notified
+const ERROR_SMS_TO = "+15163036972";                        // NMAO lead — urgent error alerts
 const REPLY_BASE = "https://app.nmao.us/support-reply.html";
+const UPLOAD_PREFIX = SUPABASE_URL + "/storage/v1/object/public/support-uploads/";
 
 const svc = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -36,20 +45,23 @@ function esc(s: string): string {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-async function emailTeam(to: string, schoolName: string, msg: string, replyUrl: string): Promise<boolean> {
+async function emailTeam(to: string, schoolName: string, msg: string, replyUrl: string, isError: boolean, shots: string[]): Promise<boolean> {
   if (!RESEND_KEY || !to) return false;
   const safeUrl = esc(replyUrl);
+  const shotsHtml = shots.map((u) =>
+    '<a href="' + esc(u) + '"><img src="' + esc(u) + '" alt="screenshot" style="max-width:100%;border:1px solid #ccc;border-radius:6px;margin:0.4rem 0"/></a>').join("");
   const html =
-    '<div style="font-family:Georgia,serif;color:#1a1a1a;line-height:1.6;max-width:580px">' +
-    '<p style="font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:#B8862C;margin:0 0 0.3rem">New support question</p>' +
-    "<p><strong>" + esc(schoolName || "A school") + "</strong> sent a message to NMAO support:</p>" +
-    '<blockquote style="margin:0.6rem 0;padding:0.75rem 1rem;background:#f6f3ec;border-left:3px solid #B8862C;white-space:pre-wrap">' +
+    '<div style="font-family:Georgia,serif;color:#1a1a1a;line-height:1.6;max-width:600px">' +
+    (isError
+      ? '<p style="font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:#C0392B;font-weight:bold;margin:0 0 0.3rem">⚠️ Error report — please handle fast</p>'
+      : '<p style="font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:#B8862C;margin:0 0 0.3rem">New support question</p>') +
+    "<p><strong>" + esc(schoolName || "A school") + "</strong> " + (isError ? "reported an error:" : "sent a message to NMAO support:") + "</p>" +
+    '<blockquote style="margin:0.6rem 0;padding:0.75rem 1rem;background:#f6f3ec;border-left:3px solid ' + (isError ? "#C0392B" : "#B8862C") + ';white-space:pre-wrap">' +
     esc(msg) + "</blockquote>" +
-    '<p><a href="' + safeUrl + '" style="display:inline-block;background:#B8862C;color:#fff;' +
-    'padding:0.7rem 1.2rem;text-decoration:none;border-radius:4px;font-weight:bold">Open & reply</a></p>' +
-    '<p style="font-size:0.82rem;color:#555">The first teammate to reply claims the thread, so we never double up or miss one. ' +
-    "Your reply appears in the school's dashboard right away.</p>" +
-    '<p style="font-size:0.82rem;color:#555">Or paste this link:<br/>' + safeUrl + "</p>" +
+    shotsHtml +
+    '<p style="margin-top:0.8rem"><a href="' + safeUrl + '" style="display:inline-block;background:' + (isError ? "#C0392B" : "#B8862C") + ';color:#fff;' +
+    'padding:0.7rem 1.2rem;text-decoration:none;border-radius:4px;font-weight:bold">Open &amp; reply</a></p>' +
+    '<p style="font-size:0.82rem;color:#555">The first teammate to reply claims the thread, so we never double up or miss one.</p>' +
     "<p>— NMAO Support Desk</p></div>";
   try {
     const r = await fetch("https://api.resend.com/emails", {
@@ -57,7 +69,7 @@ async function emailTeam(to: string, schoolName: string, msg: string, replyUrl: 
       headers: { "Authorization": "Bearer " + RESEND_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: FROM, to, reply_to: "support@nmao.us",
-        subject: "Support question — " + (schoolName || "a school"), html,
+        subject: (isError ? "⚠️ ERROR — " : "Support question — ") + (schoolName || "a school"), html,
       }),
     });
     const rj = await r.json().catch(() => ({}));
@@ -68,12 +80,31 @@ async function emailTeam(to: string, schoolName: string, msg: string, replyUrl: 
   }
 }
 
+async function sendAlertSms(text: string): Promise<boolean> {
+  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) { console.warn("Twilio not configured — skipping SMS alert"); return false; }
+  try {
+    const form = new URLSearchParams({ To: ERROR_SMS_TO, From: TWILIO_FROM, Body: text.slice(0, 480) });
+    const r = await fetch("https://api.twilio.com/2010-04-01/Accounts/" + TWILIO_SID + "/Messages.json", {
+      method: "POST",
+      headers: {
+        "Authorization": "Basic " + btoa(TWILIO_SID + ":" + TWILIO_TOKEN),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: form.toString(),
+    });
+    if (!r.ok) console.error("Twilio SMS failed:", r.status, await r.text().catch(() => ""));
+    return r.ok;
+  } catch (e) {
+    console.error("sendAlertSms failed:", e);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405);
 
   try {
-    // --- identify the caller from their JWT ---
     const authHeader = req.headers.get("Authorization") || "";
     const authClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: userData } = await authClient.auth.getUser();
@@ -83,11 +114,15 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const schoolId = String(body.school_id || "").trim();
     const msg = String(body.body || "").trim();
+    const isError = String(body.kind || "") === "error";
+    // only accept attachment URLs that live in our own public bucket
+    const attachments: string[] = Array.isArray(body.attachments)
+      ? body.attachments.map((a: unknown) => String(a || "")).filter((u: string) => u.startsWith(UPLOAD_PREFIX)).slice(0, 6)
+      : [];
     if (!schoolId) return json({ ok: false, error: "Missing school." }, 200);
-    if (!msg) return json({ ok: false, error: "Your message is empty." }, 200);
+    if (!msg) return json({ ok: false, error: isError ? "Please describe what you were doing." : "Your message is empty." }, 200);
     if (msg.length > 4000) return json({ ok: false, error: "Message is too long (max 4000 characters)." }, 200);
 
-    // --- verify the caller owns or instructs this school ---
     const { data: school } = await svc.from("schools")
       .select("id,name,owner_id,email").eq("id", schoolId).maybeSingle();
     if (!school) return json({ ok: false, error: "School not found." }, 200);
@@ -105,7 +140,6 @@ Deno.serve(async (req) => {
 
     const nowIso = new Date().toISOString();
 
-    // --- upsert the school's thread ---
     let { data: thread } = await svc.from("support_threads").select("*").eq("school_id", schoolId).maybeSingle();
     if (!thread) {
       const ins = await svc.from("support_threads")
@@ -119,20 +153,27 @@ Deno.serve(async (req) => {
     }
     if (!thread) return json({ ok: false, error: "Could not open a thread." }, 200);
 
-    // --- store the message ---
     await svc.from("support_messages").insert({
       thread_id: thread.id, school_id: schoolId, sender: "school",
       author: school.name || "School", body: msg,
+      kind: isError ? "error" : null, attachments: attachments.length ? attachments : null,
     });
 
-    // --- notify the team: every active specialist + primary ---
+    // notify the team: active specialists + primary
     const recipients = new Set<string>();
     const { data: specs } = await svc.from("onboarding_specialists").select("email").eq("active", true);
     for (const s of specs || []) if (s && s.email) recipients.add(String(s.email).trim().toLowerCase());
     for (const p of PRIMARY) recipients.add(p);
 
     const replyUrl = REPLY_BASE + "?t=" + thread.reply_token;
-    await Promise.all([...recipients].map((to) => emailTeam(to, school.name || "", msg, replyUrl)));
+    await Promise.all([...recipients].map((to) => emailTeam(to, school.name || "", msg, replyUrl, isError, attachments)));
+
+    // urgent errors also text the NMAO lead
+    if (isError) {
+      const sms = "⚠️ NMAO error report from " + (school.name || "a school") + ": " +
+        msg.slice(0, 160) + (attachments.length ? " [screenshot attached]" : "") + " — reply: " + replyUrl;
+      await sendAlertSms(sms);
+    }
 
     return json({ ok: true, thread_id: thread.id }, 200);
   } catch (e) {

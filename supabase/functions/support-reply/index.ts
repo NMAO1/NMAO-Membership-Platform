@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       if (!thread) return json({ ok: false, error: "This reply link is invalid or has expired." }, 200);
       const { data: school } = await svc.from("schools").select("name,email").eq("id", thread.school_id).maybeSingle();
       const { data: msgs } = await svc.from("support_messages")
-        .select("sender,author,body,created_at").eq("thread_id", thread.id).order("created_at", { ascending: true });
+        .select("sender,author,body,created_at,attachments,kind").eq("thread_id", thread.id).order("created_at", { ascending: true });
       // opening the thread clears the team's unread counter
       await svc.from("support_threads").update({ unread_nmao: 0 }).eq("id", thread.id);
       return json({
