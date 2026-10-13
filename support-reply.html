@@ -131,6 +131,7 @@
     var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlraW96cmR3dWRhd3B4ZHpiYnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTAwODQsImV4cCI6MjA5MDYyNjA4NH0.MRv1FnXUpGA0wEWe4cW6lSQFcNb7W0Y_nErSZe1hr8c';
     var SUPPORT_URL = SUPABASE_URL + '/functions/v1/support-reply';
     var token = null, assigned = null, status = 'open';
+    var pendingShot = null;   // annotated screenshot queued to send with the next reply
 
     // Quick Answers — ready explanations sourced from the Help Center guides.
     var GUIDES = [{"id": "lead", "title": "How do I log a new lead?", "steps": ["A prospect just called the front desk.", "Open Leads, then click + Add Lead.", "Enter the prospect's name and number.", "What are they interested in? Where did they hear about you?", "Jot a quick note so anyone can follow up.", "Save — the lead is now in your pipeline."]}, {"id": "membership", "title": "How do I create a membership plan?", "steps": ["A membership plan is what members sign up for.", "Click + Add Membership.", "Name the plan and set its price.", "Pick class access and who can see it.", "Save — the plan is ready to sell at signup."]}, {"id": "product", "title": "How do I add a product to sell?", "steps": ["Sell gear and gis right from the front desk.", "Click + Add Product.", "Name it, categorize it, set the price.", "Show it in POS and the member app.", "Save — it now appears in your point of sale."]}, {"id": "instructor", "title": "How do I add an instructor and set permissions?", "steps": ["Add a coach — and control exactly what they can do.", "Click + Add Instructor.", "Grant only the permissions they need.", "Save — the coach can now check students in."]}, {"id": "program", "title": "How do I add a program?", "steps": ["A program is a discipline you teach — the bucket for classes, plans & belts.", "Click + Add Program.", "Save — now build its classes and plans under it."]}, {"id": "class", "title": "How do I add a class?", "steps": ["Add a recurring class to your weekly schedule.", "Click + Add Class.", "Pick the days it runs.", "Set the time, instructor and capacity.", "Save — it lands on the calendar and opens for booking."]}, {"id": "family", "title": "How do I set up a family account?", "steps": ["A family shares one login and can pay together.", "Click + Add Family.", "Save — then add each member into the family."]}, {"id": "event", "title": "How do I create an event?", "steps": ["Events get their own public sign-up page.", "Click + Add Event.", "Next: set the dates and ticket tiers, then publish."]}, {"id": "belttest", "title": "How do I schedule a belt test?", "steps": ["Schedule a test, invite students, collect fees, promote.", "Click + Add Belt Test.", "Save — then add who is testing."]}, {"id": "broadcast", "title": "How do I send a broadcast?", "steps": ["Send one message to your whole school at once.", "Write a subject and pick who receives it.", "Type your message…", "Then hit Send — it goes out by text and email."]}, {"id": "embed", "title": "How do I put my schedule on my website?", "steps": ["Share your schedule & plans, or embed them on your site.", "Copy a link or embed code — it stays in sync automatically."]}, {"id": "student", "title": "How do I add a member by hand?", "steps": ["Add a member without waiting for an online sign-up.", "Click + Add Student.", "Pick their program, status, and how they pay.", "Save — they are on your roster."]}, {"id": "beltsystem", "title": "How do I create a belt system?", "steps": ["A belt system is the rank ladder for a program.", "Click + Add Belt System.", "Save — then add each belt in order, with colors & fees."]}, {"id": "shift", "title": "How do I set holiday hours (a schedule shift)?", "steps": ["A shift changes your schedule for a date range, then auto-reverts.", "Add a shift — say, Thanksgiving week.", "Set the dates, and pick which classes retime or cancel.", "Save — members get a heads-up before it starts."]}, {"id": "classpack", "title": "How do I create a prepaid class pack?", "steps": ["A class pack is prepaid — buy a bundle of classes up front.", "Add Membership, then set the Type to Class Pack.", "Class Pack access counts down and does not reset.", "Save — sell it like any other plan."]}, {"id": "social", "title": "How do I add my social links?", "steps": ["Your links power the \"Follow us\" footer on every public page & the kiosk.", "Save — leave any blank to hide that icon."]}, {"id": "timezone", "title": "How do I set my school timezone?", "steps": ["Your timezone keeps class times & auto check-in accurate.", "Save Changes — set this before adding members."]}, {"id": "export", "title": "How do I export my roster?", "steps": ["Export exactly the members your current filters show.", "Click Export.", "Tick the columns, then download a CSV or print a PDF."]}, {"id": "convert", "title": "How do I convert a lead to a member?", "steps": ["When a prospect commits, convert them in a click.", "Open the lead…", "…then Convert kicks off enrollment."]}, {"id": "session", "title": "How do I book a private lesson?", "steps": ["Book one-on-one time for a student.", "Click Book Session.", "Set the date & time, then save (charge or no-charge)."]}, {"id": "sessiontype", "title": "How do I add a session type?", "steps": ["Session types are your private-lesson offerings.", "Add a session type.", "Save — now you can sell packs of it."]}, {"id": "sessionpack", "title": "How do I set up a session pack?", "steps": ["A session pack sells prepaid blocks of private lessons.", "Add a session pack.", "Save — members buy it and book against it."]}, {"id": "import", "title": "How do I import my roster?", "steps": ["Bring your whole roster in from a CSV — no re-typing.", "Open the importer and choose your file.", "Match your columns to NMAO, then import."]}, {"id": "branding", "title": "How do I change my brand colors?", "steps": ["Make the dashboard & your public pages match your brand.", "Pick your accent color.", "Save Changes — it updates everywhere your brand shows."]}, {"id": "switchplan", "title": "How do I switch a member to another plan?", "steps": ["Members change plans all the time.", "Open the member…", "…then More actions → Switch Plan.", "Pick the new plan and confirm."]}, {"id": "cancelplan", "title": "How do I cancel a membership?", "steps": ["When a member leaves, cancel their plan.", "Open the member…", "…More actions → Cancel Plan.", "Confirm — billing stops and their spot frees up."]}, {"id": "portalinvite", "title": "How do I give a member portal access?", "steps": ["Members log in with a setup link you send them.", "Open the member…", "…and click Portal Link.", "Copy or send it — they set a password and they are in."]}, {"id": "automation", "title": "How do I turn on automated texts?", "steps": ["Automations send texts on autopilot — birthdays, reminders.", "Open the Automations tab.", "Toggle the ones you want, then Save."]}, {"id": "smsinbox", "title": "How do I reply to member texts?", "steps": ["Members can text your school — you reply right here.", "Open the SMS Inbox tab."]}, {"id": "beltlevel", "title": "How do I add belts to a belt system?", "steps": ["Fill your rank ladder — add belts in order.", "Open a belt system…", "…then Add Belt.", "Set its color & promotion fee, then save."]}, {"id": "attendance", "title": "How do I take attendance?", "steps": ["Take attendance right from your dashboard.", "Open a class from the calendar.", "Tap each student who came — or Mark all present."]}, {"id": "promote", "title": "How do I promote students at a belt test?", "steps": ["After a test, promote whoever passed.", "Manage the belt test…", "…open the Results tab.", "Mark each student Pass — they advance a rank automatically."]}, {"id": "kiosk", "title": "How does front-desk check-in work?", "steps": ["Put this on a tablet at the front desk.", "A member just types their name…", "…their name pops up — they tap it…", "…and tap the big Check In button.", "Done — their attendance is recorded."]}, {"id": "member_reserve", "title": "How do I reserve a spot in a class? (member)", "steps": ["Members reserve their spot from the Schedule.", "Tap RSVP on the class you want.", "Booked! Tap again to cancel — spots update live."]}, {"id": "member_progress", "title": "How does a member track their belt progress?", "steps": ["Progress shows their belt and classes toward the next rank."]}, {"id": "member_membership", "title": "How does a member see their membership?", "steps": ["Profile has their membership, contact info & card on file."]}];
@@ -140,8 +141,19 @@
     var DEEP = {
       membership: "To create a membership plan — what members sign up for and get billed for:\n\n1. In the left sidebar of your dashboard, click \"Memberships.\"\n2. At the top-right of the Memberships page, click the gold \"+ Add Membership\" button.\n3. Give the plan a clear name (for example \"Unlimited Monthly\") so members recognize it at signup.\n4. Choose the billing type and price — e.g. Monthly at $149, an Annual plan, or a one-time Class Pack.\n5. Set class access — Unlimited, or a set number of classes per month.\n6. Pick who can see it under \"Visibility\" — Public (shown at signup and in the member app) or Private (staff-only).\n7. Click Save. Your plan is now live and ready to sell at signup.\n\nTip: to make a similar plan fast, click \"Duplicate\" on an existing one and tweak it."
     };
+    var SHOT_BASE = 'https://app.nmao.us/help-shots/';
     var SHOTS = {
-      membership: 'https://app.nmao.us/help-shots/membership.png'
+      lead:SHOT_BASE+'11-leads.jpg', membership:SHOT_BASE+'09-memberships.jpg', product:SHOT_BASE+'14-retail.jpg',
+      instructor:SHOT_BASE+'13-instructors.jpg', program:SHOT_BASE+'06-programs.jpg', class:SHOT_BASE+'03-classes.jpg',
+      family:SHOT_BASE+'12-families.jpg', event:SHOT_BASE+'05-events.jpg', belttest:SHOT_BASE+'08-belt-tests.jpg',
+      broadcast:SHOT_BASE+'16-communications.jpg', embed:SHOT_BASE+'18-share-embed.jpg', student:SHOT_BASE+'10-members.jpg',
+      beltsystem:SHOT_BASE+'07-belt-systems.jpg', shift:SHOT_BASE+'02-schedule.jpg', classpack:SHOT_BASE+'09-memberships.jpg',
+      social:SHOT_BASE+'18-share-embed.jpg', timezone:SHOT_BASE+'19-settings.jpg', export:SHOT_BASE+'10-members.jpg',
+      convert:SHOT_BASE+'11-leads.jpg', session:SHOT_BASE+'04-sessions.jpg', sessiontype:SHOT_BASE+'04-sessions.jpg',
+      sessionpack:SHOT_BASE+'04-sessions.jpg', import:SHOT_BASE+'10-members.jpg', branding:SHOT_BASE+'19-settings.jpg',
+      switchplan:SHOT_BASE+'10-members.jpg', cancelplan:SHOT_BASE+'10-members.jpg', portalinvite:SHOT_BASE+'10-members.jpg',
+      automation:SHOT_BASE+'16-communications.jpg', smsinbox:SHOT_BASE+'16-communications.jpg', beltlevel:SHOT_BASE+'07-belt-systems.jpg',
+      attendance:SHOT_BASE+'01-home.jpg', promote:SHOT_BASE+'08-belt-tests.jpg', kiosk:SHOT_BASE+'22-kiosk.jpg'
     };
     function openQA(){ document.getElementById('qaPanel').classList.add('open'); document.getElementById('qaSearch').value=''; renderQA(); setTimeout(function(){document.getElementById('qaSearch').focus();},40); }
     function closeQA(){ document.getElementById('qaPanel').classList.remove('open'); }
@@ -165,11 +177,11 @@
       var g=null; for(var i=0;i<GUIDES.length;i++){ if(GUIDES[i].id===id){ g=GUIDES[i]; break; } } if(!g) return;
       var ta=document.getElementById('replyInput'); var cur=(ta.value||'').trim();
       ta.value=(cur?cur+'\n\n':'')+guideText(g); autoGrow(ta); closeQA();
-      if(SHOTS[g.id]){ var pv=document.getElementById('qaShotPreview'); document.getElementById('qaShotImg').src=SHOTS[g.id]; document.getElementById('qaShotLink').href='https://app.nmao.us/help-center.html#guide='+g.id; pv.style.display='block'; }
+      if(SHOTS[g.id]){ pendingShot=SHOTS[g.id]; var pv=document.getElementById('qaShotPreview'); document.getElementById('qaShotImg').src=SHOTS[g.id]; document.getElementById('qaShotLink').href='https://app.nmao.us/help-center.html#guide='+g.id; pv.style.display='block'; }
       else { hideShot(); }
       ta.focus();
     }
-    function hideShot(){ var pv=document.getElementById('qaShotPreview'); if(pv) pv.style.display='none'; }
+    function hideShot(){ pendingShot=null; var pv=document.getElementById('qaShotPreview'); if(pv) pv.style.display='none'; }
 
     window.onload = function () {
       var p = new URLSearchParams(window.location.search);
@@ -241,11 +253,12 @@
       saveAgent();
       var btn = document.getElementById('sendBtn'); btn.disabled = true;
       try {
-        var r = await api('POST', { t: token, action: 'reply', body: body, agent: agent() });
+        var shots = pendingShot ? [pendingShot] : [];
+        var r = await api('POST', { t: token, action: 'reply', body: body, agent: agent(), attachments: shots });
         if (!r.ok) { showToast(r.error || 'Reply failed.', true); btn.disabled = false; return; }
-        appendOutbound(body, agent());
+        appendOutbound(body, agent(), shots);
         if (!assigned) { assigned = agent(); status = 'open'; renderStatus(); }
-        input.value = ''; autoGrow(input); scrollToBottom();
+        input.value = ''; autoGrow(input); hideShot(); scrollToBottom();
       } catch (e) { showToast('Reply failed to send.', true); }
       btn.disabled = false;
     }
@@ -269,12 +282,13 @@
       } catch (e) { showToast('Could not update.', true); }
     }
 
-    function appendOutbound(body, who) {
+    function appendOutbound(body, who, shots) {
       var el = document.getElementById('chatMessages');
       var empty = el.querySelector('.chat-empty'); if (empty) el.innerHTML = '';
       var dt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
       var div = document.createElement('div'); div.className = 'bubble outbound';
-      div.innerHTML = escText(body) + '<div class="bubble-meta">' + (who ? escText(who) + ' · ' : '') + dt + '</div>';
+      var imgs = (shots || []).map(function (u) { return '<a href="' + u + '" target="_blank" rel="noopener"><img src="' + u + '" style="display:block;max-width:100%;margin-top:0.45rem;border-radius:8px;border:1px solid var(--border)"></a>'; }).join('');
+      div.innerHTML = escText(body) + imgs + '<div class="bubble-meta">' + (who ? escText(who) + ' · ' : '') + dt + '</div>';
       el.appendChild(div);
     }
 
