@@ -1989,15 +1989,13 @@ async function toggleCheckin(studentId,event){
       // Fail open: allow check-in to proceed if RPC errors
     }
 
-   // Get/create session
+   // §ATOMIC-SESSION — resolve/create at check-in time via the shared advisory-locked RPC. This closes
+   // the time-of-check/time-of-use gap: classSessionId was read at roster-open, and another path (the
+   // auto-checkin cron, a family self-check-in, or a second staffer) may have created the session since.
 if(!classSessionId){
-  var sessStatus=computeSessionStatus(currentClassData.start_time,currentClassData.end_time,new Date());
-  var cr=await sb.from('class_sessions').insert({
-    class_id:currentClassData.id,school_id:SID,
-    session_date:currentClassData._dateStr,status:sessStatus
-  }).select().single();
-  if(cr.error){showToast('Session error: '+cr.error.message,'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
-  classSessionId=cr.data.id;
+  var gr=await sb.rpc('get_or_create_class_session',{p_class_id:currentClassData.id,p_session_date:currentClassData._dateStr});
+  if(gr.error||!gr.data){showToast('Session error: '+((gr.error&&gr.error.message)||'could not open session'),'err');if(btn){btn.classList.remove('loading');btn.disabled=false;}return;}
+  classSessionId=gr.data;
 }
     // Insert attendance \u2014 stamp the viewed day for off-today (back-fill / future) check-ins
     var todayLocal=ymd(new Date());

@@ -7234,9 +7234,10 @@ async function openClassRosterFromCal(classId,dateStr){
   document.getElementById('classRosterList').innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">Loading...</div>';
   document.getElementById('classRosterMsg').textContent='';
   document.getElementById('classRosterModal').classList.add('active');
-  var sr=await sb.from('class_sessions').select('id').eq('class_id',classId).eq('session_date',dateStr).limit(1);
-  if(sr.data&&sr.data.length){currentRosterSessionId=sr.data[0].id;}
-  else{var cr=await sb.from('class_sessions').insert({class_id:classId,school_id:SID,session_date:dateStr,status:'scheduled'}).select().single();if(!cr.error)currentRosterSessionId=cr.data.id;}
+  // §ATOMIC-SESSION — resolve/create the session through the shared advisory-locked RPC so two
+  // concurrent check-in paths can never each create a duplicate class_sessions row for this class+day.
+  var gr=await sb.rpc('get_or_create_class_session',{p_class_id:classId,p_session_date:dateStr});
+  if(!gr.error)currentRosterSessionId=gr.data;
   if(currentRosterSessionId){var ar=await sb.from('class_attendance').select('*').eq('session_id',currentRosterSessionId);if(ar.data)ar.data.forEach(function(x){rosterAttendance[x.student_id]=x.id;});}
   try{
     var rr=await sb.from('class_enrollments').select('student_id,status').eq('class_id',classId).eq('school_id',SID).eq('session_date',dateStr).in('status',['enrolled','attended']);
