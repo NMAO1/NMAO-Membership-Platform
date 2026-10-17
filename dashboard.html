@@ -2863,7 +2863,7 @@
 
 <!-- §MODAL-MEMBERSHIP-DETAIL -->
 <div class="modal-overlay" id="membershipDetailModal">
-  <div class="modal" style="width:720px;max-width:95vw">
+  <div class="modal" style="width:840px;max-width:95vw">
     <div class="modal-header"><span class="modal-title" id="mdTitle">Membership</span><button class="modal-close" onclick="closeMembershipDetail()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body" id="mdBody"><div style="color:var(--muted);font-size:0.85rem">Loading\u2026</div></div>
   </div>
@@ -12892,10 +12892,10 @@ function mdRender(sm,m,progNames,classNames,pays){
     h+=pays.map(function(p){ var col={paid:'#5A9A6A',pending:'#C9A84C',failed:'#E07070',refunded:'#7DAAD4'}[p.status]||'var(--muted)'; return '<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.3rem 0;font-size:0.76rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted);min-width:74px">'+smDateLabel(p.created_at)+'</span><span style="color:var(--white);flex:1">'+(p.description||'\u2014')+'</span><span style="color:var(--gold)">$'+parseFloat(p.amount||0).toFixed(2)+'</span><span style="color:'+col+';min-width:54px;text-align:right">'+(p.status||'')+'</span></div>'; }).join('');
   } else { h+='<div style="color:var(--muted);font-size:0.78rem;padding:0.3rem 0">No membership payments yet.</div>'; }
   h+='<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1.1rem">';
-  h+='<button class="btn-sm" onclick="mdEdit()" style="flex:1;min-width:120px"><i class="fa-solid fa-pen"></i> Edit</button>';
-  h+='<button class="btn-sm" onclick="mdChangePlan()" style="flex:1;min-width:120px"><i class="fa-solid fa-right-left"></i> Change plan</button>';
-  if(!sm.stripe_subscription_id){ h+='<button class="btn-sm" onclick="mdAddCard()" style="flex:1;min-width:120px"><i class="fa-solid fa-credit-card"></i> Add card</button>'; }
-  h+='<button class="btn-sm" onclick="mdCancel()" style="flex:1;min-width:120px;border-color:#A04040;color:#E07070"><i class="fa-solid fa-ban"></i> Cancel</button>';
+  h+='<button class="btn-sm" onclick="mdEdit()" style="flex:1 1 auto"><i class="fa-solid fa-pen"></i> Edit</button>';
+  h+='<button class="btn-sm" onclick="mdChangePlan()" style="flex:1 1 auto"><i class="fa-solid fa-right-left"></i> Change plan</button>';
+  if(!sm.stripe_subscription_id){ h+='<button class="btn-sm" onclick="mdAddCard()" style="flex:1 1 auto"><i class="fa-solid fa-credit-card"></i> Add card</button>'; }
+  h+='<button class="btn-sm" onclick="mdCancel()" style="flex:1 1 auto;border-color:#A04040;color:#E07070"><i class="fa-solid fa-ban"></i> Cancel</button>';
   h+='</div>';
   return h;
 }
