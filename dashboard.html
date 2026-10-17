@@ -2863,7 +2863,7 @@
 
 <!-- §MODAL-MEMBERSHIP-DETAIL -->
 <div class="modal-overlay" id="membershipDetailModal">
-  <div class="modal" style="width:620px;max-width:95vw">
+  <div class="modal" style="width:720px;max-width:95vw">
     <div class="modal-header"><span class="modal-title" id="mdTitle">Membership</span><button class="modal-close" onclick="closeMembershipDetail()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body" id="mdBody"><div style="color:var(--muted);font-size:0.85rem">Loading\u2026</div></div>
   </div>
@@ -10149,7 +10149,11 @@ async function loadProfileMemberships(sid) {
       var price=m?smPriceLabel(m):'--';
       var cl=m?smClassLine(m):'';
       var since=sm.start_date?('Member since '+smDateLabel(sm.start_date)):'';
-      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+renderCompControls(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
+      // §TILE-NEXT-CHARGE — show the next charge date at a glance (same logic as the detail modal;
+      // "~" prefix flags a manual/cash plan where the date is the expected, not auto-billed, charge).
+      var _tnd=(typeof smNextChargeDate==='function')?smNextChargeDate(sm,m):null;
+      var nextLbl=_tnd?((sm.stripe_subscription_id?'':'~')+smDateLabel(_tnd)):'';
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+(nextLbl?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-calendar-day" style="margin-right:0.3rem;color:#7DAAD4"></i>Next charge · '+nextLbl+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+renderCompControls(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
