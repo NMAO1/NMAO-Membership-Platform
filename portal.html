@@ -2183,6 +2183,7 @@ async function toggleRSVP(classId,sessionDate,btn){
       if(enrollmentCounts[classId]&&enrollmentCounts[classId][sessionDate]){
         enrollmentCounts[classId][sessionDate]=Math.max(0,enrollmentCounts[classId][sessionDate]-1);
       }
+      showPortalToast('Reservation cancelled','info');
     }else{
       var ins=await sb.from('class_enrollments').insert({
         school_id:SID,
@@ -2196,6 +2197,7 @@ async function toggleRSVP(classId,sessionDate,btn){
       // Increment live count
       if(!enrollmentCounts[classId])enrollmentCounts[classId]={};
       enrollmentCounts[classId][sessionDate]=(enrollmentCounts[classId][sessionDate]||0)+1;
+      showPortalToast("You're reserved for this class!",'success');
     }
     // Re-render so pill, button state, and card border all update consistently
     renderScheduleView();

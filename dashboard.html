@@ -1085,10 +1085,10 @@
     <div class="page" id="page-leads">
       <div class="content-heading"><h2>Leads</h2><button class="help-hint-inline" onclick="openHelpPopover('leads',this)" title="Help">?</button><div class="rule-h"></div><button class="panel-action" onclick="openAddLead()"><i class="fa-solid fa-user-plus"></i> Add Lead</button></div>
       <div class="lead-pipeline">
-        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-star" style="color:var(--gold)"></i> New</div><div id="leads-new"></div></div>
-        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-phone" style="color:#7DBD7D"></i> Contacted</div><div id="leads-contacted"></div></div>
-        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-calendar-check" style="color:#7DAAD4"></i> Trial Scheduled</div><div id="leads-trial"></div></div>
-        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-circle-check" style="color:var(--gold)"></i> Converted</div><div id="leads-converted"></div></div>
+        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-star" style="color:var(--gold)"></i> New <span id="leadcount-new" style="color:var(--muted);font-weight:400;margin-left:0.2rem">0</span></div><div id="leads-new"></div></div>
+        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-phone" style="color:#7DBD7D"></i> Contacted <span id="leadcount-contacted" style="color:var(--muted);font-weight:400;margin-left:0.2rem">0</span></div><div id="leads-contacted"></div></div>
+        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-calendar-check" style="color:#7DAAD4"></i> Trial Scheduled <span id="leadcount-trial" style="color:var(--muted);font-weight:400;margin-left:0.2rem">0</span></div><div id="leads-trial"></div></div>
+        <div class="pipeline-col"><div class="pipeline-col-title"><i class="fa-solid fa-circle-check" style="color:var(--gold)"></i> Converted <span id="leadcount-converted" style="color:var(--muted);font-weight:400;margin-left:0.2rem">0</span></div><div id="leads-converted"></div></div>
       </div>
       <!-- §ATTRIBUTION — closed-loop: lead → trial → enrolled → revenue, by acquisition channel -->
       <div class="panel" style="margin-top:0.5rem">
@@ -1158,8 +1158,9 @@
       </div>
       <div class="panel"><div class="panel-header"><span class="panel-title">Transaction Ledger</span>
         <button class="panel-action" style="font-size:0.75rem;margin-left:auto" onclick="openPaymentsExport()" title="Download payments as a CSV for QuickBooks / Excel"><i class="fa-solid fa-file-csv" style="margin-right:0.3rem"></i>Export</button>
+        <input type="text" id="paymentsSearch" oninput="filterPaymentsLedger()" placeholder="Search name, type, status…" style="margin-left:0.75rem;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.8rem;padding:0.35rem 0.6rem;border-radius:3px;min-width:200px" />
         <label style="margin-left:0.75rem;font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem;cursor:pointer"><input type="checkbox" id="dscOnlyFilter" onchange="loadPaymentsLedger()" /> Discounted only</label>
-      </div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Discount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody></table></div></div>
+      </div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Type</th><th>Amount</th><th>Discount</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading...</td></tr></tbody></table></div><div id="paymentsLedgerMeta" style="padding:0.6rem 1.1rem;font-size:0.76rem;color:var(--muted)"></div></div>
     </div>
 
     <!-- §PAYMENTS-EXPORT — QuickBooks / Excel CSV of payments for a date range -->
@@ -1989,10 +1990,10 @@
       <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.5rem">
         <div style="font-size:0.85rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">First Steps</div>
         <ul style="list-style:none;padding:0;margin:0;font-size:1rem;color:var(--white);line-height:1.9">
-          <li><i class="fa-solid fa-circle-check" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your school logo and brand colors</li>
-          <li><i class="fa-solid fa-circle-check" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Create your first program and class</li>
-          <li><i class="fa-solid fa-circle-check" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add students one at a time or import a CSV</li>
-          <li><i class="fa-solid fa-circle-check" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Connect Stripe to accept member payments</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your school logo and brand colors</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Create your first program and class</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add students one at a time or import a CSV</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Connect Stripe to accept member payments</li>
         </ul>
       </div>
 <p style="font-size:0.95rem;color:var(--muted);line-height:1.6;margin-bottom:1.5rem;font-style:italic">        Use the Getting Started checklist on your dashboard to track your progress. We are here when you need us.
@@ -3892,11 +3893,11 @@ async function downloadQr(fmt){
   }catch(e){alert('Could not generate that format. Try another.');}
 }
 function copyQrUrl(){
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(qrState.url);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(qrState.url); showToast('Link copied','success');}
 }
 function copyQrFlyer(){
   var t=document.getElementById('qrFlyerText').textContent;
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t); showToast('Flyer text copied','success');}
 }
 // flowType pinned to 'implicit' so auth behavior is deterministic regardless of the
 // (unpinned) supabase-js version — email links return a hash token, not a PKCE code
@@ -5824,6 +5825,7 @@ async function loadOnboardingDocs(){
     el.innerHTML=hd+rows;
   }catch(e){ el.innerHTML='<div style="font-size:0.85rem;color:var(--muted)">Could not load documents right now.</div>'; }
 }
+var _payRows=[], _payNames={}, _payOnlyDisc=false;   // §PAY-LEDGER — cache for client-side search + totals
 async function loadPaymentsLedger(){
   var body=document.getElementById('paymentsTableBody'); if(!body) return;
   var onlyDisc=(document.getElementById('dscOnlyFilter')||{}).checked;
@@ -5844,28 +5846,49 @@ async function loadPaymentsLedger(){
         (st.data||[]).forEach(function(x){ names[x.auth_user_id]=((x.first_name||'')+' '+(x.last_name||'')).trim(); });
       }catch(e){}
     }
-    if(!rows.length){ body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">'+(onlyDisc?'No discounted sales yet.':'No payments yet.')+'</td></tr>'; }
-    else{
-      body.innerHTML=rows.map(function(p){
-        var stu=p.students?((p.students.first_name||'')+' '+(p.students.last_name||'')).trim():'\u2014';
-        var amt='$'+Number(p.amount||0).toFixed(2);
-        var when=p.paid_at||p.created_at;
-        var dTd='<span style="color:var(--muted)">\u2014</span>';
-        if(p.discount_cents){
-          var who=p.discounted_by?(names[p.discounted_by]||'staff'):'';
-          var mode=p.discount_mode==='forever'?'every cycle':'one time';
-          dTd='<div style="color:#E07070;font-weight:600">\u2212$'+(p.discount_cents/100).toFixed(2)+'</div>'+
-              '<div style="font-size:0.7rem;color:var(--muted)">'+mode+(who?(' \u00b7 '+_dEsc(who)):'')+'</div>'+
-              (p.discount_reason?'<div style="font-size:0.7rem;color:var(--muted);font-style:italic">'+_dEsc(p.discount_reason)+'</div>':'');
-        }
-        return '<tr><td>'+_dEsc(stu)+'</td><td>'+_dEsc(p.type||'\u2014')+'</td><td>'+amt+'</td><td>'+dTd+'</td><td>'+_dEsc(p.status||'')+'</td><td>'+(when?new Date(when).toLocaleDateString():'\u2014')+'</td></tr>';
-      }).join('');
-    }
+    _payRows=rows; _payNames=names; _payOnlyDisc=onlyDisc;
+    renderPaymentsLedger();
     loadDiscountSummary();
   }catch(e){
     body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#E07070;padding:2rem">Could not load payments: '+_dEsc(e.message)+'</td></tr>';
   }
 }
+// §PAY-LEDGER — render the cached rows, filtered by the search box, with a count + revenue total.
+function renderPaymentsLedger(){
+  var body=document.getElementById('paymentsTableBody'); if(!body) return;
+  var names=_payNames;
+  var qv=((document.getElementById('paymentsSearch')||{}).value||'').trim().toLowerCase();
+  var rows=_payRows.filter(function(p){
+    if(!qv) return true;
+    var stu=p.students?((p.students.first_name||'')+' '+(p.students.last_name||'')).trim().toLowerCase():'';
+    return stu.indexOf(qv)!==-1 || String(p.type||'').toLowerCase().indexOf(qv)!==-1 || String(p.status||'').toLowerCase().indexOf(qv)!==-1;
+  });
+  if(!rows.length){
+    body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">'+(qv?('No payments match "'+_dEsc(qv)+'".'):(_payOnlyDisc?'No discounted sales yet.':'No payments yet.'))+'</td></tr>';
+  } else {
+    body.innerHTML=rows.map(function(p){
+      var stu=p.students?((p.students.first_name||'')+' '+(p.students.last_name||'')).trim():'—';
+      var amt='$'+Number(p.amount||0).toFixed(2);
+      var when=p.paid_at||p.created_at;
+      var dTd='<span style="color:var(--muted)">—</span>';
+      if(p.discount_cents){
+        var who=p.discounted_by?(names[p.discounted_by]||'staff'):'';
+        var mode=p.discount_mode==='forever'?'every cycle':'one time';
+        dTd='<div style="color:#E07070;font-weight:600">−$'+(p.discount_cents/100).toFixed(2)+'</div>'+
+            '<div style="font-size:0.7rem;color:var(--muted)">'+mode+(who?(' · '+_dEsc(who)):'')+'</div>'+
+            (p.discount_reason?'<div style="font-size:0.7rem;color:var(--muted);font-style:italic">'+_dEsc(p.discount_reason)+'</div>':'');
+      }
+      return '<tr><td>'+_dEsc(stu)+'</td><td>'+_dEsc(p.type||'—')+'</td><td>'+amt+'</td><td>'+dTd+'</td><td>'+_dEsc(p.status||'')+'</td><td>'+(when?new Date(when).toLocaleDateString():'—')+'</td></tr>';
+    }).join('');
+  }
+  var meta=document.getElementById('paymentsLedgerMeta');
+  if(meta){
+    var total=rows.reduce(function(a,p){return a+Number(p.amount||0);},0);
+    var capNote=(_payRows.length>=200)?' (most recent 200)':'';
+    meta.textContent=_payRows.length ? ('Showing '+rows.length+(qv?(' of '+_payRows.length):'')+' payment'+(rows.length===1?'':'s')+capNote+' · Total $'+total.toFixed(2)) : '';
+  }
+}
+function filterPaymentsLedger(){ renderPaymentsLedger(); }
 function _dEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 async function loadDiscountSummary(){
   var panel=document.getElementById('discountSummaryPanel'); if(!panel) return;
@@ -9412,7 +9435,7 @@ function filterMembers() {
     return matchQ && matchTag && matchStatus && matchProg;
   });
   var ce = document.getElementById('memberSearchCount');
-  if (ce) ce.textContent = filtered.length !== allStudents.length ? filtered.length+' of '+allStudents.length+' shown' : '';
+  if (ce) ce.textContent = (filtered.length !== allStudents.length) ? (filtered.length+' of '+allStudents.length+' shown') : (allStudents.length+' member'+(allStudents.length===1?'':'s'));
   renderMembersTableFiltered(sortMemberList(filtered)); updateMemberSortArrows();
 }
 function atRiskBadge(sid){
@@ -9801,7 +9824,14 @@ async function openStudentProfile(sid) {
     {l:'Email',v:s.email||'--'},{l:'Phone',v:s.phone||'--'},
     {l:'DOB',  v:s.date_of_birth?new Date(s.date_of_birth+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--'},
     {l:'Since', v:s.start_date?new Date(s.start_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'--'}
-  ].map(function(row){ return '<div class="profile-info-row"><span class="profile-info-label">'+row.l+'</span><span style="color:#F5F0E8">'+row.v+'</span></div>'; }).join('');
+  ].map(function(row){
+    var disp=_dEsc(row.v), val=disp;
+    if(row.v!=='--'){
+      if(row.l==='Email'){ val='<a href="mailto:'+disp+'" style="color:var(--gold);text-decoration:none">'+disp+'</a>'; }
+      else if(row.l==='Phone'){ val='<a href="tel:'+row.v.replace(/[^\d+]/g,'')+'" style="color:var(--gold);text-decoration:none">'+disp+'</a>'; }
+    }
+    return '<div class="profile-info-row"><span class="profile-info-label">'+row.l+'</span><span style="color:#F5F0E8">'+val+'</span></div>';
+  }).join('');
   await loadProfileMemberships(sid);
   await loadStudentCredit(sid);
   await loadProfileTags(sid);
@@ -14964,6 +14994,7 @@ function renderLeads(){
   Object.keys(cols).forEach(function(status){
     var el=document.getElementById(cols[status]); if(!el) return;
     var filtered=allLeads.filter(function(l){return l.status===status;});
+    var cntEl=document.getElementById('leadcount-'+status); if(cntEl) cntEl.textContent=filtered.length;
     if(!filtered.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted);font-style:italic;padding:0.5rem">No leads</div>';return;}
     el.innerHTML=filtered.map(function(l){
       var prog=allPrograms.find(function(p){return p.id===l.program_id;});
@@ -15683,7 +15714,7 @@ function fallbackCopy(text){
 }
 
 function setInstructorPasswordFromProfile(){ if(currentInstructorProfile) setInstructorPassword(currentInstructorProfile.id); }
-function showToast(message){
+function showToast(message,type){
   var toast=document.getElementById('dashToast');
   if(!toast){
     toast=document.createElement('div');
@@ -15691,6 +15722,10 @@ function showToast(message){
     toast.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1A1A1A;border:1px solid var(--gold);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;letter-spacing:0.1em;padding:0.75rem 1.5rem;z-index:9999;border-radius:2px;transition:opacity 0.3s;pointer-events:none;';
     document.body.appendChild(toast);
   }
+  // §TOAST-TYPE — reflect the type so failures don't read as success (gold). Set every call (toast node is reused).
+  var _isErr=(type==='error');
+  toast.style.borderColor=_isErr?'#E07070':'var(--gold)';
+  toast.style.color=_isErr?'#F3C9C9':'var(--white)';
   toast.textContent=message;
   toast.style.opacity='1';
   clearTimeout(toast._timer);
