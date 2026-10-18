@@ -855,9 +855,6 @@ async function showCelebration(student,classCount,beltColor,callback){
         confetti({particleCount:60,angle:120,spread:55,origin:{x:1,y:0.7},colors:goldColors,zIndex:1000});
       },800);
     }
-    var newCelebrated=celebrated.concat([hit]);
-    student.celebrated_milestones=newCelebrated;
-    await sb.rpc('kiosk_mark_milestones_celebrated',{p_student_id:student.id,p_milestones:newCelebrated});
   }else{milestoneEl.style.display='none';}
   prog.style.animation='none';prog.offsetHeight;prog.style.animation='progressShrink 3.5s linear forwards';
   document.getElementById('kioskCelebration').classList.add('active');

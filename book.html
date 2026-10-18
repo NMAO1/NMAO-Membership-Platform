@@ -1356,6 +1356,15 @@
     }
 
     async function submitBooking() {
+      // §DISCOUNT-GUARD — a code typed but not "Applied" (or changed after applying) would be sent as
+      // null and the member silently charged full price. Require them to Apply it (or clear the box).
+      var _dcEl = document.getElementById('bookDiscountCode');
+      var _typed = (_dcEl ? _dcEl.value : '').trim().toUpperCase();
+      var _applied = (bookDiscountCode || '').trim().toUpperCase();
+      if (_typed && _typed !== _applied) {
+        setMsg('bookDiscountMsg', 'Tap “Apply” to use your discount code — or clear the box to book at full price.', 'error');
+        return;
+      }
       if (memberStudentId) { return submitMemberBooking(); }   // signed-in member → exact-student path
       var first = document.getElementById('bookFirst').value.trim();
       var last  = document.getElementById('bookLast').value.trim();

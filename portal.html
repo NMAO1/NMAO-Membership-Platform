@@ -1793,6 +1793,7 @@ function showStudentPortal(student){
   handlePackReturnParams();
   handleShopReturnParams();
   handleCardUpdateReturnParams();
+  handleBeltTestReturnParams();
   maybePromptFirstRunPassword();
 }
 
@@ -3579,6 +3580,25 @@ function handleShopReturnParams(){
     showPortalToast('Purchase complete! Pick up at the school.', 'success');
   } else if(cancel){
     showPortalToast('Purchase cancelled. No charge was made.', 'info');
+  }
+}
+
+// §BELT-TEST-RETURN — handle the Stripe redirect back from a belt-test fee payment (bt_paid / bt_cancel):
+// clean the URL, confirm to the member, and refresh so the "Finalize your spot" card flips to paid once
+// the webhook settles fee_paid. Without this the member landed back with ?bt_paid=1 stuck in the URL and
+// no confirmation, and the card could still read unpaid.
+function handleBeltTestReturnParams(){
+  var params=new URLSearchParams(window.location.search);
+  var paid=params.get('bt_paid');
+  var cancel=params.get('bt_cancel');
+  if(!paid && !cancel) return;
+  var cleanUrl=window.location.origin+window.location.pathname+window.location.hash;
+  window.history.replaceState({}, '', cleanUrl);
+  if(paid){
+    showPortalToast('Your belt-test spot is secured!', 'success');
+    setTimeout(function(){ if(currentStudent && typeof buildPortal==='function') buildPortal(currentStudent); }, 1500);
+  } else if(cancel){
+    showPortalToast('Payment cancelled — no charge was made.', 'info');
   }
 }
 

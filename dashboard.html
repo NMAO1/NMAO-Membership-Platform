@@ -19905,7 +19905,9 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
   };
 
   window.renderEvents = function(){
-    var todayStr = localDateStr(new Date());
+    // §TZ — split upcoming vs past by the SCHOOL's local day (tzToday), not the operator's browser day,
+    // so an event doesn't flip to "past" early/late near midnight or for off-site staff.
+    var todayStr = (typeof tzToday==='function') ? tzToday() : localDateStr(new Date());
     var upcoming = []; var past = [];
     window.allEvents.forEach(function(ev){
       var sessions = window.allEventSessions[ev.id] || [];
