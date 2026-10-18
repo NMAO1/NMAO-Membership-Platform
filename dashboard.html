@@ -10377,7 +10377,13 @@ async function chargeForPlan(smid){
     var passFees=false;
     try{ var sc=await sb.from('schools').select('pass_fees_to_students').eq('id',SID).single(); passFees=!!(sc.data&&sc.data.pass_fees_to_students); }catch(e){}
     var balanceCents=0;
-    try{ var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',currentProfileStudent.id); (cr.data||[]).forEach(function(row){balanceCents+=(row.amount_cents||0);}); }catch(e){}
+    // §WALLET — offer the FAMILY wallet balance at enrollment (so a sibling can draw from pooled credit),
+    // matching the profile display. Falls back to this student's own credit if the RPC is unavailable.
+    try{
+      var wr=await sb.rpc('credit_wallet_balance',{p_student_id:currentProfileStudent.id});
+      if(wr && !wr.error && wr.data!=null){ balanceCents=wr.data||0; }
+      else{ var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',currentProfileStudent.id); (cr.data||[]).forEach(function(row){balanceCents+=(row.amount_cents||0);}); }
+    }catch(e){ try{ var cr2=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',currentProfileStudent.id); (cr2.data||[]).forEach(function(row){balanceCents+=(row.amount_cents||0);}); }catch(_e){} }
     if(balanceCents<0) balanceCents=0;
     var priceCents=Math.round((m.price||0)*100);
     var isRecurring = !!INTERVAL_MAP[m.billing_type] && m.class_limit_type!=='class_pack';
