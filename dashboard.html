@@ -17148,9 +17148,10 @@ async function loadPosCredit(){
   posCreditBalanceCents=0; posCreditApplyCents=0;
   if(posSelectedStudentId){
     try{
-      var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',posSelectedStudentId);
-      var cents=0;(cr.data||[]).forEach(function(row){cents+=(row.amount_cents||0);});
-      posCreditBalanceCents=cents>0?cents:0;
+      // §WALLET — spend the FAMILY wallet at the register (matches profile + enrollment). Per-student fallback.
+      var wr=await sb.rpc('credit_wallet_balance',{p_student_id:posSelectedStudentId});
+      if(wr && !wr.error && wr.data!=null){ posCreditBalanceCents=(wr.data>0?wr.data:0); }
+      else{ var cr=await sb.from('account_credits').select('amount_cents').eq('school_id',SID).eq('student_id',posSelectedStudentId); var cents=0;(cr.data||[]).forEach(function(row){cents+=(row.amount_cents||0);}); posCreditBalanceCents=cents>0?cents:0; }
     }catch(e){ posCreditBalanceCents=0; }
     var maxApply=Math.min(posCreditBalanceCents, posCartTotalCents());
     posCreditApplyCents=maxApply>0?maxApply:0;
