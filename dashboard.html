@@ -1990,9 +1990,9 @@
       <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.5rem">
         <div style="font-size:0.85rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">First Steps</div>
         <ul style="list-style:none;padding:0;margin:0;font-size:1rem;color:var(--white);line-height:1.9">
-          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your school logo and brand colors</li>
-          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Create your first program and class</li>
-          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add students one at a time or import a CSV</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your belt ranks — your curriculum starts here</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Create your programs, memberships, and classes</li>
+          <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your students — one at a time or import a CSV</li>
           <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Connect Stripe to accept member payments</li>
         </ul>
       </div>
@@ -7451,7 +7451,7 @@ function renderRosterList() {
     if (rsvpStatus === 'attended') rsvpBadge = '<span style="font-size:0.62rem;color:var(--gold);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">checked in</span>';
     else if (rsvpStatus === 'enrolled') rsvpBadge = '<span style="font-size:0.62rem;color:var(--muted2);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">expected</span>';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : rsvpStatus ? 'rgba(201,168,76,0.4)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
-      '<div onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" style="flex:1;min-width:0;cursor:pointer;font-size:0.88rem;color:var(--white)">' + s.first_name + ' ' + s.last_name + rsvpBadge + '</div>' +
+      '<div onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" style="flex:1;min-width:0;cursor:pointer;font-size:0.88rem;color:var(--white)">' + escapeCheckout(s.first_name + ' ' + s.last_name) + rsvpBadge + '</div>' +
       '<div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">' +
         '<button onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" aria-label="View profile" style="background:none;border:none;cursor:pointer;font-size:1.05rem;color:var(--muted)"><i class="fa-solid fa-circle-user"></i></button>' +
         '<button onclick="toggleRosterAttendance(\'' + s.id + '\')" id="rbtn-' + s.id + '" title="' + (present ? 'Checked in — tap to undo' : 'Mark present') + '" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:' + (present ? 'var(--gold)' : 'var(--muted)') + '">' +
@@ -8166,7 +8166,7 @@ async function loadSessionTypes(){
 }
 function renderSessionTypes(){
   var el=document.getElementById('sessionTypesList'); if(!el) return;
-  if(!allSessionTypes.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session types yet. Add one to get started.</div>';return;}
+  if(!allSessionTypes.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session types yet.<br><button class="btn-sm" style="margin-top:0.6rem;border-color:var(--gold);color:var(--gold)" onclick="openAddSessionType()"><i class="fa-solid fa-plus"></i> Add your first session type</button></div>';return;}
   el.innerHTML=allSessionTypes.map(function(t){
     return '<div class="session-type-row"><div style="display:flex;align-items:center;gap:0.75rem"><div style="width:10px;height:10px;border-radius:50%;background:'+(t.color||'#9060D0')+'"></div><div><div style="font-size:0.88rem;color:var(--white)">'+t.name+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(t.duration_minutes||60)+' min'+(t.price>0?' \u00B7 $'+parseFloat(t.price).toFixed(2):'')+(t.available_for_booking?' \u00B7 Bookable':'')+' '+(t.description?'\u00B7 '+t.description.slice(0,40):'')+'</div></div></div><div style="display:flex;gap:0.5rem"><button class="btn-sm" onclick="openEditSessionType(\''+t.id+'\')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-sm" onclick="deleteSessionType(\''+t.id+'\')">Delete</button></div></div>';
   }).join('');
@@ -8238,14 +8238,14 @@ function packTemplateRowHTML(p){
 function renderSessionPacks(){
   var el=document.getElementById('sessionPacksList'); if(!el) return;
   var sessionPacks=allSessionPacks.filter(function(p){return p.kind==='session';});
-  if(!sessionPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session packs yet.</div>';return;}
+  if(!sessionPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No session packs yet.<br><button class="btn-sm" style="margin-top:0.6rem;border-color:var(--gold);color:var(--gold)" onclick="openAddSessionPack()"><i class="fa-solid fa-plus"></i> Add your first session pack</button></div>';return;}
   el.innerHTML=sessionPacks.map(packTemplateRowHTML).join('');
 }
 
 function renderClassPacks(){
   var el=document.getElementById('classPacksList'); if(!el) return;
   var classPacks=allMemberships.filter(function(m){return m.class_limit_type==='class_pack' && !m.is_custom;});
-  if(!classPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No class packs yet.</div>';return;}
+  if(!classPacks.length){el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem">No class packs yet.<br><button class="btn-sm" style="margin-top:0.6rem;border-color:var(--gold);color:var(--gold)" onclick="openAddClassPack()"><i class="fa-solid fa-plus"></i> Add your first class pack</button></div>';return;}
   el.innerHTML=classPacks.map(function(m){
     var count=m.class_limit_count||0;
     var classLabel=count+' class'+(count!==1?'es':'');
@@ -11749,6 +11749,9 @@ async function saveDiscount(){
 // needed); the EF also bridges prospect_schools.member_school_id to this school.
 async function openSelfUpload(btn){
   var orig = btn ? btn.innerHTML : '';
+  // §POPUP-SAFE — open the tab synchronously on the click, BEFORE any await, so Safari/iOS (the iPad
+  // concierge path) doesn't block it as a non-user-gesture popup. Navigate it once the signed URL is back.
+  var win = window.open('', '_blank');
   if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Opening…'; }
   try{
     var r = await fetch(SURL+'/functions/v1/onboarding-docs', {
@@ -11758,8 +11761,9 @@ async function openSelfUpload(btn){
     });
     var d = await r.json().catch(function(){ return {}; });
     if(!r.ok || !d.ok || !d.url){ throw new Error((d&&d.error)||'Could not open the upload page.'); }
-    window.open(d.url, '_blank');
+    if(win){ win.location = d.url; } else { window.location.href = d.url; }   // popup blocked → navigate here
   }catch(e){
+    if(win){ try{ win.close(); }catch(_e){} }
     alert((e&&e.message)?e.message:'Could not open the upload page.');
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML=orig; }
@@ -15870,7 +15874,7 @@ async function refreshBeltSystemLevels(){
   if(!currentBeltSystemId) return;
   var r=await sb.from('belt_levels').select('*, belt_level_videos(*)').eq('belt_system_id',currentBeltSystemId).order('sort_order');
   var levels=r.data||[]; var el=document.getElementById('beltSystemLevelsList');
-  if(!levels.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:3rem;font-style:italic">No belt levels yet.</div>';return;}
+  if(!levels.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:3rem;font-style:italic">No belt levels yet.<br><button class="btn-sm" style="margin-top:0.8rem;border-color:var(--gold);color:var(--gold)" onclick="openAddBeltLevel()"><i class="fa-solid fa-plus"></i> Add your first belt</button></div>';return;}
   var html='';
   for(var i=0;i<levels.length;i++){
     var l=levels[i]; var vids=l.belt_level_videos||[];

@@ -171,10 +171,10 @@
       <div class="reg-form-panel">
         <div class="reg-prompt">Join Us</div>
         <div class="reg-sub">Fill in your details and we will be in touch!</div>
-        <div class="reg-field"><label>First Name *</label><input type="text" class="reg-input" id="regFirst" placeholder="First name" autocomplete="off" /></div>
-        <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" /></div>
-        <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" /></div>
-        <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" /></div>
+        <div class="reg-field"><label>First Name *</label><input type="text" class="reg-input" id="regFirst" placeholder="First name" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRegistration();}" /></div>
+        <div class="reg-field"><label>Last Name *</label><input type="text" class="reg-input" id="regLast" placeholder="Last name" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRegistration();}" /></div>
+        <div class="reg-field"><label>Email</label><input type="email" class="reg-input" id="regEmail" placeholder="your@email.com" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRegistration();}" /></div>
+        <div class="reg-field"><label>Phone</label><input type="text" class="reg-input" id="regPhone" placeholder="(555) 555-5555" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRegistration();}" /></div>
         <div class="reg-field"><label>Program Interest</label><select class="reg-input" id="regProgram" style="cursor:pointer"><option value="">-- Select a program --</option></select></div>
         <button class="btn-reg-submit" id="regSubmitBtn" onclick="submitRegistration()"><i class="fa-solid fa-paper-plane" style="margin-right:0.5rem"></i>Submit</button>
         <div class="reg-msg" id="regMsg"></div>
@@ -495,6 +495,10 @@ function searchStudents(){
       return(s.first_name+' '+s.last_name).toLowerCase().includes(q)||
         s.first_name.toLowerCase().startsWith(q)||s.last_name.toLowerCase().startsWith(q);
     });
+    // §DEDUPE — a student already listed inside a matched family card shouldn't ALSO show as a
+    // standalone result (searching a surname otherwise renders the child twice).
+    var _famIds=familyMatches.map(function(f){return f.id;});
+    studentMatches=studentMatches.filter(function(s){return _famIds.indexOf(s.family_id)===-1;});
     if(!familyMatches.length&&!studentMatches.length){
       el.innerHTML='<div class="kiosk-empty"><i class="fa-solid fa-circle-question" style="display:block;font-size:1.5rem;margin-bottom:0.5rem;opacity:0.3"></i>No students found.<br>Please see the front desk.</div>';
       return;
@@ -551,7 +555,12 @@ function toggleFamilyChild(sid){
 }
 
 async function confirmFamilyCheckin(familyId){
-  if(!selectedFamilyChildren.length)return;
+  if(!selectedFamilyChildren.length){
+    // §TAP-FIRST — don't no-op silently when no child is selected; nudge the user.
+    var hintBtn=document.querySelector('.btn-family-checkin');
+    if(hintBtn){ var _o=hintBtn.innerHTML; hintBtn.innerHTML='<i class="fa-solid fa-hand-pointer" style="margin-right:0.5rem"></i>Tap a name first'; setTimeout(function(){ hintBtn.innerHTML=_o; },1600); }
+    return;
+  }
   var btn=document.querySelector('.btn-family-checkin');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Checking in...';}
   familyCheckinQueue=selectedFamilyChildren.slice();
@@ -872,6 +881,7 @@ async function submitRegistration(){
   var progId=document.getElementById('regProgram').value;
   var msg=document.getElementById('regMsg');
   if(!first||!last){msg.textContent='Please enter first and last name.';msg.className='reg-msg error';return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent='Please enter a valid email address (or leave it blank).';msg.className='reg-msg error';return;}
   var btn=document.getElementById('regSubmitBtn');
   btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.5rem"></i>Submitting...';
   msg.textContent='';msg.className='reg-msg';

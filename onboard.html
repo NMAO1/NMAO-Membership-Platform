@@ -248,12 +248,12 @@
             '<div class="section-label">Your details</div>' +
             '<div class="section-rule"></div>' +
             '<div class="form-row">' +
-              '<div class="field"><label>First name</label><input id="oFirst" type="text" autocomplete="given-name" /></div>' +
-              '<div class="field"><label>Last name</label><input id="oLast" type="text" autocomplete="family-name" /></div>' +
+              '<div class="field"><label>First name</label><input id="oFirst" type="text" autocomplete="given-name" onkeydown="if(event.keyCode===13)submitBooking()" /></div>' +
+              '<div class="field"><label>Last name</label><input id="oLast" type="text" autocomplete="family-name" onkeydown="if(event.keyCode===13)submitBooking()" /></div>' +
             '</div>' +
-            '<div class="field"><label>Email</label><input id="oEmail" type="email" autocomplete="email" /></div>' +
-            '<div class="field"><label>Phone</label><input id="oPhone" type="tel" autocomplete="tel" /></div>' +
-            '<div class="field"><label>School name</label><input id="oSchool" type="text" autocomplete="organization" /></div>' +
+            '<div class="field"><label>Email</label><input id="oEmail" type="email" autocomplete="email" onkeydown="if(event.keyCode===13)submitBooking()" /></div>' +
+            '<div class="field"><label>Phone</label><input id="oPhone" type="tel" autocomplete="tel" onkeydown="if(event.keyCode===13)submitBooking()" /></div>' +
+            '<div class="field"><label>School name</label><input id="oSchool" type="text" autocomplete="organization" onkeydown="if(event.keyCode===13)submitBooking()" /></div>' +
             '<input class="hp" id="oWebsite" name="website" tabindex="-1" autocomplete="off" />' +
             '<button type="button" class="btn-primary" id="oSubmit" onclick="submitBooking()">Reserve My Time</button>' +
             '<div id="oMsg"></div>' +
@@ -472,7 +472,7 @@
 
       if (hp){ return; } // honeypot: silently drop
       if (!first || !last){ setMsg('Please enter your first and last name.', 'error'); return; }
-      if (!email || email.indexOf('@') === -1){ setMsg('Please enter a valid email address.', 'error'); return; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ setMsg('Please enter a valid email address.', 'error'); return; }
 
       state.submitting = true;
       setMsg('', '');

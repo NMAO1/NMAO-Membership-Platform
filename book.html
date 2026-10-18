@@ -600,7 +600,7 @@
         <div class="field" id="bookDiscountField">
           <label>Discount code (optional)</label>
           <div style="display:flex;gap:0.5rem">
-            <input type="text" id="bookDiscountCode" placeholder="Enter code" autocapitalize="characters" style="flex:1;text-transform:uppercase;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem 0.75rem;outline:none" />
+            <input type="text" id="bookDiscountCode" placeholder="Enter code" autocapitalize="characters" onkeydown="if(event.key==='Enter'){event.preventDefault();applyBookDiscount();}" style="flex:1;text-transform:uppercase;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.92rem;padding:0.6rem 0.75rem;outline:none" />
             <button type="button" class="btn-back" style="width:auto;padding:0.6rem 1.1rem;margin:0" onclick="applyBookDiscount()">Apply</button>
           </div>
           <p class="form-msg" id="bookDiscountMsg"></p>
