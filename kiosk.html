@@ -13,7 +13,7 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root{
-      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+      --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(var(--accent-rgb),0.08);
       --black:#0A0A0A;--surface:#141414;--border:#2A2520;
       --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
       --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
@@ -31,7 +31,7 @@
     .kiosk-mode-btn{padding:0.65rem 2rem;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font-ui);border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;}
     .kiosk-mode-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
     .kiosk-body{flex:1;width:100%;padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center;}
-    .kiosk-current-class{width:100%;max-width:680px;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.2);padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;}
+    .kiosk-current-class{width:100%;max-width:680px;background:var(--gold-bg);border:1px solid rgba(var(--accent-rgb),0.2);padding:0.85rem 1.25rem;margin-bottom:2rem;text-align:center;}
     .kiosk-current-class-label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;}
     .kiosk-current-class-name{font-family:var(--font-display);font-size:1.15rem;color:var(--gold);}
     .kiosk-checkin-wrap{width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center;}
@@ -43,16 +43,16 @@
     .kiosk-search::placeholder{color:var(--muted);font-size:1.1rem;font-family:var(--font-ui);font-style:italic;}
     .kiosk-results{width:100%;display:flex;flex-direction:column;gap:0.6rem;}
     .kiosk-student-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);padding:1.1rem 1.35rem;display:flex;align-items:center;gap:1.25rem;cursor:pointer;transition:all 0.18s;}
-    .kiosk-student-card:hover,.kiosk-student-card:active{border-color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.05);transform:translateX(3px);}
+    .kiosk-student-card:hover,.kiosk-student-card:active{border-color:var(--gold);border-left-color:var(--gold);background:rgba(var(--accent-rgb),0.05);transform:translateX(3px);}
     .kiosk-avatar{width:58px;height:58px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
     .kiosk-student-name{font-family:var(--font-display);font-size:1.35rem;color:var(--white);margin-bottom:0.15rem;letter-spacing:0.02em;}
     .kiosk-student-program{font-size:0.75rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
-    .kiosk-family-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid rgba(201,168,76,0.4);padding:1rem 1.35rem;width:100%;}
+    .kiosk-family-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid rgba(var(--accent-rgb),0.4);padding:1rem 1.35rem;width:100%;}
     .kiosk-family-label{font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
     .kiosk-family-children{display:flex;flex-direction:column;gap:0.4rem;}
     .kiosk-child-row{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--black);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
     .kiosk-child-row:hover{border-color:var(--gold);}
-    .kiosk-child-row.selected{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+    .kiosk-child-row.selected{border-color:var(--gold);background:rgba(var(--accent-rgb),0.06);}
     .kiosk-child-name{font-family:var(--font-display);font-size:1.1rem;color:var(--white);}
     .kiosk-child-prog{font-size:0.68rem;color:var(--muted);margin-top:0.1rem;}
     .kiosk-child-check{font-size:1.3rem;color:var(--muted);transition:color 0.15s;}
@@ -60,7 +60,7 @@
     .btn-family-checkin{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1rem;letter-spacing:0.14em;text-transform:uppercase;padding:1rem;border:none;cursor:pointer;font-weight:700;margin-top:0.75rem;transition:opacity 0.2s;}
     .btn-family-checkin:hover{opacity:0.92;}
     .kiosk-empty{text-align:center;padding:2rem;color:var(--muted);font-style:italic;font-size:0.92rem;border:1px solid var(--border);background:var(--surface);width:100%;}
-    .kiosk-class-info{width:100%;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.25);padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.06em;}
+    .kiosk-class-info{width:100%;background:var(--gold-bg);border:1px solid rgba(var(--accent-rgb),0.25);padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.06em;}
     .kiosk-selected-card{width:100%;background:var(--surface);border:2px solid var(--gold);padding:1.35rem 1.5rem;display:flex;align-items:center;gap:1.35rem;margin-bottom:1.5rem;}
     .btn-checkin{width:100%;background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:1.2rem;letter-spacing:0.14em;text-transform:uppercase;padding:1.35rem;border:none;cursor:pointer;font-weight:700;transition:opacity 0.2s,transform 0.15s;}
     .btn-checkin:hover{opacity:0.92;}
@@ -103,13 +103,13 @@
     .celeb-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;animation:celebFadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
     .celeb-logo{max-height:100px;max-width:260px;object-fit:contain;margin-bottom:1.25rem;}
     .celeb-logo-text{font-family:var(--font-display);font-size:2.5rem;color:var(--gold);letter-spacing:0.18em;margin-bottom:1.25rem;line-height:1;}
-    .celeb-check{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 56px rgba(201,168,76,0.4);animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
+    .celeb-check{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 56px rgba(var(--accent-rgb),0.4);animation:celebPop 0.5s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
     .celeb-check i{font-size:2.2rem;color:var(--black);font-weight:900;}
     .celeb-name{font-family:var(--font-display);font-size:3.2rem;color:var(--white);margin-bottom:0.4rem;letter-spacing:0.04em;animation:celebFadeUp 0.5s 0.35s both;}
     .celeb-subtitle{font-size:0.7rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;animation:celebFadeUp 0.5s 0.45s both;}
     .celeb-class{font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;animation:celebFadeUp 0.5s 0.5s both;}
     .celeb-count{font-size:0.78rem;color:var(--muted2);animation:celebFadeUp 0.5s 0.55s both;}
-    .celeb-milestone{margin-top:1.25rem;padding:1rem 1.5rem;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06);max-width:380px;animation:celebFadeUp 0.5s 0.65s both;}
+    .celeb-milestone{margin-top:1.25rem;padding:1rem 1.5rem;border:1px solid rgba(var(--accent-rgb),0.3);background:rgba(var(--accent-rgb),0.06);max-width:380px;animation:celebFadeUp 0.5s 0.65s both;}
     .celeb-milestone-num{font-family:var(--font-display);font-size:2rem;color:var(--gold);line-height:1;margin-bottom:0.35rem;}
     .celeb-milestone-msg{font-size:1.7rem;color:var(--muted2);font-style:italic;line-height:1.4;}
     .celeb-progress{position:fixed;bottom:0;left:0;height:4px;width:100%;transform-origin:left;animation:progressShrink 3.5s linear forwards;}
@@ -249,7 +249,7 @@ var r=await sb.from("schools").select("id,name,slug,logo_url,bio,tagline,color,b
       schoolData=r.data;
       var d=r.data;
       document.getElementById('kioskSchoolName').textContent=d.name||'Member Check-In';
-      if(d.color)document.documentElement.style.setProperty('--gold',d.color);
+      if(d.color)document.documentElement.style.setProperty('--gold',d.color);if(d.color){try{var _h=String(d.color).replace('#','');if(_h.length===3){_h=_h[0]+_h[0]+_h[1]+_h[1]+_h[2]+_h[2];}var _n=parseInt(_h,16);if(!isNaN(_n))document.documentElement.style.setProperty('--accent-rgb',((_n>>16)&255)+','+((_n>>8)&255)+','+(_n&255));}catch(_e){}}
       if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
       if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
       if(d.font_family)document.documentElement.style.setProperty('--font-display','\''+d.font_family+'\',serif');
@@ -980,5 +980,21 @@ function fmtTime(t){if(!t)return'';var p=t.split(':');var hr=parseInt(p[0]);var 
 // ─────────────────────────────────────────────────────────────
 init();
 </script>
+
+<style id="nmao-design-pass">
+/* ═══ NMAO DESIGN PASS (polish) — member surfaces. Reversible: delete this block. ═══ */
+:root{ --hair: rgba(255,255,255,0.06); --accent-rgb: 201,168,76; }
+body{ -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.card,.portal-section,.kiosk-current-class,.kiosk-checkin-wrap,.kiosk-family-card,.kiosk-student-card{ box-shadow: 0 1px 2px rgba(0,0,0,0.35); border-color: var(--hair); }
+input:focus,select:focus,textarea:focus{ border-color: var(--gold); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.16); outline: none; }
+button,.btn{ transition: transform .14s ease, box-shadow .14s ease; }
+button:hover:not(:disabled),.btn:hover{ transform: translateY(-1px); }
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+*::-webkit-scrollbar{ width: 10px; height: 10px; }
+*::-webkit-scrollbar-track{ background: transparent; }
+*::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover{ background: rgba(var(--accent-rgb),0.4); background-clip: padding-box; }
+
+</style>
 </body>
 </html>

@@ -22,7 +22,7 @@
 ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(201,168,76,0.08);
+  --gold:#C9A84C;--gold-dk:#8B6914;--gold-bg:rgba(var(--accent-rgb),0.08);
   --black:#0A0A0A;--surface:#141414;--border:#2A2520;
   --white:#F5F0E8;--muted:#7A7060;--muted2:#9A8F80;--green:#5A9A6A;
   --font-display:'Cormorant Garamond',serif;--font-ui:'Lato',sans-serif;
@@ -76,7 +76,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .chip{font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:2px;}
 .chip-active{background:rgba(90,154,106,0.15);border:1px solid rgba(90,154,106,0.4);color:#7DBD7D;}
-.chip-trial{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;}
+.chip-trial{background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:#C9A84C;}
 .chip-paused{background:rgba(90,130,200,0.12);border:1px solid rgba(90,130,200,0.35);color:#7AAAD4;}
 .chip-muted{background:rgba(150,140,125,0.10);border:1px solid rgba(150,140,125,0.30);color:#B0A794;}
 .prog-tag{font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:2px;border:1px solid;font-family:var(--font-ui);letter-spacing:0.08em;}
@@ -309,7 +309,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .type-reserve{color:#7DAAD4;border-color:rgba(125,170,212,0.4);background:rgba(125,170,212,0.1);}
 .family-children-list{display:flex;flex-direction:column;gap:0.35rem;}
 .family-child-row{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:var(--black);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
-.family-child-row:hover{border-color:rgba(201,168,76,0.35);}
+.family-child-row:hover{border-color:rgba(var(--accent-rgb),0.35);}
 .family-child-row.selected{border-color:var(--gold);background:var(--gold-bg);}
 .family-child-row.already-done{opacity:0.6;cursor:default;}
 .family-child-check{width:20px;height:20px;border:2px solid var(--border);border-radius:3px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--black);transition:all 0.15s;}
@@ -335,7 +335,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .instr-class-time{font-family:var(--font-display);font-size:1rem;color:var(--gold);margin-bottom:0.2rem;}
 .instr-class-name{font-size:0.92rem;color:var(--white);margin-bottom:0.2rem;}
 .instr-class-meta{font-size:0.72rem;color:var(--muted);}
-.instr-badge{font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);display:inline-block;margin-bottom:0.5rem;}
+.instr-badge{font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold);display:inline-block;margin-bottom:0.5rem;}
 .staff-app-link{display:flex;align-items:center;gap:0.85rem;padding:1.1rem 1.35rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);margin-top:1.5rem;cursor:pointer;text-decoration:none;transition:border-color 0.2s;}
 .staff-app-link:hover{border-color:var(--gold);}
 
@@ -372,7 +372,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .consent-text{font-size:0.78rem;line-height:1.5;color:var(--muted2);}
 .consent-text strong{color:var(--white);font-weight:600;}
 
-.waiver-esign{font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.5;margin:1rem 0 0.6rem;padding:0.65rem 0.85rem;background:rgba(201,168,76,0.06);border-left:2px solid var(--gold);}
+.waiver-esign{font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.5;margin:1rem 0 0.6rem;padding:0.65rem 0.85rem;background:rgba(var(--accent-rgb),0.06);border-left:2px solid var(--gold);}
 
 .waiver-name-field{margin-bottom:0.5rem;}
 .waiver-name-field label{display:block;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
@@ -403,7 +403,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
    Family portal — per-child sign-waiver pill on hero card,
    shown when child.waiver_signed is false.
 ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
-.child-waiver-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(201,168,76,0.12);border:1px solid var(--gold);color:var(--gold);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.35rem 0.7rem;margin-top:0.5rem;cursor:pointer;transition:all 0.15s;}
+.child-waiver-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(var(--accent-rgb),0.12);border:1px solid var(--gold);color:var(--gold);font-family:var(--font-ui);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.35rem 0.7rem;margin-top:0.5rem;cursor:pointer;transition:all 0.15s;}
 .child-waiver-pill:hover{background:var(--gold);color:var(--black);}
 .child-waiver-pill i{font-size:0.75rem;}
     
@@ -451,7 +451,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .session-date-badge{font-family:var(--font-display);font-size:1.05rem;color:var(--gold);}
 .session-type-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:0.4rem;vertical-align:middle;flex-shrink:0;}
 .session-status-badge{font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:2px;font-family:var(--font-ui);}
-.session-status-scheduled{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);}
+.session-status-scheduled{background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold);}
 .session-status-completed{background:rgba(90,154,106,0.12);border:1px solid rgba(90,154,106,0.35);color:#7DBD7D;}
 .session-status-cancelled{background:rgba(200,80,80,0.1);border:1px solid rgba(200,80,80,0.3);color:#E07070;}
 .session-meta-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem;color:var(--muted2);margin-top:0.35rem;}
@@ -490,7 +490,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .instructor-book-avatar{width:58px;height:58px;border-radius:50%;border:2px solid var(--border);background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden;}
 .instructor-book-name{font-family:var(--font-display);font-size:1.05rem;color:var(--white);margin-bottom:0.25rem;}
 .instructor-book-bio{font-size:0.82rem;color:var(--muted2);line-height:1.5;margin:0.4rem 0 0.6rem;}
-.specialty-tag{font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.5rem;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.3);color:var(--gold);margin-right:0.3rem;margin-bottom:0.3rem;display:inline-block;border-radius:2px;}
+.specialty-tag{font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.5rem;background:var(--gold-bg);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold);margin-right:0.3rem;margin-bottom:0.3rem;display:inline-block;border-radius:2px;}
 .btn-book-now{background:var(--gold);color:var(--black);font-family:'Libre Baskerville',serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;padding:0.65rem 1.4rem;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.45rem;margin-top:0.85rem;transition:opacity 0.2s;}
 .btn-book-now:hover{opacity:0.9;}
 
@@ -504,7 +504,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
 .shop-product-header{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem;}
 .shop-product-name{font-size:0.95rem;color:var(--white);font-weight:600;}
 .shop-product-meta{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.4rem;}
-.shop-cat-tag{font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;background:var(--gold-bg);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:2px;}
+.shop-cat-tag{font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;background:var(--gold-bg);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold);border-radius:2px;}
 .shop-low-stock{font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;background:rgba(224,112,112,0.1);border:1px solid rgba(224,112,112,0.4);color:#E07070;border-radius:2px;}
 .shop-product-desc{font-size:0.78rem;color:var(--muted2);line-height:1.5;}
 .shop-badge{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;background:var(--gold);color:var(--black);font-weight:700;border-radius:2px;}
@@ -775,7 +775,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
        <div class="portal-section" id="startMembershipSection" style="display:none">
           <div class="section-label" id="startMembershipLabel"><i class="fa-solid fa-circle-check"></i> Activate Membership</div>
           <div class="info-card">
-            <div id="startMembershipPlan" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:0.85rem"></div>
+            <div id="startMembershipPlan" style="background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.25);border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:0.85rem"></div>
             <p id="startMembershipDesc" style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Finish getting started by setting up your membership billing.</p>
             <button class="btn-gold" id="startMembershipBtn" onclick="startMembership()"><i class="fa-solid fa-circle-check" style="margin-right:0.5rem"></i>Start my membership</button>
             <p class="form-msg" id="startMembershipMsg"></p>
@@ -877,7 +877,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font-ui);min-h
         .event-card-head{display:flex;align-items:center;gap:0.75rem;padding:1rem;cursor:pointer}
         .event-card-body{padding:0 1rem 1rem}
         .ev-tier{display:flex;justify-content:space-between;align-items:center;gap:0.75rem;border:1px solid var(--border);padding:0.7rem 0.85rem;margin-bottom:0.5rem;cursor:pointer}
-        .ev-tier.selected{border-color:var(--gold);background:rgba(201,168,76,0.08)}
+        .ev-tier.selected{border-color:var(--gold);background:rgba(var(--accent-rgb),0.08)}
         .ev-day{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0;cursor:pointer;color:var(--white);font-size:0.88rem}
         .btn-ev-register{width:100%;background:var(--gold);color:var(--black);border:none;padding:0.85rem;font-family:var(--font-ui);font-size:0.9rem;font-weight:600;cursor:pointer;letter-spacing:0.02em}
         .btn-ev-register:disabled{opacity:0.6;cursor:default}
@@ -1312,7 +1312,7 @@ async function loadSchoolBranding(pre){
     }
     schoolData=d;
     if(d.timezone) SCHOOL_TZ=d.timezone;   // school-local tz for all schedule/day-of-week math
-    if(d.color)document.documentElement.style.setProperty('--gold',d.color);
+    if(d.color)document.documentElement.style.setProperty('--gold',d.color);if(d.color){try{var _h=String(d.color).replace('#','');if(_h.length===3){_h=_h[0]+_h[0]+_h[1]+_h[1]+_h[2]+_h[2];}var _n=parseInt(_h,16);if(!isNaN(_n))document.documentElement.style.setProperty('--accent-rgb',((_n>>16)&255)+','+((_n>>8)&255)+','+(_n&255));}catch(_e){}}
     if(d.bg_color)document.documentElement.style.setProperty('--black',d.bg_color);
     if(d.border_color)document.documentElement.style.setProperty('--border',d.border_color);
     if(d.font_family)document.documentElement.style.setProperty('--font-display',"'"+d.font_family+"',serif");
@@ -4286,5 +4286,21 @@ init();
   </div>
 </div>
 <script src="social-footer.js"></script>
+
+<style id="nmao-design-pass">
+/* ═══ NMAO DESIGN PASS (polish) — member surfaces. Reversible: delete this block. ═══ */
+:root{ --hair: rgba(255,255,255,0.06); --accent-rgb: 201,168,76; }
+body{ -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.card,.portal-section,.kiosk-current-class,.kiosk-checkin-wrap,.kiosk-family-card,.kiosk-student-card{ box-shadow: 0 1px 2px rgba(0,0,0,0.35); border-color: var(--hair); }
+input:focus,select:focus,textarea:focus{ border-color: var(--gold); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.16); outline: none; }
+button,.btn{ transition: transform .14s ease, box-shadow .14s ease; }
+button:hover:not(:disabled),.btn:hover{ transform: translateY(-1px); }
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+*::-webkit-scrollbar{ width: 10px; height: 10px; }
+*::-webkit-scrollbar-track{ background: transparent; }
+*::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover{ background: rgba(var(--accent-rgb),0.4); background-clip: padding-box; }
+
+</style>
 </body>
 </html>

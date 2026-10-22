@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="/pwa/staff-192.png" />
   <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
   <title>NMAO Platform</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0A'/%3E%3Crect x='1.5' y='1.5' width='29' height='29' rx='6' fill='none' stroke='%23C9A84C' stroke-opacity='0.55'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23C9A84C'%3EN%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Lato:wght@300;400;700&family=Inter:wght@300;400;600&family=Oswald:wght@300;400;600&family=Nunito:wght@300;400;700&display=swap" rel="stylesheet" />
@@ -58,7 +59,7 @@
     .btn-sm      { font-size: 0.95rem !important; }
     .days-grid   { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
     .day-btn     { font-size: 0.82rem !important; padding: 0.6rem 0.4rem; background: var(--black); border: 1px solid var(--border); color: var(--muted); font-family: var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s ease; }
-    .day-btn:hover    { border-color: rgba(201,168,76,0.4); color: var(--white); }
+    .day-btn:hover    { border-color: rgba(var(--accent-rgb),0.4); color: var(--white); }
     .day-btn.selected { background: var(--gold); border-color: var(--gold); color: var(--black); font-weight: 600; }
     .chip        { font-size: 0.72rem !important; }
     .chip-paused { background: rgba(90,130,200,0.15); border: 1px solid rgba(90,130,200,0.4); color: #7AAAD4; }
@@ -71,7 +72,7 @@
       border: 2px solid var(--gold); padding: 0.6rem 1.4rem;
       cursor: pointer; transition: all 0.2s; font-weight: 600;
     }
-    .panel-action:hover { background: rgba(201,168,76,0.1); }
+    .panel-action:hover { background: rgba(var(--accent-rgb),0.1); }
     .content-heading .panel-action { margin-left: auto; }
 
 .alert-delete-btn {
@@ -118,7 +119,7 @@
     .alert-card { background: var(--surface); border: 1px solid rgba(224,112,112,0.3); border-left: 3px solid #E07070; padding: 0.85rem 1rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     .alert-name { font-size: 0.92rem; color: var(--white); }
     .alert-meta { font-size: 0.75rem; color: #E07070; }
-    .setup-banner { background: var(--surface); border: 1px solid rgba(201,168,76,0.25); border-left: 3px solid var(--gold); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
+    .setup-banner { background: var(--surface); border: 1px solid rgba(var(--accent-rgb),0.25); border-left: 3px solid var(--gold); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
     .setup-progress-bar  { height: 3px; background: var(--border); border-radius: 2px; margin: 0.5rem 0; overflow: hidden; }
     .setup-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s; }
     .setup-step { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0; font-size: 1.05rem; cursor: pointer; line-height: 1.4; }
@@ -126,7 +127,7 @@
 .setup-step.todo { color: var(--white); }
 .setup-step.locked { color: var(--muted); cursor: default; opacity: 0.55; }
 .setup-step .setup-step-sub { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
-.setup-step.active { display: block; cursor: default; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.35); border-radius: 8px; padding: 0.7rem 0.85rem; margin: 0.45rem 0; color: var(--white); }
+.setup-step.active { display: block; cursor: default; background: rgba(var(--accent-rgb),0.08); border: 1px solid rgba(var(--accent-rgb),0.35); border-radius: 8px; padding: 0.7rem 0.85rem; margin: 0.45rem 0; color: var(--white); }
 .setup-step.active .setup-step-head { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.1rem; }
 .setup-step-why { font-size: 0.9rem; color: var(--muted); margin: 0.4rem 0 0.65rem; }
 .setup-step-cta { background: var(--gold); color: #0A0A0A; border: none; border-radius: 6px; padding: 0.5rem 0.95rem; font-size: 0.92rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -137,19 +138,19 @@
     .cal-day-header  { padding: 0.5rem; text-align: center; font-size: 0.92rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
     .cal-day         { min-height: 120px; padding: 0.5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--black); min-width: 0; overflow: hidden; }
     .cal-day:nth-child(7n) { border-right: none; }
-    .cal-day.today   { background: rgba(201,168,76,0.04); }
+    .cal-day.today   { background: rgba(var(--accent-rgb),0.04); }
     .cal-day-num     { font-size: 1.05rem; color: var(--muted); margin-bottom: 0.4rem; font-family: var(--font-display); }
     .cal-day.today .cal-day-num { color: var(--gold); font-weight: 700; }
     .cal-event       { font-size: 0.92rem; padding: 0.28rem 0.4rem; border-radius: 2px; margin-bottom: 0.28rem; cursor: pointer; white-space: normal; overflow: hidden; line-height: 1.25; }
-    .cal-event.class-event    { background: rgba(201,168,76,0.15); color: var(--gold); border-left: 2px solid var(--gold); }
+    .cal-event.class-event    { background: rgba(var(--accent-rgb),0.15); color: var(--gold); border-left: 2px solid var(--gold); }
     .cal-event.session-event  { background: rgba(130,80,220,0.15); color: #B090E8; border-left: 2px solid #9060D0; }
     .cal-event.birthday-event { background: rgba(90,154,106,0.15); color: #7DBD7D; border-left: 2px solid #5A9A6A; }
     .month-grid-outer   { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; border: 1px solid var(--border); }
     .month-day-header   { padding: 0.5rem; text-align: center; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
     .month-day          { min-height: 80px; padding: 0.4rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--black); cursor: pointer; transition: background 0.15s; }
     .month-day:nth-child(7n) { border-right: none; }
-    .month-day:hover    { background: rgba(201,168,76,0.04); }
-    .month-day.today    { background: rgba(201,168,76,0.06); }
+    .month-day:hover    { background: rgba(var(--accent-rgb),0.04); }
+    .month-day.today    { background: rgba(var(--accent-rgb),0.06); }
     .month-day.today .month-day-num { color: var(--gold); font-weight: 700; }
     .month-day.other-month { opacity: 0.35; }
     .month-day-num  { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.3rem; font-family: var(--font-display); }
@@ -213,12 +214,12 @@
     .instr-compare-row:last-child { border-bottom: none; }
     .instr-compare-name  { font-size: 0.88rem; color: var(--white); flex: 1; min-width: 0; }
     .instr-compare-bar-wrap { flex: 2; margin: 0 1rem; }
-    .instr-compare-bar   { height: 5px; background: rgba(201,168,76,0.15); border-radius: 3px; overflow: hidden; }
+    .instr-compare-bar   { height: 5px; background: rgba(var(--accent-rgb),0.15); border-radius: 3px; overflow: hidden; }
     .instr-compare-fill  { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.6s ease; }
     .instr-compare-val   { font-size: 0.88rem; color: var(--gold); min-width: 65px; text-align: right; font-family: var(--font-display); }
     .report-type-grid    { display: grid; grid-template-columns: repeat(auto-fill,minmax(195px,1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
     .report-type-card    { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid transparent; padding: 1.25rem; cursor: pointer; transition: all 0.18s; }
-    .report-type-card:hover { border-color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.04); }
+    .report-type-card:hover { border-color: var(--gold); border-left-color: var(--gold); background: rgba(var(--accent-rgb),0.04); }
     .report-type-icon    { font-size: 1.4rem; color: var(--gold); margin-bottom: 0.5rem; line-height: 1; }
     .report-type-name    { font-family: var(--font-display); font-size: 0.95rem; color: var(--white); margin-bottom: 0.2rem; }
     .report-type-desc    { font-size: 0.72rem; color: var(--muted); font-style: italic; line-height: 1.4; }
@@ -305,7 +306,7 @@
 
     /* §CSS-POS */
     .pos-quick-item { background: var(--surface); border: 2px solid var(--border); padding: 0.85rem; cursor: pointer; transition: all 0.18s; text-align: center; position: relative; }
-    .pos-quick-item:hover { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .pos-quick-item:hover { border-color: var(--gold); background: rgba(var(--accent-rgb),0.06); }
     .pos-quick-name  { font-size: 0.82rem; color: var(--white); margin-bottom: 0.2rem; font-family: var(--font-display); }
     .pos-quick-price { font-size: 0.78rem; color: var(--gold); }
     .pos-cart-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; background: var(--black); border: 1px solid var(--border); border-left: 2px solid var(--gold); margin-bottom: 0.35rem; }
@@ -324,14 +325,14 @@
     /* Toggle knob drawn as a background radial-gradient on the input itself (reliable on all
        browsers, unlike ::after on a checkbox). Off = grey knob left; on = gold knob right. */
     .check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; border: none; border-radius: 24px; background-color: #333; background-image: radial-gradient(circle 9px at 12px 50%, #888 96%, rgba(0,0,0,0) 100%); background-repeat: no-repeat; cursor: pointer; flex-shrink: 0; transition: background-color 0.25s, background-position 0.25s; }
-    .check-item input[type="checkbox"]:checked { background-color: rgba(201,168,76,0.3); background-color: color-mix(in srgb, var(--gold) 30%, transparent); background-image: radial-gradient(circle 9px at 32px 50%, var(--gold) 96%, rgba(0,0,0,0) 100%); }
+    .check-item input[type="checkbox"]:checked { background-color: rgba(var(--accent-rgb),0.3); background-color: color-mix(in srgb, var(--gold) 30%, transparent); background-image: radial-gradient(circle 9px at 32px 50%, var(--gold) 96%, rgba(0,0,0,0) 100%); }
     .check-item-label { font-size: 0.88rem; color: var(--muted2); font-family: var(--font-ui); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .toggle-slider { position: absolute; inset: 0; background: #333; border-radius: 24px; cursor: pointer; transition: 0.3s; }
     .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #888; border-radius: 50%; transition: 0.3s; }
-    .toggle-switch input:checked + .toggle-slider { background: rgba(201,168,76,0.3); background: color-mix(in srgb, var(--gold) 30%, transparent); }
+    .toggle-switch input:checked + .toggle-slider { background: rgba(var(--accent-rgb),0.3); background: color-mix(in srgb, var(--gold) 30%, transparent); }
     .toggle-switch input:checked + .toggle-slider:before { background: var(--gold); transform: translateX(20px); }
     .auto-row        { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
     .auto-row-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
@@ -340,19 +341,19 @@
     .auto-body  { display: none; padding-top: 0.75rem; margin-top: 0.75rem; border-top: 1px solid var(--border); }
     .tag-chip   { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 12px; font-family: var(--font-ui); letter-spacing: 0.06em; margin: 0.15rem; }
     .tag-chip-remove { background: none; border: none; cursor: pointer; font-size: 0.65rem; color: inherit; opacity: 0.7; padding: 0 0.1rem; }
-    .smart-tag  { display: inline-block; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 2px; cursor: pointer; margin: 0.2rem; }
+    .smart-tag  { display: inline-block; background: rgba(var(--accent-rgb),0.1); border: 1px solid rgba(var(--accent-rgb),0.3); color: var(--gold); font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 2px; cursor: pointer; margin: 0.2rem; }
     .alert-type-btn { padding: 0.6rem 1rem; background: var(--surface); border: 2px solid var(--border); color: var(--muted); font-size: 0.78rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
-    .alert-type-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+    .alert-type-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(var(--accent-rgb),0.06); }
 
     /* §CSS-BELT */
     .belt-level-card   { background: var(--surface); border: 1px solid var(--border); margin-bottom: 0.5rem; overflow: hidden; }
     .belt-level-header { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem; cursor: pointer; }
-    .belt-level-header:hover { background: rgba(201,168,76,0.04); }
+    .belt-level-header:hover { background: rgba(var(--accent-rgb),0.04); }
     .video-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem; background: var(--black); border: 1px solid var(--border); margin-bottom: 0.4rem; border-left: 2px solid var(--gold); }
     .eligible-badge { display: inline-block; background: rgba(90,154,106,0.15); border: 1px solid rgba(90,154,106,0.4); color: #7DBD7D; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; margin-top: 0.3rem; }
     .anim-option { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem 0.5rem; background: var(--surface); border: 2px solid transparent; cursor: pointer; min-width: 76px; opacity: 0.55; transition: all 0.15s ease; }
-    .anim-option:hover { opacity: 0.85; border-color: rgba(201,168,76,0.3); }
-    .anim-option.selected { border-color: var(--gold); background: rgba(201,168,76,0.18); opacity: 1; box-shadow: 0 0 0 1px var(--gold) inset, 0 4px 12px rgba(201,168,76,0.2); }
+    .anim-option:hover { opacity: 0.85; border-color: rgba(var(--accent-rgb),0.3); }
+    .anim-option.selected { border-color: var(--gold); background: rgba(var(--accent-rgb),0.18); opacity: 1; box-shadow: 0 0 0 1px var(--gold) inset, 0 4px 12px rgba(var(--accent-rgb),0.2); }
     .anim-option.selected .anim-label { color: var(--gold); font-weight: 600; }
     .anim-icon  { font-size: 1.4rem; line-height: 1; }
     .anim-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
@@ -407,7 +408,7 @@
     .quick-add-menu.open { display: block; }
     .quick-add-item { padding: 0.9rem 1.25rem; font-size: 0.85rem; color: var(--white); cursor: pointer; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
     .quick-add-item:last-child { border-bottom: none; }
-    .quick-add-item:hover { background: rgba(201,168,76,0.08); color: var(--gold); }
+    .quick-add-item:hover { background: rgba(var(--accent-rgb),0.08); color: var(--gold); }
     .class-field-config      { background: var(--black); border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.75rem; }
     .class-field-header      { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
     .class-field-option-row  { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
@@ -416,7 +417,7 @@
     .discount-card { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     .plan-card  { background: var(--surface); border: 2px solid var(--border); padding: 1.5rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.2s; position: relative; }
     .plan-card:hover   { border-color: var(--gold); }
-    .plan-card.current { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .plan-card.current { border-color: var(--gold); background: rgba(var(--accent-rgb),0.06); }
     .plan-name  { font-family: var(--font-display); font-size: 1.3rem; color: var(--white); margin-bottom: 0.25rem; }
     .plan-price { font-size: 1.8rem; color: var(--gold); font-family: var(--font-display); line-height: 1; margin-bottom: 0.5rem; }
     .plan-price span { font-size: 0.85rem; color: var(--muted); }
@@ -450,8 +451,8 @@
     /* §CSS-SMS */
     .sms-inbox-row  { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; background: var(--black); border: 1px solid var(--border); border-left: 2px solid var(--border); margin-bottom: 0.35rem; cursor: pointer; transition: all 0.15s; }
     .sms-inbox-row:hover  { border-left-color: var(--gold); }
-    .sms-inbox-row.unread { border-left-color: var(--gold); background: rgba(201,168,76,0.03); }
-    .sms-inbox-row.active { border-left-color: var(--gold); background: rgba(201,168,76,0.10); }
+    .sms-inbox-row.unread { border-left-color: var(--gold); background: rgba(var(--accent-rgb),0.03); }
+    .sms-inbox-row.active { border-left-color: var(--gold); background: rgba(var(--accent-rgb),0.10); }
     .sms-inbox-name    { font-size: 0.88rem; color: var(--white); margin-bottom: 0.15rem; font-weight: 600; }
     .sms-inbox-preview { font-size: 0.75rem; color: var(--muted); }
     .sms-inbox-time    { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; margin-left: 1rem; }
@@ -463,7 +464,7 @@
     .sms-thread-input  { padding: 0.85rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; flex-shrink: 0; }
     .sms-bubble { max-width: 80%; padding: 0.7rem 1rem; font-size: 0.85rem; color: var(--white); line-height: 1.5; }
     .sms-bubble.inbound  { align-self: flex-start; background: var(--surf2,#1A1A1A); border: 1px solid var(--border); border-radius: 2px 10px 10px 2px; }
-    .sms-bubble.outbound { align-self: flex-end; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); border-radius: 10px 2px 2px 10px; }
+    .sms-bubble.outbound { align-self: flex-end; background: rgba(var(--accent-rgb),0.12); border: 1px solid rgba(var(--accent-rgb),0.3); border-radius: 10px 2px 2px 10px; }
     .sms-bubble-meta   { font-size: 0.62rem; color: var(--muted); margin-top: 0.25rem; }
 
     /* §CSS-QUILL */
@@ -505,6 +506,25 @@
   </style>
 </head>
 <body class="dashboard">
+<!-- §BOOT-SPLASH (staging) — branded first-load screen; self-contained so it styles from first paint. -->
+<div id="nmaoBootSplash">
+  <div class="bs-word">NMAO</div>
+  <div class="bs-sub">National Martial Arts Organization</div>
+  <div class="bs-bar"><span></span></div>
+</div>
+<style>
+#nmaoBootSplash{position:fixed;inset:0;z-index:99999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;transition:opacity .55s ease,visibility .55s ease;}
+#nmaoBootSplash.bs-hide{opacity:0;visibility:hidden;pointer-events:none;}
+#nmaoBootSplash .bs-word{font-family:'Libre Baskerville','Cormorant Garamond',Georgia,serif;font-size:3.1rem;letter-spacing:0.2em;color:#C9A84C;line-height:1;}
+#nmaoBootSplash .bs-sub{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:0.68rem;letter-spacing:0.28em;text-transform:uppercase;color:#8A8372;}
+#nmaoBootSplash .bs-bar{width:150px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;position:relative;margin-top:0.4rem;}
+#nmaoBootSplash .bs-bar span{position:absolute;top:0;bottom:0;width:40%;background:#C9A84C;border-radius:2px;animation:bsSlide 1.15s ease-in-out infinite;}
+@keyframes bsSlide{0%{left:-45%;}100%{left:100%;}}
+</style>
+<script>
+window.hideBootSplash=function(){var s=document.getElementById('nmaoBootSplash');if(!s||s.classList.contains('bs-hide'))return;s.classList.add('bs-hide');setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},700);};
+setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000); // failsafe: never stay stuck
+</script>
 
 <!-- ═══════════════════ §LOADING ═══════════════════ -->
 <div id="loadingScreen">
@@ -727,7 +747,7 @@
       </div>
       <!-- §TZ-CONFIRM — one-time confirm so the schedule day is never silently the wrong timezone -->
       <div id="timezoneConfirmBanner" style="display:none;margin-bottom:1.5rem">
-        <div style="background:var(--surface);border:1px solid rgba(201,168,76,0.35);border-left:4px solid var(--gold);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="background:var(--surface);border:1px solid rgba(var(--accent-rgb),0.35);border-left:4px solid var(--gold);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:0.85rem;min-width:0">
             <i class="fa-solid fa-clock" style="color:var(--gold)"></i>
             <div style="min-width:0">
@@ -781,7 +801,7 @@
         <div class="setup-progress-bar"><div class="setup-progress-fill" id="setupProgressFill" style="width:0%"></div></div>
         <div id="setupStepsList"></div>
       </div>
-      <div class="home-stats" id="homeStats"></div>
+      <div class="home-stats" id="homeStats"><div class="home-stat-card"><span class="sk sk-num"></span><span class="sk sk-label"></span></div><div class="home-stat-card"><span class="sk sk-num"></span><span class="sk sk-label"></span></div><div class="home-stat-card"><span class="sk sk-num"></span><span class="sk sk-label"></span></div><div class="home-stat-card"><span class="sk sk-num"></span><span class="sk sk-label"></span></div></div>
 
       <div class="content-heading"><h2>Revenue</h2><button class="help-hint-inline" onclick="openHelpPopover('home.revenue',this)" title="Help">?</button><div class="rule-h"></div></div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:0.75rem">
@@ -870,7 +890,7 @@
             <div class="field"><label>End date <span style="color:var(--muted);font-weight:normal">(optional)</span></label><input type="date" id="closureEnd" onchange="closureImpactPreview()"/></div>
           </div>
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.84rem;color:var(--white);cursor:pointer;margin-bottom:0.85rem"><input type="checkbox" id="closureRecurring"/> Repeat every year on these dates (annual holiday)</label>
-          <div id="closureImpact" style="font-size:0.82rem;color:var(--gold);background:rgba(201,168,76,0.06);border:1px solid var(--border);padding:0.6rem 0.8rem;margin-bottom:0.9rem;display:none"></div>
+          <div id="closureImpact" style="font-size:0.82rem;color:var(--gold);background:rgba(var(--accent-rgb),0.06);border:1px solid var(--border);padding:0.6rem 0.8rem;margin-bottom:0.9rem;display:none"></div>
           <div style="border-top:1px solid var(--border);padding-top:0.85rem;margin-bottom:0.6rem">
             <label style="font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.5rem">Notify members</label>
             <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--white);margin-bottom:0.35rem;cursor:pointer"><input type="checkbox" id="closureNotifyNow" checked/> Send a closure notice now</label>
@@ -1164,6 +1184,12 @@
     </div>
 
     <!-- §PAYMENTS-EXPORT — QuickBooks / Excel CSV of payments for a date range -->
+    <div class="modal-overlay" id="bcRecipientModal">
+      <div class="modal" style="width:560px;max-width:95vw">
+        <div class="modal-header"><span class="modal-title">Who will receive this broadcast</span><button class="modal-close" onclick="document.getElementById('bcRecipientModal').classList.remove('active')"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body" id="bcRecipientBody"></div>
+      </div>
+    </div>
     <div class="modal-overlay" id="paymentsExportModal">
       <div class="modal" style="width:min(94vw,480px)">
         <div class="modal-header"><span class="modal-title">Export payments (CSV)</span><button class="help-hint-inline" onclick="openHelpPopover('payments.export',this)" title="Help">?</button><button class="modal-close" onclick="closePaymentsExport()"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1201,11 +1227,13 @@
       <div id="commTabBroadcast">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
           <div class="panel"><div class="panel-header"><span class="panel-title">Send Broadcast</span></div><div class="panel-body"><div style="display:flex;flex-direction:column;gap:1rem">
-          <div id="commRecipientBanner" style="display:none;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-left:3px solid var(--gold);padding:0.75rem 1rem;font-size:0.82rem;color:var(--white)"><i class="fa-solid fa-users" style="color:var(--gold);margin-right:0.5rem"></i><span id="commRecipientNames"></span><button onclick="clearReportSelection()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-left:0.75rem"><i class="fa-solid fa-xmark"></i> Clear</button></div>
+          <div id="commRecipientBanner" style="display:none;background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.3);border-left:3px solid var(--gold);padding:0.75rem 1rem;font-size:0.82rem;color:var(--white)"><i class="fa-solid fa-users" style="color:var(--gold);margin-right:0.5rem"></i><span id="commRecipientNames"></span><button onclick="clearReportSelection()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-left:0.75rem"><i class="fa-solid fa-xmark"></i> Clear</button></div>
             <div class="field"><label>Subject <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_subject',this)" title="Help">?</button></label><input type="text" id="commSubject" placeholder="Message subject..." /></div>
             <div class="field"><label>Audience <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_audience',this)" title="Help">?</button></label><select id="commAudience" onchange="toggleTagAudience()"><option value="all">All Members</option><option value="active">Active Only</option><option value="paused">Paused</option><option value="expired">Expired</option><option value="trial">Trial</option><option value="tag">By Tag</option></select></div>
-            <div class="field" id="commTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_tag',this)" title="Help">?</button></label><select id="commTag"><option value="">-- Select Tag --</option></select></div>
+            <div class="field" id="commTagField" style="display:none"><label>Select Tag <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_tag',this)" title="Help">?</button></label><select id="commTag" onchange="updateBroadcastSummary()"><option value="">-- Select Tag --</option></select></div>
+            <div class="field"><label>Send via <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_channel',this)" title="Help">?</button></label><div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem"><button type="button" class="alert-type-btn selected" id="bc-channel-email" onclick="toggleBroadcastChannel('email')"><i class="fa-solid fa-envelope"></i> Email</button><button type="button" class="alert-type-btn" id="bc-channel-sms" onclick="toggleBroadcastChannel('sms')"><i class="fa-solid fa-comment-sms"></i> Text</button></div></div>
             <div class="field"><label>Message <button class="help-hint-inline" onclick="event.stopPropagation();openHelpPopover('comm.bc_message',this)" title="Help">?</button></label><div id="commBodyEditor" style="margin-top:0.25rem"></div></div>
+            <div id="bcSummaryWrap" style="background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.25);border-radius:6px;padding:0.6rem 0.8rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap"><span id="bcSummaryText" style="font-size:0.82rem;color:var(--white)"><i class="fa-solid fa-paper-plane" style="color:var(--gold);margin-right:0.4rem"></i>Choose an audience to see who this reaches.</span><button type="button" class="btn-sm" id="bcPreviewBtn" onclick="openBroadcastRecipientPreview()" style="display:none"><i class="fa-solid fa-list"></i> View recipients</button></div>
             <div class="field"><label>Flyer <span style="color:var(--muted);font-weight:normal">(optional — image; embeds in the email and sends as a tappable link in the text)</span></label><div style="display:flex;gap:1rem;align-items:center"><div id="bcFlyerPreview" onclick="document.getElementById('bcFlyerInput').click()" style="width:70px;height:88px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex-shrink:0"><i class="fa-solid fa-image"></i></div><div style="display:flex;flex-direction:column;gap:0.4rem"><button type="button" class="btn-sm" onclick="document.getElementById('bcFlyerInput').click()"><i class="fa-solid fa-upload"></i> Upload Flyer</button><button type="button" class="btn-sm" id="bcFlyerRemoveBtn" onclick="removeBroadcastFlyer()" style="display:none">Remove</button></div><input type="file" id="bcFlyerInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBroadcastFlyerUpload(event)" /></div></div><button class="panel-action" id="commSendBtn" style="width:fit-content" onclick="sendCommunication()"><i class="fa-solid fa-paper-plane"></i> Send</button>
             <p class="form-msg" id="commMsg"></p>
           </div></div></div>
@@ -1635,7 +1663,7 @@
       <div class="content-heading"><h2>Integrations</h2><div class="rule-h"></div></div>
       <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">Optional connections that extend what your school can do &mdash; your platform works exactly the same either way.</p>
       <!-- §TOURNAMENTS — optional bridge to the NMAO Tournament app (convenience, not a discount) -->
-      <div id="tournamentCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
+      <div id="tournamentCard" style="display:none;background:var(--surface);border:1px solid rgba(var(--accent-rgb),0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
       <div class="modal-overlay" id="tournamentInviteModal">
         <div class="modal" style="width:640px;max-width:96vw">
           <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-trophy" style="margin-right:0.5rem;color:var(--gold)"></i>Tournament invites</span><button class="modal-close" onclick="closeTournamentInvites()"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1648,7 +1676,7 @@
     <div class="page" id="page-growth">
       <div class="content-heading"><h2>Growth Engine</h2><div class="rule-h"></div></div>
       <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem">NMAO promotes your school to bring in new students &mdash; and this is where you see exactly what it produces.</p>
-      <div id="growthCard" style="display:none;background:var(--surface);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
+      <div id="growthCard" style="display:none;background:var(--surface);border:1px solid rgba(var(--accent-rgb),0.25);border-left:3px solid var(--gold);padding:1.1rem 1.25rem;margin-bottom:1.5rem"></div>
       <div class="modal-overlay" id="growthJoinModal">
         <div class="modal" style="width:600px;max-width:96vw">
           <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-bullhorn" style="margin-right:0.5rem;color:var(--gold)"></i>Join the Growth Engine</span><button class="modal-close" onclick="closeGrowthJoin()"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1987,7 +2015,7 @@
       <p style="font-size:1.05rem;color:var(--muted2);line-height:1.6;margin-bottom:1.5rem">
         Thank you for joining the National Martial Arts Organization. Your platform is set up and waiting. Let's walk through what's next.
       </p>
-      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.5rem">
+      <div style="background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.2);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.5rem">
         <div style="font-size:0.85rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:0.6rem">First Steps</div>
         <ul style="list-style:none;padding:0;margin:0;font-size:1rem;color:var(--white);line-height:1.9">
           <li><i class="fa-regular fa-circle" style="color:var(--gold);margin-right:0.5rem;font-size:0.75rem"></i>Add your belt ranks — your curriculum starts here</li>
@@ -2154,7 +2182,7 @@
         <label>To (student or lead)</label>
         <input type="text" id="newSmsSearch" oninput="searchNewSmsRecipient()" placeholder="Search a student or lead by name or phone..." autocomplete="off" style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.88rem;padding:0.6rem 0.85rem;outline:none" />
         <div id="newSmsResults" style="display:none;background:var(--surface);border:1px solid var(--border);max-height:160px;overflow-y:auto;margin-top:0.25rem;-webkit-overflow-scrolling:touch"></div>
-        <div id="newSmsSelected" style="display:none;align-items:center;gap:0.4rem;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);padding:0.5rem 0.75rem;margin-top:0.4rem"></div>
+        <div id="newSmsSelected" style="display:none;align-items:center;gap:0.4rem;background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.3);padding:0.5rem 0.75rem;margin-top:0.4rem"></div>
       </div>
       <div style="display:flex;align-items:center;gap:0.6rem;color:var(--muted);font-size:0.72rem"><div style="flex:1;height:1px;background:var(--border)"></div>OR<div style="flex:1;height:1px;background:var(--border)"></div></div>
       <div class="field">
@@ -2242,7 +2270,7 @@
       <button onclick="closeStudentProfile()" style="position:absolute;top:0.8rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
       <!-- identity row: avatar + name + status chips, all horizontal -->
       <div style="display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap;padding-right:2rem">
-        <div style="position:relative;flex-shrink:0"><div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:52px;height:52px;border-radius:50%;background:var(--gold-bg,rgba(201,168,76,0.08));border:2px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.1rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div></div>
+        <div style="position:relative;flex-shrink:0"><div id="profileAvatar" onclick="document.getElementById('photoUploadInput').click()" style="width:52px;height:52px;border-radius:50%;background:var(--gold-bg,rgba(var(--accent-rgb),0.08));border:2px solid #444;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.1rem;color:var(--gold);cursor:pointer;overflow:hidden"><span id="profileInitials">??</span></div></div>
         <div id="profileName" style="font-family:var(--font-display);font-size:1.35rem;color:var(--white);white-space:nowrap">Loading...</div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span id="profileStatusBadge" class="chip chip-active">active</span><span id="profileProgramBadge" class="class-tag">--</span><span id="profileBeltBadge" style="display:none;font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:2px;font-family:var(--font-ui);letter-spacing:0.1em;text-transform:uppercase"></span></div>
         <div id="profileTagsRow" style="display:flex;flex-wrap:wrap;gap:0.2rem"></div>
@@ -2714,7 +2742,7 @@
     <div class="modal-body">
       <input type="hidden" id="memEditId" value="" />
       <!-- §DEFAULT-BILLING-DAY — one-time onboarding ask, shown on the first plan a new school creates -->
-      <div id="memDefaultAsk" style="display:none;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.25rem;border-radius:6px">
+      <div id="memDefaultAsk" style="display:none;background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.25);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.25rem;border-radius:6px">
         <div style="font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.4rem">Set your billing day</div>
         <div style="font-size:0.95rem;color:var(--white);line-height:1.55;margin-bottom:0.75rem">What day do most of your members bill? We'll use this for new plans so mid-month joiners don't each land on a different day — you can still change it per plan.</div>
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">
@@ -3037,7 +3065,7 @@
   <div class="modal" style="width:820px;max-width:97vw;padding:0">
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:1.5rem;display:flex;align-items:center;gap:1.5rem;position:relative">
       <button onclick="closeInstructorProfile()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-      <div id="instrProfileAvatar" style="width:64px;height:64px;border-radius:50%;background:rgba(201,168,76,0.1);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden"></div>
+      <div id="instrProfileAvatar" style="width:64px;height:64px;border-radius:50%;background:rgba(var(--accent-rgb),0.1);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--gold);flex-shrink:0;overflow:hidden"></div>
       <div style="flex:1">
         <div id="instrProfileName" style="font-family:var(--font-display);font-size:1.4rem;color:var(--white);margin-bottom:0.2rem"></div>
         <div id="instrProfileSpecialties" style="font-size:0.78rem;color:var(--muted)"></div>
@@ -3736,7 +3764,7 @@
         <button class="btn-sm" onclick="copyPOSPaymentLink()" style="width:100%;margin-top:0.65rem"><i class="fa-solid fa-copy" style="margin-right:0.5rem"></i>Copy Link</button>
         <input type="text" id="posPaymentLinkUrl" readonly style="width:100%;background:var(--black);border:1px solid var(--border);color:var(--muted);font-size:0.7rem;padding:0.5rem;margin-top:0.4rem;font-family:monospace" />
       </div>
-      <div style="margin-top:1rem;padding:0.65rem 0.85rem;background:rgba(201,168,76,0.08);border-left:3px solid var(--gold);font-size:0.78rem;color:var(--muted);line-height:1.4">
+      <div style="margin-top:1rem;padding:0.65rem 0.85rem;background:rgba(var(--accent-rgb),0.08);border-left:3px solid var(--gold);font-size:0.78rem;color:var(--muted);line-height:1.4">
         <i class="fa-solid fa-circle-info" style="color:var(--gold);margin-right:0.3rem"></i>Payment recorded automatically when customer completes checkout.
       </div>
       <p class="form-msg" id="posPaymentLinkMsg" style="margin-top:0.75rem;text-align:center"></p>
@@ -4014,7 +4042,7 @@ function showSessionError(user, reason, school){
     canRetry = true;
     title = 'Finish setting up your school';
     body = 'Your account <strong style="color:var(--gold)">'+email+'</strong> is ready, but <strong style="color:var(--gold)">'+_esc(pendingName)+'</strong> didn\'t finish being created — this can happen if the last step was interrupted. Click below to finish now; nothing was lost and you won\'t be charged.';
-    primaryBtn = '<button id="retryCreateBtn" onclick="retryCreateSchool()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:#C9A84C;color:#080808;border:none;cursor:pointer;font-weight:700">Create My School</button>';
+    primaryBtn = '<button id="retryCreateBtn" onclick="retryCreateSchool()" style="font-family:Lato,sans-serif;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;padding:0.85rem 2rem;background:var(--gold);color:#080808;border:none;cursor:pointer;font-weight:700">Create My School</button>';
   } else {
     title = 'Account Not Linked to a School';
     body = 'You are signed in as <strong style="color:var(--gold)">'+email+'</strong>, but this account is not the owner of any school yet. If you just signed up, sign out and sign back in to finish setup. If you own a school, sign in with the email you used to create it.';
@@ -4241,6 +4269,7 @@ async function init() {
     buildSetupChecklist();
     buildInstructorComparison();
   loadRevenue();
+    if(window.hideBootSplash) window.hideBootSplash();   // §BOOT-SPLASH — home view is rendered; fade it out
     await handleStripeOAuthReturn();
     await loadStripeConnectStatus();
     await loadSmsUsageWidget();
@@ -4272,15 +4301,15 @@ function injectTrialGateStyles(){
     'color:#0A0A0A;font-family:Lato,sans-serif;font-size:0.85rem;font-weight:700;padding:0.65rem 1rem;display:flex;'+
     'align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;text-align:center;box-shadow:0 -2px 12px rgba(0,0,0,0.35);}'+
     '.tg-banner.warn{background:linear-gradient(90deg,#d98a3a,#c0703a);}'+
-    '.tg-banner a{background:#0A0A0A;color:#C9A84C;text-decoration:none;padding:0.4rem 1.1rem;font-weight:700;'+
+    '.tg-banner a{background:#0A0A0A;color:var(--gold);text-decoration:none;padding:0.4rem 1.1rem;font-weight:700;'+
     'letter-spacing:0.05em;text-transform:uppercase;font-size:0.74rem;white-space:nowrap;}'+
     '.tg-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10001;background:rgba(8,8,8,0.93);'+
     'display:flex;align-items:center;justify-content:center;padding:1.5rem;}'+
-    '.tg-card{max-width:440px;width:100%;background:#141414;border:1px solid rgba(201,168,76,0.45);'+
-    'border-top:3px solid #C9A84C;padding:2.5rem 2rem;text-align:center;font-family:Lato,sans-serif;}'+
+    '.tg-card{max-width:440px;width:100%;background:#141414;border:1px solid rgba(var(--accent-rgb),0.45);'+
+    'border-top:3px solid var(--gold);padding:2.5rem 2rem;text-align:center;font-family:Lato,sans-serif;}'+
     '.tg-card h2{font-family:"Cormorant Garamond",Georgia,serif;color:#F5F0E8;font-size:1.8rem;margin:0 0 0.75rem;}'+
     '.tg-card p{color:#9A8F80;font-size:0.92rem;line-height:1.6;margin:0 0 1.5rem;}'+
-    '.tg-sub{display:inline-block;background:#C9A84C;color:#0A0A0A;text-decoration:none;font-weight:700;'+
+    '.tg-sub{display:inline-block;background:var(--gold);color:#0A0A0A;text-decoration:none;font-weight:700;'+
     'letter-spacing:0.1em;text-transform:uppercase;font-size:0.8rem;padding:0.9rem 2rem;margin-bottom:1rem;}'+
     '.tg-later{display:block;background:none;border:none;color:#7A7060;font-size:0.78rem;cursor:pointer;'+
     'text-decoration:underline;margin:0.5rem auto 0;}';
@@ -4384,6 +4413,7 @@ async function loadSchool() {
     if (r.error || !r.data) return;
     var d = r.data;
     window.schoolData = d;
+    try{ document.title = (d.name || 'NMAO') + ' · ' + ({home:'Dashboard'}[window.__currentPage] || 'Dashboard'); }catch(_e){}  // §TAB-TITLE base (home is default-active)
     renderTrialGate(d);
     applyBillingGate(d);
     if (d.welcomed === false) {
@@ -4403,7 +4433,7 @@ async function loadSchool() {
     if(document.getElementById('bookingPageLinkPreview')){var bsg=(d.slug)||(window.schoolData&&window.schoolData.slug)||'';document.getElementById('bookingPageLinkPreview').textContent=bsg?('app.nmao.us/classes.html?s='+bsg):'Set your link name above first, then save.';}
     document.getElementById('settingState').value = d.state || '';
     var col=d.color||'#C9A84C', bgCol=d.bg_color||'#0A0A0A', borderCol=d.border_color||'#2A2520';
-    var surfaceCol=d.surface_color||'#141414', fontCol=d.font_color||'#F5F0E8', font=d.font_family||'Cormorant Garamond';
+    var surfaceCol=d.surface_color||'#141414', fontCol=d.font_color||'#F5F0E8', font=d.font_family||'Libre Baskerville';
     selectedFont = font;
     document.getElementById('settingColor').value          = col;     document.getElementById('settingColorHex').value          = col;
     document.getElementById('settingBgColor').value        = bgCol;   document.getElementById('settingBgColorHex').value        = bgCol;
@@ -4522,6 +4552,10 @@ function applyBrandColors(accent,bg,border,font,surface,fontColor) {
   if (surface)   document.documentElement.style.setProperty('--surface',       surface);
   if (font)      document.documentElement.style.setProperty('--font-display',  "'"+font+"',serif");
   if (fontColor) document.documentElement.style.setProperty('--white',         fontColor);
+  // §ACCENT-RGB — expose the accent as r,g,b so tints (hovers/focus/glows) follow the school's brand
+  // color instead of a hardcoded gold. Powers rgba(var(--accent-rgb), a) in the design layer.
+  try { var _h=String(accent||'').replace('#',''); if(_h.length===3){_h=_h[0]+_h[0]+_h[1]+_h[1]+_h[2]+_h[2];} var _n=parseInt(_h,16);
+    if(!isNaN(_n)) document.documentElement.style.setProperty('--accent-rgb', ((_n>>16)&255)+','+((_n>>8)&255)+','+(_n&255)); } catch(_e){}
 }
 function syncBgColor()         { var v=document.getElementById('settingBgColor').value;      document.getElementById('settingBgColorHex').value=v;      document.documentElement.style.setProperty('--black',v); }
 function syncBgColorText()     { var h=document.getElementById('settingBgColorHex').value;   if(/^#[0-9A-Fa-f]{6}$/.test(h)){ document.getElementById('settingBgColor').value=h;      document.documentElement.style.setProperty('--black',h); } }
@@ -5766,6 +5800,8 @@ function navigate(page,el){
   if(el){el.classList.add('active');}else{var navEl=document.getElementById('nav-'+page);if(navEl)navEl.classList.add('active');}
   var titles={home:'Dashboard',schedule:"Today's Schedule",classes:'All Classes',sessions:'Sessions',programs:'Programs',belts:'Belt Systems',belttests:'Belt Tests',memberships:'Memberships',members:'Members',leads:'Leads',families:'Families',instructors:'Instructors',retail:'Retail',payments:'Payments',communications:'Communications',analytics:'Analytics',settings:'Settings',billing:'Billing',shareembed:'Share & Embed',integrations:'Integrations',growth:'Growth Engine'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
+  // §TAB-TITLE — browser tab reads "School · Section"
+  try{ var _sn=(typeof schoolData!=='undefined'&&schoolData&&schoolData.name)?schoolData.name:'NMAO'; document.title=_sn+' · '+(titles[page]||page); }catch(_e){}
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
   // Lazy loads on navigate
   // §CHECKLIST-REFRESH (A1) — re-evaluate the setup checklist every time the owner returns to the
@@ -6373,6 +6409,7 @@ var HELP_CONTENT = {
   'comm.bc_audience': { title: 'Audience', purpose: 'Who receives this broadcast: everyone, a status group, or a specific tag. Choose Tag to narrow it down.' },
   'comm.bc_tag': { title: 'Select Tag', purpose: 'When the audience is a tag, pick which tag here. Only members with that tag receive the message.' },
   'comm.bc_message': { title: 'Message', purpose: 'The content of your broadcast. For texts, keep it short, since longer messages use more segments.' },
+  'comm.bc_channel': { title: 'Send via', purpose: 'Choose how this broadcast goes out. Email is selected by default and is free. Text (SMS) is optional — tap it to add it, and both can be on at once. Standard SMS rates apply to texts, and longer messages send as multiple segments. The summary below shows exactly how many emails and texts will go out; tap "View recipients" to see the names first.' },
   'comm.al_type': { title: 'Alert Type', purpose: 'The style and intent of the alert, like an announcement or a reminder. It sets how the banner looks to members.' },
   'comm.al_subject': { title: 'Subject', purpose: 'The headline of the alert, shown at the top of the banner.' },
   'comm.al_audience': { title: 'Audience', purpose: 'Who sees this alert: everyone, a status group, or a specific tag.' },
@@ -6682,6 +6719,7 @@ function switchCommTab(tab){
   if(window.attachFlatpickrGlobally) setTimeout(window.attachFlatpickrGlobally,50); }
   if(tab==='sms')    loadSmsInbox();
   if(tab==='portalInvites'&&typeof loadPortalInvitesTab==='function') loadPortalInvitesTab();
+  if(tab==='broadcast'&&typeof updateBroadcastSummary==='function') updateBroadcastSummary();
 }
 
 // Revenue goal
@@ -6746,7 +6784,7 @@ async function buildSetupChecklist(){
     if(isLocked){ var rk=(s.requires&&s.requires.length)?s.requires[0]:null; var rl=rk?labelByKey[rk]:''; return '<div class="setup-step locked"><i class="fa-solid fa-lock" style="color:var(--muted);font-size:0.8rem;flex-shrink:0"></i><span>'+s.label+'<span class="setup-step-sub">Unlocks after: '+rl+'</span></span></div>'; }
     return '<div class="setup-step todo" onclick="navigate(\''+s.nav+'\',null);'+s.cta+'"><i class="fa-solid fa-circle" style="color:var(--muted);font-size:0.95rem;flex-shrink:0"></i><span>'+s.label+'</span></div>';
   }).join('');
-  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem">'+done+' of '+total+' completed</div><div style="border:1px solid rgba(201,168,76,0.5);background:rgba(201,168,76,0.10);border-radius:12px;margin-top:1.1rem;padding:1.1rem 1.25rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.9rem"><div style="flex:1;min-width:250px"><div style="font-size:1.35rem;font-weight:700;color:var(--white);margin-bottom:0.35rem">🤝 Prefer we set it up for you?</div><div style="font-size:1rem;color:var(--muted);line-height:1.55">Send us your roster, billing, waivers &amp; branding — our team will get your school fully set up.</div></div><button onclick="openSelfUpload(this)" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:9px;padding:0.8rem 1.4rem;font-size:1.05rem;font-weight:700;cursor:pointer;white-space:nowrap">Send us your files &rarr;</button></div>';
+  document.getElementById('setupStepsList').innerHTML=html+'<div style="font-size:0.82rem;color:var(--muted);margin-top:0.6rem">'+done+' of '+total+' completed</div><div style="border:1px solid rgba(var(--accent-rgb),0.5);background:rgba(var(--accent-rgb),0.10);border-radius:12px;margin-top:1.1rem;padding:1.1rem 1.25rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.9rem"><div style="flex:1;min-width:250px"><div style="font-size:1.35rem;font-weight:700;color:var(--white);margin-bottom:0.35rem">🤝 Prefer we set it up for you?</div><div style="font-size:1rem;color:var(--muted);line-height:1.55">Send us your roster, billing, waivers &amp; branding — our team will get your school fully set up.</div></div><button onclick="openSelfUpload(this)" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:9px;padding:0.8rem 1.4rem;font-size:1.05rem;font-weight:700;cursor:pointer;white-space:nowrap">Send us your files &rarr;</button></div>';
 }
 async function dismissSetupBanner(){
   document.getElementById('setupBanner').style.display='none';
@@ -6794,7 +6832,7 @@ async function renderTournamentCard(){
       +'<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.9rem">Your school is live — here’s how to get your students competing:</div>'
       +'<div id="tournamentStatus" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.9rem"></div>'
       +(code ?
-        '<div style="background:var(--black);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:0.85rem 1rem;margin-bottom:0.85rem">'
+        '<div style="background:var(--black);border:1px solid rgba(var(--accent-rgb),0.35);border-radius:8px;padding:0.85rem 1rem;margin-bottom:0.85rem">'
         +'<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem">Your school code</div>'
         +'<div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">'
         +'<span style="font-family:var(--font-display);font-size:1.7rem;color:var(--gold);letter-spacing:0.08em">'+impEsc(code)+'</span>'
@@ -6859,7 +6897,7 @@ async function renderGrowthCard(){
       +'<div id="growthResults" style="margin-bottom:1.1rem">Loading…</div>'
       +'<div style="font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Approved tags</div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;margin-bottom:0.35rem">'
-      +TAGS.map(function(t){ return '<span style="font-size:0.8rem;color:var(--gold);background:rgba(201,168,76,0.10);border:1px solid rgba(201,168,76,0.35);border-radius:99px;padding:0.28rem 0.7rem">'+t+'</span>'; }).join('')
+      +TAGS.map(function(t){ return '<span style="font-size:0.8rem;color:var(--gold);background:rgba(var(--accent-rgb),0.10);border:1px solid rgba(var(--accent-rgb),0.35);border-radius:99px;padding:0.28rem 0.7rem">'+t+'</span>'; }).join('')
       +'<button class="btn-sm" onclick="copyGrowthTags(this)"><i class="fa-solid fa-copy"></i> Copy tags</button></div>'
       +'<div style="font-size:0.78rem;color:var(--muted)">Tag any post with these and our team may feature it on NMAO’s channels.</div>'
       +'<div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem">'
@@ -7450,7 +7488,7 @@ function renderRosterList() {
     var rsvpBadge = '';
     if (rsvpStatus === 'attended') rsvpBadge = '<span style="font-size:0.62rem;color:var(--gold);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">checked in</span>';
     else if (rsvpStatus === 'enrolled') rsvpBadge = '<span style="font-size:0.62rem;color:var(--muted2);margin-left:0.5rem;letter-spacing:0.1em;text-transform:uppercase">expected</span>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(201,168,76,0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : rsvpStatus ? 'rgba(201,168,76,0.4)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid ' + (present ? 'rgba(var(--accent-rgb),0.3)' : 'var(--border)') + ';border-left:2px solid ' + (present ? 'var(--gold)' : rsvpStatus ? 'rgba(var(--accent-rgb),0.4)' : 'var(--border)') + ';margin-bottom:0.25rem" id="rrow-' + s.id + '">' +
       '<div onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" style="flex:1;min-width:0;cursor:pointer;font-size:0.88rem;color:var(--white)">' + escapeCheckout(s.first_name + ' ' + s.last_name) + rsvpBadge + '</div>' +
       '<div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0">' +
         '<button onclick="openRosterRowProfile(\'' + s.id + '\')" title="View profile" aria-label="View profile" style="background:none;border:none;cursor:pointer;font-size:1.05rem;color:var(--muted)"><i class="fa-solid fa-circle-user"></i></button>' +
@@ -8813,13 +8851,13 @@ function _cardRow(sid, c){
                             : ((c.label && !(c.wallet_type === 'link')) ? c.label : '');
   var sub = [who, exp].filter(Boolean).join(' · ');
   var badges = '';
-  if(c.is_default) badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(201,168,76,0.18);color:var(--gold);padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Primary</span>';
+  if(c.is_default) badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(var(--accent-rgb),0.18);color:var(--gold);padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Primary</span>';
   if(c.expired)    badges += '<span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(224,112,112,0.18);color:#E07070;padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.45rem">Expired</span>';
   var pm = c.payment_method_id;
   var actions = '';
   if(!c.is_default) actions += '<button class="btn-sm" style="font-size:0.68rem" onclick="setDefaultCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-star"></i> Make primary card</button>';
   actions += '<button class="btn-sm" style="font-size:0.68rem;color:#E07070" onclick="removeStudentCard(\'' + sid + '\',\'' + pm + '\')"><i class="fa-solid fa-trash"></i> Remove</button>';
-  return '<div style="background:var(--black);border:1px solid ' + (c.is_default ? 'rgba(201,168,76,0.5)' : 'var(--border)') + ';padding:0.6rem 0.8rem;margin-bottom:0.5rem">' +
+  return '<div style="background:var(--black);border:1px solid ' + (c.is_default ? 'rgba(var(--accent-rgb),0.5)' : 'var(--border)') + ';padding:0.6rem 0.8rem;margin-bottom:0.5rem">' +
     '<div style="font-size:0.85rem;color:var(--white)">' + _cardFace(c) + badges + '</div>' +
     (sub ? ('<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">' + sub + '</div>') : '') +
     '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.5rem">' + actions + '</div>' +
@@ -9123,7 +9161,7 @@ async function buildProfileVitals(sid){
     else{
       ael.style.display='flex';
       ael.innerHTML=alerts.map(function(a){
-        var col=a.sev==='d'?'#E07070':'#C9A84C', bg=a.sev==='d'?'rgba(224,112,112,0.12)':'rgba(201,168,76,0.12)';
+        var col=a.sev==='d'?'#E07070':'#C9A84C', bg=a.sev==='d'?'rgba(224,112,112,0.12)':'rgba(var(--accent-rgb),0.12)';
         return '<span style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;padding:0.3rem 0.65rem;border-radius:3px;background:'+bg+';color:'+col+';border:1px solid '+col+'55"><i class="'+a.i+'"></i> '+a.t+'</span>';
       }).join('');
     }
@@ -10710,7 +10748,7 @@ async function openPromoteModal() {
     var count=await loadClassesSincePromotion(s.id); var req=to.classes_required;
     banner.style.display='block';
     if(count>=req){banner.style.cssText='display:block;background:rgba(90,154,106,0.12);border:1px solid rgba(90,154,106,0.3);color:#7DBD7D;padding:0.75rem;margin-bottom:1rem;border-radius:2px;font-size:0.85rem';banner.textContent='Eligible \u2014 '+count+'/'+req+' classes.';}
-    else{banner.style.cssText='display:block;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);color:var(--gold);padding:0.75rem;margin-bottom:1rem;border-radius:2px;font-size:0.85rem';banner.textContent=count+'/'+req+' classes. Instructor override required.';}
+    else{banner.style.cssText='display:block;background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.2);color:var(--gold);padding:0.75rem;margin-bottom:1rem;border-radius:2px;font-size:0.85rem';banner.textContent=count+'/'+req+' classes. Instructor override required.';}
   }else{document.getElementById('promoteEligibilityBanner').style.display='none';}
   var vids=to.belt_level_videos||[];
   if(vids.length){document.getElementById('promotionYoutubeSection').style.display='block';document.getElementById('promotionVideosList').innerHTML=vids.map(function(v){return '<a href="'+v.youtube_url+'" target="_blank" style="display:block;font-size:0.82rem;color:var(--gold);margin-bottom:0.3rem"><i class="fa-solid fa-play" style="margin-right:0.3rem"></i>'+(v.description||v.youtube_url)+'</a>';}).join('');}
@@ -13783,7 +13821,7 @@ function checkoutCardPickerHtml(){
   var isMem = (checkoutCartClass() === 'membership');
   var lbl = isMem ? 'Bill this membership to (also becomes primary)' : 'Charge which card';
   var opts = cards.map(function(c){ return '<option value="' + c.payment_method_id + '"' + ((c.payment_method_id === _checkout.chosenPmId) ? ' selected' : '') + '>' + escapeCheckout(_checkoutCardLabel(c)) + '</option>'; }).join('');
-  return '<div style="margin-top:0.5rem;padding:0.7rem 0.9rem;border:1px solid var(--gold);border-radius:2px;background:rgba(201,168,76,0.06)">' +
+  return '<div style="margin-top:0.5rem;padding:0.7rem 0.9rem;border:1px solid var(--gold);border-radius:2px;background:rgba(var(--accent-rgb),0.06)">' +
     '<label style="display:block;font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.35rem">' + lbl + '</label>' +
     '<select id="checkoutCardPick" onchange="_checkout.chosenPmId=this.value" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.9rem;padding:0.5rem 0.65rem">' + opts + '</select>' +
     '<button class="btn-sm" style="font-size:0.7rem;margin-top:0.45rem" onclick="checkoutAddCardInline()"><i class="fa-solid fa-plus"></i> Add a card</button>' +
@@ -15286,7 +15324,7 @@ function renderInstructors(){
   tb.innerHTML=allInstructors.map(function(instr){
     var name=((instr.first_name||'')+' '+(instr.last_name||'')).trim();
     var classCount=allClasses.filter(function(c){return c.instructor_name===name;}).length;
-    var bookingBadge=instr.booking_link_enabled?'<span style="font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Bookable</span>':'<span style="font-size:0.62rem;color:var(--muted)">\u2014</span>';
+    var bookingBadge=instr.booking_link_enabled?'<span style="font-size:0.62rem;padding:0.15rem 0.5rem;background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold)">Bookable</span>':'<span style="font-size:0.62rem;color:var(--muted)">\u2014</span>';
     return '<tr>' +
       '<td class="name" style="cursor:pointer" onclick="openInstructorProfile(\''+instr.id+'\')">'+name+'</td>' +
       '<td>'+(instr.email||'\u2014')+'</td>' +
@@ -16676,7 +16714,7 @@ async function renderMemberships(){
   if(!nonClassPack.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">'+(allPrograms.length?'<div style="font-style:italic;margin-bottom:0.5rem">Memberships are how members pay to train.</div><button class="panel-action" onclick="openAddMembership()"><i class="fa-solid fa-plus"></i> Add your first membership</button>':'<div style="font-style:italic;margin-bottom:0.5rem">Create a program first, then add a membership.</div><button class="panel-action" onclick="navigate(\'programs\',null);openAddProgram()"><i class="fa-solid fa-plus"></i> Add a program</button>')+'</td></tr>';return;}
   var mpR=await sb.from('membership_programs').select('membership_id,program_id'); var mpData=mpR.data||[];
   tb.innerHTML=nonClassPack.map(function(m){
-   var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack'}[m.billing_type]||m.billing_type;
+   var tl={monthly:'Monthly',yearly:'Yearly',trial:'Trial',class_pack:'Class Pack',one_time:'One-Time',recurring:'Recurring',annual:'Annual',pack:'Pack',punch:'Punch Pass'}[m.billing_type]||String(m.billing_type||'').replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
    var _bl=parseInt(m.billing_length,10);
    if(m.billing_type==='monthly'&&m.billing_unit==='months'&&_bl>1){tl='Every '+_bl+' months';}
    var price='$'+parseFloat(m.price||0).toFixed(2)+(m.billing_type==='monthly'?((m.billing_unit==='months'&&_bl>1)?('/'+_bl+'mo'):'/mo'):m.billing_type==='yearly'?'/yr':'');
@@ -16909,10 +16947,10 @@ function renderProducts(){
   el.innerHTML=filtered.map(function(p){
     var badges='';
     if(p.featured)  badges+='<span class="chip chip-pending" style="font-size:0.65rem">Featured</span>';
-    if(p.quick_list)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold)">Quick List</span>';
+    if(p.quick_list)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(var(--accent-rgb),0.15);border:1px solid rgba(var(--accent-rgb),0.4);color:var(--gold)">Quick List</span>';
     if(p.member_app)badges+='<span class="chip chip-active" style="font-size:0.65rem">App</span>';
-    if(p.has_variants)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)"><i class="fa-solid fa-layer-group" style="font-size:0.6rem;margin-right:2px"></i>Sizes</span>';
-    else if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
+    if(p.has_variants)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold)"><i class="fa-solid fa-layer-group" style="font-size:0.6rem;margin-right:2px"></i>Sizes</span>';
+    else if(p.track_inventory)badges+='<span class="chip" style="font-size:0.65rem;background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold)">Qty: '+(p.inventory_qty||0)+'</span>';
     var imgHtml=p.image_url?'<img src="'+p.image_url+'" style="width:100%;height:120px;object-fit:cover" alt="Product image" />':'<div class="product-img-placeholder"><i class="fa-solid fa-box"></i></div>';
     var badgeTag=p.badge_style&&p.badge_text?'<div class="product-badge-tag badge-'+p.badge_style+'">'+p.badge_text+'</div>':'';
     var delBtn='<button onclick="event.stopPropagation();deleteProduct(\''+p.id+'\')" style="position:absolute;top:0.4rem;left:0.4rem;width:28px;height:28px;background:rgba(0,0,0,0.7);border:1px solid rgba(224,112,112,0.5);color:#E07070;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2" title="Delete product"><i class="fa-solid fa-trash" style="font-size:0.72rem"></i></button>';
@@ -17632,6 +17670,7 @@ function toggleTagAudience(){
   var f=document.getElementById('commTagField');
   if(!a||!f) return;
   f.style.display=a.value==='tag'?'block':'none';
+  if(typeof updateBroadcastSummary==='function') updateBroadcastSummary();
 }
 
 function clearReportSelection(){
@@ -17640,6 +17679,7 @@ function clearReportSelection(){
   if(b) b.style.display='none';
   var n=document.getElementById('commRecipientNames');
   if(n) n.textContent='';
+  if(typeof updateBroadcastSummary==='function') updateBroadcastSummary();
 }
 
 window._broadcastFlyerUrl = null;
@@ -17665,6 +17705,83 @@ function removeBroadcastFlyer(){
   var rb=document.getElementById('bcFlyerRemoveBtn'); if(rb) rb.style.display='none';
   var inp=document.getElementById('bcFlyerInput'); if(inp) inp.value='';
 }
+// §BROADCAST-CHANNEL — Broadcast panel channel state (default Email; Text opt-in). Mirrors the Send-to-Selected modal.
+var broadcastChannels={email:true,sms:false};
+function toggleBroadcastChannel(ch){
+  var other=ch==='email'?'sms':'email';
+  // Never allow zero channels: if you deselect the only active one, keep the other on.
+  if(broadcastChannels[ch] && !broadcastChannels[other]){
+    broadcastChannels[other]=true;
+    var ob=document.getElementById('bc-channel-'+other); if(ob) ob.classList.add('selected');
+  }
+  broadcastChannels[ch]=!broadcastChannels[ch];
+  var b=document.getElementById('bc-channel-'+ch); if(b) b.classList.toggle('selected',broadcastChannels[ch]);
+  updateBroadcastSummary();
+}
+// Single source of truth for who a broadcast reaches — used by BOTH the live summary/preview AND the real send.
+function computeBroadcastRecipients(){
+  var audience=document.getElementById('commAudience').value;
+  var tagEl=document.getElementById('commTag'); var tagId=tagEl?tagEl.value:'';
+  var emailRecipients, smsRecipients, pool;
+  if(selectedReportRecipients.length){
+    pool=selectedReportRecipients.slice();
+    emailRecipients=pool.filter(function(r){return r.email;});
+    smsRecipients=pool.filter(function(r){return r.phone;});
+  }else{
+    pool=(allStudents||[]).filter(function(s){
+      if(audience==='active')  return s.status==='active';
+      if(audience==='trial')   return s.status==='trial';
+      if(audience==='paused')  return s.status==='paused';
+      if(audience==='expired') return s.status==='expired';
+      if(audience==='tag')     return tagId&&s._tags&&s._tags.includes(tagId);
+      // "All Members" = current members only (active/trial/paused/past_due).
+      return ['active','trial','paused','past_due'].indexOf(s.status)!==-1;
+    });
+    emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:(s.first_name+' '+s.last_name).trim(),phone:s.phone};});
+    smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:(s.first_name+' '+s.last_name).trim(),email:s.email};});
+  }
+  return {emailRecipients:emailRecipients, smsRecipients:smsRecipients, pool:pool};
+}
+function _bcName(r){ return (r.name || ((r.first_name||'')+' '+(r.last_name||'')).trim() || r.email || r.phone || 'Unknown'); }
+function stripHtmlForCount(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim(); }
+function smsSegments(text){ var n=(text||'').length; if(n<=0) return 1; return n<=160?1:Math.ceil(n/153); }
+function updateBroadcastSummary(){
+  var el=document.getElementById('bcSummaryText'); if(!el) return;
+  var btn=document.getElementById('bcPreviewBtn');
+  var rc=computeBroadcastRecipients();
+  var reach={};
+  if(broadcastChannels.email) rc.emailRecipients.forEach(function(r){reach[r.id]=1;});
+  if(broadcastChannels.sms)   rc.smsRecipients.forEach(function(r){reach[r.id]=1;});
+  var parts=[];
+  if(broadcastChannels.sms)   parts.push('<b>'+rc.smsRecipients.length+'</b> text'+(rc.smsRecipients.length===1?'':'s'));
+  if(broadcastChannels.email) parts.push('<b>'+rc.emailRecipients.length+'</b> email'+(rc.emailRecipients.length===1?'':'s'));
+  var who=selectedReportRecipients.length?'selected recipients':('“'+document.getElementById('commAudience').value+'” members');
+  var txt='<i class="fa-solid fa-paper-plane" style="color:var(--gold);margin-right:0.4rem"></i>Sending '+(parts.join(' and ')||'nothing')+' to <b>'+who+'</b>.';
+  var skipped=rc.pool.filter(function(p){return !reach[p.id];}).length;
+  if(skipped) txt+=' <span style="color:var(--muted)">'+skipped+' skipped — no contact on the selected channel'+((broadcastChannels.email&&broadcastChannels.sms)?'s':'')+'.</span>';
+  el.innerHTML=txt;
+  if(btn) btn.style.display=rc.pool.length?'inline-flex':'none';
+}
+function openBroadcastRecipientPreview(){
+  var rc=computeBroadcastRecipients();
+  var body=document.getElementById('bcRecipientBody'); if(!body) return;
+  var reach={};
+  if(broadcastChannels.email) rc.emailRecipients.forEach(function(r){reach[r.id]=1;});
+  if(broadcastChannels.sms)   rc.smsRecipients.forEach(function(r){reach[r.id]=1;});
+  var skipped=rc.pool.filter(function(p){return !reach[p.id];});
+  function sec(title,icon,list,ckey){
+    var h='<div style="margin-bottom:1rem"><div style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem"><i class="'+icon+'" style="margin-right:0.4rem"></i>'+title+' ('+list.length+')</div>';
+    if(!list.length){ h+='<div style="font-size:0.8rem;color:var(--muted)">None.</div>'; }
+    else{ h+='<div style="max-height:220px;overflow:auto">'+list.map(function(r){return '<div style="display:flex;justify-content:space-between;gap:1rem;font-size:0.82rem;border-bottom:1px solid var(--border);padding:0.3rem 0"><span>'+escHtml(_bcName(r))+'</span><span style="color:var(--muted)">'+escHtml(r[ckey]||'')+'</span></div>';}).join('')+'</div>'; }
+    return h+'</div>';
+  }
+  var html='';
+  if(broadcastChannels.sms)   html+=sec('Text','fa-solid fa-comment-sms',rc.smsRecipients,'phone');
+  if(broadcastChannels.email) html+=sec('Email','fa-solid fa-envelope',rc.emailRecipients,'email');
+  if(skipped.length)          html+=sec('Skipped — no contact on selected channel','fa-solid fa-ban',skipped.map(function(p){return {name:_bcName(p),email:p.email,phone:p.phone};}),(broadcastChannels.email&&!broadcastChannels.sms)?'email':'phone');
+  body.innerHTML=html||'<div style="color:var(--muted)">No recipients.</div>';
+  document.getElementById('bcRecipientModal').classList.add('active');
+}
 async function sendCommunication(){
   var audience=document.getElementById('commAudience').value;
   var tagId=document.getElementById('commTag').value;
@@ -17682,28 +17799,19 @@ async function sendCommunication(){
     _smsBody = _smsBody + '<p>View flyer: '+_flyer+'</p>';
   }
   setMsg('commMsg','Sending...','');
-  var emailRecipients, smsRecipients;
-  if(selectedReportRecipients.length){
-    emailRecipients=selectedReportRecipients.filter(function(r){return r.email;});
-    smsRecipients=selectedReportRecipients.filter(function(r){return r.phone;});
-  }else{
-    var pool=allStudents.filter(function(s){
-      if(audience==='active')  return s.status==='active';
-      if(audience==='trial')   return s.status==='trial';
-      if(audience==='paused')  return s.status==='paused';
-      if(audience==='expired') return s.status==='expired';
-      if(audience==='tag')     return tagId&&s._tags&&s._tags.includes(tagId);
-      // "All Members" = current members only (active/trial/paused/past_due). Excludes expired/cancelled and any future status.
-      return ['active','trial','paused','past_due'].indexOf(s.status)!==-1;
-    });
-    emailRecipients=pool.filter(function(s){return s.email;}).map(function(s){return{id:s.id,email:s.email,name:s.first_name+' '+s.last_name,phone:s.phone};});
-    smsRecipients=pool.filter(function(s){return s.phone;}).map(function(s){return{id:s.id,phone:s.phone,name:s.first_name+' '+s.last_name,email:s.email};});
-  }
+  // §BROADCAST-CHANNEL — honor the owner's channel choice (default Email; Text is opt-in).
+  if(!broadcastChannels.email && !broadcastChannels.sms){ setMsg('commMsg','Pick at least one channel — Email or Text.','error'); return; }
+  var _rc=computeBroadcastRecipients();
+  var emailRecipients = broadcastChannels.email ? _rc.emailRecipients : [];
+  var smsRecipients   = broadcastChannels.sms   ? _rc.smsRecipients   : [];
   // §BROADCAST-GUARD — confirm the real recipient counts before a roster-wide blast.
   var _emailN=emailRecipients.length, _smsN=smsRecipients.length;
-  if(_emailN+_smsN===0){ setMsg('commMsg','No recipients with contact info on file.','error'); return; }
-  var _who=selectedReportRecipients.length ? ('the '+(_emailN+_smsN)+' selected recipient'+((_emailN+_smsN)===1?'':'s')) : ('"'+audience+'" members');
-  if(!confirm('Send this broadcast to '+_who+' now?\n\n'+_emailN+' email'+(_emailN===1?'':'s')+' and '+_smsN+' text'+(_smsN===1?'':'s')+' will go out immediately. This can\'t be undone.')){
+  if(_emailN+_smsN===0){ setMsg('commMsg','No recipients have contact info for the channel'+(broadcastChannels.email&&broadcastChannels.sms?'s':'')+' you chose.','error'); return; }
+  var _who=selectedReportRecipients.length ? ('the '+_rc.pool.length+' selected recipient'+(_rc.pool.length===1?'':'s')) : ('"'+audience+'" members');
+  var _lines=[];
+  if(_smsN){ var _segs=smsSegments(stripHtmlForCount(_smsBody)); _lines.push(_smsN+' text'+(_smsN===1?'':'s')+(_segs>1?(' (~'+_segs+' segments each)'):'')); }
+  if(_emailN){ _lines.push(_emailN+' email'+(_emailN===1?'':'s')); }
+  if(!confirm('Send this broadcast to '+_who+' now?\n\nSending '+_lines.join(' and ')+'. This can\'t be undone.\n\nTip: use "View recipients" to see exactly who.')){
     setMsg('commMsg','Cancelled — nothing sent.',''); return;
   }
   window._commSending=true;
@@ -18284,12 +18392,12 @@ function renderPortalInviteRow(r){
     var dt=new Date(r.portal_invited_at);
     var daysAgo=Math.floor((Date.now()-dt.getTime())/86400000);
     var label=daysAgo===0?"today":daysAgo===1?"1 day ago":daysAgo+" days ago";
-    statusBadge='<span style="font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.45rem;border-radius:2px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);margin-left:0.5rem">Invited '+label+'</span>';
+    statusBadge='<span style="font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.45rem;border-radius:2px;background:rgba(var(--accent-rgb),0.1);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--gold);margin-left:0.5rem">Invited '+label+'</span>';
   }
   var emailLine=hasEmail
     ? '<span>'+escapePIHtml(r.email)+'</span>'
     : '<span style="color:#E07070;font-style:italic">No email \u2014 cannot invite</span>';
-  var rowStyle="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border);"+(hasEmail?"cursor:pointer;":"opacity:0.55;")+(isSelected?"background:rgba(201,168,76,0.08);":"");
+  var rowStyle="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border);"+(hasEmail?"cursor:pointer;":"opacity:0.55;")+(isSelected?"background:rgba(var(--accent-rgb),0.08);":"");
   var rowOnClick=hasEmail?'onclick="togglePortalInviteRow(\''+r.id+'\')"':"";
   var checkbox=hasEmail
     ? '<input type="checkbox" '+(isSelected?"checked":"")+' onclick="event.stopPropagation();togglePortalInviteRow(\''+r.id+'\')" style="flex-shrink:0;cursor:pointer" />'
@@ -18499,7 +18607,7 @@ async function loadRevenueChart(){
       var isCurrentMonth=i===5;
       return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0.3rem">'+
         '<div style="font-size:0.65rem;color:var(--muted)">$'+v.toFixed(0)+'</div>'+
-        '<div style="width:100%;background:'+(isCurrentMonth?'var(--gold)':'rgba(201,168,76,0.35)')+';border-radius:2px 2px 0 0;height:'+pct+'%;min-height:'+(v>0?'4px':'0')+'px;transition:height 0.6s ease"></div>'+
+        '<div style="width:100%;background:'+(isCurrentMonth?'var(--gold)':'rgba(var(--accent-rgb),0.35)')+';border-radius:2px 2px 0 0;height:'+pct+'%;min-height:'+(v>0?'4px':'0')+'px;transition:height 0.6s ease"></div>'+
       '</div>';
     }).join('');
     labelsEl.innerHTML=labels.map(function(l,i){
@@ -20471,7 +20579,7 @@ var r = await sb.from("events").select("*").eq("school_id", SID).eq("active", tr
       var s = reg && reg.students;
       var name = s ? (s.first_name + " " + s.last_name) : (reg && reg.guest_name) || "Guest";
       var checked = !!rs.checked_in;
-      return "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid " + (checked ? "rgba(201,168,76,0.3)" : "var(--border)") + ";border-left:2px solid " + (checked ? "var(--gold)" : "var(--border)") + ";margin-bottom:0.3rem\">" +
+      return "<div style=\"display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.75rem;background:var(--surface);border:1px solid " + (checked ? "rgba(var(--accent-rgb),0.3)" : "var(--border)") + ";border-left:2px solid " + (checked ? "var(--gold)" : "var(--border)") + ";margin-bottom:0.3rem\">" +
         "<div style=\"font-size:0.88rem;color:var(--white)\">" + escText(name) + "</div>" +
         "<button onclick=\"toggleEventCheckin(&quot;" + rs.id + "&quot;)\" style=\"background:none;border:none;cursor:pointer;font-size:1.4rem;color:" + (checked ? "var(--gold)" : "var(--muted)") + "\">" +
           "<i class=\"fa-solid " + (checked ? "fa-circle-check" : "fa-circle") + "\"></i>" +
@@ -21512,7 +21620,7 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     }
 
     box.innerHTML = results.map(function(r, idx){
-      return "<div class=\"gs-result\" data-idx=\"" + idx + "\" onclick=\"globalSearchSelect(" + idx + ")\" style=\"display:flex;align-items:center;gap:0.7rem;padding:0.7rem 0.85rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s\" onmouseover=\"this.style.background=&quot;rgba(201,168,76,0.08)&quot;\" onmouseout=\"this.style.background=&quot;transparent&quot;\">" +
+      return "<div class=\"gs-result\" data-idx=\"" + idx + "\" onclick=\"globalSearchSelect(" + idx + ")\" style=\"display:flex;align-items:center;gap:0.7rem;padding:0.7rem 0.85rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s\" onmouseover=\"this.style.background=&quot;rgba(var(--accent-rgb),0.08)&quot;\" onmouseout=\"this.style.background=&quot;transparent&quot;\">" +
         "<div style=\"width:32px;height:32px;flex-shrink:0;background:" + r.color + "22;border:1px solid " + r.color + "66;display:flex;align-items:center;justify-content:center\">" +
           "<i class=\"fa-solid " + r.icon + "\" style=\"color:" + r.color + ";font-size:0.85rem\"></i>" +
         "</div>" +
@@ -21567,7 +21675,7 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
   function highlightActive(rows){
     rows.forEach(function(row, idx){
       if (idx === window.globalSearchActiveIdx) {
-        row.style.background = "rgba(201,168,76,0.15)";
+        row.style.background = "rgba(var(--accent-rgb),0.15)";
         row.scrollIntoView({block: "nearest"});
       } else {
         row.style.background = "transparent";
@@ -22100,5 +22208,110 @@ var url = SURL + "/functions/v1/event-og?id=" + window.currentEventId;
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
   })();
   </script>
+
+<style id="nmao-design-pass">
+/* ═══════════════════════════════════════════════════════════════════════
+   NMAO DESIGN PASS v2 — staging only. Reversible: delete this <style> block.
+   Respects per-school brand: --font-display = brand/headline font,
+   --gold = accent, --accent-rgb = accent as r,g,b (set by applyBrandColors),
+   green = success only.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --accent-rgb: 201,168,76;           /* default; overridden per-school at runtime */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+  --elev-2: 0 10px 30px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+  --hair: rgba(255,255,255,0.06);
+}
+/* 1 — TYPE: clean sans UI, brand serif reserved for headlines */
+body{ font-family: var(--font-ui); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0; }
+h1,h2,h3,.panel-title,.modal-title,.content-heading h2,.view-title,
+.home-stat-num,.stat-value,.rev-amount,.goal-amount,.payroll-month-amount,.goal-current,
+.sidebar-logo-text,.sidebar-school,.topbar-title,#schoolBtn,.word,.day-popover-title,.pack-template-price{
+  font-family: var(--font-display) !important; letter-spacing: 0.2px;
+}
+.nav-item,.btn,.btn-sm,.panel-action,.field input,.field select,.field textarea,
+table,.chip,label,.stat-label,.home-stat-label,.badge-red,.badge-gold,.badge-green,.badge-blue,.badge-black{
+  font-family: var(--font-ui) !important;
+}
+.home-stat-num,.stat-value,.rev-amount,.goal-amount,td{ font-variant-numeric: tabular-nums; }
+
+/* 2 — CARD LIFT + one consistent corner radius across EVERY card/tile/box container */
+.panel,.card,.home-stat-card,.rev-card,.alert-card,.session-card,.pack-template-card,.report-type-card,
+.lead-card,.product-card,.belt-level-card,.day-view-card,.class-roster-card,.discount-card,.plan-card,
+.test-card,.sms-thread-card,.fulfillment-panel,.no-show-policy-box,.unsaved-box{
+  border-radius: var(--radius-md); border-color: var(--hair);
+}
+/* prominent surface tiles get the full lift */
+.panel,.card,.home-stat-card,.rev-card,.report-type-card{
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 4px rgba(0,0,0,0.28), 0 10px 28px rgba(0,0,0,0.22);
+}
+/* dense list cards get a quieter shadow so they don't feel heavy */
+.lead-card,.product-card,.discount-card,.plan-card,.test-card,.session-card,.pack-template-card,.belt-level-card,.sms-thread-card{
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.modal{ border-radius: var(--radius-lg); box-shadow: var(--elev-2); }
+/* matching hover lift on the clickable prominent tiles */
+.home-stat-card,.rev-card,.report-type-card{ transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.home-stat-card:hover,.rev-card:hover,.report-type-card:hover{ transform: translateY(-3px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 14px 34px rgba(0,0,0,0.3); border-color: rgba(var(--accent-rgb),0.35); }
+/* 2b — remaining tile/panel/widget/overlay surfaces → card radius (consistency sweep) */
+.revenue-goal-widget,.setup-banner,.pipeline-col,.pos-total,.cd-zone,.class-field-config,
+.manual-payment-form,.tg-card,.detail-drawer,.day-popover,.plan-menu,.quick-add-menu{ border-radius: var(--radius-md) !important; }
+/* 2c — custom controls + inputs → match the button/input radius */
+.day-btn,.font-option,.cal-view-toggle,.pos-qty-btn,.pos-quick-item,.alert-type-btn,.anim-option,
+.cd-act-btn,.avail-time-input,.booking-slug-input{ border-radius: var(--radius-sm) !important; }
+
+/* 3 — NAV: rounded pills, accent-tinted hover */
+.nav-item{ border-radius: var(--radius-sm); margin: 2px 8px; padding: 0.55rem 0.72rem; transition: background .15s ease, color .15s ease; }
+.nav-item:hover{ background: rgba(var(--accent-rgb),0.06); }
+.nav-section-label{ opacity: 0.58; }
+
+/* 4 — BUTTONS: consistent shape + lift + brand-accent focus rings */
+.btn,.btn-sm,.panel-action,.setup-step-cta,.btn-gold-full{ border-radius: var(--radius-sm); transition: transform .14s ease, box-shadow .14s ease, background .14s ease, border-color .14s ease; }
+.btn:hover,.btn-sm:hover,.panel-action:hover,.setup-step-cta:hover{ transform: translateY(-1px); }
+.btn:active,.btn-sm:active,.panel-action:active{ transform: translateY(0); }
+a:focus-visible,button:focus-visible,.btn:focus-visible,.btn-sm:focus-visible,.nav-item:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* 5 — INPUTS: softer idle border, brand-accent focus glow */
+.field input,.field select,.field textarea{ border-radius: var(--radius-sm); border-color: rgba(255,255,255,0.09); transition: border-color .15s ease, box-shadow .15s ease; }
+.field input:focus,.field select:focus,.field textarea:focus{ border-color: var(--gold); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.18); outline: none; }
+
+/* 6 — TABLES: more air, hover rows, quieter gridlines, caps headers */
+table tbody td{ padding-top: 0.72rem; padding-bottom: 0.72rem; border-color: rgba(255,255,255,0.05); }
+table thead th{ letter-spacing: 0.07em; text-transform: uppercase; font-size: 0.72rem !important; color: var(--muted); font-weight: 600; }
+table tbody tr{ transition: background .12s ease; }
+table tbody tr:hover{ background: rgba(255,255,255,0.025); }
+
+/* 7 — BADGES / CHIPS: unified pill shape */
+.chip,.badge-red,.badge-gold,.badge-green,.badge-blue,.badge-black{ border-radius: 999px; letter-spacing: 0.02em; }
+
+/* 8 — premium thin scrollbars (accent on hover) */
+*::-webkit-scrollbar{ width: 10px; height: 10px; }
+*::-webkit-scrollbar-track{ background: transparent; }
+*::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.1); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover{ background: rgba(var(--accent-rgb),0.45); background-clip: padding-box; }
+
+/* 9 — smoother modal transitions + a crafted entrance (fade + gentle scale-in) */
+.modal-overlay{ transition: opacity .2s ease; }
+@keyframes nmaoModalIn{ from{ opacity:0; transform: translateY(10px) scale(0.985); } to{ opacity:1; transform:none; } }
+.modal-overlay.active .modal{ animation: nmaoModalIn .2s cubic-bezier(.2,.7,.3,1); }
+
+/* 10 — input + control micro-polish */
+::placeholder{ color: var(--muted); opacity: 0.75; }
+select{ cursor: pointer; }
+button:disabled,.btn:disabled,.btn-sm:disabled,.panel-action:disabled{ opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* 11 — clear active-nav state: filled accent tint + left accent bar */
+.nav-item.active{ background: rgba(var(--accent-rgb),0.12) !important; color: var(--gold) !important; font-weight: 600; position: relative; }
+.nav-item.active::before{ content:''; position:absolute; left:0; top:20%; bottom:20%; width:3px; border-radius:0 3px 3px 0; background: var(--gold); }
+
+/* 12 — skeleton shimmer for loading states */
+@keyframes nmaoShimmer{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+.sk{ background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 37%, rgba(255,255,255,0.04) 63%); background-size:200% 100%; animation: nmaoShimmer 1.5s ease-in-out infinite; border-radius:6px; display:block; }
+.sk-num{ height:2.1rem; width:58px; margin-bottom:0.55rem; }
+.sk-label{ height:0.78rem; width:72%; }
+
+</style>
 </body>
 </html>
