@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Your Account — NMAO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #B8862C;
+      --gold-light: #D4A93D;
+      --gold-bright: #F5D462;
+      --ink: #1a1a1a;
+      --ink-soft: #3d3d3d;
+      --paper: #faf7f0;
+      --paper-soft: #f1ebdb;
+      --rule: #d9cfb6;
+      --font-display: 'Libre Baskerville', Georgia, serif;
+      --font-body: 'Source Serif Pro', Charter, Georgia, serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      background: #0a0a0a;
+      padding: 1.5rem 2rem;
+      border-bottom: 2px solid var(--gold);
+    }
+    .header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header img { height: 36px; width: 36px; }
+    .header-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 2rem 6rem;
+    }
+    .doc-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+    .doc-meta {
+      font-style: italic;
+      color: var(--ink-soft);
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      color: var(--ink);
+      letter-spacing: -0.005em;
+    }
+    p { margin-bottom: 1.1rem; color: var(--ink-soft); }
+    ul, ol {
+      margin: 0 0 1.1rem 1.5rem;
+      color: var(--ink-soft);
+    }
+    li { margin-bottom: 0.6rem; }
+    a {
+      color: var(--gold);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+    a:hover { color: var(--ink); }
+    strong { color: var(--ink); font-weight: 600; }
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      margin: 1.5rem 0 1.75rem;
+      padding: 0;
+    }
+    .steps > li {
+      position: relative;
+      padding: 0 0 0 3rem;
+      margin-bottom: 1.25rem;
+      min-height: 2rem;
+    }
+    .steps > li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: -0.1rem;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #0a0a0a;
+      color: var(--gold-bright);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .cta {
+      display: inline-block;
+      background: #0a0a0a;
+      color: var(--gold-bright) !important;
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      padding: 0.95rem 1.75rem;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      margin: 0.5rem 0 0.25rem;
+    }
+    .cta:hover { background: #1a1a1a; color: var(--gold-bright) !important; }
+    .callout {
+      background: var(--paper-soft);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-size: 0.97rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    th {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--paper-soft);
+    }
+    td { color: var(--ink-soft); }
+    .footer {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--rule);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+    @media (max-width: 600px) {
+      .doc-title { font-size: 1.85rem; }
+      .container { padding: 2.5rem 1.5rem 4rem; }
+      body { font-size: 16px; }
+      table { font-size: 0.85rem; }
+      th, td { padding: 0.5rem 0.65rem; }
+      .cta { display: block; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <img src="nmao_logo.png" alt="NMAO" />
+      <span class="header-text">NMAO</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 class="doc-title">Delete Your Account</h1>
+    <p class="doc-meta">For the NMAO Member and NMAO Staff apps · NMAO Inc.</p>
+
+    <p>This page explains how to request deletion of your account and associated personal data from the <strong>NMAO Member</strong> and <strong>NMAO Staff</strong> apps, operated by NMAO Inc. We honor every valid request.</p>
+
+    <h2>How to request account deletion</h2>
+    <ol class="steps">
+      <li>Email <a href="mailto:support@nmao.us?subject=Delete%20my%20NMAO%20account&body=I%20would%20like%20to%20delete%20my%20NMAO%20account%20and%20associated%20data.%0A%0AFull%20name%3A%0AEmail%20on%20my%20account%3A%0ASchool%2Fdojo%20name%3A%0A">support@nmao.us</a> from the email address on your account, or tap the button below. Include your <strong>full name</strong>, the <strong>email address on your account</strong>, and your <strong>school / dojo name</strong>, with the subject line <em>"Delete my account."</em></li>
+      <li>We confirm your identity (we may ask you to verify from the email address on file) to protect your account from unauthorized deletion.</li>
+      <li>We delete your personal data as described below and email you a confirmation, <strong>typically within 30 days</strong> of verifying your request.</li>
+    </ol>
+
+    <p><a class="cta" href="mailto:support@nmao.us?subject=Delete%20my%20NMAO%20account&body=I%20would%20like%20to%20delete%20my%20NMAO%20account%20and%20associated%20data.%0A%0AFull%20name%3A%0AEmail%20on%20my%20account%3A%0ASchool%2Fdojo%20name%3A%0A">Email a deletion request</a></p>
+
+    <div class="callout">
+      Your account at a martial arts school is managed by that school on the NMAO platform. You may also ask the school where you are (or your child is) enrolled to submit the deletion request on your behalf — either route reaches us.
+    </div>
+
+    <h2>What data is deleted</h2>
+    <p>When your request is verified, we delete the personal data associated with your account, including:</p>
+    <ul>
+      <li>Your profile information — <strong>name, email address, and phone number</strong>;</li>
+      <li>Your login credentials;</li>
+      <li>Account records tied to your identity, such as membership, class schedule, attendance, and rank/belt-progress entries.</li>
+    </ul>
+
+    <h2>What may be retained, and for how long</h2>
+    <p>Some information must be kept for a limited time after account deletion to meet legal, tax, and accounting obligations, to resolve disputes, and to prevent fraud:</p>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Retention after deletion</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Payment and transaction records (required for tax &amp; accounting)</td><td>Up to 7 years, as required by law, then deleted or anonymized</td></tr>
+        <tr><td>Minimal records needed to comply with legal obligations or resolve disputes</td><td>Only as long as legally required, then deleted</td></tr>
+        <tr><td>Aggregated or anonymized data that no longer identifies you</td><td>May be retained indefinitely</td></tr>
+      </tbody>
+    </table>
+    <p>Payment card numbers are never stored by NMAO — card details are handled by our payment processor (Stripe) and are not held in your NMAO account.</p>
+
+    <h2>Deleting only some of your data</h2>
+    <p>You can also ask us to delete or correct specific information without closing your account. Email <a href="mailto:support@nmao.us?subject=Data%20request%20—%20NMAO%20account">support@nmao.us</a> describing what you would like removed or corrected.</p>
+
+    <h2>Contact</h2>
+    <p>
+      NMAO Inc.<br/>
+      376 S Bayview Ave, Freeport, NY 11520<br/>
+      Email: <a href="mailto:support@nmao.us">support@nmao.us</a>
+    </p>
+    <p>For full details on how we handle your information, see our <a href="privacy.html">Privacy Policy</a>.</p>
+  </main>
+
+  <footer class="footer">
+    © 2026 NMAO Inc. All rights reserved. &nbsp;·&nbsp; <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="terms.html">Terms of Service</a>
+  </footer>
+</body>
+</html>
