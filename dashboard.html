@@ -10238,7 +10238,7 @@ function renderAutopayToggle(sm){
   // limbo (needs card), NOT enrolled — never show it green. A comped sub is paused, not billing.
   var hasSub = !!sm.stripe_subscription_id;
   var isComp = (sm.billing_method==='comp');
-  var live = hasSub && !isComp;                                       // truly billing
+  var live = hasSub && !isComp && sm.autopay !== false;              // truly billing — a paused sub keeps its id but autopay=false
   var intended = (sm.autopay===true || sm.billing_method==='autopay' || sm.awaiting_card===true);
   var bg, lbl, icon, tip;
   if(live){
