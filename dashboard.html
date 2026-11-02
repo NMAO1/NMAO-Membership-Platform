@@ -2333,16 +2333,6 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
             <select id="profileTagAdd" onchange="addTagToStudent()" style="background:var(--surface);border:1px solid var(--border);color:var(--white);font-family:var(--font-ui);font-size:0.82rem;padding:0.45rem 0.65rem;width:100%"><option value="">+ Add Tag</option></select>
           </div>
 
-          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
-            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-chart-line" style="color:var(--gold)"></i>Progress <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_progress',this)" title="Help">?</button></div>
-            <div id="profileBeltSection" style="display:none">
-              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
-              <div id="profileBeltInfo"></div><div id="profileBeltProgress" style="margin-top:0.75rem"></div><div id="profileBeltPalette" style="margin-top:0.75rem"></div>
-              <div style="border-top:1px solid var(--border);margin:0.9rem 0"></div>
-            </div>
-            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
-            <div id="profileClassTracker"></div>
-          </div>
 
         </div>
 
@@ -2439,6 +2429,12 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
             <div id="profileCardOnFile" style="font-size:0.82rem;color:var(--muted);font-style:italic">Loading...</div>
           </div>
 
+
+        </div>
+      </div>
+
+      <!-- §FULL-WIDTH-BILLS-BELT — bills & payments full width, belt progress below (moved out of the 2-col grid) -->
+      <div style="padding:1.5rem;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:1rem">
           <!-- §BILLS-PAYMENTS tile — matches the Guardians/Billing tiles; bills + upcoming + Make a Payment -->
           <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
             <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--gold)"></i>Bills &amp; Payments</div>
@@ -2460,8 +2456,16 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
               <div style="margin-top:0.85rem"><button class="panel-action gold" id="mpSubmitBtn" style="font-size:0.72rem" onclick="submitMakePayment()"><i class="fa-solid fa-bolt" style="margin-right:0.4rem"></i>Charge <span id="mpSubmitAmt"></span></button><p id="mpMsg" class="form-msg" style="margin-top:0.4rem"></p></div>
             </div>
           </div>
-
-        </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
+            <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-chart-line" style="color:var(--gold)"></i>Progress <button class="help-hint-inline" onclick="openHelpPopover('profile.sec_progress',this)" title="Help">?</button></div>
+            <div id="profileBeltSection" style="display:none">
+              <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Belt Status</div>
+              <div id="profileBeltInfo"></div><div id="profileBeltProgress" style="margin-top:0.75rem"></div><div id="profileBeltPalette" style="margin-top:0.75rem"></div>
+              <div style="border-top:1px solid var(--border);margin:0.9rem 0"></div>
+            </div>
+            <div style="font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:0.75rem">Class Tracker</div>
+            <div id="profileClassTracker"></div>
+          </div>
       </div>
 
       <div style="padding:1.5rem">
@@ -4737,7 +4741,59 @@ function handleSmsDeepLink(){
   var name=s?(s.first_name+' '+s.last_name):key;
   setTimeout(function(){ if(window.openSmsThread) openSmsThread(key, name); }, 200);
 }
-async function saveBrandSettings() {
+// §BRAND-CONFIRM — never save a brand/design change blind. Show a live preview in the
+// chosen colors + flag low-contrast (unreadable) combinations before writing to the DB.
+function _hexN(h){ h=(h||'').trim().replace('#',''); if(h.length===3)h=h.split('').map(function(c){return c+c;}).join(''); if(!/^[0-9a-fA-F]{6}$/.test(h))return null; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function _relLum(rgb){ var a=rgb.map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}); return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2]; }
+function _contrast(h1,h2){ var r1=_hexN(h1),r2=_hexN(h2); if(!r1||!r2)return null; var l1=_relLum(r1),l2=_relLum(r2); return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05); }
+function saveBrandSettings(){
+  var cfg={ bg:document.getElementById('settingBgColor').value, surface:document.getElementById('settingSurfaceColor').value,
+    accent:document.getElementById('settingColor').value, text:document.getElementById('settingFontColor').value,
+    border:document.getElementById('settingBorderColor').value, nav:document.getElementById('settingSidebarText').value };
+  var warns=[];
+  function chk(label,a,b,min){ var c=_contrast(a,b); if(c!==null && c<min) warns.push({label:label,ratio:c,min:min}); }
+  chk('Body text on the background', cfg.text, cfg.bg, 4.5);
+  chk('Body text on cards (surface)', cfg.text, cfg.surface, 4.5);
+  chk('Sidebar nav text on the background', cfg.nav, cfg.bg, 3);
+  chk('Accent (buttons) on the background', cfg.accent, cfg.bg, 2);
+  cfg.warns=warns; _showBrandConfirm(cfg);
+}
+function _showBrandConfirm(cfg){
+  _closeBrandConfirm();
+  var hasWarn=cfg.warns.length>0;
+  var warnHtml = hasWarn ? ('<div style="background:rgba(242,109,109,0.1);border:1px solid #F26D6D;border-radius:8px;padding:0.85rem 1rem;margin:1rem 0">'
+      +'<div style="color:#F26D6D;font-weight:700;font-size:0.82rem;margin-bottom:0.4rem"><i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>Readability warning'+(cfg.warns.length>1?'s':'')+'</div>'
+      +'<ul style="margin:0;padding-left:1.1rem;color:#F5F0E8;font-size:0.8rem;line-height:1.6">'
+      + cfg.warns.map(function(w){return '<li>'+w.label+' may be hard to read (contrast '+w.ratio.toFixed(1)+':1 — aim for '+w.min+':1 or higher).</li>';}).join('')
+      +'</ul></div>') : '<div style="color:#34D399;font-size:0.8rem;margin:0.9rem 0"><i class="fa-solid fa-circle-check" style="margin-right:0.4rem"></i>Colors look readable.</div>';
+  var prev='<div style="border-radius:10px;overflow:hidden;border:1px solid '+cfg.border+';margin:1rem 0"><div style="display:flex">'
+    +'<div style="width:116px;background:'+cfg.bg+';border-right:1px solid '+cfg.border+';padding:0.9rem 0.8rem">'
+      +'<div style="color:'+cfg.accent+';font-weight:700;font-size:0.8rem;margin-bottom:0.7rem">NMAO</div>'
+      +'<div style="color:'+cfg.nav+';font-size:0.74rem;line-height:1.95">Dashboard<br>Members<br>Schedule<br>Billing</div></div>'
+    +'<div style="flex:1;background:'+cfg.bg+';padding:0.9rem 1rem">'
+      +'<div style="color:'+cfg.text+';font-weight:700;font-size:0.9rem;margin-bottom:0.5rem">Good morning</div>'
+      +'<div style="background:'+cfg.surface+';border:1px solid '+cfg.border+';border-radius:8px;padding:0.75rem 0.85rem;margin-bottom:0.7rem">'
+        +'<div style="color:'+cfg.text+';font-size:0.78rem;margin-bottom:0.3rem">Sample card text on a surface panel.</div>'
+        +'<div style="color:'+cfg.accent+';font-weight:700;font-size:0.95rem">72 members</div></div>'
+      +'<span style="display:inline-block;background:'+cfg.accent+';color:'+cfg.bg+';font-weight:700;font-size:0.74rem;padding:0.4rem 0.9rem;border-radius:6px">Primary button</span>'
+    +'</div></div></div>';
+  var card='<div style="background:#141A30;border:1px solid #2A3352;border-radius:14px;max-width:480px;width:100%;padding:1.5rem;font-family:var(--font-ui);box-shadow:0 24px 60px rgba(0,0,0,0.5)">'
+    +'<div style="font-family:var(--font-display);font-size:1.15rem;color:#EEF1F8;margin-bottom:0.3rem">Confirm your brand colors</div>'
+    +'<div style="color:#A3ACC6;font-size:0.82rem">Here’s how your dashboard will look. Make sure everything is easy to read before saving.</div>'
+    +prev+warnHtml
+    +'<div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:1rem">'
+      +'<button class="btn-sm" onclick="_closeBrandConfirm()">Cancel</button>'
+      +'<button class="panel-action gold" onclick="_confirmBrandSave()"><i class="fa-solid fa-check" style="margin-right:0.35rem"></i>'+(hasWarn?'Save anyway':'Looks good — save')+'</button>'
+    +'</div></div>';
+  var ov=document.createElement('div'); ov.id='brandConfirmOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:1.5rem';
+  ov.innerHTML=card;
+  ov.addEventListener('click',function(e){ if(e.target===ov)_closeBrandConfirm(); });
+  document.body.appendChild(ov);
+}
+function _closeBrandConfirm(){ var o=document.getElementById('brandConfirmOverlay'); if(o)o.remove(); }
+function _confirmBrandSave(){ _closeBrandConfirm(); _doSaveBrandSettings(); }
+async function _doSaveBrandSettings() {
   setMsg('brandMsg','Saving...','');
   var r=await sb.from('schools').update({color:document.getElementById('settingColor').value,bg_color:document.getElementById('settingBgColor').value,border_color:document.getElementById('settingBorderColor').value,surface_color:document.getElementById('settingSurfaceColor').value,font_color:document.getElementById('settingFontColor').value,sidebar_text_color:document.getElementById('settingSidebarText').value,font_family:selectedFont}).eq('id',SID);
 if(r.error){setMsg('brandMsg',r.error.message,'error');}else{setMsg('brandMsg','Brand settings saved!','success');setTimeout(function(){document.getElementById('brandMsg').textContent='';},3000);}
@@ -10222,7 +10278,11 @@ async function loadProfileMemberships(sid) {
       // "~" prefix flags a manual/cash plan where the date is the expected, not auto-billed, charge).
       var _tnd=(typeof smNextChargeDate==='function')?smNextChargeDate(sm,m):null;
       var nextLbl=_tnd?((sm.stripe_subscription_id?'':'~')+smDateLabel(_tnd)):'';
-      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+(nextLbl?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-calendar-day" style="margin-right:0.3rem;color:#7DAAD4"></i>Next charge · '+nextLbl+'</div>':'')+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+renderCompControls(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
+      // §PAUSED-LABEL — a kept subscription with autopay off (or comped) isn't billing; show that, not a bogus "Next charge" date.
+      var _pzLbl='';
+      if(sm.stripe_subscription_id && sm.billing_method==='comp'){ nextLbl=''; _pzLbl='<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-hand-holding-heart" style="margin-right:0.3rem;color:#C9A84C"></i>Comped — not billed</div>'; }
+      else if(sm.stripe_subscription_id && sm.autopay===false){ nextLbl=''; _pzLbl='<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-circle-pause" style="margin-right:0.3rem;color:#C9A84C"></i>Paused — billing off</div>'; }
+      return '<div onclick="openMembershipDetail(\''+sm.id+'\')" style="cursor:pointer;padding:0.6rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+name+'</div>'+pill+'</div><div style="font-size:0.78rem;color:var(--gold);margin-top:0.15rem">'+price+(cl?(' \u00b7 '+cl):'')+'</div>'+(since?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">'+since+'</div>':'')+(nextLbl?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem"><i class="fa-solid fa-calendar-day" style="margin-right:0.3rem;color:#7DAAD4"></i>Next charge · '+nextLbl+'</div>':'')+_pzLbl+smTermLine(sm)+'<div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem"><i class="fa-solid fa-circle-info" style="margin-right:0.3rem"></i>View details</div><div style="margin-top:0.55rem;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">'+renderAutopayToggle(sm)+renderCompControls(sm)+'</div><div style="margin-top:0.5rem"><button class="btn-sm gold" onclick="event.stopPropagation();chargeForPlan(\''+sm.id+'\')"><i class="fa-solid fa-cash-register"></i> Charge for this plan</button></div></div>';
     }).join('');
   } catch(e) { document.getElementById('profileMembershipslist').innerHTML='<div style="color:var(--muted);font-size:0.82rem">No membership data.</div>'; }
 }
