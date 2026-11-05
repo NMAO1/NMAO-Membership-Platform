@@ -2438,6 +2438,7 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
           <!-- §BILLS-PAYMENTS tile — matches the Guardians/Billing tiles; bills + upcoming + Make a Payment -->
           <div style="border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem">
             <div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--gold)"></i>Bills &amp; Payments</div>
+            <div id="billsSnapshot"></div>
             <div id="billsSummary" style="font-size:0.68rem;color:var(--muted);margin-bottom:0.75rem"></div>
             <div id="billsUpcomingWrap" style="margin-bottom:0.75rem"></div>
             <div id="billsList" style="max-height:280px;overflow-y:auto"></div>
@@ -8942,7 +8943,9 @@ async function loadProfileCardOnFile(sid){
     }
     var cards = data.cards || [];
     _profileCards = cards;
+    window._profileCards = cards;   // §SNAP — the Bills snapshot card-health chip reads this
     _profileHasCard = cards.length > 0;   // AUTOPAY card-gate uses this
+    try{ if(typeof renderBillsSnapshot==='function' && _billsCtx && _billsCtx.sid===sid) renderBillsSnapshot(); }catch(e){}
     if(!cards.length){
       el.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.2rem">No cards on file</div>' + addBtns;
       return;
@@ -10167,6 +10170,7 @@ async function loadStudentCredit(sid){
     window._profileWalletCents=cents;
     var el=document.getElementById('profileCreditBalance');
     if(el){el.textContent='$'+(cents/100).toFixed(2);el.style.color=cents>0?'var(--gold)':'#F5F0E8';}
+    try{ if(typeof renderBillsSnapshot==='function' && _billsCtx && _billsCtx.sid===sid) renderBillsSnapshot(); }catch(e){}  // §SNAP — fill the credit tile once the wallet loads
   }catch(e){var el=document.getElementById('profileCreditBalance');if(el)el.textContent='--';}
 }
 var _issueCreditKey=null;   // §CREDIT-DEDUPE — one key per form-open; a network retry reuses it (upsert no-ops), a genuine second credit gets a fresh one.
@@ -10991,6 +10995,8 @@ var _billsCtx = { sid:null, familyIds:[], nameById:{}, pastDueCents:0, upcomingC
 // the summary + upcoming + full bills list immediately.
 async function loadBillsTile(sid){
   _billsCtx = { sid:sid, familyIds:[sid], nameById:{}, pastDueCents:0, upcomingCents:0, chargeableUpcomingCents:0, failedIds:[], loaded:false };
+  _billsFilter = { status:'all', type:'all' };   // §SNAP — fresh ledger filter per member
+  var _snap=document.getElementById('billsSnapshot'); if(_snap) _snap.innerHTML='';
   var mp=document.getElementById('makePaymentPanel'); if(mp) mp.style.display='none';
   var sumEl=document.getElementById('billsSummary'); if(sumEl) sumEl.innerHTML='';
   try{
@@ -11000,10 +11006,8 @@ async function loadBillsTile(sid){
     // can void exactly those rows; otherwise they keep re-counting as past due and stay chargeable again.
     var failedCents=0, failedIds=[]; rows.forEach(function(r){ if(r.status==='failed'){ failedCents+=Math.round((r.amount||0)*100); failedIds.push(r.id); } });
     _billsCtx.pastDueCents=failedCents; _billsCtx.failedIds=failedIds;
-    if(sumEl){ var bits=[];
-      if(failedCents>0) bits.push('<span style="color:#E07070">Past due $'+(failedCents/100).toFixed(2)+'</span>');
-      if(lastPaid) bits.push('Last payment '+smDateLabel((lastPaid.created_at||'').substring(0,10)));
-      sumEl.innerHTML=bits.join(' · '); }
+    // §SNAP — Balance due / Past due now live in the snapshot header (renderBillsSnapshot); keep this thin line for "Last payment" only.
+    if(sumEl){ sumEl.innerHTML = lastPaid ? ('Last payment '+smDateLabel((lastPaid.created_at||'').substring(0,10))) : ''; }
   }catch(e){}
   await loadBillsSection(sid);
 }
@@ -11021,8 +11025,9 @@ async function loadBillsSection(sid){
   }catch(e){}
   _billsCtx.familyIds=ids; _billsCtx.nameById=nameById;
   var isFamily=ids.length>1;
-  await renderBillsUpcoming(ids, nameById, isFamily);
+  await renderBillsUpcoming(ids, nameById, isFamily);   // sets _billsCtx.nextChargeLabel for the snapshot
   await renderBillsList(ids, nameById, isFamily);
+  await renderBillsSnapshot();
 }
 
 function billStatusBadge(s){
@@ -11031,30 +11036,203 @@ function billStatusBadge(s){
   return '<span style="display:inline-block;font-size:0.6rem;font-weight:700;letter-spacing:0.04em;color:'+v[1]+';border:1px solid '+v[1]+'66;border-radius:999px;padding:0.12rem 0.5rem">'+v[0]+'</span>';
 }
 
+// Fetches the member/family ledger once, stashes it on _billsCtx, then delegates all rendering (filters,
+// month grouping, sparkline, per-failed-row retry) to _renderBillsRows so filter clicks re-render with no refetch.
 async function renderBillsList(ids, nameById, isFamily){
   var el=document.getElementById('billsList'); if(!el) return;
-  el.innerHTML='<div style="color:var(--muted);font-size:0.82rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading bills…</div>';
+  el.innerHTML='<div style="color:var(--muted);font-size:0.82rem"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:0.4rem"></i>Loading bills&hellip;</div>';
   try{
     var r=await sb.from('payments').select('id,student_id,type,description,amount,status,due_date,created_at,invoice_number,stripe_payment_intent_id,amount_refunded_cents').in('student_id',ids).eq('school_id',SID).order('created_at',{ascending:false}).limit(200);
-    var data=r.data||[];
-    if(!data.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">No bills on record.</div>'; return; }
-    var typeLabels={membership:'Membership',retail_sale:'Retail',session:'Session',session_pack:'Session Pack',belt_test:'Belt Test',fee:'Fee',other:'Other'};
-    var cols=(isFamily?'1.2fr ':'')+'2fr 0.9fr 0.8fr 0.7fr';
-    var head='<div style="display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.4rem 0.5rem;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">'+(isFamily?'<div>Person</div>':'')+'<div>Description</div><div>Due</div><div style="text-align:right">Total</div><div style="text-align:center">Status</div></div>';
-    el.innerHTML='<div style="font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem">Bills</div>'+head+data.map(function(p){
-      var d=(''+(p.due_date||p.created_at||'')).substring(0,10);
-      var person=isFamily?('<div style="font-size:0.78rem;color:var(--white)">'+(nameById[p.student_id]||'—')+'</div>'):'';
-      var desc=(typeLabels[p.type]||p.type||'Bill')+(p.description?('<span style="color:var(--muted);font-size:0.7rem"> · '+p.description+'</span>'):'');
-      // Whole row opens the ONE shared transaction drawer (openChargeDetail). Refund / Resend receipt /
-      // View in Stripe now all live INSIDE that drawer, so this member list and the school-wide Revenue
-      // list behave identically. (Old inline Refund prompt removed — superseded by the drawer.)
-      return '<div onclick="openChargeDetail(\''+p.id+'\',\'bills\')" style="cursor:pointer;display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.55rem 0.5rem;align-items:center;border-bottom:1px solid var(--border)">'+person+
-        '<div style="font-size:0.8rem;color:var(--white)">'+desc+'</div>'+
-        '<div style="font-size:0.74rem;color:var(--muted)">'+(d?smDateLabel(d):'—')+'</div>'+
-        '<div style="font-size:0.82rem;color:var(--gold);text-align:right">$'+parseFloat(p.amount||0).toFixed(2)+'</div>'+
-        '<div style="text-align:center">'+billStatusBadge(p.status)+'</div></div>';
-    }).join('');
+    _billsCtx.allRows=r.data||[]; _billsCtx.isFamily=isFamily;
+    _renderBillsRows();
   }catch(e){ el.innerHTML='<div style="color:var(--muted);font-size:0.82rem">Bills unavailable.</div>'; }
+}
+
+// ══════════════════════ §BILLS-PLUS — snapshot header, card health, retry, reminder, statement, filters ══════════════════════
+// Every action reuses an existing, deployed primitive (no new Edge Function):
+//   retry a failed charge -> create-pos-charge (same path + semantics as Make-a-Payment "Amount due now"; voids the failed row on success)
+//   send reminder         -> send-sms (the same EF the Messages tab uses)
+//   statement             -> client-side CSV via downloadTextFile + a printable window (browser Save-as-PDF)
+//   next charge / autopay / account credit / card-on-file are read from state the profile already loaded.
+var _billsFilter = { status:'all', type:'all' };
+function _bpMoney(cents){ return '$'+(Math.round(cents||0)/100).toFixed(2); }
+function _setBillsFilter(k,v){ _billsFilter[k]=v; _renderBillsRows(); }
+
+function _bpStat(label,value,color){
+  return '<div style="flex:1;min-width:92px;background:var(--black);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.65rem">'+
+    '<div style="font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">'+label+'</div>'+
+    '<div style="font-size:0.95rem;font-weight:700;color:'+(color||'var(--white)')+'">'+value+'</div></div>';
+}
+function _bpChip(color,icon,label,strong){
+  return '<span style="display:inline-flex;align-items:center;gap:0.35rem;background:'+(strong?color:'transparent')+';border:1px solid '+color+(strong?'':'66')+';color:'+(strong?'#fff':color)+';border-radius:999px;padding:0.2rem 0.6rem;font-size:0.66rem;font-weight:700;letter-spacing:0.03em"><i class="fa-solid '+icon+'"></i>'+label+'</span>';
+}
+function _bpAutopayState(mems){
+  var anyLive=false,anyPaused=false,anyComp=false,anyNeedsCard=false,any=false;
+  (mems||[]).forEach(function(sm){ any=true; var hasSub=!!sm.stripe_subscription_id; var comp=(sm.billing_method==='comp');
+    if(hasSub&&!comp&&sm.autopay!==false) anyLive=true;
+    else if(hasSub&&comp) anyComp=true;
+    else if(hasSub&&sm.autopay===false) anyPaused=true;
+    else if(sm.autopay===true||sm.billing_method==='autopay'||sm.awaiting_card===true) anyNeedsCard=true;
+  });
+  if(!any) return {label:'&mdash;',color:'var(--muted)'};
+  if(anyLive) return {label:'On',color:'#5A9A6A'};
+  if(anyPaused) return {label:'Paused',color:'#C9A84C'};
+  if(anyComp) return {label:'Comped',color:'#7DAAD4'};
+  if(anyNeedsCard) return {label:'Needs card',color:'#B9822E'};
+  return {label:'Off',color:'#E07070'};
+}
+// Card-on-file health from the cards the profile already loaded (window._profileCards, set by loadProfileCardOnFile).
+function billsCardHealthChip(){
+  try{
+    var cards=window._profileCards||[]; if(!cards.length) return _bpChip('#888888','fa-credit-card','No card on file');
+    var def=cards.filter(function(c){return c.is_default;})[0]||cards[0];
+    var face=(def.brand?(''+def.brand).toUpperCase():'Card')+' &bull;&bull;&bull;&bull;'+(def.last4||'');
+    if(cards.some(function(c){return c.expired;})) return _bpChip('#E07070','fa-triangle-exclamation','Card expired &mdash; update needed',true);
+    if(def.exp_month&&def.exp_year){
+      var now=new Date(); var expEnd=new Date(def.exp_year, def.exp_month, 1); // boundary: first day after the exp month
+      var days=(expEnd-now)/(86400000);
+      if(days>0&&days<=45) return _bpChip('#C9A84C','fa-clock',face+' &mdash; expires '+String(def.exp_month).padStart(2,'0')+'/'+String(def.exp_year).slice(-2));
+    }
+    return _bpChip('#5A9A6A','fa-credit-card',face);
+  }catch(e){ return ''; }
+}
+// Snapshot KPI strip + at-a-glance actions. Runs after upcoming+list so _billsCtx.nextChargeLabel is set.
+async function renderBillsSnapshot(){
+  var el=document.getElementById('billsSnapshot'); if(!el) return;
+  var sid=_billsCtx.sid; if(!sid) return;
+  var pastDue=_billsCtx.pastDueCents||0;
+  var credit=(typeof window._profileWalletCents==='number')?window._profileWalletCents:0;
+  var mems=Object.keys(_profileMemsById||{}).map(function(k){return _profileMemsById[k];}).filter(function(sm){return sm&&sm.student_id===sid;});
+  var ap=_bpAutopayState(mems);
+  var lifeCents=0;
+  try{ var lp=await sb.from('payments').select('amount,status').in('student_id',_billsCtx.familyIds||[sid]).eq('school_id',SID).in('status',['paid','partial_refund']); (lp.data||[]).forEach(function(p){ lifeCents+=Math.round((parseFloat(p.amount)||0)*100); }); }catch(e){}
+  var tiles=[];
+  tiles.push(_bpStat('Balance due', pastDue>0?_bpMoney(pastDue):'$0.00', pastDue>0?'#E07070':'var(--white)'));
+  tiles.push(_bpStat('Next charge', _billsCtx.nextChargeLabel||'&mdash;', 'var(--white)'));
+  if(credit>0) tiles.push(_bpStat('Account credit', _bpMoney(credit), 'var(--gold)'));
+  tiles.push(_bpStat('Autopay', ap.label, ap.color));
+  tiles.push(_bpStat('Lifetime paid', _bpMoney(lifeCents), 'var(--muted2)'));
+  var chip=billsCardHealthChip();
+  var actions='';
+  if(pastDue>0){
+    actions+='<button class="panel-action gold" style="font-size:0.72rem" onclick="openMakePaymentPanel()"><i class="fa-solid fa-hand-holding-dollar" style="margin-right:0.35rem"></i>Collect '+_bpMoney(pastDue)+'</button>';
+    actions+='<button class="btn-sm" style="font-size:0.72rem" onclick="sendPaymentReminder()"><i class="fa-solid fa-bell" style="margin-right:0.3rem"></i>Send reminder</button>';
+  }
+  actions+='<button class="btn-sm" style="font-size:0.72rem" onclick="exportMemberStatement()"><i class="fa-solid fa-file-csv" style="margin-right:0.3rem"></i>Statement CSV</button>';
+  actions+='<button class="btn-sm" style="font-size:0.72rem" onclick="printMemberStatement()"><i class="fa-solid fa-print" style="margin-right:0.3rem"></i>Print</button>';
+  el.innerHTML='<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.6rem">'+tiles.join('')+'</div>'+
+    (chip?('<div style="margin-bottom:0.6rem">'+chip+'</div>'):'')+
+    '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">'+actions+'</div>';
+}
+// Tiny 12-month bar chart of this member/family's PAID totals.
+function _billsSparkline(rows){
+  var byM={}, now=new Date();
+  (rows||[]).forEach(function(p){ if(p.status!=='paid'&&p.status!=='partial_refund') return; var d=new Date(p.created_at); if(isNaN(d)) return; var k=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); byM[k]=(byM[k]||0)+(parseFloat(p.amount)||0); });
+  var keys=[]; for(var i=11;i>=0;i--){ var d=new Date(now.getFullYear(),now.getMonth()-i,1); keys.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)); }
+  var max=0; keys.forEach(function(k){ if((byM[k]||0)>max) max=byM[k]; });
+  if(max<=0) return '';
+  var bars=keys.map(function(k){ var v=byM[k]||0; var h=Math.max(2,Math.round((v/max)*34)); return '<div title="'+k+': $'+v.toFixed(2)+'" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center"><div style="width:68%;height:'+h+'px;background:var(--gold);opacity:'+(v>0?0.85:0.2)+';border-radius:2px 2px 0 0"></div></div>'; }).join('');
+  return '<div style="margin:0 0 0.7rem"><div style="font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Payments &middot; last 12 months</div><div style="display:flex;align-items:flex-end;gap:2px;height:40px">'+bars+'</div></div>';
+}
+// Renders the ledger from _billsCtx.allRows applying _billsFilter; failed rows get a Retry action.
+function _renderBillsRows(){
+  var el=document.getElementById('billsList'); if(!el) return;
+  var all=_billsCtx.allRows||[], isFamily=_billsCtx.isFamily, nameById=_billsCtx.nameById||{};
+  if(!all.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;padding:1rem 0">No bills on record.</div>'; return; }
+  var typeLabels={membership:'Membership',retail_sale:'Retail',session:'Session',session_pack:'Session Pack',belt_test:'Belt Test',fee:'Fee',other:'Other',imported:'Imported'};
+  var failedCount=all.filter(function(p){return p.status==='failed';}).length;
+  var statusBtns=[['all','All'],['failed','Failed'+(failedCount?(' ('+failedCount+')'):'')],['paid','Paid'],['refunded','Refunds']].map(function(s){ var on=_billsFilter.status===s[0]; return '<button onclick="_setBillsFilter(\'status\',\''+s[0]+'\')" style="font-size:0.62rem;padding:0.18rem 0.55rem;border-radius:999px;border:1px solid '+(on?'var(--gold)':'var(--border)')+';background:'+(on?'rgba(201,168,76,0.15)':'transparent')+';color:'+(on?'var(--gold)':'var(--muted)')+';cursor:pointer;font-family:var(--font-ui)">'+s[1]+'</button>'; }).join('');
+  var types=[]; all.forEach(function(p){ var t=p.type||'other'; if(types.indexOf(t)===-1) types.push(t); });
+  var typeSel='<select onchange="_setBillsFilter(\'type\',this.value)" style="font-size:0.62rem;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:0.15rem 0.3rem;font-family:var(--font-ui)"><option value="all"'+(_billsFilter.type==='all'?' selected':'')+'>All types</option>'+types.map(function(t){ return '<option value="'+t+'"'+(_billsFilter.type===t?' selected':'')+'>'+(typeLabels[t]||t)+'</option>'; }).join('')+'</select>';
+  var filterBar='<div style="display:flex;gap:0.35rem;flex-wrap:wrap;align-items:center;margin:0 0 0.6rem">'+statusBtns+'<span style="margin-left:auto">'+typeSel+'</span></div>';
+  var spark=_billsSparkline(all);
+  var rows=all.filter(function(p){
+    if(_billsFilter.status==='failed'&&p.status!=='failed') return false;
+    if(_billsFilter.status==='paid'&&p.status!=='paid') return false;
+    if(_billsFilter.status==='refunded'&&p.status!=='refunded'&&p.status!=='partial_refund') return false;
+    if(_billsFilter.type!=='all'&&(p.type||'other')!==_billsFilter.type) return false;
+    return true;
+  });
+  if(!rows.length){ el.innerHTML=filterBar+spark+'<div style="color:var(--muted);font-style:italic;font-size:0.82rem;padding:0.75rem 0">No bills match this filter.</div>'; return; }
+  var cols=(isFamily?'1.1fr ':'')+'1.9fr 0.9fr 0.8fr 0.7fr 0.7fr';
+  var out=filterBar+spark; var curMonth=null;
+  rows.forEach(function(p){
+    var d=(''+(p.due_date||p.created_at||'')).substring(0,10);
+    var mk=(''+(p.created_at||d)).substring(0,7);
+    if(mk!==curMonth){ curMonth=mk; var mlabel=mk; try{ mlabel=new Date(mk+'-01T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}); }catch(e){}
+      out+='<div style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:0.7rem 0 0.3rem;padding-top:0.3rem;border-top:1px solid var(--border)">'+mlabel+'</div>'; }
+    var person=isFamily?('<div style="font-size:0.76rem;color:var(--white)">'+(nameById[p.student_id]||'&mdash;')+'</div>'):'';
+    var desc=(typeLabels[p.type]||p.type||'Bill')+(p.description?('<span style="color:var(--muted);font-size:0.7rem"> &middot; '+p.description+'</span>'):'');
+    var retry=(p.status==='failed')?('<button onclick="event.stopPropagation();retryFailedPayment(\''+p.id+'\','+(parseFloat(p.amount)||0)+',\''+p.student_id+'\')" title="Retry this failed charge on the card on file" style="font-size:0.6rem;font-weight:700;color:#C9A84C;border:1px solid #C9A84C;border-radius:999px;padding:0.1rem 0.5rem;background:transparent;cursor:pointer;font-family:var(--font-ui)"><i class="fa-solid fa-rotate-right"></i> Retry</button>'):'';
+    out+='<div onclick="openChargeDetail(\''+p.id+'\',\'bills\')" style="cursor:pointer;display:grid;grid-template-columns:'+cols+';gap:0.5rem;padding:0.5rem 0.5rem;align-items:center;border-bottom:1px solid var(--border)">'+person+
+      '<div style="font-size:0.8rem;color:var(--white)">'+desc+'</div>'+
+      '<div style="font-size:0.74rem;color:var(--muted)">'+(d?smDateLabel(d):'&mdash;')+'</div>'+
+      '<div style="font-size:0.82rem;color:var(--gold);text-align:right">$'+(parseFloat(p.amount)||0).toFixed(2)+'</div>'+
+      '<div style="text-align:center">'+billStatusBadge(p.status)+'</div>'+
+      '<div style="text-align:center">'+retry+'</div></div>';
+  });
+  el.innerHTML=out;
+}
+// Retry one failed charge: re-charge that amount on the owning student's card via create-pos-charge, then
+// void the failed row (same clearing rule as §PASTDUE-CLOSE) so it stops counting as past due.
+async function retryFailedPayment(paymentId, amountNum, studentId){
+  var cents=Math.round((parseFloat(amountNum)||0)*100);
+  var sid=studentId||_billsCtx.sid;
+  if(cents<=0){ alert('This payment has no amount to retry.'); return; }
+  if(!confirm('Retry this failed payment?\n\nThis charges the card on file '+_bpMoney(cents)+'. If it succeeds, the failed charge is cleared.')) return;
+  var uid=null; try{ var s=await sb.auth.getUser(); uid=(s&&s.data&&s.data.user)?s.data.user.id:null; }catch(e){}
+  var idem=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('retry_'+paymentId+'_'+Date.now());
+  try{
+    var resp=await fetch(SURL+'/functions/v1/create-pos-charge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await authToken())},body:JSON.stringify({ school_id:SID, student_id:sid, line_items:[{name:'Retry failed payment', unit_amount:cents, quantity:1, product_id:null, item_type:'custom'}], credit_to_apply_cents:0, cash_amount_cents:0, applied_by:uid, idempotency_key:idem })});
+    var jd={}; try{ jd=await resp.json(); }catch(e){}
+    if(!resp.ok||jd.error){ var em=jd.error||'Charge failed'; if(em.indexOf('NO_SAVED_CARD')>-1) em='No saved card on file &mdash; add a card first.'; else if(em.indexOf('AUTHENTICATION_REQUIRED')>-1) em='This card needs 3-D Secure authentication &mdash; send a payment link instead.'; else em=em.replace(/^[A-Z_]+:\s*/,''); alert('Retry failed: '+em); return; }
+    try{ await sb.from('payments').update({ status:'cancelled', notes:'Retried & collected via Bills' }).eq('id',paymentId).eq('school_id',SID).eq('status','failed'); }catch(e){}
+    if(window.showToast) showToast('Charged '+_bpMoney(jd.gross_charged_cents!=null?jd.gross_charged_cents:cents)+(jd.last4?(' to card '+jd.last4):'')+'.','ok');
+    await loadBillsTile(_billsCtx.sid);
+  }catch(e){ alert('Retry failed: '+(e&&e.message?e.message:e)); }
+}
+// Send a past-due (or upcoming) reminder by text, reusing the same send-sms EF the Messages tab uses.
+async function sendPaymentReminder(){
+  var sid=_billsCtx.sid; if(!sid) return;
+  var due=_billsCtx.pastDueCents||0;
+  var schoolName=(window.schoolData&&schoolData.name)?schoolData.name:'your school';
+  var body=(due>0)
+    ? ('Friendly reminder from '+schoolName+': there is a past-due balance of '+_bpMoney(due)+' on your account. Please update your payment or reply with any questions. Thank you!')
+    : ('Friendly reminder from '+schoolName+' about your upcoming tuition. Reply with any questions &mdash; thank you!');
+  if(!confirm('Send this reminder by text?\n\n'+body.replace(/&mdash;/g,'-'))) return;
+  try{
+    var r=await fetch(SURL+'/functions/v1/send-sms',{method:'POST',headers:{'Content-Type':'application/json','Authorization':SC_BEARER},body:JSON.stringify({school_id:SID, student_id:sid, body:body.replace(/&mdash;/g,'-')})});
+    if(r.ok){ if(window.showToast) showToast('Reminder sent by text.','ok'); }
+    else { var err={}; try{err=await r.json();}catch(e){} alert('Could not send reminder: '+((err&&err.error)||('HTTP '+r.status))); }
+  }catch(e){ alert('Reminder failed: '+(e&&e.message?e.message:e)); }
+}
+// Per-member statement as CSV (reuses the Payments-export helpers + downloadTextFile).
+function exportMemberStatement(){
+  var rows=_billsCtx.allRows||[];
+  if(!rows.length){ if(window.showToast) showToast('No bills to export.'); return; }
+  var name=(_billsCtx.nameById&&_billsCtx.nameById[_billsCtx.sid])||'member';
+  var ordered=rows.slice().reverse(); // oldest first for a statement
+  var lines=[['Date','Person','Type','Description','Amount','Status','Invoice'].join(',')];
+  var total=0;
+  ordered.forEach(function(p){
+    if(p.status==='paid'||p.status==='partial_refund') total+=parseFloat(p.amount)||0;
+    lines.push([ _pexDate(p.created_at||p.due_date), _pexCsvCell((_billsCtx.nameById&&_billsCtx.nameById[p.student_id])||''), _pexCsvCell(p.type||''), _pexCsvCell(p.description||''), (parseFloat(p.amount)||0).toFixed(2), _pexCsvCell(p.status||''), _pexCsvCell(p.invoice_number||'') ].join(','));
+  });
+  lines.push(['','','','TOTAL PAID','',total.toFixed(2),''].join(','));
+  downloadTextFile(lines.join('\r\n'), 'nmao-statement-'+(''+name).replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.csv', 'text/csv;charset=utf-8');
+  if(window.showToast) showToast('Statement CSV downloaded.','ok');
+}
+// Printable statement -> browser Save as PDF.
+function printMemberStatement(){
+  var rows=_billsCtx.allRows||[];
+  if(!rows.length){ if(window.showToast) showToast('No bills to print.'); return; }
+  var name=(_billsCtx.nameById&&_billsCtx.nameById[_billsCtx.sid])||'Member';
+  var schoolName=(window.schoolData&&schoolData.name)?schoolData.name:'NMAO';
+  var w=window.open('','_blank'); if(!w){ alert('Pop-up blocked — allow pop-ups to print, or use the Statement CSV.'); return; }
+  var ordered=rows.slice().reverse(); var total=0;
+  var body=ordered.map(function(p){ var d=(''+(p.due_date||p.created_at||'')).substring(0,10); if(p.status==='paid'||p.status==='partial_refund') total+=parseFloat(p.amount)||0; return '<tr><td>'+(d?smDateLabel(d):'')+'</td><td>'+((p.description||p.type||'')+'')+'</td><td style="text-align:right">$'+(parseFloat(p.amount)||0).toFixed(2)+'</td><td>'+(p.status||'')+'</td></tr>'; }).join('');
+  var html='<html><head><title>Statement - '+name+'</title><meta charset="utf-8"><style>body{font-family:Arial,Helvetica,sans-serif;padding:32px;color:#111}h1{font-size:18px;margin:0 0 4px}.sub{color:#555;font-size:13px}table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left}th{text-transform:uppercase;font-size:10px;letter-spacing:.05em;color:#666}tfoot td{font-weight:bold;border-top:2px solid #333}</style></head><body><h1>'+schoolName+' &mdash; Account Statement</h1><div class="sub">'+name+' &middot; '+new Date().toLocaleDateString()+'</div><table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td colspan="2">Total paid</td><td style="text-align:right">$'+total.toFixed(2)+'</td><td></td></tr></tfoot></table></body></html>';
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(function(){ try{ w.print(); }catch(e){} }, 300);
 }
 
 // §COMP-NEXT — waive the next Stripe charge for one plan (applies a one-time $0-out credit in Stripe).
@@ -11434,6 +11612,8 @@ async function renderBillsUpcoming(ids, nameById, isFamily){
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.5rem;border-bottom:1px solid var(--border)"><div><div style="font-size:0.82rem;color:var(--white)">'+person+(m?m.name:'Membership')+' <span style="font-size:0.56rem;color:#7DAAD4;border:1px solid #7DAAD466;border-radius:999px;padding:0.06rem 0.38rem;margin-left:0.3rem">'+tag+'</span></div><div style="font-size:0.7rem;color:var(--muted)">Next charge · '+dstr+' · Autopay '+apBadge+(su?' · <a onclick="event.stopPropagation();compNextBill(\''+sm.id+'\')" style="color:#7DAAD4;cursor:pointer;text-decoration:underline" title="Waive the next charge — sets it to $0 in Stripe">comp this bill</a>':'')+'</div></div><div style="font-size:0.85rem;color:var(--gold)">'+(amt!=null?('$'+amt.toFixed(2)):'—')+'</div></div>';
     }).join('');
     _billsCtx.upcomingCents=totalCents;
+    // §SNAP-NEXT — stash the soonest upcoming charge (date + amount) for the snapshot header's "Next charge" tile.
+    try{ var _sn=null; mems.forEach(function(sm){ var m=sm.memberships; var su=stripeMap[sm.id]; var dt=su?(su.next_date?new Date((''+su.next_date).substring(0,10)+'T12:00:00'):null):smNextChargeDate(sm,m); var c=su?su.amount_cents:(sm.price!=null?Math.round(parseFloat(sm.price)*100):null); if(dt&&!isNaN(dt)&&c!=null){ if(!_sn||dt<_sn.d){ _sn={d:dt,c:c}; } } }); _billsCtx.nextChargeLabel=_sn?(_sn.d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' &middot; '+_bpMoney(_sn.c)):'&mdash;'; _billsCtx.nextChargeCents=_sn?_sn.c:0; }catch(e){ _billsCtx.nextChargeLabel='&mdash;'; }
     el.innerHTML='<div style="font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:0 0 0.4rem">Upcoming</div>'+rowsHtml;
   }catch(e){ el.innerHTML=''; }
 }
