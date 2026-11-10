@@ -811,7 +811,7 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
         <div class="rev-card" onclick="openUpcomingBreakdown(15)"><div class="rev-amount" id="upc15">$0</div><div class="rev-label">Next 15 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc15sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
         <div class="rev-card" onclick="openUpcomingBreakdown(30)"><div class="rev-amount" id="upc30">$0</div><div class="rev-label">Next 30 Days <span style="font-weight:normal;letter-spacing:0;text-transform:none;color:var(--muted)">· projected</span></div><div id="upc30sub" style="font-size:0.68rem;color:var(--muted);margin-top:0.4rem"></div></div>
       </div>
-      <div id="upcPastDue" style="display:none;font-size:0.78rem;color:#E07070;margin-bottom:1.5rem;text-align:center"></div>
+      <div id="upcPastDue" role="button" title="View past-due details" onclick="openPastDueBreakdown()" style="display:none;font-size:0.78rem;color:#E07070;margin-bottom:1.5rem;text-align:center;cursor:pointer"></div>
       <div id="cancelFeesOwedPanel" style="display:none;margin-bottom:1.5rem"></div>
       <div class="content-heading"><h2>Calendar</h2><button class="help-hint-inline" onclick="openHelpPopover('home.calendar',this)" title="Help">?</button><div class="rule-h"></div>
         <div class="cal-view-toggle">
@@ -3423,6 +3423,21 @@ setTimeout(function(){if(window.hideBootSplash)window.hideBootSplash();},12000);
         <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-top:0.3rem" id="revBreakdownPeriodLabel">Today</div>
       </div>
       <div id="revBreakdownList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- §PASTDUE-MODAL — drill-down of past-due members, opened from the Revenue past-due line -->
+<div class="modal-overlay" id="pastDueModal">
+  <div class="modal" style="width:520px;max-width:95vw">
+    <div class="modal-header"><span class="modal-title">Past-Due Details</span><button class="modal-close" onclick="closePastDueBreakdown()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:1rem;padding:1rem;background:var(--black);border:1px solid var(--border)">
+        <div style="font-family:var(--font-display);font-size:2.5rem;color:#E07070;line-height:1" id="pastDueTotalAmt">$0.00</div>
+        <div style="font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-top:0.3rem" id="pastDueCountLbl">Past due</div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.85rem;line-height:1.5">These members have an overdue or failed payment. Open a member to see the exact charge and <b style="color:var(--white)">collect or retry</b> it.</div>
+      <div id="pastDueList"></div>
     </div>
   </div>
 </div>
@@ -13436,8 +13451,40 @@ async function loadUpcomingRevenue(){
     paintUpcomingTile('upc15','upc15sub',a15,c15);
     paintUpcomingTile('upc30','upc30sub',a30,c30);
     var pd=document.getElementById('upcPastDue');
-    if(pd){ if(pastDue>0){ pd.style.display='block'; pd.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i>$'+pastDue.toFixed(2)+' past due ('+pastN+' '+(pastN===1?'member':'members')+')'; } else { pd.style.display='none'; } }
+    if(pd){ if(pastDue>0){ pd.style.display='block'; pd.innerHTML='<i class="fa-solid fa-triangle-exclamation" style="margin-right:0.4rem"></i><span style="text-decoration:underline;text-underline-offset:2px">$'+pastDue.toFixed(2)+' past due ('+pastN+' '+(pastN===1?'member':'members')+')</span><i class="fa-solid fa-chevron-right" style="margin-left:0.45rem;font-size:0.62rem;opacity:0.85"></i>'; } else { pd.style.display='none'; } }
   }catch(e){}
+}
+// §PASTDUE-MODAL — drill-down from the Revenue "past due" line. Reuses the already-computed
+// _upcoming.list (name/studentId/membership/amount). Each row opens that member's profile, where the
+// Bills & Payments tile surfaces the exact failed charge(s) + Collect/Retry (§BILLS-PLUS) to rectify.
+function closePastDueBreakdown(){ var m=document.getElementById('pastDueModal'); if(m) m.classList.remove('active'); }
+function openPastDueBreakdown(){
+  var m=document.getElementById('pastDueModal'); if(!m) return;
+  var items=(_upcoming&&_upcoming.list)?_upcoming.list.filter(function(x){ return x.status==='past_due'; }):[];
+  items.sort(function(a,b){ return (b.amount||0)-(a.amount||0); });
+  var total=items.reduce(function(s,x){ return s+(x.amount||0); },0);
+  var amtEl=document.getElementById('pastDueTotalAmt'); if(amtEl) amtEl.textContent='$'+total.toFixed(2);
+  var cntEl=document.getElementById('pastDueCountLbl'); if(cntEl) cntEl.textContent=items.length+' '+(items.length===1?'member past due':'members past due');
+  var el=document.getElementById('pastDueList');
+  if(el){
+    if(!items.length){ el.innerHTML='<div style="color:var(--muted);font-style:italic;font-size:0.85rem;text-align:center;padding:1rem">No past-due members.</div>'; }
+    else{
+      el.innerHTML=items.map(function(x){
+        var mb='<span style="font-size:0.56rem;font-weight:700;color:'+(x.mode==='auto'?'#5A9A6A':'#C9A84C')+';border:1px solid '+(x.mode==='auto'?'#5A9A6A':'#C9A84C')+'66;border-radius:999px;padding:0.08rem 0.42rem;margin-left:0.45rem">'+(x.mode==='auto'?'AUTOPAY':'CASH')+'</span>';
+        return '<div onclick="pastDueOpenMember(\''+x.studentId+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.7rem 0.75rem;border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;background:var(--black)">'+
+          '<div style="min-width:0"><div style="font-size:0.9rem;color:var(--white);font-weight:600">'+(x.name||'Member')+mb+'</div>'+
+          '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem">'+(x.membershipName||'Membership')+' · payment past due</div></div>'+
+          '<div style="text-align:right;flex:none"><div style="font-size:0.95rem;color:#E07070;font-weight:700">$'+((x.amount||0)).toFixed(2)+'</div>'+
+          '<div style="font-size:0.66rem;color:var(--gold)">Open to collect <i class="fa-solid fa-arrow-right" style="font-size:0.58rem"></i></div></div></div>';
+      }).join('');
+    }
+  }
+  m.classList.add('active');
+}
+function pastDueOpenMember(sid){
+  closePastDueBreakdown();
+  try{ if(typeof closeRevenueBreakdown==='function') closeRevenueBreakdown(); }catch(e){}
+  try{ openStudentProfile(sid); }catch(e){}
 }
 function paintUpcomingTile(amtId,subId,auto,cash){
   var total=auto+cash;
