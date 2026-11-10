@@ -11010,7 +11010,7 @@ var _billsCtx = { sid:null, familyIds:[], nameById:{}, pastDueCents:0, upcomingC
 // the summary + upcoming + full bills list immediately.
 async function loadBillsTile(sid){
   _billsCtx = { sid:sid, familyIds:[sid], nameById:{}, pastDueCents:0, upcomingCents:0, chargeableUpcomingCents:0, failedIds:[], loaded:false };
-  _billsFilter = { status:'all', type:'all' };   // §SNAP — fresh ledger filter per member
+  _billsFilter = { status:'all', type:'all', month:'all' };   // §SNAP — fresh ledger filter per member
   var _snap=document.getElementById('billsSnapshot'); if(_snap) _snap.innerHTML='';
   var mp=document.getElementById('makePaymentPanel'); if(mp) mp.style.display='none';
   var sumEl=document.getElementById('billsSummary'); if(sumEl) sumEl.innerHTML='';
@@ -11069,7 +11069,7 @@ async function renderBillsList(ids, nameById, isFamily){
 //   send reminder         -> send-sms (the same EF the Messages tab uses)
 //   statement             -> client-side CSV via downloadTextFile + a printable window (browser Save-as-PDF)
 //   next charge / autopay / account credit / card-on-file are read from state the profile already loaded.
-var _billsFilter = { status:'all', type:'all' };
+var _billsFilter = { status:'all', type:'all', month:'all' };
 function _bpMoney(cents){ return '$'+(Math.round(cents||0)/100).toFixed(2); }
 function _setBillsFilter(k,v){ _billsFilter[k]=v; _renderBillsRows(); }
 
@@ -11140,15 +11140,6 @@ async function renderBillsSnapshot(){
     '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">'+actions+'</div>';
 }
 // Tiny 12-month bar chart of this member/family's PAID totals.
-function _billsSparkline(rows){
-  var byM={}, now=new Date();
-  (rows||[]).forEach(function(p){ if(p.status!=='paid'&&p.status!=='partial_refund') return; var d=new Date(p.created_at); if(isNaN(d)) return; var k=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); byM[k]=(byM[k]||0)+(parseFloat(p.amount)||0); });
-  var keys=[]; for(var i=11;i>=0;i--){ var d=new Date(now.getFullYear(),now.getMonth()-i,1); keys.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)); }
-  var max=0; keys.forEach(function(k){ if((byM[k]||0)>max) max=byM[k]; });
-  if(max<=0) return '';
-  var bars=keys.map(function(k){ var v=byM[k]||0; var h=Math.max(2,Math.round((v/max)*34)); return '<div title="'+k+': $'+v.toFixed(2)+'" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center"><div style="width:68%;height:'+h+'px;background:var(--gold);opacity:'+(v>0?0.85:0.2)+';border-radius:2px 2px 0 0"></div></div>'; }).join('');
-  return '<div style="margin:0 0 0.7rem"><div style="font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Payments &middot; last 12 months</div><div style="display:flex;align-items:flex-end;gap:2px;height:40px">'+bars+'</div></div>';
-}
 // Renders the ledger from _billsCtx.allRows applying _billsFilter; failed rows get a Retry action.
 function _renderBillsRows(){
   var el=document.getElementById('billsList'); if(!el) return;
@@ -11159,18 +11150,20 @@ function _renderBillsRows(){
   var statusBtns=[['all','All'],['failed','Failed'+(failedCount?(' ('+failedCount+')'):'')],['paid','Paid'],['refunded','Refunds']].map(function(s){ var on=_billsFilter.status===s[0]; return '<button onclick="_setBillsFilter(\'status\',\''+s[0]+'\')" style="font-size:0.62rem;padding:0.18rem 0.55rem;border-radius:999px;border:1px solid '+(on?'var(--gold)':'var(--border)')+';background:'+(on?'rgba(201,168,76,0.15)':'transparent')+';color:'+(on?'var(--gold)':'var(--muted)')+';cursor:pointer;font-family:var(--font-ui)">'+s[1]+'</button>'; }).join('');
   var types=[]; all.forEach(function(p){ var t=p.type||'other'; if(types.indexOf(t)===-1) types.push(t); });
   var typeSel='<select onchange="_setBillsFilter(\'type\',this.value)" style="font-size:0.62rem;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:0.15rem 0.3rem;font-family:var(--font-ui)"><option value="all"'+(_billsFilter.type==='all'?' selected':'')+'>All types</option>'+types.map(function(t){ return '<option value="'+t+'"'+(_billsFilter.type===t?' selected':'')+'>'+(typeLabels[t]||t)+'</option>'; }).join('')+'</select>';
-  var filterBar='<div style="display:flex;gap:0.35rem;flex-wrap:wrap;align-items:center;margin:0 0 0.6rem">'+statusBtns+'<span style="margin-left:auto">'+typeSel+'</span></div>';
-  var spark=_billsSparkline(all);
+  var months=[]; all.forEach(function(p){ var mk=(''+(p.created_at||p.due_date||'')).substring(0,7); if(mk&&months.indexOf(mk)===-1) months.push(mk); }); months.sort().reverse();
+  var monthSel='<select onchange="_setBillsFilter(\'month\',this.value)" style="font-size:0.62rem;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:0.15rem 0.3rem;font-family:var(--font-ui)"><option value="all"'+((!_billsFilter.month||_billsFilter.month==='all')?' selected':'')+'>All months</option>'+months.map(function(mk){ var lb=mk; try{ lb=new Date(mk+'-01T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}); }catch(e){} return '<option value="'+mk+'"'+(_billsFilter.month===mk?' selected':'')+'>'+lb+'</option>'; }).join('')+'</select>';
+  var filterBar='<div style="display:flex;gap:0.35rem;flex-wrap:wrap;align-items:center;margin:0 0 0.6rem">'+statusBtns+'<span style="margin-left:auto;display:flex;gap:0.35rem">'+monthSel+typeSel+'</span></div>';
   var rows=all.filter(function(p){
     if(_billsFilter.status==='failed'&&p.status!=='failed') return false;
     if(_billsFilter.status==='paid'&&p.status!=='paid') return false;
     if(_billsFilter.status==='refunded'&&p.status!=='refunded'&&p.status!=='partial_refund') return false;
     if(_billsFilter.type!=='all'&&(p.type||'other')!==_billsFilter.type) return false;
+    if(_billsFilter.month&&_billsFilter.month!=='all'&&(''+(p.created_at||p.due_date||'')).substring(0,7)!==_billsFilter.month) return false;
     return true;
   });
-  if(!rows.length){ el.innerHTML=filterBar+spark+'<div style="color:var(--muted);font-style:italic;font-size:0.82rem;padding:0.75rem 0">No bills match this filter.</div>'; return; }
+  if(!rows.length){ el.innerHTML=filterBar+'<div style="color:var(--muted);font-style:italic;font-size:0.82rem;padding:0.75rem 0">No bills match this filter.</div>'; return; }
   var cols=(isFamily?'1.1fr ':'')+'1.9fr 0.9fr 0.8fr 0.7fr 0.7fr';
-  var out=filterBar+spark; var curMonth=null;
+  var out=filterBar; var curMonth=null;
   rows.forEach(function(p){
     var d=(''+(p.due_date||p.created_at||'')).substring(0,10);
     var mk=(''+(p.created_at||d)).substring(0,7);
